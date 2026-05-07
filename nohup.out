@@ -1,67 +1,9 @@
-nohup: ignoring input
 
 > vansai-app@0.4.20 start
 > NODE_ENV=production next start --port 3003
 
-⨯ Failed to start server
-Error: listen EADDRINUSE: address already in use :::3003
-    at <unknown> (Error: listen EADDRINUSE: address already in use :::3003)
-    at new Promise (<anonymous>) {
-  code: 'EADDRINUSE',
-  errno: -98,
-  syscal[36m[19:28:53] 📥 POST /v1/chat/completions | oc/minimax-m2.5-free | 1 msgs[0m
-[19:28:53] 🔍 [AUTH] API Key: sk-3...83b4
-[19:28:53] ℹ️  [ROUTING] oc/minimax-m2.5-free → opencode/minimax-m2.5-free
-[19:28:53] ℹ️  [AUTH] [32mUsing opencode account: Public[0m
-[19:28:53] 🔍 [FORMAT] openai → openai | stream=true
-[19:28:53] 🔍 [CAVEMAN] ultra | openai
-[19:28:53] [PENDING] START | provider=opencode | model=minimax-m2.5-free
-[19:28:53] 🔍 [REQUEST] OPENCODE | minimax-m2.5-free | 2 msgs
-[19:28:56] [PENDING] END | provider=opencode | model=minimax-m2.5-free
-[19:28:56] 🌊 [STREAM] OPENCODE | minimax-m2.5-free | 3352ms | complete
-TOKEN Antigravity refreshed
-TOKEN Copilot token refreshed
-TOKEN Copilot token refreshed
-TOKEN Copilot token refreshed
-[36m[19:33:31] 📥 POST /v1/chat/completions | oc/minimax-m2.5-free | 1 msgs[0m
-[19:33:31] 🔍 [AUTH] API Key: sk-3...83b4
-[19:33:31] ℹ️  [ROUTING] oc/minimax-m2.5-free → opencode/minimax-m2.5-free
-[19:33:31] ℹ️  [AUTH] [32mUsing opencode account: Public[0m
-[19:33:31] 🔍 [FORMAT] openai → openai | stream=true
-[19:33:31] 🔍 [CAVEMAN] ultra | openai
-[19:33:31] [PENDING] START | provider=opencode | model=minimax-m2.5-free
-[19:33:31] 🔍 [REQUEST] OPENCODE | minimax-m2.5-free | 2 msgs
-[19:33:34] [PENDING] END | provider=opencode | model=minimax-m2.5-free
-[19:33:34] 🌊 [STREAM] OPENCODE | minimax-m2.5-free | 3516ms | complete
-[36m[19:34:07] 📥 POST /v1/chat/completions | oc/gpt-4o-mini | 1 msgs[0m
-[19:34:07] 🔍 [AUTH] API Key: sk-3...83b4
-[19:34:07] ℹ️  [ROUTING] oc/gpt-4o-mini → opencode/gpt-4o-mini
-[19:34:07] ℹ️  [AUTH] [32mUsing opencode account: Public[0m
-[19:34:07] 🔍 [FORMAT] openai → openai | stream=true
-[19:34:07] 🔍 [CAVEMAN] ultra | openai
-[19:34:07] [PENDING] START | provider=opencode | model=gpt-4o-mini
-[19:34:07] 🔍 [REQUEST] OPENCODE | gpt-4o-mini | 2 msgs
-[19:34:08] [PENDING] END (ERROR) | provider=opencode | model=gpt-4o-mini
-[31m[ERROR] [401]: {"type":"error","error":{"type":"ModelError","message":"Model gpt-4o-mini not supported"}}[0m
-[36m[19:34:22] 📥 POST /v1/chat/completions | oc/minimax-m2.5-free | 1 msgs[0m
-[19:34:22] 🔍 [AUTH] API Key: sk-3...83b4
-[19:34:22] ℹ️  [ROUTING] oc/minimax-m2.5-free → opencode/minimax-m2.5-free
-[19:34:22] ℹ️  [AUTH] [32mUsing opencode account: Public[0m
-[19:34:22] 🔍 [FORMAT] openai → openai | stream=true
-[19:34:22] 🔍 [CAVEMAN] ultra | openai
-[19:34:22] [PENDING] START | provider=opencode | model=minimax-m2.5-free
-[19:34:22] 🔍 [REQUEST] OPENCODE | minimax-m2.5-free | 2 msgs
-[19:34:23] [PENDING] END | provider=opencode | model=minimax-m2.5-free
-[19:34:23] 🌊 [STREAM] OPENCODE | minimax-m2.5-free | 1589ms | complete
-[36m[19:37:39] 📥 POST /v1/chat/completions | oc/minimax-m2.5-free | 1 msgs[0m
-[19:37:39] 🔍 [AUTH] API Key: sk-3...83b4
-[19:37:39] ℹ️  [ROUTING] oc/minimax-m2.5-free → opencode/minimax-m2.5-free
-[19:37:39] ℹ️  [AUTH] [32mUsing opencode account: Public[0m
-[19:37:39] 🔍 [FORMAT] openai → openai | stream=true
-[19:37:39] 🔍 [CAVEMAN] ultra | openai
-[19:37:39] [PENDING] START | provider=opencode | model=minimax-m2.5-free
-[19:37:39] 🔍 [REQUEST] OPENCODE | minimax-m2.5-free | 2 msgs
-[19:37:42] [PENDING] END | provider=opencode | model=minimax-m2.5-free
-[19:37:42] 📊 [32m[USAGE] OPENCODE | in=120 | out=27 | account=unknown[0m | reasoning=24
-[32m[19:37:42] 📊 [STREAM USAGE] OPENCODE | in=120 | out=27[0m
-[19:37:42] 🌊 [STREAM] OPENCODE | minimax-m2.5-free | 2984ms | complete
+▲ Next.js 16.2.4
+- Local:         http://localhost:3003
+- Network:       http://38.242.205.93:3003
+✓ Ready in 117ms
+⚠ "next start" does not work with "output: standalone" configuration. Use "node .next/standalone/server.js" instead.
