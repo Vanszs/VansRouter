@@ -8,14 +8,17 @@ export const MITM_TOOLS = {
     description: "Google Antigravity IDE with MITM",
     configType: "mitm",
     mitmDomain: "daily-cloudcode-pa.googleapis.com",
-    modelAliases: ["claude-opus-4-6-thinking", "claude-sonnet-4-6", "gemini-3-flash", "gpt-oss-120b-medium", "gemini-3-pro-high", "gemini-3-pro-low"],
+    modelAliases: ["gemini-3.5-flash-low", "gemini-3-flash-agent", "gemini-3.5-flash-extra-low", "gemini-3.1-pro-low", "gemini-pro-agent", "claude-sonnet-4-6", "claude-opus-4-6-thinking", "gpt-oss-120b-medium", "gemini-3-flash"],
     defaultModels: [
-      { id: "gemini-3.1-pro-high", name: "Gemini 3.1 Pro High", alias: "gemini-3.1-pro-high" },
-      { id: "gemini-3.1-pro-low", name: "Gemini 3.1 Pro Low", alias: "gemini-3.1-pro-low" },
-      { id: "gemini-3-flash", name: "Gemini 3 Flash / Default", alias: "gemini-3-flash" },
-      { id: "claude-sonnet-4-6", name: "Claude Sonnet 4.6", alias: "claude-sonnet-4-6" },
-      { id: "claude-opus-4-6-thinking", name: "Claude Opus 4.6 Thinking", alias: "claude-opus-4-6-thinking" },
-      { id: "gpt-oss-120b-medium", name: "GPT OSS 120B Medium", alias: "gpt-oss-120b-medium" },
+      { id: "gemini-3.5-flash-low", name: "Gemini 3.5 Flash (Medium) / Default", alias: "gemini-3.5-flash-low" },
+      { id: "gemini-3-flash-agent", name: "Gemini 3.5 Flash (High)", alias: "gemini-3-flash-agent" },
+      { id: "gemini-3.5-flash-extra-low", name: "Gemini 3.5 Flash (Low)", alias: "gemini-3.5-flash-extra-low" },
+      { id: "gemini-3.1-pro-low", name: "Gemini 3.1 Pro (Low)", alias: "gemini-3.1-pro-low" },
+      { id: "gemini-pro-agent", name: "Gemini 3.1 Pro (High)", alias: "gemini-pro-agent" },
+      { id: "claude-sonnet-4-6", name: "Claude Sonnet 4.6 (Thinking)", alias: "claude-sonnet-4-6" },
+      { id: "claude-opus-4-6-thinking", name: "Claude Opus 4.6 (Thinking)", alias: "claude-opus-4-6-thinking" },
+      { id: "gpt-oss-120b-medium", name: "GPT-OSS 120B (Medium)", alias: "gpt-oss-120b-medium" },
+      { id: "gemini-3-flash", name: "Gemini 3 Flash (Command)", alias: "gemini-3-flash" },
     ],
   },
   copilot: {
@@ -71,7 +74,7 @@ export const CLI_TOOLS = {
   claude: {
     id: "claude",
     name: "Claude Code",
-    icon: "terminal",
+    image: "/providers/claude.png",
     color: "#D97757",
     description: "Anthropic Claude Code CLI",
     configType: "env",
@@ -100,7 +103,7 @@ export const CLI_TOOLS = {
   },
   codex: {
     id: "codex",
-    name: "OpenAI Codex CLI / App", 
+    name: "OpenAI Codex CLI / App",
     image: "/providers/codex.png",
     color: "#10A37F",
     description: "OpenAI Codex CLI",
@@ -114,14 +117,15 @@ export const CLI_TOOLS = {
     description: "OpenCode AI Terminal Assistant",
     configType: "custom",
   },
-  cowork: {
-    id: "cowork",
-    name: "Claude Cowork",
-    image: "/providers/claude.png",
-    color: "#D97757",
-    description: "Claude Desktop Cowork (third-party inference)",
-    configType: "custom",
-  },
+  // Cowork disabled: spawns arbitrary processes (RCE risk). Hidden from CLI tools UI.
+  // cowork: {
+  //   id: "cowork",
+  //   name: "Claude Cowork",
+  //   image: "/providers/claude.png",
+  //   color: "#D97757",
+  //   description: "Claude Desktop Cowork (third-party inference)",
+  //   configType: "custom",
+  // },
   hermes: {
     id: "hermes",
     name: "Hermes Agent",
@@ -217,7 +221,7 @@ export const CLI_TOOLS = {
   amp: {
     id: "amp",
     name: "Amp CLI",
-    icon: "terminal",
+    image: "/providers/amp.png",
     color: "#F97316",
     description: "Sourcegraph Amp coding assistant CLI",
     docsUrl: "/docs?section=cli-tools&tool=amp",
@@ -248,7 +252,7 @@ amp --model "{{model}}"
   qwen: {
     id: "qwen",
     name: "Qwen Code",
-    icon: "psychology",
+    image: "/providers/qwen.png",
     color: "#10B981",
     description: "Alibaba Qwen Code CLI — supports OpenAI, Anthropic & Gemini providers via 9Router",
     docsUrl: "https://qwenlm.github.io/qwen-code-docs/en/users/configuration/model-providers/",
@@ -293,6 +297,55 @@ amp --model "{{model}}"
   }
 }`,
     },
+  },
+  "deepseek-tui": {
+    id: "deepseek-tui",
+    name: "DeepSeek TUI",
+    image: "/providers/deepseek-tui.png",
+    color: "#4D6BFE",
+    description: "DeepSeek Terminal Coding Agent (Rust TUI)",
+    docsUrl: "https://github.com/DeepSeek-TUI/DeepSeek-TUI",
+    configType: "custom",
+    defaultCommand: "deepseek",
+    modelAliases: ["deepseek-v4-pro", "deepseek-v4-flash", "deepseek-chat", "deepseek-reasoner"],
+    defaultModels: [
+      { id: "deepseek-v4-pro", name: "DeepSeek V4 Pro", alias: "deepseek-v4-pro" },
+      { id: "deepseek-v4-flash", name: "DeepSeek V4 Flash", alias: "deepseek-v4-flash" },
+      { id: "deepseek-chat", name: "DeepSeek V3 Chat", alias: "deepseek-chat" },
+    ],
+    notes: [
+      { type: "info", text: "DeepSeek TUI uses ~/.deepseek/config.toml for configuration. 9Router will update the provider to 'openai' mode with your base_url, api_key, and model." },
+      { type: "warning", text: "Config path: Linux/macOS ~/.deepseek/config.toml • Windows %USERPROFILE%\\.deepseek\\config.toml" },
+    ],
+  },
+  jcode: {
+    id: "jcode",
+    name: "jcode",
+    image: "/providers/jcode.png",
+    color: "#FF6B35",
+    description: "High-performance Rust-based coding agent harness",
+    configType: "custom",
+    docsUrl: "https://github.com/1jehuang/jcode",
+    notes: [
+      {
+        type: "info",
+        text: "jcode is a Rust-based coding agent with semantic memory, multi-agent swarms, and extreme performance (27.8 MB RAM, 14ms boot)."
+      },
+      {
+        type: "info",
+        text: "Configure 9router as an OpenAI-compatible provider to route all jcode requests through 9router's optimization layer."
+      },
+      {
+        type: "warning",
+        text: "Requires jcode installed. Install via: curl -fsSL https://raw.githubusercontent.com/1jehuang/jcode/master/scripts/install.sh | bash"
+      },
+    ],
+    defaultModels: [
+      { id: "claude-opus-4-7", name: "Claude Opus 4.7", alias: "opus", defaultValue: "cc/claude-opus-4-7" },
+      { id: "claude-sonnet-4-6", name: "Claude Sonnet 4.6", alias: "sonnet", defaultValue: "cc/claude-sonnet-4-6" },
+      { id: "gpt-5.5", name: "GPT 5.5", alias: "gpt5", defaultValue: "cx/gpt-5.5" },
+      { id: "gemini-3.1-pro", name: "Gemini 3.1 Pro", alias: "gemini", defaultValue: "gemini/gemini-3.1-pro" },
+    ],
   },
   // HIDDEN: gemini-cli
   // "gemini-cli": {

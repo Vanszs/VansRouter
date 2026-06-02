@@ -9,9 +9,9 @@ export function compressMessages(body, enabled) {
   if (!enabled) return null;
   if (!body) return null;
 
-  // Kiro shape: conversationState.history[].userInputMessage.userInputMessageContext.toolResults[].content[].text
+  // Kiro format: conversationState.history + conversationState.currentMessage
   if (body.conversationState) {
-    return compressKiroMessages(body);
+    return compressKiroFormat(body, enabled);
   }
 
   // Support both OpenAI/Claude "messages" and OpenAI Responses "input"
@@ -87,17 +87,22 @@ export function compressMessages(body, enabled) {
   return stats;
 }
 
-// Kiro shape: compress toolResults[].content[].text in history
-function compressKiroMessages(body) {
-  const history = body.conversationState?.history;
-  if (!Array.isArray(history)) return null;
+// Compress Kiro format: conversationState.history[].userInputMessage.userInputMessageContext.toolResults[].content[].text
+function compressKiroFormat(body, enabled) {
   const stats = { bytesBefore: 0, bytesAfter: 0, hits: [] };
   try {
-    for (const item of history) {
-      const toolResults = item?.userInputMessage?.userInputMessageContext?.toolResults;
+    const state = body.conversationState;
+    const allMessages = [...(Array.isArray(state?.history) ? state.history : [])];
+    if (state?.currentMessage) allMessages.push(state.currentMessage);
+
+    for (const msg of allMessages) {
+      const toolResults = msg?.userInputMessage?.userInputMessageContext?.toolResults;
       if (!Array.isArray(toolResults)) continue;
+
       for (const tr of toolResults) {
-        if (!Array.isArray(tr?.content)) continue;
+        if (tr.status === "error") continue; // preserve error traces
+        if (!Array.isArray(tr.content)) continue;
+
         for (const part of tr.content) {
           if (part && typeof part.text === "string") {
             part.text = compressText(part.text, stats, "kiro-tool-result");
@@ -106,7 +111,7 @@ function compressKiroMessages(body) {
       }
     }
   } catch (e) {
-    console.warn("[RTK] compressKiroMessages error:", e.message);
+    console.warn("[RTK] compressKiroFormat error:", e.message);
     return null;
   }
   return stats;
