@@ -37,7 +37,25 @@ export function geminiToOpenAIResponse(chunk, state) {
       const hasThoughtSig = part.thoughtSignature || part.thought_signature;
       const isThought = part.thought === true;
       
-      // Handle thought signature (thinking mode)
+      // If it is explicitly marked as thought/reasoning, output as reasoning_content
+      if (isThought) {
+        if (part.text !== undefined && part.text !== "") {
+          results.push({
+            id: `chatcmpl-${state.messageId}`,
+            object: "chat.completion.chunk",
+            created: Math.floor(Date.now() / 1000),
+            model: state.model,
+            choices: [{
+              index: 0,
+              delta: { reasoning_content: part.text },
+              finish_reason: null
+            }]
+          });
+        }
+        continue;
+      }
+
+      // Handle thought signature (thinking mode metadata or trailing text)
       if (hasThoughtSig) {
         const hasTextContent = part.text !== undefined && part.text !== "";
         const hasFunctionCall = !!part.functionCall;
@@ -50,9 +68,7 @@ export function geminiToOpenAIResponse(chunk, state) {
             model: state.model,
             choices: [{
               index: 0,
-              delta: isThought 
-                ? { reasoning_content: part.text }
-                : { content: part.text },
+              delta: { content: part.text },
               finish_reason: null
             }]
           });

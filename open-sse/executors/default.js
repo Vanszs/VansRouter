@@ -13,6 +13,8 @@ export class DefaultExecutor extends BaseExecutor {
 
   transformRequest(model, body) {
     const transformed = this.applyJsonSchemaFallback(body);
+    // Don't strip tools/tool_choice for nvidia provider so Kimi 2.6 can still attempt to tool call,
+    // and we will parse its XML/special tokens on response.
     return injectReasoningContent({ provider: this.provider, model, body: transformed });
   }
 
@@ -311,6 +313,271 @@ export class DefaultExecutor extends BaseExecutor {
   async refreshKilocode(refreshToken, proxyOptions = null) {
     // Kilocode uses device code flow, no refresh token support
     return null;
+  }
+
+  async execute({ model, body, stream, credentials, signal, log, proxyOptions = null }) {
+    const result = await super.execute({ model, body, stream, credentials, signal, log, proxyOptions });
+    
+    // Check if it's Kimi 2.6 and we are translating on an OpenAI-compatible endpoint
+    const isKimiModel = typeof model === "string" && model.includes("kimi-k2.6");
+    const isClaudeFormat = this.provider === "claude" || this.provider === "kimi" || this.provider === "kimi-coding" || this.provider === "minimax" || this.provider === "minimax-cn" || this.provider === "glm";
+
+    if (isKimiModel && !isClaudeFormat) {
+      const response = result.response;
+      if (stream) {
+        const transformedStream = transformKimiStream(response.body);
+        result.response = new Response(transformedStream, {
+          status: response.status,
+          statusText: response.statusText,
+          headers: response.headers
+        });
+      } else {
+        const text = await response.text();
+        let parsed;
+        try {
+          parsed = JSON.parse(text);
+          const choice = parsed.choices?.[0];
+          if (choice?.message?.content) {
+            const content = choice.message.content;
+            const toolCalls = parseKimiToolCalls(content);
+            if (toolCalls.length > 0) {
+              choice.message.tool_calls = toolCalls;
+              choice.message.content = cleanKimiContent(content) || null;
+              choice.finish_reason = "tool_calls";
+            }
+          }
+          result.response = new Response(JSON.stringify(parsed), {
+            status: response.status,
+            statusText: response.statusText,
+            headers: response.headers
+          });
+        } catch (e) {
+          result.response = new Response(text, {
+            status: response.status,
+            statusText: response.statusText,
+            headers: response.headers
+          });
+        }
+      }
+    }
+    return result;
+  }
+}
+
+// Helpers to parse and sanitize Kimi 2.6 tool calls
+function parseKimiToolCalls(content) {
+  const toolCalls = [];
+  
+  if (content.includes("<|tool_calls_section_begin|>")) {
+    const escapedRegex = /<\|tool_call_begin\|>\s*(\S+)\s*<\|tool_call_argument_begin\|>\s*([\s\S]*?)\s*<\|tool_call_end\|>/g;
+    let match;
+    let index = 0;
+    while ((match = escapedRegex.exec(content)) !== null) {
+      const rawName = match[1];
+      const name = rawName.replace(/^functions\./, "").replace(/[:\d]+$/, "");
+      const args = match[2].trim();
+      toolCalls.push({
+        id: `call_${Math.random().toString(36).substring(2, 11)}_${index++}`,
+        type: "function",
+        function: {
+          name,
+          arguments: args
+        }
+      });
+    }
+  } else if (content.includes("<invoke")) {
+    const regex = /<invoke\s+name=["'](.*?)["']\s*>([\s\S]*?)<\/invoke>/g;
+    let match;
+    let index = 0;
+    while ((match = regex.exec(content)) !== null) {
+      const rawName = match[1];
+      const name = rawName.replace(/^functions\./, "").replace(/[:\d]+$/, "");
+      const inner = match[2];
+      
+      const paramRegex = /<parameter\s+name=["'](.*?)["']\s*>([\s\S]*?)<\/parameter>/g;
+      let paramMatch;
+      const argsObj = {};
+      while ((paramMatch = paramRegex.exec(inner)) !== null) {
+        argsObj[paramMatch[1]] = paramMatch[2].trim();
+      }
+      
+      toolCalls.push({
+        id: `call_${Math.random().toString(36).substring(2, 11)}_${index++}`,
+        type: "function",
+        function: {
+          name,
+          arguments: JSON.stringify(argsObj)
+        }
+      });
+    }
+  }
+  
+  return toolCalls;
+}
+
+function cleanKimiContent(content) {
+  let cleaned = content;
+  cleaned = cleaned.replace(/<\|tool_calls_section_begin\|>[\s\S]*?<\|tool_calls_section_end\|>/g, "");
+  cleaned = cleaned.replace(/<invoke[\s\S]*?<\/invoke>/g, "");
+  return cleaned.trim();
+}
+
+function transformKimiStream(responseStream) {
+  const reader = responseStream.getReader();
+  const decoder = new TextDecoder();
+  const encoder = new TextEncoder();
+  let buffer = "";
+
+  let accumulatedText = "";
+  let sseId = null;
+  let sseModel = null;
+  let lastChunkObj = null;
+
+  const transformStream = new ReadableStream({
+    async start(controller) {
+      try {
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) {
+            if (buffer) {
+              processLine(buffer, controller);
+            }
+            if (accumulatedText) {
+              const flushChunk = createTextChunk(sseId, sseModel, accumulatedText, lastChunkObj);
+              controller.enqueue(encoder.encode(`data: ${JSON.stringify(flushChunk)}\n\n`));
+            }
+            controller.enqueue(encoder.encode("data: [DONE]\n\n"));
+            controller.close();
+            break;
+          }
+
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split("\n");
+          buffer = lines.pop() || "";
+
+          for (const line of lines) {
+            processLine(line, controller);
+          }
+        }
+      } catch (err) {
+        controller.error(err);
+      }
+    }
+  });
+
+  return transformStream;
+
+  function processLine(line, controller) {
+    const trimmed = line.trim();
+    if (!trimmed) {
+      return;
+    }
+    if (!trimmed.startsWith("data:")) {
+      controller.enqueue(encoder.encode(line + "\n"));
+      return;
+    }
+
+    const rawData = trimmed.slice(5).trim();
+    if (rawData === "[DONE]") {
+      return;
+    }
+
+    let parsed;
+    try {
+      parsed = JSON.parse(rawData);
+    } catch {
+      controller.enqueue(encoder.encode(line + "\n"));
+      return;
+    }
+
+    if (parsed.id) sseId = parsed.id;
+    if (parsed.model) sseModel = parsed.model;
+    lastChunkObj = parsed;
+
+    const choice = parsed.choices?.[0];
+    const delta = choice?.delta;
+    const content = delta?.content || "";
+
+    if (!content) {
+      if (choice?.finish_reason && accumulatedText) {
+        const toolCalls = parseKimiToolCalls(accumulatedText);
+        if (toolCalls.length > 0) {
+          const tcChunk = createToolCallChunk(sseId, sseModel, toolCalls, lastChunkObj);
+          controller.enqueue(encoder.encode(`data: ${JSON.stringify(tcChunk)}\n\n`));
+        } else {
+          const textChunk = createTextChunk(sseId, sseModel, accumulatedText, lastChunkObj);
+          controller.enqueue(encoder.encode(`data: ${JSON.stringify(textChunk)}\n\n`));
+        }
+        accumulatedText = "";
+      }
+      controller.enqueue(encoder.encode(`data: ${JSON.stringify(parsed)}\n\n`));
+      return;
+    }
+
+    accumulatedText += content;
+
+    const hasFormat1Start = accumulatedText.includes("<|tool_calls_section_begin|>");
+    const hasFormat2Start = accumulatedText.includes("<invoke");
+
+    if (!hasFormat1Start && !hasFormat2Start) {
+      controller.enqueue(encoder.encode(`data: ${JSON.stringify(parsed)}\n\n`));
+      accumulatedText = "";
+      return;
+    }
+
+    const startTag = hasFormat1Start ? "<|tool_calls_section_begin|>" : "<invoke";
+    const startIdx = accumulatedText.indexOf(startTag);
+    if (startIdx > 0) {
+      const prefixText = accumulatedText.slice(0, startIdx);
+      const prefixChunk = createTextChunk(sseId, sseModel, prefixText, parsed);
+      controller.enqueue(encoder.encode(`data: ${JSON.stringify(prefixChunk)}\n\n`));
+      accumulatedText = accumulatedText.slice(startIdx);
+    }
+
+    const endTag = hasFormat1Start ? "<|tool_calls_section_end|>" : "</invoke>";
+    const endIdx = accumulatedText.indexOf(endTag);
+    if (endIdx !== -1) {
+      const endTagLength = endTag.length;
+      const fullToolCallBlock = accumulatedText.slice(0, endIdx + endTagLength);
+      const remainder = accumulatedText.slice(endIdx + endTagLength);
+
+      const toolCalls = parseKimiToolCalls(fullToolCallBlock);
+      if (toolCalls.length > 0) {
+        const tcChunk = createToolCallChunk(sseId, sseModel, toolCalls, parsed);
+        controller.enqueue(encoder.encode(`data: ${JSON.stringify(tcChunk)}\n\n`));
+      } else {
+        const textChunk = createTextChunk(sseId, sseModel, fullToolCallBlock, parsed);
+        controller.enqueue(encoder.encode(`data: ${JSON.stringify(textChunk)}\n\n`));
+      }
+
+      accumulatedText = remainder;
+      if (accumulatedText) {
+        const trailingChunk = createTextChunk(sseId, sseModel, accumulatedText, parsed);
+        controller.enqueue(encoder.encode(`data: ${JSON.stringify(trailingChunk)}\n\n`));
+        accumulatedText = "";
+      }
+    }
+  }
+
+  function createTextChunk(id, model, text, templateObj) {
+    const chunk = JSON.parse(JSON.stringify(templateObj || {}));
+    chunk.id = id;
+    chunk.model = model;
+    if (!chunk.choices) chunk.choices = [{}];
+    if (!chunk.choices[0].delta) chunk.choices[0].delta = {};
+    chunk.choices[0].delta.content = text;
+    return chunk;
+  }
+
+  function createToolCallChunk(id, model, toolCalls, templateObj) {
+    const chunk = JSON.parse(JSON.stringify(templateObj || {}));
+    chunk.id = id;
+    chunk.model = model;
+    if (!chunk.choices) chunk.choices = [{}];
+    if (!chunk.choices[0].delta) chunk.choices[0].delta = {};
+    chunk.choices[0].delta.tool_calls = toolCalls;
+    chunk.choices[0].finish_reason = "tool_calls";
+    return chunk;
   }
 }
 
