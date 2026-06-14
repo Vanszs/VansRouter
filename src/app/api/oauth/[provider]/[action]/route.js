@@ -20,6 +20,10 @@ import {
   clearXaiSession,
 } from "@/lib/oauth/utils/server";
 
+const NO_PKCE_DEVICE_PROVIDERS = ["github", "kiro", "kimi-coding", "kilocode", "codebuddy", "qoder"];
+const NO_PKCE_EXCHANGE_PROVIDERS = ["cline"];
+const NO_PKCE_POLL_PROVIDERS = ["github", "kimi-coding", "kilocode", "codebuddy"];
+
 async function completeXaiManualCode(code, state) {
   const session = state ? getXaiSessionStatus(state) : null;
   if (!session) {
@@ -151,9 +155,8 @@ export async function GET(request, { params }) {
         : undefined;
       
       // Providers that don't use PKCE for device code
-      const noPkceDeviceProviders = ["github", "kiro", "kimi-coding", "kilocode", "codebuddy", "qoder"];
       let deviceData;
-      if (noPkceDeviceProviders.includes(provider)) {
+      if (NO_PKCE_DEVICE_PROVIDERS.includes(provider)) {
         deviceData = await requestDeviceCode(provider, undefined, deviceOptions);
       } else {
         // Qwen and other PKCE providers
@@ -233,8 +236,7 @@ export async function POST(request, { params }) {
       }
 
       // Cline uses authorization_code without PKCE
-      const noPkceExchangeProviders = ["cline"];
-      if (!code || !redirectUri || (!codeVerifier && !noPkceExchangeProviders.includes(provider))) {
+      if (!code || !redirectUri || (!codeVerifier && !NO_PKCE_EXCHANGE_PROVIDERS.includes(provider))) {
         return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
       }
 
@@ -271,9 +273,8 @@ export async function POST(request, { params }) {
       }
 
       // Providers that don't use PKCE for device code
-      const noPkceProviders = ["github", "kimi-coding", "kilocode", "codebuddy"];
       let result;
-      if (noPkceProviders.includes(provider)) {
+      if (NO_PKCE_POLL_PROVIDERS.includes(provider)) {
         result = await pollForToken(provider, deviceCode);
       } else if (provider === "kiro") {
         // Kiro needs extraData (clientId, clientSecret) from device code response

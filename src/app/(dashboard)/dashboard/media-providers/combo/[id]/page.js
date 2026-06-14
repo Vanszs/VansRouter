@@ -1,8 +1,9 @@
 "use client";
 
 import { useParams, notFound, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { Card, Button, Input, Toggle, ModelSelectModal } from "@/shared/components";
 import ProviderIcon from "@/shared/components/ProviderIcon";
 import { AI_PROVIDERS, MEDIA_PROVIDER_KINDS } from "@/shared/constants/providers";
@@ -44,6 +45,77 @@ function getListingHref(kind) {
   return `/dashboard/media-providers/${kind}`;
 }
 
+function ComboProvidersCard(props) {
+  return (
+    <>
+      {/* Providers Card */}
+      <Card>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-3">
+          <div>
+            <h2 className="text-lg font-semibold">Providers</h2>
+            <p className="text-xs text-text-muted">Tried in order (top-down) or rotated when round-robin is on.</p>
+          </div>
+          <Button size="sm" icon="add" onClick={() => setShowPicker(true)}>Add Provider</Button>
+        </div>
+        {providers.length === 0 ? (
+          <div className="text-center py-6 border border-dashed border-border rounded-lg text-text-muted text-sm">
+            No providers yet.
+          </div>
+        ) : (
+          <div className="flex flex-col gap-2">
+            {providers.map((entry, idx) => {
+              const { providerId, model } = parseModelEntry(entry);
+              const p = AI_PROVIDERS[providerId];
+              return (
+                <div key={`${entry}-${idx}`} className="flex items-center gap-3 p-2 rounded-lg bg-black/[0.02] dark:bg-white/[0.02]">
+                  <span className="text-xs text-text-muted w-5 text-center">{idx + 1}</span>
+                  <ProviderIcon
+                    src={`/providers/${providerId}.png`}
+                    alt={p?.name || providerId}
+                    size={24}
+                    className="object-contain rounded shrink-0"
+                    fallbackText={p?.textIcon || providerId.slice(0, 2).toUpperCase()}
+                    fallbackColor={p?.color}
+                  />
+                  <div className="min-w-0 flex-1">
+                    <div className="text-sm font-medium truncate">{p?.name || providerId}</div>
+                    {model && <code className="text-[10px] text-text-muted font-mono truncate block">{model}</code>}
+                  </div>
+                  <div className="flex items-center gap-0.5">
+                    <button type="button" onClick={() => handleMove(idx, -1)} disabled={idx === 0} className={`p-1 rounded ${idx === 0 ? "text-text-muted/20" : "text-text-muted hover:text-primary hover:bg-black/5"}`} title="Move up">
+                      <span className="material-symbols-outlined text-[16px]">arrow_upward</span>
+                    </button>
+                    <button type="button" onClick={() => handleMove(idx, 1)} disabled={idx === providers.length - 1} className={`p-1 rounded ${idx === providers.length - 1 ? "text-text-muted/20" : "text-text-muted hover:text-primary hover:bg-black/5"}`} title="Move down">
+                      <span className="material-symbols-outlined text-[16px]">arrow_downward</span>
+                    </button>
+                    <button type="button" onClick={() => handleRemoveProvider(idx)} className="p-1 rounded text-text-muted hover:text-red-500 hover:bg-red-500/10" title="Remove">
+                      <span className="material-symbols-outlined text-[16px]">close</span>
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </Card>
+    </>
+  );
+}
+
+
+// Mask large b64_json strings to keep JSON view readable
+function maskB64(obj) {
+  if (!obj || typeof obj !== "object") return obj;
+  if (Array.isArray(obj)) return obj.map(maskB64);
+  const out = {};
+  for (const [k, v] of Object.entries(obj)) {
+    out[k] = (k === "b64_json" && typeof v === "string" && v.length > 100)
+      ? `<${v.length} chars base64>`
+      : maskB64(v);
+  }
+  return out;
+}
+
 export default function ComboDetailPage() {
   const { id } = useParams();
   const router = useRouter();
@@ -62,7 +134,7 @@ export default function ComboDetailPage() {
   const [connections, setConnections] = useState([]);
   const [modelAliases, setModelAliases] = useState({});
 
-  const fetchAll = async () => {
+  const fetchAll = useCallback(async () => {
     try {
       const [comboRes, settingsRes, logsRes, keysRes, connsRes, aliasesRes] = await Promise.all([
         fetch(`/api/combos/${id}`, { cache: "no-store" }),
@@ -89,10 +161,10 @@ export default function ComboDetailPage() {
       setLogs(allLogs.filter((l) => typeof l === "string" && l.includes(c.name)).slice(0, 50));
     } catch { /* noop */ }
     setLoading(false);
-  };
+  }, [id]);
 
   // eslint-disable-next-line react-hooks/set-state-in-effect
-  useEffect(() => { fetchAll(); }, [id]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { fetchAll(); }, [fetchAll]);
 
   const validateName = (v) => {
     if (!v.trim()) { setNameError("Name is required"); return false; }
@@ -117,7 +189,6 @@ export default function ComboDetailPage() {
     const ok = await saveCombo({ name });
     if (ok) await fetchAll();
   };
-
   const handleAddModel = async (model) => {
     const value = model?.value || model;
     if (!value || providers.includes(value)) return;
@@ -125,7 +196,6 @@ export default function ComboDetailPage() {
     setProviders(next);
     await saveCombo({ models: next });
   };
-
   const handleDeselectModel = async (model) => {
     const value = model?.value || model;
     if (!value || !providers.includes(value)) return;
@@ -133,13 +203,11 @@ export default function ComboDetailPage() {
     setProviders(next);
     await saveCombo({ models: next });
   };
-
   const handleRemoveProvider = async (idx) => {
     const next = providers.filter((_, i) => i !== idx);
     setProviders(next);
     await saveCombo({ models: next });
   };
-
   const handleMove = async (idx, dir) => {
     const next = [...providers];
     const swap = idx + dir;
@@ -148,7 +216,6 @@ export default function ComboDetailPage() {
     setProviders(next);
     await saveCombo({ models: next });
   };
-
   const handleToggleRoundRobin = async (enabled) => {
     setRoundRobin(enabled);
     const settingsRes = await fetch("/api/settings", { cache: "no-store" });
@@ -162,13 +229,11 @@ export default function ComboDetailPage() {
       body: JSON.stringify({ comboStrategies: updated }),
     });
   };
-
   const handleDelete = async () => {
     if (!confirm(`Delete combo "${combo.name}"?`)) return;
     const res = await fetch(`/api/combos/${id}`, { method: "DELETE" });
     if (res.ok) router.push(getListingHref(combo.kind));
   };
-
   const handleTest = async () => {
     setTesting(true);
     setTestResult(null);
@@ -214,23 +279,8 @@ export default function ComboDetailPage() {
     }
     setTesting(false);
   };
-
-  // Mask large b64_json strings to keep JSON view readable
-  function maskB64(obj) {
-    if (!obj || typeof obj !== "object") return obj;
-    if (Array.isArray(obj)) return obj.map(maskB64);
-    const out = {};
-    for (const [k, v] of Object.entries(obj)) {
-      out[k] = (k === "b64_json" && typeof v === "string" && v.length > 100)
-        ? `<${v.length} chars base64>`
-        : maskB64(v);
-    }
-    return out;
-  }
-
   if (loading) return <div className="text-text-muted text-sm">Loading...</div>;
   if (!combo) return notFound();
-
   const kindLabel = KIND_LABELS[combo.kind] || MEDIA_PROVIDER_KINDS.find((k) => k.id === combo.kind)?.label || "Combo";
   const examplePath = EXAMPLE_PATHS[combo.kind];
   const exampleBody = combo.kind && EXAMPLE_BODIES[combo.kind] ? EXAMPLE_BODIES[combo.kind](combo.name) : null;
@@ -238,7 +288,6 @@ export default function ComboDetailPage() {
     ? `curl -X POST http://localhost:20128${examplePath} \\\n  -H "Content-Type: application/json" \\\n  -H "Authorization: Bearer ${apiKey || "YOUR_KEY"}" \\\n  -d '${JSON.stringify(exampleBody)}'`
     : "";
   const backHref = getListingHref(combo.kind);
-
   return (
     <div className="flex flex-col gap-6">
       {/* Header */}
@@ -259,7 +308,6 @@ export default function ComboDetailPage() {
           Delete
         </Button>
       </div>
-
       {/* Settings Card */}
       <Card>
         <h2 className="text-lg font-semibold mb-3">Settings</h2>
@@ -277,58 +325,7 @@ export default function ComboDetailPage() {
           </div>
         </div>
       </Card>
-
-      {/* Providers Card */}
-      <Card>
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-3">
-          <div>
-            <h2 className="text-lg font-semibold">Providers</h2>
-            <p className="text-xs text-text-muted">Tried in order (top-down) or rotated when round-robin is on.</p>
-          </div>
-          <Button size="sm" icon="add" onClick={() => setShowPicker(true)}>Add Provider</Button>
-        </div>
-        {providers.length === 0 ? (
-          <div className="text-center py-6 border border-dashed border-border rounded-lg text-text-muted text-sm">
-            No providers yet.
-          </div>
-        ) : (
-          <div className="flex flex-col gap-2">
-            {providers.map((entry, idx) => {
-              const { providerId, model } = parseModelEntry(entry);
-              const p = AI_PROVIDERS[providerId];
-              return (
-                <div key={`${entry}-${idx}`} className="flex items-center gap-3 p-2 rounded-lg bg-black/[0.02] dark:bg-white/[0.02]">
-                  <span className="text-xs text-text-muted w-5 text-center">{idx + 1}</span>
-                  <ProviderIcon
-                    src={`/providers/${providerId}.png`}
-                    alt={p?.name || providerId}
-                    size={24}
-                    className="object-contain rounded shrink-0"
-                    fallbackText={p?.textIcon || providerId.slice(0, 2).toUpperCase()}
-                    fallbackColor={p?.color}
-                  />
-                  <div className="min-w-0 flex-1">
-                    <div className="text-sm font-medium truncate">{p?.name || providerId}</div>
-                    {model && <code className="text-[10px] text-text-muted font-mono truncate block">{model}</code>}
-                  </div>
-                  <div className="flex items-center gap-0.5">
-                    <button onClick={() => handleMove(idx, -1)} disabled={idx === 0} className={`p-1 rounded ${idx === 0 ? "text-text-muted/20" : "text-text-muted hover:text-primary hover:bg-black/5"}`} title="Move up">
-                      <span className="material-symbols-outlined text-[16px]">arrow_upward</span>
-                    </button>
-                    <button onClick={() => handleMove(idx, 1)} disabled={idx === providers.length - 1} className={`p-1 rounded ${idx === providers.length - 1 ? "text-text-muted/20" : "text-text-muted hover:text-primary hover:bg-black/5"}`} title="Move down">
-                      <span className="material-symbols-outlined text-[16px]">arrow_downward</span>
-                    </button>
-                    <button onClick={() => handleRemoveProvider(idx)} className="p-1 rounded text-text-muted hover:text-red-500 hover:bg-red-500/10" title="Remove">
-                      <span className="material-symbols-outlined text-[16px]">close</span>
-                    </button>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </Card>
-
+      <ComboProvidersCard {...{ providers }} />
       {/* Test Example Card */}
       {combo.kind && examplePath && (
         <Card>
@@ -357,7 +354,7 @@ export default function ComboDetailPage() {
                       Download
                     </a>
                   </div>
-                  <img src={testResult.imageUrl} alt="Generated" className="max-w-full rounded-lg border border-border" />
+                  <Image src={testResult.imageUrl} alt="Generated" width={512} height={512} className="max-w-full rounded-lg border border-border" unoptimized />
                 </div>
               )}
               {testResult.audioUrl && (
@@ -368,7 +365,9 @@ export default function ComboDetailPage() {
                       Download
                     </a>
                   </div>
-                  <audio controls src={testResult.audioUrl} className="w-full" />
+                  <audio controls src={testResult.audioUrl} className="w-full" aria-label="Generated speech audio">
+                    <track kind="captions" />
+                  </audio>
                 </div>
               )}
               {testResult.json && (
@@ -380,7 +379,6 @@ export default function ComboDetailPage() {
           )}
         </Card>
       )}
-
       {/* Usage Logs Card */}
       <Card>
         <h2 className="text-lg font-semibold mb-3">Usage Logs</h2>
@@ -392,7 +390,6 @@ export default function ComboDetailPage() {
           </pre>
         )}
       </Card>
-
       <ModelSelectModal
         isOpen={showPicker}
         onClose={() => setShowPicker(false)}

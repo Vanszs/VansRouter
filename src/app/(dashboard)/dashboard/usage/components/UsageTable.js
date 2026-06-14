@@ -1,11 +1,12 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo, Fragment } from "react";
+import { useState, useCallback, useMemo, Fragment } from "react";
 import PropTypes from "prop-types";
 import Card from "@/shared/components/Card";
 import Badge from "@/shared/components/Badge";
 
-const fmt = (n) => new Intl.NumberFormat().format(n || 0);
+const _nf = new Intl.NumberFormat();
+const fmt = (n) => _nf.format(n || 0);
 const fmtCost = (n) => `$${(n || 0).toFixed(2)}`;
 
 function fmtTime(iso) {
@@ -96,38 +97,31 @@ export default function UsageTable({
   onToggleSort,
   viewMode,
   storageKey,
-  renderDetailCells,
-  renderSummaryCells,
+  renderDetailCells: detailCells,
+  renderSummaryCells: summaryCells,
   emptyMessage,
 }) {
-  const [expanded, setExpanded] = useState(new Set());
-
-  // Load expanded state from localStorage
-  useEffect(() => {
+  const [expanded, setExpanded] = useState(() => {
     try {
-      const saved = localStorage.getItem(storageKey);
-      if (saved) setExpanded(new Set(JSON.parse(saved)));
-    } catch (e) {
-      console.error(`Failed to load ${storageKey}:`, e);
-    }
-  }, [storageKey]);
+      const saved = typeof window !== "undefined" ? localStorage.getItem(storageKey) : null;
+      if (saved) return new Set(JSON.parse(saved));
+    } catch { /* ignore */ }
+    return new Set();
+  });
 
   // Save expanded state to localStorage
-  useEffect(() => {
-    try {
-      localStorage.setItem(storageKey, JSON.stringify([...expanded]));
-    } catch (e) {
-      console.error(`Failed to save ${storageKey}:`, e);
-    }
-  }, [expanded, storageKey]);
-
   const toggleGroup = useCallback((groupKey) => {
     setExpanded((prev) => {
       const next = new Set(prev);
       next.has(groupKey) ? next.delete(groupKey) : next.add(groupKey);
+      try {
+        localStorage.setItem(storageKey, JSON.stringify([...next]));
+      } catch (e) {
+        console.error(`Failed to save ${storageKey}:`, e);
+      }
       return next;
     });
-  }, []);
+  }, [storageKey]);
 
   const valueColumns = useMemo(() => {
     if (viewMode === "tokens") {
@@ -195,7 +189,7 @@ export default function UsageTable({
                       </span>
                     </div>
                   </td>
-                  {renderSummaryCells(group)}
+                  {summaryCells(group)}
                   <ValueCells item={group.summary} viewMode={viewMode} isSummary />
                 </tr>
                 {/* Detail rows */}
@@ -204,7 +198,7 @@ export default function UsageTable({
                     key={`detail-${item.key}`}
                     className="group-detail hover:bg-bg-subtle/20 transition-colors"
                   >
-                    {renderDetailCells(item)}
+                    {detailCells(item)}
                     <ValueCells item={item} viewMode={viewMode} />
                   </tr>
                 ))}

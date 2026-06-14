@@ -404,7 +404,7 @@ async function getAntigravityUsage(accessToken, providerSpecificData, proxyOptio
     // Parse model quotas (inspired by vscode-antigravity-cockpit)
     if (data.models) {
       // Filter only recommended/important models (must match PROVIDER_MODELS ag ids)
-      const importantModels = [
+      const importantModels = new Set([
         'gemini-3-flash-agent',
         'gemini-3.5-flash-low',
         'gemini-3.5-flash-extra-low',
@@ -414,7 +414,7 @@ async function getAntigravityUsage(accessToken, providerSpecificData, proxyOptio
         'claude-opus-4-6-thinking',
         'gpt-oss-120b-medium',
         'gemini-3-flash',
-      ];
+      ]);
 
       for (const [modelKey, info] of Object.entries(data.models)) {
         // Skip models without quota info
@@ -423,7 +423,7 @@ async function getAntigravityUsage(accessToken, providerSpecificData, proxyOptio
         }
 
         // Skip internal models and non-important models
-        if (info.isInternal || !importantModels.includes(modelKey)) {
+        if (info.isInternal || !importantModels.has(modelKey)) {
           continue;
         }
 

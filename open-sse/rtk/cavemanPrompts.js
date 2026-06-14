@@ -1,7 +1,7 @@
 // Caveman intensity-level prompts injected into system message to reduce output tokens.
 // Adapted from caveman skill (https://github.com/JuliusBrussee/caveman).
 
-export const CAVEMAN_LEVELS = {
+const CAVEMAN_LEVELS = {
   LITE: "lite",
   FULL: "full",
   ULTRA: "ultra",

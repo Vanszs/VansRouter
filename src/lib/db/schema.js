@@ -1,5 +1,5 @@
 // Latest schema version — bumped when a migration is added in ./migrations/
-export const SCHEMA_VERSION = 1;
+const SCHEMA_VERSION = 1;
 
 export const PRAGMA_SQL = `
 PRAGMA journal_mode = WAL;

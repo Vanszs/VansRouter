@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useRef, useReducer } from "react";
 import { Card, Button, ManualConfigModal, ComboFormModal, McpMarketplaceModal, ModelSelectModal } from "@/shared/components";
 import Image from "next/image";
 import BaseUrlSelect from "./BaseUrlSelect";
@@ -15,256 +15,8 @@ const ensureV1 = (url) => {
   return /\/v1$/.test(trimmed) ? trimmed : `${trimmed}/v1`;
 };
 
-export default function CoworkToolCard({
-  tool,
-  isExpanded,
-  onToggle,
-  baseUrl,
-  apiKeys,
-  activeProviders,
-  hasActiveProviders,
-  cloudEnabled,
-  cloudUrl,
-  tunnelEnabled,
-  tunnelPublicUrl,
-  tailscaleEnabled,
-  tailscaleUrl,
-  initialStatus,
-}) {
-  const [status, setStatus] = useState(initialStatus || null);
-  const [checking, setChecking] = useState(false);
-  const [applying, setApplying] = useState(false);
-  const [restoring, setRestoring] = useState(false);
-  const [message, setMessage] = useState(null);
-  const [selectedApiKey, setSelectedApiKey] = useState("");
-  const [selectedModels, setSelectedModels] = useState([]);
-  const [showManualConfigModal, setShowManualConfigModal] = useState(false);
-  const [customBaseUrl, setCustomBaseUrl] = useState("");
-  const [plugins, setPlugins] = useState([]);
-  const [localPlugins, setLocalPlugins] = useState([]);
-  const [customPlugins, setCustomPlugins] = useState([]);
-  const [modelAliases, setModelAliases] = useState({});
-  const [comboModalOpen, setComboModalOpen] = useState(false);
-  const [modelSelectOpen, setModelSelectOpen] = useState(false);
-  const [marketplaceOpen, setMarketplaceOpen] = useState(false);
-  const [addMcpOpen, setAddMcpOpen] = useState(false);
-  const [addMcpForm, setAddMcpForm] = useState({ type: "url", name: "", url: "", command: "", args: "" });
-
-  useEffect(() => {
-    if (apiKeys?.length > 0 && !selectedApiKey) {
-      setSelectedApiKey(apiKeys[0].key);
-    }
-  }, [apiKeys, selectedApiKey]);
-
-  useEffect(() => {
-    if (initialStatus) setStatus(initialStatus);
-  }, [initialStatus]);
-
-  useEffect(() => {
-    if (isExpanded && !status) checkStatus();
-  }, [isExpanded]);
-
-  useEffect(() => {
-    if (!isExpanded) return;
-    fetch("/api/models/alias")
-      .then((r) => r.ok ? r.json() : null)
-      .then((data) => {
-        if (data) setModelAliases(data.aliases || {});
-      })
-      .catch(() => {});
-  }, [isExpanded]);
-
-  useEffect(() => {
-    if (status?.cowork?.models?.length) {
-      setSelectedModels(status.cowork.models);
-    }
-    if (status?.cowork?.baseUrl && !customBaseUrl) {
-      setCustomBaseUrl(stripV1(status.cowork.baseUrl));
-    }
-    // Initialize plugins: from current config, fallback to defaultPlugins
-    if (Array.isArray(status?.cowork?.plugins) && status.cowork.plugins.length > 0) {
-      setPlugins(status.cowork.plugins);
-    } else if (plugins.length === 0 && Array.isArray(status?.defaultPlugins)) {
-      setPlugins(status.defaultPlugins);
-    }
-    if (Array.isArray(status?.cowork?.localPlugins)) {
-      setLocalPlugins(status.cowork.localPlugins);
-    }
-    if (Array.isArray(status?.cowork?.customPlugins) && status.cowork.customPlugins.length > 0) {
-      setCustomPlugins(status.cowork.customPlugins);
-    }
-  }, [status]);
-
-  const checkStatus = async () => {
-    setChecking(true);
-    try {
-      const res = await fetch(ENDPOINT);
-      const data = await res.json();
-      setStatus(data);
-    } catch (error) {
-      setStatus({ installed: false, error: error.message });
-    } finally {
-      setChecking(false);
-    }
-  };
-
-  const getEffectiveBaseUrl = () => ensureV1(customBaseUrl);
-
-  const getConfigStatus = () => {
-    if (!status?.installed) return null;
-    const url = status?.cowork?.baseUrl;
-    if (!url) return "not_configured";
-    return status.has9Router ? "configured" : "other";
-  };
-
-  const configStatus = getConfigStatus();
-
-  const handleApply = async () => {
-    setMessage(null);
-    const effectiveUrl = getEffectiveBaseUrl();
-
-    if (selectedModels.length === 0) {
-      setMessage({ type: "error", text: "Please select at least one model" });
-      return;
-    }
-
-    setApplying(true);
-    try {
-      const keyToUse = selectedApiKey?.trim()
-        || (apiKeys?.length > 0 ? apiKeys[0].key : null)
-        || (!cloudEnabled ? "sk_9router" : null);
-
-      const res = await fetch(ENDPOINT, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          baseUrl: effectiveUrl,
-          apiKey: keyToUse,
-          models: selectedModels,
-          plugins,
-          localPlugins,
-          customPlugins,
-        }),
-      });
-      const data = await res.json();
-      if (res.ok) {
-        setMessage({ type: "success", text: "Settings applied. Quit & reopen Claude Desktop to load." });
-        checkStatus();
-      } else {
-        setMessage({ type: "error", text: data.error || "Failed to apply settings" });
-      }
-    } catch (error) {
-      setMessage({ type: "error", text: error.message });
-    } finally {
-      setApplying(false);
-    }
-  };
-
-  const handleCreateCombo = async ({ name, models }) => {
-    try {
-      const res = await fetch("/api/combos", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, models }),
-      });
-      if (!res.ok) {
-        const err = await res.json();
-        setMessage({ type: "error", text: err.error || "Failed to create combo" });
-        return;
-      }
-      if (!selectedModels.includes(name)) {
-        setSelectedModels([...selectedModels, name]);
-      }
-      setComboModalOpen(false);
-      setMessage({ type: "success", text: `Combo "${name}" created and added.` });
-    } catch (error) {
-      setMessage({ type: "error", text: error.message });
-    }
-  };
-
-  const handleAddModel = (model) => {
-    const value = model?.value || model?.name || model;
-    if (!value || selectedModels.includes(value)) return;
-    setSelectedModels((prev) => [...prev, value]);
-  };
-
-  const handleRemoveModel = (model) => {
-    const value = model?.value || model?.name || model;
-    setSelectedModels((prev) => prev.filter((item) => item !== value));
-  };
-
-  const handleReset = async () => {
-    setRestoring(true);
-    setMessage(null);
-    try {
-      const res = await fetch(ENDPOINT, { method: "DELETE" });
-      const data = await res.json();
-      if (res.ok) {
-        setMessage({ type: "success", text: "Settings reset successfully" });
-        setSelectedModels([]);
-        setPlugins(status?.defaultPlugins || []);
-        setLocalPlugins([]);
-        setCustomPlugins([]);
-        checkStatus();
-      } else {
-        setMessage({ type: "error", text: data.error || "Failed to reset" });
-      }
-    } catch (error) {
-      setMessage({ type: "error", text: error.message });
-    } finally {
-      setRestoring(false);
-    }
-  };
-
-  const addPlugin = (p) => {
-    if (plugins.some((x) => x.name === p.name)) return;
-    setPlugins([...plugins, p]);
-  };
-
-  const removePlugin = (name) => {
-    setPlugins(plugins.filter((p) => p.name !== name));
-  };
-
-  const getManualConfigs = () => {
-    const keyToUse = (selectedApiKey && selectedApiKey.trim())
-      ? selectedApiKey
-      : (!cloudEnabled ? "sk_9router" : "<API_KEY_FROM_DASHBOARD>");
-
-    const modelsToShow = selectedModels.length > 0 ? selectedModels : ["provider/model-id"];
-    const cfg = {
-      inferenceProvider: "gateway",
-      inferenceGatewayBaseUrl: getEffectiveBaseUrl() || "https://your-public-host/v1",
-      inferenceGatewayApiKey: keyToUse,
-      inferenceModels: modelsToShow.map((name) => ({ name })),
-    };
-
-    return [{
-      filename: "~/Library/Application Support/Claude-3p/configLibrary/<appliedId>.json",
-      content: JSON.stringify(cfg, null, 2),
-    }];
-  };
-
+function CoworkExpandedSection({ applying, checking, customPlugins, getEffectiveBaseUrl, handleApply, handleRemoveModel, handleReset, localPlugins, message, plugins, removePlugin, restoring, selectedApiKey, selectedModels, setAddMcpForm, setAddMcpOpen, setComboModalOpen, setCustomBaseUrl, setCustomPlugins, setLocalPlugins, setMarketplaceOpen, setPlugins, setSelectedApiKey, setShowManualConfigModal, status, url, value }) {
   return (
-    <Card padding="xs" className="overflow-hidden">
-      <div className="flex items-start justify-between gap-3 hover:cursor-pointer sm:items-center" onClick={onToggle}>
-        <div className="flex min-w-0 items-center gap-3">
-          <div className="size-8 flex items-center justify-center shrink-0">
-            <Image src={tool.image} alt={tool.name} width={32} height={32} className="size-8 object-contain rounded-lg" sizes="32px" onError={(e) => { e.target.style.display = "none"; }} />
-          </div>
-          <div className="min-w-0">
-            <div className="flex min-w-0 flex-wrap items-center gap-2">
-              <h3 className="font-medium text-sm">{tool.name}</h3>
-              {configStatus === "configured" && <span className="px-1.5 py-0.5 text-[10px] font-medium bg-green-500/10 text-green-600 dark:text-green-400 rounded-full">Connected</span>}
-              {configStatus === "not_configured" && <span className="px-1.5 py-0.5 text-[10px] font-medium bg-yellow-500/10 text-yellow-600 dark:text-yellow-400 rounded-full">Not configured</span>}
-              {configStatus === "other" && <span className="px-1.5 py-0.5 text-[10px] font-medium bg-blue-500/10 text-blue-600 dark:text-blue-400 rounded-full">Other</span>}
-            </div>
-            <p className="text-xs text-text-muted truncate">{tool.description}</p>
-          </div>
-        </div>
-        <span className={`material-symbols-outlined text-text-muted text-[20px] transition-transform ${isExpanded ? "rotate-180" : ""}`}>expand_more</span>
-      </div>
-
-      {isExpanded && (
         <div className="mt-4 pt-4 border-t border-border flex flex-col gap-4">
           {checking && (
             <div className="flex items-center gap-2 text-text-muted">
@@ -336,14 +88,14 @@ export default function CoworkToolCard({
                         selectedModels.map((m) => (
                           <span key={m} className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs bg-black/5 dark:bg-white/5 text-text-muted border border-transparent hover:border-border">
                             {m}
-                            <button onClick={() => handleRemoveModel(m)} className="ml-0.5 hover:text-red-500">
+                            <button type="button" onClick={() => handleRemoveModel(m)} className="ml-0.5 hover:text-red-500">
                               <span className="material-symbols-outlined text-[12px]">close</span>
                             </button>
                           </span>
                         ))
                       )}
                     </div>
-                    <button onClick={() => setComboModalOpen(true)} disabled={!hasActiveProviders} className={`shrink-0 px-2 py-1.5 rounded border text-xs whitespace-nowrap transition-colors ${hasActiveProviders ? "bg-primary/10 border-primary/40 text-primary hover:bg-primary/20 cursor-pointer" : "opacity-50 cursor-not-allowed border-border"}`}>+ Combo</button>
+                    <button type="button" onClick={() => setComboModalOpen(true)} disabled={!hasActiveProviders} className={`shrink-0 px-2 py-1.5 rounded border text-xs whitespace-nowrap transition-colors ${hasActiveProviders ? "bg-primary/10 border-primary/40 text-primary hover:bg-primary/20 cursor-pointer" : "opacity-50 cursor-not-allowed border-border"}`}>+ Combo</button>
                   </div>
                 </div>
 
@@ -352,7 +104,7 @@ export default function CoworkToolCard({
                   <span className="material-symbols-outlined text-text-muted text-[14px] mt-2">arrow_forward</span>
                   <div className="flex-1 flex flex-col gap-1">
                     {/* Preset plugins */}
-                    {plugins.filter((p) => p.name !== "exa").map((p) => (
+                    {plugins.flatMap((p) => p.name === "exa" ? [] : [(
                       <div key={p.name} className="flex items-center gap-2 px-2 py-1 bg-surface rounded border border-border">
                         <span className="text-xs font-medium min-w-0 truncate flex-shrink-0">{p.title || p.name}</span>
                         {p.oauth && <span className="text-[8px] text-amber-600 shrink-0">OAuth</span>}
@@ -364,18 +116,18 @@ export default function CoworkToolCard({
                             <span className="text-[9px] px-1 py-0.5 rounded bg-black/5 dark:bg-white/5 text-text-muted whitespace-nowrap">+{p.toolNames.length - 6}</span>
                           )}
                         </div>
-                        <button onClick={() => removePlugin(p.name)} className="shrink-0 hover:text-red-500 ml-auto">
+                        <button type="button" onClick={() => removePlugin(p.name)} className="shrink-0 hover:text-red-500 ml-auto">
                           <span className="material-symbols-outlined text-[12px]">close</span>
                         </button>
                       </div>
-                    ))}
+                    )])}
                     {/* Custom plugins */}
                     {customPlugins.map((p) => (
                       <div key={p.name} className="flex items-center gap-2 px-2 py-1 bg-surface rounded border border-border">
                         <span className="text-xs font-medium min-w-0 truncate flex-shrink-0">{p.name}</span>
                         <span className="text-[8px] px-1 py-0.5 rounded bg-blue-500/10 text-blue-500 shrink-0">custom</span>
                         <span className="flex-1 text-[9px] text-text-muted truncate">{p.url || p.command}</span>
-                        <button onClick={() => setCustomPlugins(customPlugins.filter((x) => x.name !== p.name))} className="shrink-0 hover:text-red-500 ml-auto">
+                        <button type="button" onClick={() => setCustomPlugins(customPlugins.filter((x) => x.name !== p.name))} className="shrink-0 hover:text-red-500 ml-auto">
                           <span className="material-symbols-outlined text-[12px]">close</span>
                         </button>
                       </div>
@@ -385,10 +137,10 @@ export default function CoworkToolCard({
                     )}
                     {/* Actions row */}
                     <div className="flex items-center gap-2 mt-0.5">
-                      <button onClick={() => setMarketplaceOpen(true)} className="px-2 py-1 rounded border text-xs bg-primary/10 border-primary/40 text-primary hover:bg-primary/20 cursor-pointer whitespace-nowrap">
+                      <button type="button" onClick={() => setMarketplaceOpen(true)} className="px-2 py-1 rounded border text-xs bg-primary/10 border-primary/40 text-primary hover:bg-primary/20 cursor-pointer whitespace-nowrap">
                         + Browse
                       </button>
-                      <button onClick={() => { setAddMcpForm({ type: "url", name: "", url: "", command: "", args: "" }); setAddMcpOpen(true); }} className="px-2 py-1 rounded border text-xs bg-surface border-border text-text-muted hover:border-primary hover:text-primary cursor-pointer whitespace-nowrap">
+                      <button type="button" onClick={() => { setAddMcpForm({ type: "url", name: "", url: "", command: "", args: "" }); setAddMcpOpen(true); }} className="px-2 py-1 rounded border text-xs bg-surface border-border text-text-muted hover:border-primary hover:text-primary cursor-pointer whitespace-nowrap">
                         + Custom
                       </button>
                       <a href="https://mcp.so" target="_blank" rel="noopener noreferrer" className="text-[10px] text-text-muted hover:text-primary underline ml-auto">Find MCPs →</a>
@@ -452,9 +204,10 @@ export default function CoworkToolCard({
                     <span className="material-symbols-outlined text-text-muted text-[14px] mt-1.5">arrow_forward</span>
                     <div className="flex-1 flex flex-col gap-2">
                       <div className="flex flex-col gap-1.5 px-2 py-1.5 bg-surface rounded border border-border">
-                        {status.localStdioPlugins.filter((p) => p.name !== "browsermcp").map((p) => {
+                        {status.localStdioPlugins.flatMap((p) => {
+                          if (p.name === "browsermcp") return [];
                           const enabled = localPlugins.includes(p.name);
-                          return (
+                          return [(
                             <label key={p.name} className="flex items-start gap-2 cursor-pointer">
                               <input
                                 type="checkbox"
@@ -473,7 +226,7 @@ export default function CoworkToolCard({
                                 )}
                               </div>
                             </label>
-                          );
+                          )];
                         })}
                       </div>
                       <p className="text-[10px] text-text-muted leading-snug">
@@ -505,7 +258,331 @@ export default function CoworkToolCard({
             </>
           )}
         </div>
-      )}
+  );
+}
+
+
+function CoworkAddMcpModal({ addMcpOpen, setAddMcpOpen, addMcpForm, setAddMcpForm, setCustomPlugins }) {
+  if (!addMcpOpen) return null;
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={() => setAddMcpOpen(false)} aria-hidden="true">
+      <div className="bg-surface border border-border rounded-xl shadow-xl w-full max-w-sm mx-4 p-5 flex flex-col gap-4" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-between">
+          <h3 className="font-semibold text-sm">Add Custom MCP</h3>
+          <button type="button" onClick={() => setAddMcpOpen(false)} className="text-text-muted hover:text-text-main">
+            <span className="material-symbols-outlined text-[18px]">close</span>
+          </button>
+        </div>
+        <div className="flex gap-2">
+          <button type="button" onClick={() => setAddMcpForm((f) => ({ ...f, type: "url" }))} className={`flex-1 py-1.5 rounded border text-xs font-medium transition-colors ${addMcpForm.type === "url" ? "bg-primary/10 border-primary/40 text-primary" : "border-border text-text-muted hover:border-primary/40"}`}>URL (SSE)</button>
+          <button type="button" onClick={() => setAddMcpForm((f) => ({ ...f, type: "cmd" }))} className={`flex-1 py-1.5 rounded border text-xs font-medium transition-colors ${addMcpForm.type === "cmd" ? "bg-primary/10 border-primary/40 text-primary" : "border-border text-text-muted hover:border-primary/40"}`}>Command (stdio)</button>
+        </div>
+        <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-1">
+            <label htmlFor="cowork-mcp-name" className="text-[11px] text-text-muted font-medium">Name</label>
+            <input id="cowork-mcp-name" type="text" placeholder="my-mcp" value={addMcpForm.name} onChange={(e) => setAddMcpForm((f) => ({ ...f, name: e.target.value.replace(/\s+/g, "-").toLowerCase() }))} className="px-2 py-1.5 rounded border border-border bg-surface text-xs outline-none focus:border-primary" />
+          </div>
+          {addMcpForm.type === "url" ? (
+            <div className="flex flex-col gap-1">
+              <label htmlFor="cowork-mcp-url" className="text-[11px] text-text-muted font-medium">SSE URL</label>
+              <input id="cowork-mcp-url" type="text" placeholder="https://your-mcp-server.com/sse" value={addMcpForm.url} onChange={(e) => setAddMcpForm((f) => ({ ...f, url: e.target.value }))} className="px-2 py-1.5 rounded border border-border bg-surface text-xs outline-none focus:border-primary" />
+            </div>
+          ) : (
+            <>
+              <div className="flex flex-col gap-1">
+                <label htmlFor="cowork-mcp-command" className="text-[11px] text-text-muted font-medium">Command</label>
+                <input id="cowork-mcp-command" type="text" placeholder="npx" value={addMcpForm.command} onChange={(e) => setAddMcpForm((f) => ({ ...f, command: e.target.value }))} className="px-2 py-1.5 rounded border border-border bg-surface text-xs outline-none focus:border-primary" />
+              </div>
+              <div className="flex flex-col gap-1">
+                <label htmlFor="cowork-mcp-args" className="text-[11px] text-text-muted font-medium">Args <span className="font-normal">(comma-separated)</span></label>
+                <input id="cowork-mcp-args" type="text" placeholder="-y, @some/mcp-package" value={addMcpForm.args} onChange={(e) => setAddMcpForm((f) => ({ ...f, args: e.target.value }))} className="px-2 py-1.5 rounded border border-border bg-surface text-xs outline-none focus:border-primary" />
+              </div>
+            </>
+          )}
+        </div>
+        <div className="flex gap-2 justify-end">
+          <button type="button" onClick={() => setAddMcpOpen(false)} className="px-3 py-1.5 rounded border border-border text-xs text-text-muted hover:bg-surface cursor-pointer">Cancel</button>
+          <button type="button" onClick={() => {
+            const name = addMcpForm.name.trim();
+            if (!name) return;
+            if (addMcpForm.type === "url") {
+              if (!addMcpForm.url.trim()) return;
+              setCustomPlugins((prev) => [...prev.filter((x) => x.name !== name), { name, url: addMcpForm.url.trim(), transport: "sse", custom: true }]);
+            } else {
+              if (!addMcpForm.command.trim()) return;
+              const args = addMcpForm.args.split(",").flatMap((a) => { const t = a.trim(); return t ? [t] : []; });
+              setCustomPlugins((prev) => [...prev.filter((x) => x.name !== name), { name, command: addMcpForm.command.trim(), args, custom: true }]);
+            }
+            setAddMcpOpen(false);
+          }} className="px-3 py-1.5 rounded bg-primary text-white text-xs font-medium hover:opacity-90 cursor-pointer">Add</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default function CoworkToolCard({
+  tool,
+  isExpanded,
+  onToggle,
+  baseUrl,
+  apiKeys,
+  activeProviders,
+  hasActiveProviders,
+  cloudEnabled,
+  cloudUrl,
+  tunnelEnabled,
+  tunnelPublicUrl,
+  tailscaleEnabled,
+  tailscaleUrl,
+  initialStatus,
+}) {
+  const [state, dispatch] = useReducer((s, a) => {
+    switch (a.type) {
+      case "CHECK_START": return { ...s, checking: true };
+      case "CHECK_DONE": return { ...s, status: a.data, checking: false };
+      case "APPLY_START": return { ...s, applying: true, message: null };
+      case "APPLY_DONE": return { ...s, applying: false, message: a.message };
+      case "RESTORE_START": return { ...s, restoring: true, message: null };
+      case "RESTORE_DONE": return { ...s, restoring: false, message: a.message };
+      default: return s;
+    }
+  }, { status: initialStatus || null, checking: false, applying: false, restoring: false, message: null });
+  const status = state.status;
+  const checking = state.checking;
+  const { applying, restoring, message } = state;
+  const [selectedApiKeyOverride, setSelectedApiKey] = useState(null);
+  const selectedApiKey = selectedApiKeyOverride ?? (apiKeys?.length > 0 ? apiKeys[0].key : "");
+  const [selectedModels, setSelectedModels] = useState([]);
+  const [showManualConfigModal, setShowManualConfigModal] = useState(false);
+  const [customBaseUrl, setCustomBaseUrl] = useState("");
+  const [plugins, setPlugins] = useState([]);
+  const [localPlugins, setLocalPlugins] = useState([]);
+  const [customPlugins, setCustomPlugins] = useState([]);
+  const [modelAliases, setModelAliases] = useState({});
+  const [comboModalOpen, setComboModalOpen] = useState(false);
+  const [modelSelectOpen, setModelSelectOpen] = useState(false);
+  const [marketplaceOpen, setMarketplaceOpen] = useState(false);
+  const [addMcpOpen, setAddMcpOpen] = useState(false);
+  const [addMcpForm, setAddMcpForm] = useState({ type: "url", name: "", url: "", command: "", args: "" });
+
+  useEffect(() => {
+    if (!addMcpOpen) return;
+    const onEsc = (e) => { if (e.key === "Escape") setAddMcpOpen(false); };
+    document.addEventListener("keydown", onEsc);
+    return () => document.removeEventListener("keydown", onEsc);
+  }, [addMcpOpen]);
+
+  const checkStatus = useCallback(async () => {
+    dispatch({ type: "CHECK_START" });
+    try {
+      const res = await fetch(ENDPOINT);
+      const data = await res.json();
+      dispatch({ type: "CHECK_DONE", data });
+    } catch (error) {
+      dispatch({ type: "CHECK_DONE", data: { installed: false, error: error.message } });
+    }
+  }, []);
+
+  const statusFetchedRef = useRef(!!initialStatus);
+  const aliasesFetchedRef = useRef(false);
+
+  const initializeCard = useCallback(async () => {
+    if (!statusFetchedRef.current) {
+      statusFetchedRef.current = true;
+      await checkStatus();
+    }
+    if (!aliasesFetchedRef.current) {
+      aliasesFetchedRef.current = true;
+      try {
+        const r = await fetch("/api/models/alias");
+        if (r.ok) {
+          const data = await r.json();
+          setModelAliases(data.aliases || {});
+        }
+      } catch {}
+    }
+  }, [checkStatus]);
+
+  const handleToggle = useCallback(() => {
+    if (!isExpanded) initializeCard();
+    onToggle();
+  }, [isExpanded, initializeCard, onToggle]);
+
+  useEffect(() => { initializeCard(); }, [initializeCard]);
+
+  const hasInitConfig = useRef(false);
+  if (status?.cowork && !hasInitConfig.current) {
+    hasInitConfig.current = true;
+    if (status.cowork.models?.length && selectedModels.length === 0) {
+      setSelectedModels(status.cowork.models);
+    }
+    if (status.cowork.baseUrl && !customBaseUrl) {
+      setCustomBaseUrl(stripV1(status.cowork.baseUrl));
+    }
+    if (Array.isArray(status.cowork.plugins) && status.cowork.plugins.length > 0) {
+      setPlugins(status.cowork.plugins);
+    } else if (plugins.length === 0 && Array.isArray(status?.defaultPlugins)) {
+      setPlugins(status.defaultPlugins);
+    }
+    if (Array.isArray(status.cowork.localPlugins)) {
+      setLocalPlugins(status.cowork.localPlugins);
+    }
+    if (Array.isArray(status.cowork.customPlugins) && status.cowork.customPlugins.length > 0) {
+      setCustomPlugins(status.cowork.customPlugins);
+    }
+  }
+  const getEffectiveBaseUrl = () => ensureV1(customBaseUrl);
+
+  const getConfigStatus = () => {
+    if (!status?.installed) return null;
+    const url = status?.cowork?.baseUrl;
+    if (!url) return "not_configured";
+    return status.has9Router ? "configured" : "other";
+  };
+
+  const configStatus = getConfigStatus();
+
+  const handleApply = async () => {
+    dispatch({ type: "APPLY_START" });
+    const effectiveUrl = getEffectiveBaseUrl();
+
+    if (selectedModels.length === 0) {
+      dispatch({ type: "APPLY_DONE", message: { type: "error", text: "Please select at least one model" } });
+      return;
+    }
+
+    try {
+      const keyToUse = selectedApiKey?.trim()
+        || (apiKeys?.length > 0 ? apiKeys[0].key : null)
+        || (!cloudEnabled ? "sk_9router" : null);
+
+      const res = await fetch(ENDPOINT, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          baseUrl: effectiveUrl,
+          apiKey: keyToUse,
+          models: selectedModels,
+          plugins,
+          localPlugins,
+          customPlugins,
+        }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        dispatch({ type: "APPLY_DONE", message: { type: "success", text: "Settings applied. Quit & reopen Claude Desktop to load." } });
+        checkStatus();
+      } else {
+        dispatch({ type: "APPLY_DONE", message: { type: "error", text: data.error || "Failed to apply settings" } });
+      }
+    } catch (error) {
+      dispatch({ type: "APPLY_DONE", message: { type: "error", text: error.message } });
+    }
+  };
+
+  const handleCreateCombo = async ({ name, models }) => {
+    try {
+      const res = await fetch("/api/combos", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, models }),
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        dispatch({ type: "APPLY_DONE", message: { type: "error", text: err.error || "Failed to create combo" } });
+        return;
+      }
+      if (!selectedModels.includes(name)) {
+        setSelectedModels([...selectedModels, name]);
+      }
+      setComboModalOpen(false);
+      dispatch({ type: "APPLY_DONE", message: { type: "success", text: `Combo "${name}" created and added.` } });
+    } catch (error) {
+      dispatch({ type: "APPLY_DONE", message: { type: "error", text: error.message } });
+    }
+  };
+
+  const handleAddModel = (model) => {
+    const value = model?.value || model?.name || model;
+    if (!value || selectedModels.includes(value)) return;
+    setSelectedModels((prev) => [...prev, value]);
+  };
+
+  const handleRemoveModel = (model) => {
+    const value = model?.value || model?.name || model;
+    setSelectedModels((prev) => prev.filter((item) => item !== value));
+  };
+
+  const handleReset = async () => {
+    dispatch({ type: "RESTORE_START" });
+    try {
+      const res = await fetch(ENDPOINT, { method: "DELETE" });
+      const data = await res.json();
+      if (res.ok) {
+        dispatch({ type: "RESTORE_DONE", message: { type: "success", text: "Settings reset successfully" } });
+        setSelectedModels([]);
+        setPlugins(status?.defaultPlugins || []);
+        setLocalPlugins([]);
+        setCustomPlugins([]);
+        checkStatus();
+      } else {
+        dispatch({ type: "RESTORE_DONE", message: { type: "error", text: data.error || "Failed to reset" } });
+      }
+    } catch (error) {
+      dispatch({ type: "RESTORE_DONE", message: { type: "error", text: error.message } });
+    }
+  };
+
+  const addPlugin = (p) => {
+    if (plugins.some((x) => x.name === p.name)) return;
+    setPlugins([...plugins, p]);
+  };
+
+  const removePlugin = (name) => {
+    setPlugins(plugins.filter((p) => p.name !== name));
+  };
+
+  const getManualConfigs = () => {
+    const keyToUse = (selectedApiKey && selectedApiKey.trim())
+      ? selectedApiKey
+      : (!cloudEnabled ? "sk_9router" : "<API_KEY_FROM_DASHBOARD>");
+
+    const modelsToShow = selectedModels.length > 0 ? selectedModels : ["provider/model-id"];
+    const cfg = {
+      inferenceProvider: "gateway",
+      inferenceGatewayBaseUrl: getEffectiveBaseUrl() || "https://your-public-host/v1",
+      inferenceGatewayApiKey: keyToUse,
+      inferenceModels: modelsToShow.map((name) => ({ name })),
+    };
+
+    return [{
+      filename: "~/Library/Application Support/Claude-3p/configLibrary/<appliedId>.json",
+      content: JSON.stringify(cfg, null, 2),
+    }];
+  };
+
+  return (
+    <Card padding="xs" className="overflow-hidden">
+      <button type="button" className="flex w-full items-start justify-between gap-3 hover:cursor-pointer sm:items-center text-left" onClick={handleToggle} aria-expanded={expanded} aria-label="Toggle section">
+        <div className="flex min-w-0 items-center gap-3">
+          <div className="size-8 flex items-center justify-center shrink-0">
+            <Image src={tool.image} alt={tool.name} width={32} height={32} className="size-8 object-contain rounded-lg" sizes="32px" onError={(e) => { e.target.style.display = "none"; }} />
+          </div>
+          <div className="min-w-0">
+            <div className="flex min-w-0 flex-wrap items-center gap-2">
+              <h3 className="font-medium text-sm">{tool.name}</h3>
+              {configStatus === "configured" && <span className="px-1.5 py-0.5 text-[10px] font-medium bg-green-500/10 text-green-600 dark:text-green-400 rounded-full">Connected</span>}
+              {configStatus === "not_configured" && <span className="px-1.5 py-0.5 text-[10px] font-medium bg-yellow-500/10 text-yellow-600 dark:text-yellow-400 rounded-full">Not configured</span>}
+              {configStatus === "other" && <span className="px-1.5 py-0.5 text-[10px] font-medium bg-blue-500/10 text-blue-600 dark:text-blue-400 rounded-full">Other</span>}
+            </div>
+            <p className="text-xs text-text-muted truncate">{tool.description}</p>
+          </div>
+        </div>
+        <span className={`material-symbols-outlined text-text-muted text-[20px] transition-transform ${isExpanded ? "rotate-180" : ""}`}>expand_more</span>
+      </button>
+
+      {isExpanded && <CoworkExpandedSection applying={applying} checking={checking} customPlugins={customPlugins} getEffectiveBaseUrl={getEffectiveBaseUrl} handleApply={handleApply} handleRemoveModel={handleRemoveModel} handleReset={handleReset} localPlugins={localPlugins} message={message} plugins={plugins} removePlugin={removePlugin} restoring={restoring} selectedApiKey={selectedApiKey} selectedModels={selectedModels} setAddMcpForm={setAddMcpForm} setAddMcpOpen={setAddMcpOpen} setComboModalOpen={setComboModalOpen} setCustomBaseUrl={setCustomBaseUrl} setCustomPlugins={setCustomPlugins} setLocalPlugins={setLocalPlugins} setMarketplaceOpen={setMarketplaceOpen} setPlugins={setPlugins} setSelectedApiKey={setSelectedApiKey} setShowManualConfigModal={setShowManualConfigModal} status={status} url={url} value={value} />}
 
       <ManualConfigModal
         isOpen={showManualConfigModal}
@@ -543,98 +620,7 @@ export default function CoworkToolCard({
         addedNames={plugins.map((p) => p.name)}
       />
 
-      {/* Add Custom MCP modal */}
-      {addMcpOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={() => setAddMcpOpen(false)}>
-          <div className="bg-surface border border-border rounded-xl shadow-xl w-full max-w-sm mx-4 p-5 flex flex-col gap-4" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-between">
-              <h3 className="font-semibold text-sm">Add Custom MCP</h3>
-              <button onClick={() => setAddMcpOpen(false)} className="text-text-muted hover:text-text-main">
-                <span className="material-symbols-outlined text-[18px]">close</span>
-              </button>
-            </div>
-
-            <div className="flex gap-2">
-              <button
-                onClick={() => setAddMcpForm((f) => ({ ...f, type: "url" }))}
-                className={`flex-1 py-1.5 rounded border text-xs font-medium transition-colors ${addMcpForm.type === "url" ? "bg-primary/10 border-primary/40 text-primary" : "border-border text-text-muted hover:border-primary/40"}`}
-              >URL (SSE)</button>
-              <button
-                onClick={() => setAddMcpForm((f) => ({ ...f, type: "cmd" }))}
-                className={`flex-1 py-1.5 rounded border text-xs font-medium transition-colors ${addMcpForm.type === "cmd" ? "bg-primary/10 border-primary/40 text-primary" : "border-border text-text-muted hover:border-primary/40"}`}
-              >Command (stdio)</button>
-            </div>
-
-            <div className="flex flex-col gap-2">
-              <div className="flex flex-col gap-1">
-                <label className="text-[11px] text-text-muted font-medium">Name</label>
-                <input
-                  type="text"
-                  placeholder="my-mcp"
-                  value={addMcpForm.name}
-                  onChange={(e) => setAddMcpForm((f) => ({ ...f, name: e.target.value.replace(/\s+/g, "-").toLowerCase() }))}
-                  className="px-2 py-1.5 rounded border border-border bg-surface text-xs outline-none focus:border-primary"
-                />
-              </div>
-              {addMcpForm.type === "url" ? (
-                <div className="flex flex-col gap-1">
-                  <label className="text-[11px] text-text-muted font-medium">SSE URL</label>
-                  <input
-                    type="text"
-                    placeholder="https://your-mcp-server.com/sse"
-                    value={addMcpForm.url}
-                    onChange={(e) => setAddMcpForm((f) => ({ ...f, url: e.target.value }))}
-                    className="px-2 py-1.5 rounded border border-border bg-surface text-xs outline-none focus:border-primary"
-                  />
-                </div>
-              ) : (
-                <>
-                  <div className="flex flex-col gap-1">
-                    <label className="text-[11px] text-text-muted font-medium">Command</label>
-                    <input
-                      type="text"
-                      placeholder="npx"
-                      value={addMcpForm.command}
-                      onChange={(e) => setAddMcpForm((f) => ({ ...f, command: e.target.value }))}
-                      className="px-2 py-1.5 rounded border border-border bg-surface text-xs outline-none focus:border-primary"
-                    />
-                  </div>
-                  <div className="flex flex-col gap-1">
-                    <label className="text-[11px] text-text-muted font-medium">Args <span className="font-normal">(comma-separated)</span></label>
-                    <input
-                      type="text"
-                      placeholder="-y, @some/mcp-package"
-                      value={addMcpForm.args}
-                      onChange={(e) => setAddMcpForm((f) => ({ ...f, args: e.target.value }))}
-                      className="px-2 py-1.5 rounded border border-border bg-surface text-xs outline-none focus:border-primary"
-                    />
-                  </div>
-                </>
-              )}
-            </div>
-
-            <div className="flex gap-2 justify-end">
-              <button onClick={() => setAddMcpOpen(false)} className="px-3 py-1.5 rounded border border-border text-xs text-text-muted hover:bg-surface cursor-pointer">Cancel</button>
-              <button
-                onClick={() => {
-                  const name = addMcpForm.name.trim();
-                  if (!name) return;
-                  if (addMcpForm.type === "url") {
-                    if (!addMcpForm.url.trim()) return;
-                    setCustomPlugins((prev) => [...prev.filter((x) => x.name !== name), { name, url: addMcpForm.url.trim(), transport: "sse", custom: true }]);
-                  } else {
-                    if (!addMcpForm.command.trim()) return;
-                    const args = addMcpForm.args.split(",").map((a) => a.trim()).filter(Boolean);
-                    setCustomPlugins((prev) => [...prev.filter((x) => x.name !== name), { name, command: addMcpForm.command.trim(), args, custom: true }]);
-                  }
-                  setAddMcpOpen(false);
-                }}
-                className="px-3 py-1.5 rounded bg-primary text-white text-xs font-medium hover:opacity-90 cursor-pointer"
-              >Add</button>
-            </div>
-          </div>
-        </div>
-      )}
+      <CoworkAddMcpModal addMcpOpen={addMcpOpen} setAddMcpOpen={setAddMcpOpen} addMcpForm={addMcpForm} setAddMcpForm={setAddMcpForm} setCustomPlugins={setCustomPlugins} />
     </Card>
   );
 }

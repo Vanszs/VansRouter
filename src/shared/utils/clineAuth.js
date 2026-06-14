@@ -2,14 +2,14 @@ import pkg from "../../../package.json" with { type: "json" };
 
 const APP_VERSION = pkg.version || "0.0.0";
 
-export function getClineAccessToken(token) {
+function getClineAccessToken(token) {
   if (typeof token !== "string") return "";
   const trimmed = token.trim();
   if (!trimmed) return "";
   return trimmed.startsWith("workos:") ? trimmed : `workos:${trimmed}`;
 }
 
-export function getClineAuthorizationHeader(token) {
+function getClineAuthorizationHeader(token) {
   const accessToken = getClineAccessToken(token);
   return accessToken ? `Bearer ${accessToken}` : "";
 }

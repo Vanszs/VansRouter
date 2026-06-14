@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { formatResetTime, getRemainingPercentage } from "./utils";
 
 const PAGE_SIZE = 10;
@@ -71,21 +71,23 @@ function getColorClasses(remainingPercentage) {
 
 function sortQuotas(quotas, sortMode) {
   if (sortMode === "remaining-asc") {
-    return [...quotas].sort((a, b) => a.remaining - b.remaining || a.name.localeCompare(b.name));
+    return quotas.toSorted((a, b) => a.remaining - b.remaining || a.name.localeCompare(b.name));
   }
 
   if (sortMode === "remaining-desc") {
-    return [...quotas].sort((a, b) => b.remaining - a.remaining || a.name.localeCompare(b.name));
+    return quotas.toSorted((a, b) => b.remaining - a.remaining || a.name.localeCompare(b.name));
   }
 
   return quotas;
 }
 
+const EMPTY_QUOTAS = [];
+
 /**
  * Quota Table Component - Table-based display for quota data
  */
 export default function QuotaTable({
-  quotas = [],
+  quotas = EMPTY_QUOTAS,
   compact = false,
   sortMode = "default",
   showSortLabel = false,
@@ -108,13 +110,18 @@ export default function QuotaTable({
 
   const totalPages = Math.max(1, Math.ceil(sortedQuotas.length / PAGE_SIZE));
 
-  useEffect(() => {
+  const prevSortModeRef = useRef(sortMode);
+  const prevQuotasRef = useRef(quotas);
+  const prevTotalPagesRef = useRef(totalPages);
+  if (sortMode !== prevSortModeRef.current || quotas !== prevQuotasRef.current) {
+    prevSortModeRef.current = sortMode;
+    prevQuotasRef.current = quotas;
+    prevTotalPagesRef.current = totalPages;
     setPage(1);
-  }, [sortMode, quotas]);
-
-  useEffect(() => {
+  } else if (totalPages !== prevTotalPagesRef.current) {
+    prevTotalPagesRef.current = totalPages;
     setPage((currentPage) => Math.min(currentPage, totalPages));
-  }, [totalPages]);
+  }
 
   if (!quotas || quotas.length === 0) {
     return null;

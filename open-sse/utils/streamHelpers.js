@@ -18,7 +18,19 @@ export function parseSSELine(line, format = null) {
   }
 
   // Standard SSE format: "data: {...}"
-  if (line.charCodeAt(0) !== 100) return null; // 'd' = 100
+  if (line.charCodeAt(0) !== 100) {
+    // NDJSON fallback: some providers stream raw JSON object lines without a
+    // "data:" prefix. Parse brace-prefixed lines defensively.
+    const trimmed = line.trim();
+    if (trimmed.charCodeAt(0) === 123) { // '{' = 123
+      try {
+        return JSON.parse(trimmed);
+      } catch (error) {
+        return null;
+      }
+    }
+    return null;
+  }
 
   const data = line.slice(5).trim();
   if (data === "[DONE]") return { done: true };

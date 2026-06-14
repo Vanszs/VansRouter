@@ -1,9 +1,12 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { Card, Button, Badge, Input, ModelSelectModal } from "@/shared/components";
 import { TOOL_HOSTS } from "@/shared/constants/mitmToolHosts";
 import Image from "next/image";
+
+const EMPTY_ALIASES = {};
+const EMPTY_STATUS = {};
 
 /**
  * Per-tool MITM card — shows DNS status + model mappings.
@@ -11,19 +14,123 @@ import Image from "next/image";
  * - Skips sudo modal if password is already cached
  * - Model mappings can only be edited when DNS is active
  */
+function MitmExpandedSection({ handleDnsToggle, handleMappingBlur, handleModelMappingChange, loading, mitmHosts, modelMappings, openModelSelector, saveMappings, warning }) {
+  return (
+          <div className="mt-4 pt-4 border-t border-border flex flex-col gap-4">
+            {/* Hosts */}
+            {mitmHosts.length > 0 && (
+              <div className="mt-2 rounded-md border border-border bg-surface/50 px-2 py-1.5">
+                <p className="text-[10px] font-medium tracking-wide text-text-main/80 mb-1">
+                  Edit hosts file manually to add the following entries:
+                </p>
+                <ul className="list-none space-y-0.5 font-mono text-[10px] text-text-muted break-all">
+                  {mitmHosts.map((h) => (
+                    <li key={h}>127.0.0.1 {h}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            {/* Info */}
+            <div className="flex flex-col gap-0.5 text-[11px] text-text-muted px-1">
+              <p>Toggle DNS to redirect {tool.name} traffic through VansAI via MITM.</p>
+              {!dnsActive && (
+                <p className="text-amber-600 text-[10px] mt-1">
+                  ⚠️ Enable DNS to edit model mappings
+                </p>
+              )}
+            </div>
+
+            {/* Model Mappings */}
+            {tool.defaultModels?.length > 0 && (
+              <div className="flex flex-col gap-2">
+                {tool.defaultModels.map((model) => (
+                  <div key={model.alias} className="grid grid-cols-1 gap-1.5 sm:grid-cols-[9rem_auto_1fr_auto] sm:items-center sm:gap-2">
+                    <span className="text-xs font-semibold text-text-main sm:text-right">{model.name}</span>
+                    <span className="material-symbols-outlined hidden text-text-muted text-[14px] sm:inline">arrow_forward</span>
+                    <div className="relative w-full min-w-0">
+                      <input
+                        type="text"
+                        value={modelMappings[model.alias] || ""}
+                        onChange={(e) => handleModelMappingChange(model.alias, e.target.value)}
+                        onBlur={(e) => handleMappingBlur(model.alias, e.target.value)}
+                        aria-label="Model ID" placeholder="provider/model-id"
+                        disabled={!dnsActive}
+                        className={`w-full min-w-0 pl-2 pr-7 py-2 bg-surface rounded border border-border text-xs focus:outline-none focus:ring-1 focus:ring-primary/50 sm:py-1.5 ${!dnsActive ? "opacity-50 cursor-not-allowed" : ""}`}
+                      />
+                      {modelMappings[model.alias] && (
+                        <button type="button"
+                          onClick={() => {
+                            handleModelMappingChange(model.alias, "");
+                            saveMappings({ ...modelMappings, [model.alias]: "" });
+                          }}
+                          className="absolute right-1 top-1/2 -translate-y-1/2 p-0.5 text-text-muted hover:text-red-500 rounded transition-colors"
+                          title="Clear"
+                        >
+                          <span className="material-symbols-outlined text-[14px]">close</span>
+                        </button>
+                      )}
+                    </div>
+                    <button type="button"
+                      onClick={() => openModelSelector(model.alias)}
+                      disabled={!hasActiveProviders || !dnsActive}
+                      className={`rounded border px-2 py-2 text-xs transition-colors sm:py-1.5 ${hasActiveProviders && dnsActive ? "bg-surface border-border hover:border-primary cursor-pointer" : "opacity-50 cursor-not-allowed border-border"}`}
+                    >
+                      Select
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {tool.defaultModels?.length === 0 && (
+              <p className="text-xs text-text-muted px-1">Model mappings will be available soon.</p>
+            )}
+
+            {/* Start / Stop DNS button */}
+            <div className="flex flex-col gap-2 sm:items-start">
+              {dnsActive ? (
+                <button type="button"
+                  onClick={handleDnsToggle}
+                  disabled={!serverRunning || loading}
+                  className="flex w-full items-center justify-center gap-1.5 rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-2 text-xs font-medium text-red-500 transition-colors hover:bg-red-500/20 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto sm:py-1.5"
+                >
+                  <span className="material-symbols-outlined text-[16px]">stop_circle</span>
+                  Stop DNS
+                </button>
+              ) : (
+                <button type="button"
+                  onClick={handleDnsToggle}
+                  disabled={!serverRunning || loading}
+                  className="flex w-full items-center justify-center gap-1.5 rounded-lg border border-primary/30 bg-primary/10 px-4 py-2 text-xs font-medium text-primary transition-colors hover:bg-primary/20 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto sm:py-1.5"
+                >
+                  <span className="material-symbols-outlined text-[16px]">play_circle</span>
+                  Start DNS
+                </button>
+              )}
+
+              {/* Warning below button */}
+              {warning && (
+                <div className="flex items-center gap-2 px-2 py-1.5 rounded text-xs text-amber-500">
+                  <span className="material-symbols-outlined text-[14px]">warning</span>
+                  <span>{warning}</span>
+                </div>
+              )}
+            </div>
+          </div>
+  );
+}
+
+
 export default function MitmToolCard({
   tool,
-  isExpanded,
+  status: { isExpanded, hasCachedPassword, needsSudoPassword, isWin } = EMPTY_STATUS,
   onToggle,
   serverRunning,
   dnsActive,
-  hasCachedPassword,
-  needsSudoPassword,
-  isWin,
   apiKeys,
   activeProviders,
   hasActiveProviders,
-  modelAliases = {},
+  modelAliases = EMPTY_ALIASES,
   cloudEnabled,
   onDnsChange,
 }) {
@@ -40,11 +147,7 @@ export default function MitmToolCard({
   const mitmHosts = TOOL_HOSTS[tool.id] ?? [];
   const canRunWithoutPassword = isWin || hasCachedPassword || needsSudoPassword === false;
 
-  useEffect(() => {
-    if (isExpanded) loadSavedMappings();
-  }, [isExpanded]);
-
-  const loadSavedMappings = async () => {
+  const loadSavedMappings = useCallback(async () => {
     try {
       const res = await fetch(`/api/cli-tools/antigravity-mitm/alias?tool=${tool.id}`);
       if (res.ok) {
@@ -52,7 +155,23 @@ export default function MitmToolCard({
         if (Object.keys(data.aliases || {}).length > 0) setModelMappings(data.aliases);
       }
     } catch { /* ignore */ }
-  };
+  }, [tool.id]);
+
+  const mappingsFetchedRef = useRef(false);
+
+  const initializeCard = useCallback(async () => {
+    if (!mappingsFetchedRef.current) {
+      mappingsFetchedRef.current = true;
+      await loadSavedMappings();
+    }
+  }, [loadSavedMappings]);
+
+  const handleToggle = useCallback(() => {
+    if (!isExpanded) initializeCard();
+    onToggle();
+  }, [isExpanded, initializeCard, onToggle]);
+
+  useEffect(() => { initializeCard(); }, [initializeCard]);
 
   const saveMappings = useCallback(async (mappings) => {
     try {
@@ -132,7 +251,7 @@ export default function MitmToolCard({
   return (
     <>
       <Card padding="xs" className="overflow-hidden">
-        <div className="flex items-start justify-between gap-3 hover:cursor-pointer sm:items-center" onClick={onToggle}>
+        <button type="button" className="flex w-full items-start justify-between gap-3 hover:cursor-pointer sm:items-center text-left" onClick={handleToggle} aria-expanded={expanded} aria-label="Toggle section">
           <div className="flex min-w-0 items-center gap-3">
             <div className="size-8 flex items-center justify-center shrink-0">
               <Image
@@ -162,111 +281,9 @@ export default function MitmToolCard({
           <span className={`material-symbols-outlined text-text-muted text-[20px] transition-transform ${isExpanded ? "rotate-180" : ""}`}>
             expand_more
           </span>
-        </div>
+        </button>
 
-        {isExpanded && (
-          <div className="mt-4 pt-4 border-t border-border flex flex-col gap-4">
-            {/* Hosts */}
-            {mitmHosts.length > 0 && (
-              <div className="mt-2 rounded-md border border-border bg-surface/50 px-2 py-1.5">
-                <p className="text-[10px] font-medium tracking-wide text-text-main/80 mb-1">
-                  Edit hosts file manually to add the following entries:
-                </p>
-                <ul className="list-none space-y-0.5 font-mono text-[10px] text-text-muted break-all">
-                  {mitmHosts.map((h) => (
-                    <li key={h}>127.0.0.1 {h}</li>
-                  ))}
-                </ul>
-              </div>
-            )}
-            {/* Info */}
-            <div className="flex flex-col gap-0.5 text-[11px] text-text-muted px-1">
-              <p>Toggle DNS to redirect {tool.name} traffic through VansAI via MITM.</p>
-              {!dnsActive && (
-                <p className="text-amber-600 text-[10px] mt-1">
-                  ⚠️ Enable DNS to edit model mappings
-                </p>
-              )}
-            </div>
-
-            {/* Model Mappings */}
-            {tool.defaultModels?.length > 0 && (
-              <div className="flex flex-col gap-2">
-                {tool.defaultModels.map((model) => (
-                  <div key={model.alias} className="grid grid-cols-1 gap-1.5 sm:grid-cols-[9rem_auto_1fr_auto] sm:items-center sm:gap-2">
-                    <span className="text-xs font-semibold text-text-main sm:text-right">{model.name}</span>
-                    <span className="material-symbols-outlined hidden text-text-muted text-[14px] sm:inline">arrow_forward</span>
-                    <div className="relative w-full min-w-0">
-                      <input
-                        type="text"
-                        value={modelMappings[model.alias] || ""}
-                        onChange={(e) => handleModelMappingChange(model.alias, e.target.value)}
-                        onBlur={(e) => handleMappingBlur(model.alias, e.target.value)}
-                        placeholder="provider/model-id"
-                        disabled={!dnsActive}
-                        className={`w-full min-w-0 pl-2 pr-7 py-2 bg-surface rounded border border-border text-xs focus:outline-none focus:ring-1 focus:ring-primary/50 sm:py-1.5 ${!dnsActive ? "opacity-50 cursor-not-allowed" : ""}`}
-                      />
-                      {modelMappings[model.alias] && (
-                        <button
-                          onClick={() => {
-                            handleModelMappingChange(model.alias, "");
-                            saveMappings({ ...modelMappings, [model.alias]: "" });
-                          }}
-                          className="absolute right-1 top-1/2 -translate-y-1/2 p-0.5 text-text-muted hover:text-red-500 rounded transition-colors"
-                          title="Clear"
-                        >
-                          <span className="material-symbols-outlined text-[14px]">close</span>
-                        </button>
-                      )}
-                    </div>
-                    <button
-                      onClick={() => openModelSelector(model.alias)}
-                      disabled={!hasActiveProviders || !dnsActive}
-                      className={`rounded border px-2 py-2 text-xs transition-colors sm:py-1.5 ${hasActiveProviders && dnsActive ? "bg-surface border-border hover:border-primary cursor-pointer" : "opacity-50 cursor-not-allowed border-border"}`}
-                    >
-                      Select
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {tool.defaultModels?.length === 0 && (
-              <p className="text-xs text-text-muted px-1">Model mappings will be available soon.</p>
-            )}
-
-            {/* Start / Stop DNS button */}
-            <div className="flex flex-col gap-2 sm:items-start">
-              {dnsActive ? (
-                <button
-                  onClick={handleDnsToggle}
-                  disabled={!serverRunning || loading}
-                  className="flex w-full items-center justify-center gap-1.5 rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-2 text-xs font-medium text-red-500 transition-colors hover:bg-red-500/20 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto sm:py-1.5"
-                >
-                  <span className="material-symbols-outlined text-[16px]">stop_circle</span>
-                  Stop DNS
-                </button>
-              ) : (
-                <button
-                  onClick={handleDnsToggle}
-                  disabled={!serverRunning || loading}
-                  className="flex w-full items-center justify-center gap-1.5 rounded-lg border border-primary/30 bg-primary/10 px-4 py-2 text-xs font-medium text-primary transition-colors hover:bg-primary/20 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto sm:py-1.5"
-                >
-                  <span className="material-symbols-outlined text-[16px]">play_circle</span>
-                  Start DNS
-                </button>
-              )}
-
-              {/* Warning below button */}
-              {warning && (
-                <div className="flex items-center gap-2 px-2 py-1.5 rounded text-xs text-amber-500">
-                  <span className="material-symbols-outlined text-[14px]">warning</span>
-                  <span>{warning}</span>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
+      {isExpanded && <MitmExpandedSection handleDnsToggle={handleDnsToggle} handleMappingBlur={handleMappingBlur} handleModelMappingChange={handleModelMappingChange} loading={loading} mitmHosts={mitmHosts} modelMappings={modelMappings} openModelSelector={openModelSelector} saveMappings={saveMappings} warning={warning} />}
       </Card>
 
       {/* Password Modal */}

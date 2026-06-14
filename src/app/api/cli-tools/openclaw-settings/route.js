@@ -107,7 +107,6 @@ export async function GET() {
       settingsPath: getOpenClawSettingsPath(),
     });
   } catch (error) {
-    console.log("Error checking openclaw settings:", error);
     return NextResponse.json({ error: "Failed to check openclaw settings" }, { status: 500 });
   }
 }
@@ -147,11 +146,7 @@ export async function POST(request) {
 
     await fs.mkdir(openclawDir, { recursive: true });
 
-    let settings = {};
-    try {
-      const existingSettings = await fs.readFile(settingsPath, "utf-8");
-      settings = JSON.parse(existingSettings);
-    } catch { /* No existing settings */ }
+    let settings = (await readSettings()) || {};
 
     if (!settings.agents) settings.agents = {};
     if (!settings.agents.defaults) settings.agents.defaults = {};
@@ -164,9 +159,9 @@ export async function POST(request) {
     const fullModelId = `9router/${model}`;
 
     // Remove all old 9router/* entries from agents.defaults.models
-    Object.keys(settings.agents.defaults.models)
-      .filter((k) => k.startsWith("9router/"))
-      .forEach((k) => { delete settings.agents.defaults.models[k]; });
+    for (const k of Object.keys(settings.agents.defaults.models)) {
+      if (k.startsWith("9router/")) delete settings.agents.defaults.models[k];
+    }
 
     // Update default model
     settings.agents.defaults.model.primary = fullModelId;
@@ -227,7 +222,6 @@ export async function POST(request) {
       settingsPath,
     });
   } catch (error) {
-    console.log("Error updating openclaw settings:", error);
     return NextResponse.json({ error: "Failed to update openclaw settings" }, { status: 500 });
   }
 }
@@ -238,18 +232,12 @@ export async function DELETE() {
     const settingsPath = getOpenClawSettingsPath();
 
     // Read existing settings
-    let settings = {};
-    try {
-      const existingSettings = await fs.readFile(settingsPath, "utf-8");
-      settings = JSON.parse(existingSettings);
-    } catch (error) {
-      if (error.code === "ENOENT") {
-        return NextResponse.json({
-          success: true,
-          message: "No settings file to reset",
-        });
-      }
-      throw error;
+    const settings = await readSettings();
+    if (!settings) {
+      return NextResponse.json({
+        success: true,
+        message: "No settings file to reset",
+      });
     }
 
     // Remove 9Router from models.providers
@@ -286,7 +274,6 @@ export async function DELETE() {
       message: "9Router settings removed successfully",
     });
   } catch (error) {
-    console.log("Error resetting openclaw settings:", error);
     return NextResponse.json({ error: "Failed to reset openclaw settings" }, { status: 500 });
   }
 }

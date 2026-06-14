@@ -46,12 +46,12 @@ export default function DocsSidebar({ isMobile = false, onClose, lang = DEFAULT_
   const [openSections, setOpenSections] = useState(() => {
     if (typeof window === "undefined") return [];
     try {
-      return JSON.parse(sessionStorage.getItem("sidebarOpen") || "[]");
+      return JSON.parse(sessionStorage.getItem("sidebarOpen_v1") || "[]");
     } catch { return []; }
   });
 
   useEffect(() => {
-    sessionStorage.setItem("sidebarOpen", JSON.stringify(openSections));
+    sessionStorage.setItem("sidebarOpen_v1", JSON.stringify(openSections));
   }, [openSections]);
 
   const toggleSection = (index) => {
@@ -77,7 +77,7 @@ export default function DocsSidebar({ isMobile = false, onClose, lang = DEFAULT_
 
           return (
             <div key={section.key}>
-              <button
+              <button type="button"
                 onClick={() => toggleSection(sectionIndex)}
                 className="flex items-center justify-between w-full text-sm font-semibold text-gray-900 mb-2 hover:text-[#E68A6E] transition-colors"
               >

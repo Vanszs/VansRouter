@@ -218,13 +218,13 @@ async function removeDNSEntry(tool, sudoPassword) {
  * Remove ALL tool DNS entries (used when stopping server)
  */
 async function removeAllDNSEntries(sudoPassword) {
-  for (const tool of Object.keys(TOOL_HOSTS)) {
+  await Promise.all(Object.keys(TOOL_HOSTS).map(async (tool) => {
     try {
       await removeDNSEntry(tool, sudoPassword);
     } catch (e) {
       err(`DNS ${tool}: failed to remove — ${e.message}`);
     }
-  }
+  }));
 }
 
 /**

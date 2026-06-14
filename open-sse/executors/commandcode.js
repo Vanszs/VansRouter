@@ -90,4 +90,3 @@ function wrapNdjsonAsOpenAISse(originalResponse, model) {
   });
 }
 
-export default CommandCodeExecutor;

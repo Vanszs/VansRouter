@@ -46,5 +46,4 @@ export const VOICE_FETCHERS = {
   gemini: fetchGeminiVoices,
 };
 
-// Re-export for backward compat
-export { fetchEdgeTtsVoices, fetchLocalDeviceVoices, fetchElevenLabsVoices, fetchGeminiVoices };
+

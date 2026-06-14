@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import Link from "next/link";
 
 export default function DashboardError({ error, reset }) {
   useEffect(() => {
@@ -31,13 +32,13 @@ export default function DashboardError({ error, reset }) {
             <span className="material-symbols-outlined text-[18px]">refresh</span>
             Try again
           </button>
-          <a
+          <Link
             href="/dashboard"
             className="inline-flex items-center gap-2 rounded-md border border-border bg-surface px-4 py-2 text-sm font-medium text-text-main transition-colors hover:bg-surface-2"
           >
             <span className="material-symbols-outlined text-[18px]">home</span>
             Dashboard
-          </a>
+          </Link>
         </div>
       </div>
     </section>

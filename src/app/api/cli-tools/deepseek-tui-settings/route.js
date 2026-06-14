@@ -117,7 +117,6 @@ export async function GET() {
             configPath: getDeepSeekConfigPath(),
         });
     } catch (error) {
-        console.log("Error checking deepseek-tui settings:", error);
         return NextResponse.json({ error: "Failed to check deepseek-tui settings" }, { status: 500 });
     }
 }
@@ -141,7 +140,6 @@ export async function POST(request) {
             configPath: getDeepSeekConfigPath(),
         });
     } catch (error) {
-        console.log("Error updating deepseek-tui settings:", error);
         return NextResponse.json({ error: "Failed to update deepseek-tui settings" }, { status: 500 });
     }
 }
@@ -149,16 +147,14 @@ export async function POST(request) {
 export async function DELETE() {
     try {
         const configPath = getDeepSeekConfigPath();
-        try {
-            await fs.access(configPath);
-        } catch {
+        const existing = await readConfigToml();
+        if (!existing) {
             return NextResponse.json({ success: true, message: "No config file to reset" });
         }
 
         await fs.writeFile(configPath, DEFAULT_CONFIG);
         return NextResponse.json({ success: true, message: `${PROVIDER_NAME} config reset to DeepSeek defaults` });
     } catch (error) {
-        console.log("Error resetting deepseek-tui settings:", error);
         return NextResponse.json({ error: "Failed to reset deepseek-tui settings" }, { status: 500 });
     }
 }

@@ -2,6 +2,7 @@
 
 import { useParams, notFound, useRouter } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { useState, useEffect } from "react";
 import { Card, Badge, Button, AddCustomEmbeddingModal, NoAuthProxyCard, ProviderInfoCard } from "@/shared/components";
 import ProviderIcon from "@/shared/components/ProviderIcon";
@@ -43,6 +44,18 @@ const DEFAULT_RESPONSE_EXAMPLE = `{
 }`;
 
 const CLOUDFLARE_TEST_IMAGE_URL = "https://pub-1fb693cb11cc46b2b2f656f51e015a2c.r2.dev/dog.png";
+
+// Compact embedding array: first 4 values + count
+function formatResultJson(data) {
+  if (!data) return DEFAULT_RESPONSE_EXAMPLE;
+  const clone = JSON.parse(JSON.stringify(data));
+  (clone.data || []).forEach((item) => {
+    if (Array.isArray(item.embedding) && item.embedding.length > 4) {
+      item.embedding = [...item.embedding.slice(0, 4).map((v) => parseFloat(v.toFixed(6))), `... (${item.embedding.length} dims)`];
+    }
+  });
+  return JSON.stringify(clone, null, 2);
+}
 const CLOUDFLARE_TEST_MASK_URL = "https://pub-1fb693cb11cc46b2b2f656f51e015a2c.r2.dev/dog-mask.png";
 
 function getImageEditDefaults(providerId, modelId) {
@@ -141,7 +154,7 @@ function EmbeddingExampleCard({ providerId, customAlias }) {
   const [dimensions, setDimensions] = useState("");
   const [apiKey, setApiKey] = useState("");
   const [useTunnel, setUseTunnel] = useState(false);
-  const [localEndpoint, setLocalEndpoint] = useState("");
+  const [localEndpoint, setLocalEndpoint] = useState(() => typeof window !== "undefined" ? window.location.origin : "");
   const [tunnelEndpoint, setTunnelEndpoint] = useState("");
   const [result, setResult] = useState(null);
   const [running, setRunning] = useState(false);
@@ -150,7 +163,6 @@ function EmbeddingExampleCard({ providerId, customAlias }) {
   const { copied: copiedRes, copy: copyRes } = useCopyToClipboard();
 
   useEffect(() => {
-    setLocalEndpoint(window.location.origin);
     fetch("/api/keys")
       .then((r) => r.json())
       .then((d) => { setApiKey((d.keys || []).find((k) => k.isActive !== false)?.key || ""); })
@@ -202,18 +214,6 @@ function EmbeddingExampleCard({ providerId, customAlias }) {
     }
   };
 
-  // Compact embedding array: first 4 values + count
-  const formatResultJson = (data) => {
-    if (!data) return DEFAULT_RESPONSE_EXAMPLE;
-    const clone = JSON.parse(JSON.stringify(data));
-    (clone.data || []).forEach((item) => {
-      if (Array.isArray(item.embedding) && item.embedding.length > 4) {
-        item.embedding = [...item.embedding.slice(0, 4).map((v) => parseFloat(v.toFixed(6))), `... (${item.embedding.length} dims)`];
-      }
-    });
-    return JSON.stringify(clone, null, 2);
-  };
-
   const resultJson = result ? JSON.stringify(result.data, null, 2) : "";
 
   return (
@@ -224,7 +224,7 @@ function EmbeddingExampleCard({ providerId, customAlias }) {
         {/* Model — text input for custom node, dropdown otherwise */}
         <Row label="Model">
           {isCustom ? (
-            <input
+            <input aria-label="Model"
               value={selectedModel}
               onChange={(e) => setSelectedModel(e.target.value)}
               placeholder="e.g. voyage-3, embed-english-v3.0, text-embedding-3-small"
@@ -246,7 +246,7 @@ function EmbeddingExampleCard({ providerId, customAlias }) {
         {/* Endpoint */}
         <Row label="Endpoint">
           <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
-            <input
+            <input aria-label="Endpoint"
               value={endpoint}
               onChange={(e) => useTunnel ? setTunnelEndpoint(e.target.value) : setLocalEndpoint(e.target.value)}
               className="w-full min-w-0 flex-1 px-3 py-1.5 text-sm border border-border rounded-lg bg-background focus:outline-none focus:border-primary font-mono"
@@ -254,7 +254,7 @@ function EmbeddingExampleCard({ providerId, customAlias }) {
             />
             {/* Tunnel toggle — only show if tunnel URL is available */}
             {tunnelEndpoint && (
-              <button
+              <button type="button"
                 onClick={() => setUseTunnel((v) => !v)}
                 title={useTunnel ? "Using tunnel" : "Using local"}
                 className={`flex items-center gap-1 text-xs px-2 py-1.5 rounded-lg border shrink-0 transition-colors ${
@@ -270,7 +270,7 @@ function EmbeddingExampleCard({ providerId, customAlias }) {
 
         {/* API Key */}
         <Row label="API Key">
-          <input
+          <input aria-label="API Key"
             type="password"
             value={apiKey}
             onChange={(e) => setApiKey(e.target.value)}
@@ -282,7 +282,7 @@ function EmbeddingExampleCard({ providerId, customAlias }) {
         {/* Input */}
         <Row label="Input">
           <div className="relative">
-            <input
+            <input aria-label="Input"
               value={input}
               onChange={(e) => setInput(e.target.value)}
               className="w-full px-3 py-1.5 pr-7 text-sm border border-border rounded-lg bg-background focus:outline-none focus:border-primary"
@@ -301,7 +301,7 @@ function EmbeddingExampleCard({ providerId, customAlias }) {
 
         {/* Dimensions (optional) — truncate embedding vector length */}
         <Row label="Dimensions">
-          <input
+          <input aria-label="Dimensions"
             type="number"
             min="1"
             value={dimensions}
@@ -316,14 +316,14 @@ function EmbeddingExampleCard({ providerId, customAlias }) {
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between mb-1.5">
             <span className="text-xs font-semibold text-text-muted uppercase tracking-wider">Request</span>
             <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
-              <button
+              <button type="button"
                 onClick={() => copyCurl(curlSnippet)}
                 className="inline-flex items-center gap-1 text-xs text-text-muted hover:text-primary transition-colors"
               >
                 <span className="material-symbols-outlined text-[14px]">{copiedCurl ? "check" : "content_copy"}</span>
                 {copiedCurl ? "Copied" : "Copy"}
               </button>
-              <button
+              <button type="button"
                 onClick={handleRun}
                 disabled={running || !input.trim() || !modelFull}
                 className="flex w-full sm:w-auto items-center justify-center gap-1.5 px-3 py-1 rounded-lg bg-primary text-white text-xs font-medium hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
@@ -348,7 +348,7 @@ function EmbeddingExampleCard({ providerId, customAlias }) {
               Response {result && <span className="font-normal normal-case">&#9889; {result.latencyMs}ms</span>}
             </span>
             {result && (
-              <button
+              <button type="button"
                 onClick={() => copyRes(resultJson)}
                 className="inline-flex items-center gap-1 text-xs text-text-muted hover:text-primary transition-colors"
               >
@@ -413,7 +413,13 @@ function TtsExampleCard({ providerId }) {
   const [languageHint, setLanguageHint]     = useState("");
 
   useEffect(() => {
-    setLocalEndpoint(window.location.origin);
+    if (!modalOpen) return;
+    const onEsc = (e) => { if (e.key === "Escape") setModalOpen(false); };
+    document.addEventListener("keydown", onEsc);
+    return () => document.removeEventListener("keydown", onEsc);
+  }, [modalOpen]);
+
+  useEffect(() => {
     fetch("/api/keys")
       .then((r) => r.json())
       .then((d) => { setApiKey((d.keys || []).find((k) => k.isActive !== false)?.key || ""); })
@@ -451,7 +457,7 @@ function TtsExampleCard({ providerId }) {
     // api-language (edge-tts, local-device, elevenlabs): NO default load, wait for user to pick language
     // config (nvidia, hyperbolic, deepgram, huggingface, cartesia, playht, coqui, tortoise, inworld, qwen):
     // use ttsConfig.models for model selector; voice is empty by default (backend uses provider default)
-  }, [providerId]);
+  }, [providerId, config]);
 
   // Update voices when model changes (voicesPerModel providers)
   useEffect(() => {
@@ -462,7 +468,7 @@ function TtsExampleCard({ providerId }) {
       setSelectedVoice(voices[0].id);
       setSelectedVoiceName(voices[0].name || voices[0].id);
     }
-  }, [selectedModel]);
+  }, [selectedModel, config.voicesPerModel, providerId]);
 
   // Open modal — load language list
   const openModal = async () => {
@@ -594,7 +600,7 @@ function TtsExampleCard({ providerId }) {
                 {endpoint}/v1/audio/speech
               </span>
               {tunnelEndpoint && (
-                <button
+                <button type="button"
                   onClick={() => setUseTunnel((v) => !v)}
                   title={useTunnel ? "Using tunnel" : "Using local"}
                   className={`flex items-center gap-1 text-xs px-2 py-1.5 rounded-lg border shrink-0 transition-colors ${
@@ -650,7 +656,7 @@ function TtsExampleCard({ providerId }) {
           {config.hasBrowseButton && (
             <Row label="Language">
               <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
-                <button
+                <button type="button"
                   onClick={openModal}
                   className="w-full min-w-0 flex-1 px-3 py-1.5 text-sm border border-border rounded-lg bg-background font-mono truncate text-left hover:border-primary/40 transition-colors"
                 >
@@ -658,7 +664,7 @@ function TtsExampleCard({ providerId }) {
                     ? <span className="text-text-main">{languages.find((l) => l.code === selectedLang)?.name || selectedLang}</span>
                     : <span className="text-text-muted">No language selected</span>}
                 </button>
-                <button
+                <button type="button"
                   onClick={openModal}
                   className="flex w-full items-center justify-center gap-1 text-xs px-2.5 py-1.5 rounded-lg border border-border text-text-muted hover:text-primary hover:border-primary/40 transition-colors sm:w-auto sm:shrink-0"
                 >
@@ -674,7 +680,7 @@ function TtsExampleCard({ providerId }) {
             <Row label="Voice">
               <div className="flex flex-wrap gap-1.5">
                 {countryVoices.map((v) => (
-                  <button
+                  <button type="button"
                     key={v.id}
                     onClick={() => {
                       setSelectedVoice(v.id);
@@ -705,7 +711,7 @@ function TtsExampleCard({ providerId }) {
             <Row label="Voice ID">
               <div className="flex flex-col gap-1">
                 <div className="relative">
-                  <input
+                  <input aria-label="Voice ID"
                     value={voiceId}
                     onChange={(e) => {
                       setVoiceId(e.target.value);
@@ -740,9 +746,9 @@ function TtsExampleCard({ providerId }) {
                 }}
                 className="w-full px-3 py-1.5 text-sm border border-border rounded-lg bg-background focus:outline-none focus:border-primary"
               >
-                {getModelsByProviderId(providerId).filter((m) => m.type === "tts").map((m) => (
+                {getModelsByProviderId(providerId).flatMap((m) => m.type !== "tts" ? [] : [(
                   <option key={m.id} value={m.id}>{m.name || m.id}</option>
-                ))}
+                )])}
               </select>
             </Row>
           )}
@@ -750,7 +756,7 @@ function TtsExampleCard({ providerId }) {
           {/* Input */}
           <Row label="Input">
             <div className="relative">
-              <input
+              <input aria-label="Input"
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 className="w-full px-3 py-1.5 pr-7 text-sm border border-border rounded-lg bg-background focus:outline-none focus:border-primary"
@@ -784,14 +790,14 @@ function TtsExampleCard({ providerId }) {
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between mb-1.5">
               <span className="text-xs font-semibold text-text-muted uppercase tracking-wider">Request</span>
               <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
-                <button
+                <button type="button"
                   onClick={() => copyCurl(curlSnippet)}
                   className="inline-flex items-center gap-1 text-xs text-text-muted hover:text-primary transition-colors"
                 >
                   <span className="material-symbols-outlined text-[14px]">{copiedCurl ? "check" : "content_copy"}</span>
                   {copiedCurl ? "Copied" : "Copy"}
                 </button>
-                <button
+                <button type="button"
                   onClick={handleRun}
                   disabled={running || !input.trim() || !modelFull}
                   className="flex w-full sm:w-auto items-center justify-center gap-1.5 px-3 py-1 rounded-lg bg-primary text-white text-xs font-medium hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
@@ -820,7 +826,9 @@ function TtsExampleCard({ providerId }) {
                   Download
                 </a>
               </div>
-              <audio controls src={audioUrl} className="w-full" />
+              <audio controls src={audioUrl} className="w-full" aria-label="Generated audio playback">
+                <track kind="captions" />
+              </audio>
               
               {/* JSON Response (if format is json) */}
               {jsonResponse && (
@@ -852,6 +860,7 @@ function TtsExampleCard({ providerId }) {
           className="fixed inset-0 z-50 flex items-end justify-center sm:items-center"
           style={{ backgroundColor: "rgba(0,0,0,0.6)", backdropFilter: "blur(2px)" }}
           onClick={() => setModalOpen(false)}
+          aria-hidden="true"
         >
           <div
             className="border border-border rounded-xl shadow-2xl w-full max-w-md mx-4 flex flex-col max-h-[80vh]"
@@ -861,15 +870,14 @@ function TtsExampleCard({ providerId }) {
             {/* Header */}
             <div className="flex items-center justify-between px-4 py-3 border-b border-border shrink-0 rounded-t-xl">
               <h3 className="text-sm font-semibold">Select Language</h3>
-              <button onClick={() => setModalOpen(false)} className="text-text-muted hover:text-primary transition-colors">
+              <button type="button" onClick={() => setModalOpen(false)} className="text-text-muted hover:text-primary transition-colors">
                 <span className="material-symbols-outlined text-[20px]">close</span>
               </button>
             </div>
 
             {/* Search */}
             <div className="px-4 py-2.5 border-b border-border shrink-0">
-              <input
-                autoFocus
+              <input aria-label="Input"
                 value={modalSearch}
                 onChange={(e) => setModalSearch(e.target.value)}
                 placeholder="Search language..."
@@ -885,7 +893,7 @@ function TtsExampleCard({ providerId }) {
               ) : (
                 <div className="flex flex-col gap-0.5">
                   {filteredLanguages.map((c) => (
-                    <button
+                    <button type="button"
                       key={c.code}
                       onClick={() => handlePickLanguage(c)}
                       className={`flex items-center justify-between w-full px-3 py-2 rounded-lg text-left hover:bg-sidebar transition-colors ${
@@ -942,7 +950,7 @@ function GenericExampleCard({ providerId, kind }) {
   );
   const [apiKey, setApiKey] = useState("");
   const [useTunnel, setUseTunnel] = useState(false);
-  const [localEndpoint, setLocalEndpoint] = useState("");
+  const [localEndpoint, setLocalEndpoint] = useState(() => typeof window !== "undefined" ? window.location.origin : "");
   const [tunnelEndpoint, setTunnelEndpoint] = useState("");
   const [result, setResult] = useState(null);
   const [progress, setProgress] = useState(null); // { stage, bytesReceived }
@@ -957,7 +965,6 @@ function GenericExampleCard({ providerId, kind }) {
   const { copied: copiedRes, copy: copyRes } = useCopyToClipboard();
 
   useEffect(() => {
-    setLocalEndpoint(window.location.origin);
     fetch("/api/keys")
       .then((r) => r.json())
       .then((d) => { setApiKey((d.keys || []).find((k) => k.isActive !== false)?.key || ""); })
@@ -1129,7 +1136,7 @@ function GenericExampleCard({ providerId, kind }) {
           </Row>
         ) : allowManualModel ? (
           <Row label="Model">
-            <input
+            <input aria-label="Model"
               value={selectedModel}
               onChange={(e) => setSelectedModel(e.target.value)}
               placeholder="Enter model id (provider-specific)"
@@ -1145,7 +1152,7 @@ function GenericExampleCard({ providerId, kind }) {
               {endpoint}{apiPath}
             </span>
             {tunnelEndpoint && (
-              <button
+              <button type="button"
                 onClick={() => setUseTunnel((v) => !v)}
                 title={useTunnel ? "Using tunnel" : "Using local"}
                 className={`flex items-center gap-1 text-xs px-2 py-1.5 rounded-lg border shrink-0 transition-colors ${
@@ -1191,7 +1198,7 @@ function GenericExampleCard({ providerId, kind }) {
         {/* Input */}
         <Row label={exConfig.inputLabel}>
           <div className="relative">
-            <input
+            <input aria-label="Input"
               value={input}
               onChange={(e) => setInput(e.target.value)}
               placeholder={exConfig.inputPlaceholder}
@@ -1214,7 +1221,7 @@ function GenericExampleCard({ providerId, kind }) {
           <Row label="Ref Image (URL)">
             <div className="flex flex-col gap-2">
               <div className="relative">
-                <input
+                <input aria-label="Ref Image (URL)"
                   value={refImage}
                   onChange={(e) => setRefImage(e.target.value)}
                   placeholder={imageEditDefaults.image || "https://example.com/source.png"}
@@ -1231,12 +1238,17 @@ function GenericExampleCard({ providerId, kind }) {
                 )}
               </div>
               {refImagePreviewSrc && (
-                <img
+                <Image
                   src={refImagePreviewSrc}
                   alt="Reference"
                   className="max-h-40 rounded-lg border border-border object-contain bg-sidebar"
+                  width={0}
+                  height={0}
+                  sizes="100vw"
+                  style={{ width: "auto", maxHeight: "160px" }}
                   onError={(e) => { e.currentTarget.style.display = "none"; }}
                   onLoad={(e) => { e.currentTarget.style.display = "block"; }}
+                  unoptimized
                 />
               )}
             </div>
@@ -1247,7 +1259,7 @@ function GenericExampleCard({ providerId, kind }) {
           <Row label="Mask (URL)">
             <div className="flex flex-col gap-2">
               <div className="relative">
-                <input
+                <input aria-label="Mask (URL)"
                   value={maskImage}
                   onChange={(e) => setMaskImage(e.target.value)}
                   placeholder={imageEditDefaults.mask_image || "https://example.com/mask.png"}
@@ -1264,12 +1276,17 @@ function GenericExampleCard({ providerId, kind }) {
                 )}
               </div>
               {maskImagePreviewSrc && (
-                <img
+                <Image
                   src={maskImagePreviewSrc}
                   alt="Mask"
                   className="max-h-40 rounded-lg border border-border object-contain bg-sidebar"
+                  width={0}
+                  height={0}
+                  sizes="100vw"
+                  style={{ width: "auto", maxHeight: "160px" }}
                   onError={(e) => { e.currentTarget.style.display = "none"; }}
                   onLoad={(e) => { e.currentTarget.style.display = "block"; }}
+                  unoptimized
                 />
               )}
             </div>
@@ -1277,9 +1294,9 @@ function GenericExampleCard({ providerId, kind }) {
         )}
 
         {/* Extra fields — for kinds without model concept (webSearch/webFetch), show all; otherwise filter by model.params */}
-        {(exConfig.extraFields || [])
-          .filter((f) => kindModels.length === 0 || (Array.isArray(selectedModelObj?.params) && selectedModelObj.params.includes(f.key)))
-          .map((f) => (
+        {(exConfig.extraFields || []).flatMap((f) => {
+          if (kindModels.length > 0 && !(Array.isArray(selectedModelObj?.params) && selectedModelObj.params.includes(f.key))) return [];
+          return [(
           <Row key={f.key} label={f.label}>
             {f.type === "select" ? (
               <select
@@ -1292,7 +1309,7 @@ function GenericExampleCard({ providerId, kind }) {
                 ))}
               </select>
             ) : f.type === "text" ? (
-              <input
+              <input aria-label="Input"
                 type="text"
                 value={extraValues[f.key] ?? ""}
                 placeholder={f.placeholder}
@@ -1300,7 +1317,7 @@ function GenericExampleCard({ providerId, kind }) {
                 className="w-full px-3 py-1.5 text-sm border border-border rounded-lg bg-background focus:outline-none focus:border-primary"
               />
             ) : (
-              <input
+              <input aria-label="Input"
                 type="number"
                 value={extraValues[f.key] ?? ""}
                 min={f.min}
@@ -1310,7 +1327,8 @@ function GenericExampleCard({ providerId, kind }) {
               />
             )}
           </Row>
-        ))}
+        )];
+        })}
 
         {/* Output Format toggle (image only) — last */}
         {kind === "image" && (
@@ -1331,14 +1349,14 @@ function GenericExampleCard({ providerId, kind }) {
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between mb-1.5">
             <span className="text-xs font-semibold text-text-muted uppercase tracking-wider">Request</span>
             <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
-              <button
+              <button type="button"
                 onClick={() => copyCurl(curlSnippet)}
                 className="inline-flex items-center gap-1 text-xs text-text-muted hover:text-primary transition-colors"
               >
                 <span className="material-symbols-outlined text-[14px]">{copiedCurl ? "check" : "content_copy"}</span>
                 {copiedCurl ? "Copied" : "Copy"}
               </button>
-            <button
+            <button type="button"
               onClick={handleRun}
               disabled={running || !input.trim() || !modelFull}
               className="flex w-full sm:w-auto items-center justify-center gap-1.5 px-3 py-1 rounded-lg bg-primary text-white text-xs font-medium hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
@@ -1370,10 +1388,15 @@ function GenericExampleCard({ providerId, kind }) {
         {partialImage?.b64_json && !result && (
           <div>
             <span className="text-xs font-semibold text-text-muted uppercase tracking-wider">Partial preview</span>
-            <img
+            <Image
               src={`data:image/png;base64,${partialImage.b64_json}`}
               alt="Partial"
               className="max-w-full rounded-lg border border-border mt-1.5 opacity-80"
+              width={0}
+              height={0}
+              sizes="100vw"
+              style={{ width: "100%", height: "auto" }}
+              unoptimized
             />
           </div>
         )}
@@ -1388,7 +1411,7 @@ function GenericExampleCard({ providerId, kind }) {
               Response {result && <span className="font-normal normal-case">&#9889; {result.latencyMs}ms</span>}
             </span>
             {result && (
-              <button
+              <button type="button"
                 onClick={() => copyRes(resultJson)}
                 className="inline-flex items-center gap-1 text-xs text-text-muted hover:text-primary transition-colors"
               >
@@ -1412,10 +1435,15 @@ function GenericExampleCard({ providerId, kind }) {
                   Download
                 </a>
               </div>
-              <img
+              <Image
                 src={binaryImageUrl || (result?.data?.data?.[0]?.b64_json ? `data:image/png;base64,${result.data.data[0].b64_json}` : result?.data?.data?.[0]?.url)}
                 alt="Generated"
                 className="max-w-full rounded-lg border border-border"
+                width={0}
+                height={0}
+                sizes="100vw"
+                style={{ width: "100%", height: "auto" }}
+                unoptimized
               />
             </div>
           )}
@@ -1443,7 +1471,7 @@ function SttExampleCard({ providerId }) {
   const [temperature, setTemperature] = useState("");
   const [apiKey, setApiKey] = useState("");
   const [useTunnel, setUseTunnel] = useState(false);
-  const [localEndpoint, setLocalEndpoint] = useState("");
+  const [localEndpoint, setLocalEndpoint] = useState(() => typeof window !== "undefined" ? window.location.origin : "");
   const [tunnelEndpoint, setTunnelEndpoint] = useState("");
   const [result, setResult] = useState(null);
   const [latency, setLatency] = useState(null);
@@ -1453,7 +1481,6 @@ function SttExampleCard({ providerId }) {
   const { copied: copiedRes, copy: copyRes } = useCopyToClipboard();
 
   useEffect(() => {
-    setLocalEndpoint(window.location.origin);
     fetch("/api/keys")
       .then((r) => r.json())
       .then((d) => { setApiKey((d.keys || []).find((k) => k.isActive !== false)?.key || ""); })
@@ -1542,7 +1569,7 @@ function SttExampleCard({ providerId }) {
           </Row>
         ) : (
           <Row label="Model">
-            <input
+            <input aria-label="Model"
               value={selectedModel}
               onChange={(e) => setSelectedModel(e.target.value)}
               placeholder="Enter model id"
@@ -1558,7 +1585,7 @@ function SttExampleCard({ providerId }) {
               {endpoint}/v1/audio/transcriptions
             </span>
             {tunnelEndpoint && (
-              <button
+              <button type="button"
                 onClick={() => setUseTunnel((v) => !v)}
                 title={useTunnel ? "Using tunnel" : "Using local"}
                 className={`flex items-center gap-1 text-xs px-2 py-1.5 rounded-lg border shrink-0 transition-colors ${
@@ -1582,7 +1609,7 @@ function SttExampleCard({ providerId }) {
         {/* Audio file */}
         <Row label="Audio File">
           <div className="flex flex-col gap-2">
-            <input
+            <input aria-label="Audio File"
               type="file"
               accept="audio/*,video/mp4,.m4a,.mp3,.wav,.ogg,.flac,.webm,.opus"
               onChange={(e) => setAudioFile(e.target.files?.[0] || null)}
@@ -1599,7 +1626,7 @@ function SttExampleCard({ providerId }) {
         {/* Language (if model supports) */}
         {allowedParams.includes("language") && (
           <Row label="Language">
-            <input
+            <input aria-label="Language"
               value={language}
               onChange={(e) => setLanguage(e.target.value)}
               placeholder="e.g. en, vi, ja (auto-detect if empty)"
@@ -1611,7 +1638,7 @@ function SttExampleCard({ providerId }) {
         {/* Prompt (if model supports) */}
         {allowedParams.includes("prompt") && (
           <Row label="Prompt">
-            <input
+            <input aria-label="Prompt"
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
               placeholder="optional context to improve accuracy"
@@ -1623,7 +1650,7 @@ function SttExampleCard({ providerId }) {
         {/* Temperature (if model supports) */}
         {allowedParams.includes("temperature") && (
           <Row label="Temperature">
-            <input
+            <input aria-label="Temperature"
               type="number"
               step="0.1"
               min="0"
@@ -1658,14 +1685,14 @@ function SttExampleCard({ providerId }) {
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between mb-1.5">
             <span className="text-xs font-semibold text-text-muted uppercase tracking-wider">Request</span>
             <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
-              <button
+              <button type="button"
                 onClick={() => copyCurl(curlSnippet)}
                 className="inline-flex items-center gap-1 text-xs text-text-muted hover:text-primary transition-colors"
               >
                 <span className="material-symbols-outlined text-[14px]">{copiedCurl ? "check" : "content_copy"}</span>
                 {copiedCurl ? "Copied" : "Copy"}
               </button>
-              <button
+              <button type="button"
                 onClick={handleRun}
                 disabled={running || !audioFile || !modelFull}
                 className="flex w-full sm:w-auto items-center justify-center gap-1.5 px-3 py-1 rounded-lg bg-primary text-white text-xs font-medium hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
@@ -1689,7 +1716,7 @@ function SttExampleCard({ providerId }) {
               Response {result && latency && <span className="font-normal normal-case">&#9889; {latency}ms</span>}
             </span>
             {result && (
-              <button
+              <button type="button"
                 onClick={() => copyRes(resultStr)}
                 className="inline-flex items-center gap-1 text-xs text-text-muted hover:text-primary transition-colors"
               >

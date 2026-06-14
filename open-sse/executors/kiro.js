@@ -102,8 +102,9 @@ export class KiroExecutor extends BaseExecutor {
           if (!state.contextUsagePercentage) state.contextUsagePercentage = 0;
 
           // Handle assistantResponseEvent
-          if (eventType === "assistantResponseEvent" && event.payload?.content) {
-            const content = event.payload.content;
+          const payload = event.payload;
+          if (eventType === "assistantResponseEvent" && payload?.content) {
+            const content = payload.content;
             state.totalContentLength += content.length;
             
             const chunk = {
@@ -160,6 +161,7 @@ export class KiroExecutor extends BaseExecutor {
 
           // Handle codeEvent
           if (eventType === "codeEvent" && event.payload?.content) {
+            const codeContent = event.payload.content;
             const chunk = {
               id: responseId,
               object: "chat.completion.chunk",
@@ -167,7 +169,7 @@ export class KiroExecutor extends BaseExecutor {
               model,
               choices: [{
                 index: 0,
-                delta: { content: event.payload.content },
+                delta: { content: codeContent },
                 finish_reason: null
               }]
             };
@@ -478,4 +480,3 @@ function parseEventFrame(data) {
   }
 }
 
-export default KiroExecutor;

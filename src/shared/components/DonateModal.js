@@ -1,45 +1,56 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
+import Image from "next/image";
 import { createPortal } from "react-dom";
 import PropTypes from "prop-types";
 import { GITHUB_CONFIG } from "@/shared/constants/config";
 
 export default function DonateModal({ isOpen, onClose }) {
-  const [data, setData] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+  const [fetchState, setFetchState] = useState({ data: null, loading: false, error: "" });
   const modalRef = useRef(null);
+  const hasFetched = useRef(false);
 
   useEffect(() => {
-    if (!isOpen || data) return;
-    setLoading(true);
-    setError("");
+    if (!isOpen || hasFetched.current) return;
+    hasFetched.current = true;
+    setFetchState(prev => ({ ...prev, loading: true, error: "" }));
     fetch(GITHUB_CONFIG.donateUrl, { cache: "no-store" })
       .then((res) => {
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         return res.json();
       })
-      .then((json) => setData(json))
-      .catch((err) => setError(err.message || "Failed to load"))
-      .finally(() => setLoading(false));
-  }, [isOpen, data]);
+      .then((json) => setFetchState(prev => ({ ...prev, data: json, loading: false })))
+      .catch((err) => setFetchState(prev => ({ ...prev, error: err.message || "Failed to load", loading: false })));
+  }, [isOpen]);
+
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
 
   useEffect(() => {
     const handleClickOutside = (e) => {
-      if (modalRef.current && !modalRef.current.contains(e.target)) onClose();
+      if (modalRef.current && !modalRef.current.contains(e.target)) onCloseRef.current();
     };
     if (isOpen) {
       document.addEventListener("mousedown", handleClickOutside);
       return () => document.removeEventListener("mousedown", handleClickOutside);
     }
-  }, [isOpen, onClose]);
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const onEsc = (e) => { if (e.key === "Escape") onCloseRef.current(); };
+    document.addEventListener("keydown", onEsc);
+    return () => document.removeEventListener("keydown", onEsc);
+  }, [isOpen]);
 
   if (!isOpen || typeof document === "undefined") return null;
 
+  const { data, loading, error } = fetchState;
+
   return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" onClick={onClose} />
+      <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" onClick={onClose} aria-hidden="true" />
       <div
         ref={modalRef}
         className="relative w-full bg-surface border border-black/10 dark:border-white/10 rounded-xl shadow-2xl animate-in fade-in zoom-in-95 duration-200 max-w-3xl flex flex-col max-h-[85vh]"
@@ -49,7 +60,7 @@ export default function DonateModal({ isOpen, onClose }) {
             <span className="material-symbols-outlined text-pink-500">volunteer_activism</span>
             {data?.title || "Support 9Router"}
           </h2>
-          <button
+          <button type="button"
             onClick={onClose}
             className="p-1.5 rounded-lg text-text-muted hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
             aria-label="Close"
@@ -102,10 +113,13 @@ function DonateChannelCard({ channel }) {
         <div className="text-xs text-text-muted mb-3 text-center">{description}</div>
       )}
       {qr && (
-        <img
+        <Image
           src={qr}
           alt={`${label} QR`}
           className="w-full max-w-[180px] aspect-square object-contain rounded-lg bg-white p-1"
+          width={180}
+          height={180}
+          unoptimized
         />
       )}
     </>

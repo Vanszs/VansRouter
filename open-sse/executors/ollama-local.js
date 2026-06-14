@@ -11,4 +11,3 @@ export class OllamaLocalExecutor extends DefaultExecutor {
   }
 }
 
-export default OllamaLocalExecutor;

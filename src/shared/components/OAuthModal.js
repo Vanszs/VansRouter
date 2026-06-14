@@ -24,19 +24,18 @@ export default function OAuthModal({ isOpen, provider, providerInfo, onSuccess, 
   const { copied, copy } = useCopyToClipboard();
 
   // State for client-only values to avoid hydration mismatch
-  const [isLocalhost, setIsLocalhost] = useState(false);
-  const [placeholderUrl, setPlaceholderUrl] = useState("/callback?code=...");
+  const [isLocalhost, setIsLocalhost] = useState(() => {
+    if (typeof window !== "undefined")
+      return window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
+    return false;
+  });
+  const [placeholderUrl, setPlaceholderUrl] = useState(() => {
+    if (typeof window !== "undefined") return `${window.location.origin}/callback?code=...`;
+    return "/callback?code=...";
+  });
   const callbackProcessedRef = useRef(false);
-
-  // Detect if running on localhost (client-side only)
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      setIsLocalhost(
-        window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"
-      );
-      setPlaceholderUrl(`${window.location.origin}/callback?code=...`);
-    }
-  }, []);
+  const onSuccessRef = useRef(onSuccess);
+  onSuccessRef.current = onSuccess;
 
   // Define all useCallback hooks BEFORE the useEffects that reference them
 
@@ -60,12 +59,12 @@ export default function OAuthModal({ isOpen, provider, providerInfo, onSuccess, 
       if (!res.ok) throw new Error(data.error);
 
       setStep("success");
-      onSuccess?.();
+      onSuccessRef.current?.();
     } catch (err) {
       setError(err.message);
       setStep("error");
     }
-  }, [authData, provider, onSuccess]);
+  }, [authData, provider, oauthMeta]);
 
   const completeXaiManualCode = useCallback(async (code) => {
     if (!authData?.state) return;
@@ -79,12 +78,12 @@ export default function OAuthModal({ isOpen, provider, providerInfo, onSuccess, 
       if (!res.ok) throw new Error(data.error);
 
       setStep("success");
-      onSuccess?.();
+      onSuccessRef.current?.();
     } catch (err) {
       setError(err.message);
       setStep("error");
     }
-  }, [authData, onSuccess]);
+  }, [authData]);
 
   // Poll for device code token
   const startPolling = useCallback(async (deviceCode, codeVerifier, interval, extraData, deadlineMs) => {
@@ -104,10 +103,10 @@ export default function OAuthModal({ isOpen, provider, providerInfo, onSuccess, 
         return;
       }
 
-      await new Promise((r) => setTimeout(r, interval * 1000));
+      // Delay between polls; re-check abort after waking
+      const sleepDone = await new Promise((r) => setTimeout(r, interval * 1000)).then(() => !pollingAbortRef.current);
 
-      // Check again after sleep
-      if (pollingAbortRef.current) {
+      if (!sleepDone) {
         console.log("[OAuthModal] Polling aborted after sleep");
         setPolling(false);
         return;
@@ -126,7 +125,7 @@ export default function OAuthModal({ isOpen, provider, providerInfo, onSuccess, 
           pollingAbortRef.current = true; // Stop polling immediately
           setStep("success");
           setPolling(false);
-          onSuccess?.();
+          onSuccessRef.current?.();
           return;
         }
 
@@ -148,7 +147,7 @@ export default function OAuthModal({ isOpen, provider, providerInfo, onSuccess, 
     setError("Authorization timeout");
     setStep("error");
     setPolling(false);
-  }, [provider, onSuccess]);
+  }, [provider]);
 
   // Start OAuth flow
   const startOAuthFlow = useCallback(async () => {
@@ -310,22 +309,29 @@ export default function OAuthModal({ isOpen, provider, providerInfo, onSuccess, 
     }
   }, [provider, isLocalhost, startPolling, oauthMeta, idcConfig]);
 
+  const resetOAuthState = useCallback(() => {
+    setAuthData(null);
+    setCallbackUrl("");
+    setError(null);
+    setIsDeviceCode(false);
+    setDeviceData(null);
+    setPolling(false);
+  }, []);
+
   // Reset state and start OAuth when modal opens
+  const prevOpenRef = useRef(false);
   useEffect(() => {
-    if (isOpen && provider) {
-      // Guard against StrictMode/effect re-runs auto-opening multiple tabs.
+    const justOpened = isOpen && !prevOpenRef.current;
+    const justClosed = !isOpen && prevOpenRef.current;
+    prevOpenRef.current = isOpen;
+
+    if (justOpened && provider) {
       if (openedRef.current) return;
       openedRef.current = true;
-      setAuthData(null);
-      setCallbackUrl("");
-      setError(null);
-      setIsDeviceCode(false);
-      setDeviceData(null);
-      setPolling(false);
+      resetOAuthState();
       pollingAbortRef.current = false;
       startOAuthFlow();
-    } else if (!isOpen) {
-      // Abort polling and cleanup proxy when modal closes
+    } else if (justClosed) {
       pollingAbortRef.current = true;
       openedRef.current = false;
       if (provider === "codex") {
@@ -334,7 +340,7 @@ export default function OAuthModal({ isOpen, provider, providerInfo, onSuccess, 
         fetch("/api/oauth/xai/stop-proxy").catch(() => {});
       }
     }
-  }, [isOpen, provider, startOAuthFlow]);
+  }, [isOpen, provider, startOAuthFlow, resetOAuthState]);
 
   // Fixed-port server-side mode: poll status (proxy auto-exchanges + saves DB)
   useEffect(() => {
@@ -356,7 +362,7 @@ export default function OAuthModal({ isOpen, provider, providerInfo, onSuccess, 
         if (data.status === "done") {
           callbackProcessedRef.current = true;
           setStep("success");
-          onSuccess?.();
+          onSuccessRef.current?.();
           return;
         }
         if (data.status === "error") {
@@ -378,7 +384,7 @@ export default function OAuthModal({ isOpen, provider, providerInfo, onSuccess, 
     };
     setTimeout(tick, POLL_INTERVAL_MS);
     return () => { cancelled = true; };
-  }, [authData, onSuccess]);
+  }, [authData]);
 
   // Listen for OAuth callback via multiple methods
   useEffect(() => {
@@ -428,11 +434,11 @@ export default function OAuthModal({ isOpen, provider, providerInfo, onSuccess, 
 
     // Method 3: localStorage event
     const handleStorage = (event) => {
-      if (event.key === "oauth_callback" && event.newValue) {
+      if (event.key === "oauth_callback_v1" && event.newValue) {
         try {
           const data = JSON.parse(event.newValue);
           handleCallback(data);
-          localStorage.removeItem("oauth_callback");
+          localStorage.removeItem("oauth_callback_v1");
         } catch (e) {
           console.log("Failed to parse localStorage data");
         }
@@ -442,13 +448,13 @@ export default function OAuthModal({ isOpen, provider, providerInfo, onSuccess, 
 
     // Also check localStorage on mount (in case callback already happened)
     try {
-      const stored = localStorage.getItem("oauth_callback");
+      const stored = localStorage.getItem("oauth_callback_v1");
       if (stored) {
         const data = JSON.parse(stored);
         if (data.timestamp && Date.now() - data.timestamp < 30000) {
           handleCallback(data);
         }
-        localStorage.removeItem("oauth_callback");
+        localStorage.removeItem("oauth_callback_v1");
       }
     } catch {
       // localStorage may be unavailable or data may be malformed - ignore silently

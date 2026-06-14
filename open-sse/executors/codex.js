@@ -15,6 +15,7 @@ import { dbg } from "../utils/debugLog.js";
 
 // SSE error patterns inside 200-OK body that should trigger retry as if 503
 const CODEX_SSE_OVERLOADED_PATTERNS = ["server_is_overloaded", "service_unavailable_error"];
+const CODEX_SSE_OVERLOADED_RE = new RegExp(CODEX_SSE_OVERLOADED_PATTERNS.join("|"));
 const CODEX_SSE_PEEK_BYTES = 4096;
 
 // In-memory map: hash(machineId + first assistant content) → { sessionId, lastUsed }
@@ -121,7 +122,7 @@ function extractItemText(item) {
   if (!item) return "";
   if (typeof item.content === "string") return item.content;
   if (Array.isArray(item.content)) {
-    return item.content.map(c => c.text || c.output || "").filter(Boolean).join("");
+    return item.content.flatMap(c => { const t = c.text || c.output || ""; return t ? [t] : []; }).join("");
   }
   return "";
 }
@@ -232,8 +233,8 @@ export class CodexExecutor extends BaseExecutor {
    */
   async prefetchImages(body) {
     if (!Array.isArray(body?.input)) return;
-    for (const item of body.input) {
-      if (!Array.isArray(item.content)) continue;
+    await Promise.all(body.input.map(async (item) => {
+      if (!Array.isArray(item.content)) return;
       const pending = item.content.map(async (c) => {
         if (c.type !== "image_url") return c;
         const url = typeof c.image_url === "string" ? c.image_url : c.image_url?.url;
@@ -244,7 +245,7 @@ export class CodexExecutor extends BaseExecutor {
         return { type: "input_image", image_url: fetched?.url || url, detail };
       });
       item.content = await Promise.all(pending);
-    }
+    }));
   }
 
   async execute(args) {
@@ -314,8 +315,8 @@ export class CodexExecutor extends BaseExecutor {
         if (done) break;
         chunks.push(value);
         text += decoder.decode(value, { stream: true });
-        const hit = CODEX_SSE_OVERLOADED_PATTERNS.find(p => text.includes(p));
-        if (hit) { matched = hit; break; }
+        const hit = text.match(CODEX_SSE_OVERLOADED_RE);
+        if (hit) { matched = hit[0]; break; }
       }
     } catch (e) {
       dbg("CODEX", `peek read error: ${e.message}`);

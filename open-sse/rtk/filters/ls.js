@@ -43,7 +43,7 @@ export function ls(input) {
     if (parsed.name === "." || parsed.name === "..") continue;
 
     // Rust ls.rs: show_all flag respected — for LLM context always skip noise
-    if (LS_NOISE_DIRS.includes(parsed.name)) continue;
+    if (LS_NOISE_DIRS.has(parsed.name)) continue;
 
     if (parsed.fileType === "d") {
       dirs.push(parsed.name);

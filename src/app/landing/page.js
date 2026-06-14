@@ -22,8 +22,8 @@ export default function LandingPage() {
         
         {/* Animated gradient orbs */}
         <div className="absolute top-0 left-1/4 w-[700px] h-[700px] bg-[#6366f1]/12 rounded-full blur-[130px] animate-blob"></div>
-        <div className="absolute top-1/3 right-1/4 w-[600px] h-[600px] bg-purple-500/10 rounded-full blur-[130px] animate-blob" style={{ animationDelay: '2s', animationDuration: '22s' }}></div>
-        <div className="absolute bottom-0 left-1/2 w-[650px] h-[650px] bg-blue-500/8 rounded-full blur-[130px] animate-blob" style={{ animationDelay: '4s', animationDuration: '25s' }}></div>
+        <div className="absolute top-1/3 right-1/4 w-[600px] h-[600px] bg-purple-500/10 rounded-full blur-[130px] animate-blob-delayed-1"></div>
+        <div className="absolute bottom-0 left-1/2 w-[650px] h-[650px] bg-blue-500/8 rounded-full blur-[130px] animate-blob-delayed-2"></div>
         
         {/* Vignette effect */}
         <div className="absolute inset-0" style={{
@@ -56,13 +56,13 @@ export default function LandingPage() {
               Join developers who are streamlining their AI integrations with VansAI. Open source and free to start.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <button 
+              <button type="button" 
                 onClick={() => router.push("/dashboard")}
                 className="w-full sm:w-auto h-14 px-10 rounded-lg bg-[#6366f1] hover:bg-[#4f46e5] text-white text-lg font-bold transition-all shadow-[0_0_20px_rgba(99,102,241,0.5)]"
               >
                 Start Free
               </button>
-              <button 
+              <button type="button" 
                 onClick={() => window.open("https://github.com/decolua/9router#readme", "_blank")}
                 className="w-full sm:w-auto h-14 px-10 rounded-lg border border-[#3a2f27] hover:bg-[#1a1433] text-white text-lg font-bold transition-all"
               >
@@ -75,31 +75,6 @@ export default function LandingPage() {
         
         <Footer />
       </div>
-      
-      {/* Global styles for keyframes */}
-      <style jsx global>{`
-        @keyframes float {
-          0%, 100% { transform: translateY(0); }
-          50% { transform: translateY(-10px); }
-        }
-        @keyframes dash {
-          to { stroke-dashoffset: -20; }
-        }
-        @keyframes blob {
-          0%, 100% { 
-            transform: translate(0, 0) scale(1);
-          }
-          33% { 
-            transform: translate(30px, -50px) scale(1.1);
-          }
-          66% { 
-            transform: translate(-20px, 20px) scale(0.9);
-          }
-        }
-        .animate-blob {
-          animation: blob 20s ease-in-out infinite;
-        }
-      `}</style>
     </div>
   );
 }

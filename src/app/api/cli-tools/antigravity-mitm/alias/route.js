@@ -13,7 +13,6 @@ export async function GET(request) {
     const aliases = await getMitmAlias(toolName || undefined);
     return NextResponse.json({ aliases });
   } catch (error) {
-    console.log("Error fetching MITM aliases:", error.message);
     return NextResponse.json({ error: "Failed to fetch aliases" }, { status: 500 });
   }
 }
@@ -47,7 +46,6 @@ export async function PUT(request) {
     writeAliasForTool(tool, filtered);
     return NextResponse.json({ success: true, aliases: filtered });
   } catch (error) {
-    console.log("Error saving MITM aliases:", error.message);
     return NextResponse.json({ error: "Failed to save aliases" }, { status: 500 });
   }
 }

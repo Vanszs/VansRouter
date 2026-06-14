@@ -1,7 +1,7 @@
 import { platform, arch } from "os";
 
 // === Gemini CLI ===
-export const GEMINI_CLI_VERSION = "0.34.0";
+const GEMINI_CLI_VERSION = "0.34.0";
 export const GEMINI_CLI_API_CLIENT = "google-genai-sdk/1.41.0 gl-node/v22.19.0";
 
 // Map Node arch to Gemini CLI arch string (x64/x86/arm64/...)
@@ -24,14 +24,14 @@ export const GITHUB_COPILOT = {
 };
 
 // === Antigravity enums ===
-export const IDE_TYPE = {
+const IDE_TYPE = {
   UNSPECIFIED: 0,
   JETSKI: 10,
   ANTIGRAVITY: 9,
   PLUGINS: 7
 };
 
-export const PLATFORM = {
+const PLATFORM = {
   UNSPECIFIED: 0,
   DARWIN_AMD64: 1,
   DARWIN_ARM64: 2,
@@ -40,13 +40,13 @@ export const PLATFORM = {
   WINDOWS_AMD64: 5
 };
 
-export const PLUGIN_TYPE = {
+const PLUGIN_TYPE = {
   UNSPECIFIED: 0,
   CLOUD_CODE: 1,
   GEMINI: 2
 };
 
-export function getPlatformEnum() {
+function getPlatformEnum() {
   const os = platform();
   const architecture = arch();
   if (os === "darwin") return architecture === "arm64" ? PLATFORM.DARWIN_ARM64 : PLATFORM.DARWIN_AMD64;

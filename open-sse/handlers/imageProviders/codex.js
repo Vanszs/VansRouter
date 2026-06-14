@@ -45,7 +45,6 @@ function buildContent(prompt, refs, detail = CODEX_REF_DETAIL) {
 
 // Parse Codex SSE stream → final base64 image. Optional callbacks for client streaming.
 async function parseStream(response, log, callbacks = {}) {
-  const reader = response.body.getReader();
   const decoder = new TextDecoder();
   let buffer = "";
   let imageB64 = null;
@@ -53,9 +52,7 @@ async function parseStream(response, log, callbacks = {}) {
   let bytesReceived = 0;
   let lastProgressLogMs = 0;
 
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) break;
+  for await (const value of response.body) {
     bytesReceived += value?.byteLength || 0;
     buffer += decoder.decode(value, { stream: true });
 

@@ -1,4 +1,4 @@
-import { register } from "../index.js";
+import { register } from "../registry.js";
 import { FORMATS } from "../formats.js";
 import { adjustMaxTokens } from "../helpers/maxTokensHelper.js";
 
@@ -28,7 +28,7 @@ export function claudeToOpenAIRequest(model, body, stream) {
   // System message
   if (body.system) {
     const systemContent = Array.isArray(body.system)
-      ? body.system.map(s => stripAnthropicBillingHeader(s.text || "")).filter(Boolean).join("\n")
+      ? body.system.flatMap(s => { const t = stripAnthropicBillingHeader(s.text || ""); return t ? [t] : []; }).join("\n")
       : stripAnthropicBillingHeader(body.system);
     
     if (systemContent) {
@@ -163,9 +163,7 @@ function convertClaudeMessage(msg) {
             resultContent = block.content;
           } else if (Array.isArray(block.content)) {
             resultContent = block.content
-              .filter(c => c.type === "text")
-              .map(c => c.text)
-              .join("\n") || JSON.stringify(block.content);
+              .reduce((acc, c) => c.type === "text" ? acc + (acc ? "\n" : "") + c.text : acc, "") || JSON.stringify(block.content);
           } else if (block.content) {
             resultContent = JSON.stringify(block.content);
           }
@@ -204,9 +202,12 @@ function convertClaudeMessage(msg) {
 
     // Return content
     if (parts.length > 0) {
+      // Flatten text-only arrays (single or multiple text parts) into a string.
+      // Multimodal arrays (containing image_url etc.) are preserved as arrays.
+      const allText = parts.every(p => p.type === "text");
       return {
         role,
-        content: parts.length === 1 && parts[0].type === "text" ? parts[0].text : parts
+        content: allText ? parts.map(p => p.text).join("\n") : parts
       };
     }
     

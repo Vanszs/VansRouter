@@ -105,4 +105,3 @@ export class IFlowExecutor extends BaseExecutor {
   }
 }
 
-export default IFlowExecutor;

@@ -73,7 +73,6 @@ export async function GET() {
       settingsPath: getClaudeSettingsPath(),
     });
   } catch (error) {
-    console.log("Error checking claude settings:", error);
     return NextResponse.json(
       { error: "Failed to check claude settings" },
       { status: 500 }
@@ -100,15 +99,7 @@ export async function POST(request) {
     await fs.mkdir(claudeDir, { recursive: true });
 
     // Read current settings
-    let currentSettings = {};
-    try {
-      const content = await fs.readFile(settingsPath, "utf-8");
-      currentSettings = JSON.parse(content);
-    } catch (error) {
-      if (error.code !== "ENOENT") {
-        throw error;
-      }
-    }
+    const currentSettings = (await readSettings()) || {};
 
     // Normalize ANTHROPIC_BASE_URL to ensure /v1 suffix
     if (env.ANTHROPIC_BASE_URL) {
@@ -135,7 +126,6 @@ export async function POST(request) {
       message: "Settings updated successfully",
     });
   } catch (error) {
-    console.log("Error updating claude settings:", error);
     return NextResponse.json(
       { error: "Failed to update claude settings" },
       { status: 500 }
@@ -159,18 +149,12 @@ export async function DELETE() {
     const settingsPath = getClaudeSettingsPath();
 
     // Read current settings
-    let currentSettings = {};
-    try {
-      const content = await fs.readFile(settingsPath, "utf-8");
-      currentSettings = JSON.parse(content);
-    } catch (error) {
-      if (error.code === "ENOENT") {
-        return NextResponse.json({
-          success: true,
-          message: "No settings file to reset",
-        });
-      }
-      throw error;
+    const currentSettings = await readSettings();
+    if (!currentSettings) {
+      return NextResponse.json({
+        success: true,
+        message: "No settings file to reset",
+      });
     }
 
     // Remove specified env fields
@@ -193,7 +177,6 @@ export async function DELETE() {
       message: "Settings reset successfully",
     });
   } catch (error) {
-    console.log("Error resetting claude settings:", error);
     return NextResponse.json(
       { error: "Failed to reset claude settings" },
       { status: 500 }

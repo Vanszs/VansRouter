@@ -64,7 +64,7 @@ function CallbackContent() {
 
     // Method 3: localStorage event (fallback)
     try {
-      localStorage.setItem("oauth_callback", JSON.stringify({ ...callbackData, timestamp: Date.now() }));
+      localStorage.setItem("oauth_callback_v1", JSON.stringify({ ...callbackData, timestamp: Date.now() }));
       relayed = true;
     } catch (e) {
       console.log("localStorage failed:", e);

@@ -101,8 +101,8 @@ export class DefaultExecutor extends BaseExecutor {
             // Special handling for Anthropic-Beta to preserve required flags like OAuth
             if (lcKey === "anthropic-beta") {
               const staticBetaStr = headers[titleKey] || headers[lcKey] || "";
-              const staticFlags = new Set(staticBetaStr.split(",").map(f => f.trim()).filter(Boolean));
-              const cachedFlags = new Set(cached[lcKey].split(",").map(f => f.trim()).filter(Boolean));
+              const staticFlags = new Set(staticBetaStr.split(",").flatMap(f => { const t = f.trim(); return t ? [t] : []; }));
+              const cachedFlags = new Set(cached[lcKey].split(",").flatMap(f => { const t = f.trim(); return t ? [t] : []; }));
 
               // Merge all static flags (which contain oauth, thinking, etc) into the cached ones
               for (const flag of staticFlags) {

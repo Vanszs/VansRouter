@@ -2,7 +2,7 @@ import crypto from "node:crypto";
 import { createRemoteJWKSet, jwtVerify } from "jose";
 import { getSettings } from "@/lib/localDb";
 
-export const OIDC_COOKIE_NAMES = {
+const OIDC_COOKIE_NAMES = {
   state: "oidc_state",
   nonce: "oidc_nonce",
   verifier: "oidc_code_verifier",

@@ -1,43 +1,43 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback, useReducer } from "react";
 import { Card, Button, ModelSelectModal, ManualConfigModal } from "@/shared/components";
 import Image from "next/image";
 import BaseUrlSelect from "./BaseUrlSelect";
 import ApiKeySelect from "./ApiKeySelect";
 import { matchKnownEndpoint } from "./cliEndpointMatch";
 
+function toolCardReducer(state, action) {
+  switch (action.type) {
+    case "CHECK_START": return { ...state, checking: true };
+    case "CHECK_DONE": return { ...state, status: action.data, checking: false };
+    case "APPLY_START": return { ...state, applying: true, message: null };
+    case "APPLY_DONE": return { ...state, applying: false, message: action.message };
+    case "RESTORE_START": return { ...state, restoring: true, message: null };
+    case "RESTORE_DONE": return { ...state, restoring: false, message: action.message };
+    default: return state;
+  }
+}
+
 export default function KiloToolCard({ tool, isExpanded, onToggle, baseUrl, apiKeys, activeProviders, cloudEnabled, initialStatus, tunnelEnabled, tunnelPublicUrl, tailscaleEnabled, tailscaleUrl }) {
-  const [status, setStatus] = useState(initialStatus || null);
-  const [checking, setChecking] = useState(false);
-  const [applying, setApplying] = useState(false);
-  const [restoring, setRestoring] = useState(false);
-  const [message, setMessage] = useState(null);
+  const [state, dispatch] = useReducer(toolCardReducer, {
+    status: initialStatus || null,
+    checking: false,
+    applying: false,
+    restoring: false,
+    message: null,
+  });
+  const { status, checking, applying, restoring, message } = state;
   const [showInstallGuide, setShowInstallGuide] = useState(false);
-  const [selectedApiKey, setSelectedApiKey] = useState("");
+  const [selectedApiKeyOverride, setSelectedApiKey] = useState(null);
+  const selectedApiKey = selectedApiKeyOverride ?? (apiKeys?.length > 0 ? apiKeys[0].key : "");
   const [selectedModel, setSelectedModel] = useState("");
   const [modalOpen, setModalOpen] = useState(false);
   const [modelAliases, setModelAliases] = useState({});
   const [showManualConfigModal, setShowManualConfigModal] = useState(false);
   const [customBaseUrl, setCustomBaseUrl] = useState("");
 
-  useEffect(() => {
-    if (apiKeys?.length > 0 && !selectedApiKey) setSelectedApiKey(apiKeys[0].key);
-  }, [apiKeys, selectedApiKey]);
-
-  useEffect(() => {
-    if (initialStatus) setStatus(initialStatus);
-  }, [initialStatus]);
-
-  useEffect(() => {
-    if (isExpanded && !status) {
-      checkStatus();
-      fetchModelAliases();
-    }
-    if (isExpanded) fetchModelAliases();
-  }, [isExpanded]);
-
-  const fetchModelAliases = async () => {
+  const fetchModelAliases = useCallback(async () => {
     try {
       const res = await fetch("/api/models/alias");
       const data = await res.json();
@@ -45,7 +45,39 @@ export default function KiloToolCard({ tool, isExpanded, onToggle, baseUrl, apiK
     } catch (error) {
       console.log("Error fetching model aliases:", error);
     }
-  };
+  }, []);
+
+  const checkStatus = useCallback(async () => {
+    dispatch({ type: "CHECK_START" });
+    try {
+      const res = await fetch("/api/cli-tools/kilo-settings");
+      const data = await res.json();
+      dispatch({ type: "CHECK_DONE", data });
+    } catch (error) {
+      dispatch({ type: "CHECK_DONE", data: { installed: false, error: error.message } });
+    }
+  }, []);
+
+  const statusFetchedRef = useRef(!!initialStatus);
+  const aliasesFetchedRef = useRef(false);
+
+  const initializeCard = useCallback(async () => {
+    if (!statusFetchedRef.current) {
+      statusFetchedRef.current = true;
+      await checkStatus();
+    }
+    if (!aliasesFetchedRef.current) {
+      aliasesFetchedRef.current = true;
+      await fetchModelAliases();
+    }
+  }, [checkStatus, fetchModelAliases]);
+
+  const handleToggle = useCallback(() => {
+    if (!isExpanded) initializeCard();
+    onToggle();
+  }, [isExpanded, initializeCard, onToggle]);
+
+  useEffect(() => { initializeCard(); }, [initializeCard]);
 
   const getConfigStatus = () => {
     if (!status?.installed) return null;
@@ -61,22 +93,8 @@ export default function KiloToolCard({ tool, isExpanded, onToggle, baseUrl, apiK
 
   const getDisplayUrl = () => customBaseUrl || `${baseUrl}/v1`;
 
-  const checkStatus = async () => {
-    setChecking(true);
-    try {
-      const res = await fetch("/api/cli-tools/kilo-settings");
-      const data = await res.json();
-      setStatus(data);
-    } catch (error) {
-      setStatus({ installed: false, error: error.message });
-    } finally {
-      setChecking(false);
-    }
-  };
-
   const handleApply = async () => {
-    setApplying(true);
-    setMessage(null);
+    dispatch({ type: "APPLY_START" });
     try {
       const keyToUse = (selectedApiKey && selectedApiKey.trim())
         ? selectedApiKey
@@ -89,35 +107,30 @@ export default function KiloToolCard({ tool, isExpanded, onToggle, baseUrl, apiK
       });
       const data = await res.json();
       if (res.ok) {
-        setMessage({ type: "success", text: "Settings applied successfully!" });
+        dispatch({ type: "APPLY_DONE", message: { type: "success", text: "Settings applied successfully!" } });
         checkStatus();
       } else {
-        setMessage({ type: "error", text: data.error || "Failed to apply settings" });
+        dispatch({ type: "APPLY_DONE", message: { type: "error", text: data.error || "Failed to apply settings" } });
       }
     } catch (error) {
-      setMessage({ type: "error", text: error.message });
-    } finally {
-      setApplying(false);
+      dispatch({ type: "APPLY_DONE", message: { type: "error", text: error.message } });
     }
   };
 
   const handleReset = async () => {
-    setRestoring(true);
-    setMessage(null);
+    dispatch({ type: "RESTORE_START" });
     try {
       const res = await fetch("/api/cli-tools/kilo-settings", { method: "DELETE" });
       const data = await res.json();
       if (res.ok) {
-        setMessage({ type: "success", text: "Settings reset successfully!" });
+        dispatch({ type: "RESTORE_DONE", message: { type: "success", text: "Settings reset successfully!" } });
         setSelectedModel("");
         checkStatus();
       } else {
-        setMessage({ type: "error", text: data.error || "Failed to reset settings" });
+        dispatch({ type: "RESTORE_DONE", message: { type: "error", text: data.error || "Failed to reset settings" } });
       }
     } catch (error) {
-      setMessage({ type: "error", text: error.message });
-    } finally {
-      setRestoring(false);
+      dispatch({ type: "RESTORE_DONE", message: { type: "error", text: error.message } });
     }
   };
 
@@ -141,7 +154,7 @@ export default function KiloToolCard({ tool, isExpanded, onToggle, baseUrl, apiK
 
   return (
     <Card padding="xs" className="overflow-hidden">
-      <div className="flex items-start justify-between gap-3 hover:cursor-pointer sm:items-center" onClick={onToggle}>
+      <button type="button" className="flex w-full items-start justify-between gap-3 hover:cursor-pointer sm:items-center text-left" onClick={handleToggle} aria-expanded={expanded} aria-label="Toggle section">
         <div className="flex min-w-0 items-center gap-3">
           <div className="size-8 flex items-center justify-center shrink-0">
             <Image src="/providers/kilocode.png" alt={tool.name} width={32} height={32} className="size-8 object-contain rounded-lg" sizes="32px" onError={(e) => { e.target.style.display = "none"; }} />
@@ -156,7 +169,7 @@ export default function KiloToolCard({ tool, isExpanded, onToggle, baseUrl, apiK
           </div>
         </div>
         <span className={`material-symbols-outlined text-text-muted text-[20px] transition-transform ${isExpanded ? "rotate-180" : ""}`}>expand_more</span>
-      </div>
+      </button>
 
       {isExpanded && (
         <div className="mt-4 pt-4 border-t border-border flex flex-col gap-4">
@@ -224,10 +237,10 @@ export default function KiloToolCard({ tool, isExpanded, onToggle, baseUrl, apiK
                   <span className="text-xs font-semibold text-text-main sm:text-right sm:text-sm">Model</span>
                   <span className="material-symbols-outlined hidden text-text-muted text-[14px] sm:inline">arrow_forward</span>
                   <div className="relative w-full min-w-0">
-                    <input type="text" value={selectedModel} onChange={(e) => setSelectedModel(e.target.value)} placeholder="provider/model-id" className="w-full min-w-0 pl-2 pr-7 py-2 bg-surface rounded border border-border text-xs focus:outline-none focus:ring-1 focus:ring-primary/50 sm:py-1.5" />
-                    {selectedModel && <button onClick={() => setSelectedModel("")} className="absolute right-1 top-1/2 -translate-y-1/2 p-0.5 text-text-muted hover:text-red-500 rounded transition-colors" title="Clear"><span className="material-symbols-outlined text-[14px]">close</span></button>}
+                    <input type="text" value={selectedModel} onChange={(e) => setSelectedModel(e.target.value)} aria-label="Model ID" placeholder="provider/model-id" className="w-full min-w-0 pl-2 pr-7 py-2 bg-surface rounded border border-border text-xs focus:outline-none focus:ring-1 focus:ring-primary/50 sm:py-1.5" />
+                    {selectedModel && <button type="button" onClick={() => setSelectedModel("")} className="absolute right-1 top-1/2 -translate-y-1/2 p-0.5 text-text-muted hover:text-red-500 rounded transition-colors" title="Clear"><span className="material-symbols-outlined text-[14px]">close</span></button>}
                   </div>
-                  <button onClick={() => setModalOpen(true)} disabled={!activeProviders?.length} className={`w-full sm:w-auto rounded border px-2 py-2 text-xs transition-colors sm:py-1.5 whitespace-nowrap sm:shrink-0 ${activeProviders?.length ? "bg-surface border-border text-text-main hover:border-primary cursor-pointer" : "opacity-50 cursor-not-allowed border-border"}`}>Select Model</button>
+                  <button type="button" onClick={() => setModalOpen(true)} disabled={!activeProviders?.length} className={`w-full sm:w-auto rounded border px-2 py-2 text-xs transition-colors sm:py-1.5 whitespace-nowrap sm:shrink-0 ${activeProviders?.length ? "bg-surface border-border text-text-main hover:border-primary cursor-pointer" : "opacity-50 cursor-not-allowed border-border"}`}>Select Model</button>
                 </div>
               </div>
 

@@ -1,65 +1,68 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useEffect, useRef, useReducer } from "react";
 import PropTypes from "prop-types";
 import { Modal, Button, Input } from "@/shared/components";
 import { useCopyToClipboard } from "@/shared/hooks/useCopyToClipboard";
+
+function socialReducer(state, action) {
+  switch (action.type) {
+    case "INIT": return { ...state, error: null, step: "loading" };
+    case "AUTH_READY": return { ...state, step: "input", authUrl: action.authUrl, authData: action.data };
+    case "AUTH_ERROR": return { ...state, step: "error", error: action.error };
+    case "SET_CALLBACK": return { ...state, callbackUrl: action.value };
+    case "CLEAR_ERROR": return { ...state, error: null };
+    case "GO_INPUT": return { ...state, step: "input", error: null };
+    case "SUCCESS": return { ...state, step: "success" };
+    default: return state;
+  }
+}
 
 /**
  * Kiro Social OAuth Modal (Google/GitHub)
  * Handles manual callback URL flow for social login
  */
 export default function KiroSocialOAuthModal({ isOpen, provider, onSuccess, onClose }) {
-  const [step, setStep] = useState("loading"); // loading | input | success | error
-  const [authUrl, setAuthUrl] = useState("");
-  const [authData, setAuthData] = useState(null);
-  const [callbackUrl, setCallbackUrl] = useState("");
-  const [error, setError] = useState(null);
+  const [state, dispatch] = useReducer(socialReducer, { step: "loading", authUrl: "", authData: null, callbackUrl: "", error: null });
+  const { step, authUrl, authData, callbackUrl, error } = state;
   const { copied, copy } = useCopyToClipboard();
   const openedRef = useRef(false);
+  const prevOpenRef = useRef(false);
 
-  // Reset auto-open guard when modal closes so it can re-open next session.
+  // Initialize auth flow when modal opens
   useEffect(() => {
-    if (!isOpen) openedRef.current = false;
-  }, [isOpen]);
+    if (isOpen && !prevOpenRef.current && provider) {
+      openedRef.current = false;
+      const initAuth = async () => {
+        try {
+          dispatch({ type: "INIT" });
 
-  // Initialize auth flow
-  useEffect(() => {
-    if (!isOpen || !provider) return;
+          const res = await fetch(`/api/oauth/kiro/social-authorize?provider=${provider}`);
+          const data = await res.json();
 
-    const initAuth = async () => {
-      try {
-        setError(null);
-        setStep("loading");
+          if (!res.ok) {
+            throw new Error(data.error);
+          }
 
-        const res = await fetch(`/api/oauth/kiro/social-authorize?provider=${provider}`);
-        const data = await res.json();
+          dispatch({ type: "AUTH_READY", authUrl: data.authUrl, data });
 
-        if (!res.ok) {
-          throw new Error(data.error);
+          // Auto-open browser once per modal session.
+          if (!openedRef.current) {
+            openedRef.current = true;
+            window.open(data.authUrl, "_blank");
+          }
+        } catch (err) {
+          dispatch({ type: "AUTH_ERROR", error: err.message });
         }
-
-        setAuthData(data);
-        setAuthUrl(data.authUrl);
-        setStep("input");
-
-        // Auto-open browser once per modal session.
-        if (!openedRef.current) {
-          openedRef.current = true;
-          window.open(data.authUrl, "_blank");
-        }
-      } catch (err) {
-        setError(err.message);
-        setStep("error");
-      }
-    };
-
-    initAuth();
+      };
+      initAuth();
+    }
+    prevOpenRef.current = isOpen;
   }, [isOpen, provider]);
 
   const handleManualSubmit = async () => {
     try {
-      setError(null);
+      dispatch({ type: "CLEAR_ERROR" });
       
       // Parse callback URL - can be either kiro:// or http://localhost format
       let url;
@@ -71,7 +74,7 @@ export default function KiroSocialOAuthModal({ isOpen, provider, onSuccess, onCl
       }
 
       const code = url.searchParams.get("code");
-      const state = url.searchParams.get("state");
+      const urlState = url.searchParams.get("state");
       const errorParam = url.searchParams.get("error");
 
       if (errorParam) {
@@ -96,11 +99,10 @@ export default function KiroSocialOAuthModal({ isOpen, provider, onSuccess, onCl
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
 
-      setStep("success");
+      dispatch({ type: "SUCCESS" });
       onSuccess?.();
     } catch (err) {
-      setError(err.message);
-      setStep("error");
+      dispatch({ type: "AUTH_ERROR", error: err.message });
     }
   };
 
@@ -149,7 +151,7 @@ export default function KiroSocialOAuthModal({ isOpen, provider, onSuccess, onCl
                 </p>
                 <Input
                   value={callbackUrl}
-                  onChange={(e) => setCallbackUrl(e.target.value)}
+                  onChange={(e) => dispatch({ type: "SET_CALLBACK", value: e.target.value })}
                   placeholder="kiro://kiro.kiroAgent/authenticate-success?code=..."
                   className="font-mono text-xs"
                 />
@@ -192,7 +194,7 @@ export default function KiroSocialOAuthModal({ isOpen, provider, onSuccess, onCl
             <h3 className="text-lg font-semibold mb-2">Connection Failed</h3>
             <p className="text-sm text-red-600 mb-4">{error}</p>
             <div className="flex gap-2">
-              <Button onClick={() => setStep("input")} variant="secondary" fullWidth>
+              <Button onClick={() => dispatch({ type: "GO_INPUT" })} variant="secondary" fullWidth>
                 Try Again
               </Button>
               <Button onClick={onClose} variant="ghost" fullWidth>

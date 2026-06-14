@@ -146,13 +146,13 @@ export function getProviderConfig(provider) {
 }
 
 // Get number of fallback URLs for provider (for retry logic)
-export function getProviderFallbackCount(provider) {
+function getProviderFallbackCount(provider) {
   const config = getProviderConfig(provider);
   return config.baseUrls?.length || 1;
 }
 
 // Build provider URL
-export function buildProviderUrl(provider, model, stream = true, options = {}) {
+function buildProviderUrl(provider, model, stream = true, options = {}) {
   if (isOpenAICompatible(provider)) {
     const apiType = getOpenAICompatibleType(provider);
     const baseUrl = options?.baseUrl || OPENAI_COMPATIBLE_DEFAULTS.baseUrl;
@@ -209,7 +209,7 @@ export function buildProviderUrl(provider, model, stream = true, options = {}) {
 }
 
 // Build provider headers
-export function buildProviderHeaders(provider, credentials, stream = true, body = null) {
+function buildProviderHeaders(provider, credentials, stream = true, body = null) {
   const config = getProviderConfig(provider);
   const headers = {
     "Content-Type": "application/json",
@@ -332,7 +332,7 @@ export function getTargetFormat(provider) {
 }
 
 // Check if last message is from user
-export function isLastMessageFromUser(body) {
+function isLastMessageFromUser(body) {
   const messages = body.messages || body.contents;
   if (!messages?.length) return true;
   const lastMsg = messages[messages.length - 1];
@@ -340,7 +340,7 @@ export function isLastMessageFromUser(body) {
 }
 
 // Check if request has thinking config
-export function hasThinkingConfig(body) {
+function hasThinkingConfig(body) {
   return !!(body.reasoning_effort || body.thinking?.type === "enabled");
 }
 

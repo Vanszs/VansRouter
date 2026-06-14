@@ -1,8 +1,8 @@
 // OpenAI helper functions for translator
 
 // Valid OpenAI content block types
-export const VALID_OPENAI_CONTENT_TYPES = ["text", "image_url", "image", "input_audio", "audio_url"];
-export const VALID_OPENAI_MESSAGE_TYPES = ["text", "image_url", "image", "tool_calls", "tool_result"];
+const VALID_OPENAI_CONTENT_TYPES = new Set(["text", "image_url", "image", "input_audio", "audio_url"]);
+const VALID_OPENAI_MESSAGE_TYPES = new Set(["text", "image_url", "image", "tool_calls", "tool_result"]);
 
 // Filter messages to OpenAI standard format
 // Remove: thinking, redacted_thinking, signature, and other non-OpenAI blocks
@@ -31,7 +31,7 @@ export function filterToOpenAIFormat(body) {
         if (block.type === "thinking" || block.type === "redacted_thinking") continue;
         
         // Only keep valid OpenAI content types
-        if (VALID_OPENAI_CONTENT_TYPES.includes(block.type)) {
+        if (VALID_OPENAI_CONTENT_TYPES.has(block.type)) {
           // Remove signature field if exists
           const { signature, cache_control, ...cleanBlock } = block;
           filteredContent.push(cleanBlock);
@@ -50,6 +50,11 @@ export function filterToOpenAIFormat(body) {
         filteredContent.push({ type: "text", text: "" });
       }
       
+      // Flatten text-only arrays into a string; preserve multimodal arrays as-is.
+      if (filteredContent.every(b => b.type === "text")) {
+        return { ...msg, content: filteredContent.map(b => b.text).join("\n") };
+      }
+
       return { ...msg, content: filteredContent };
     }
     

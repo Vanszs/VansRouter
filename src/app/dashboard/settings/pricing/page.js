@@ -60,7 +60,7 @@ export default function PricingSettingsPage() {
             Configure pricing rates for cost tracking and calculations
           </p>
         </div>
-        <button
+        <button type="button"
           onClick={() => setShowModal(true)}
           className="px-4 py-2 bg-primary text-white rounded hover:bg-primary/90 transition-colors"
         >
@@ -129,7 +129,7 @@ export default function PricingSettingsPage() {
       <Card className="p-6">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-semibold">Current Pricing Overview</h2>
-          <button
+          <button type="button"
             onClick={() => setShowModal(true)}
             className="text-primary hover:underline text-sm"
           >

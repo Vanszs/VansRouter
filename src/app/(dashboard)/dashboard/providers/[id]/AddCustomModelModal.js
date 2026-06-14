@@ -1,19 +1,33 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useReducer, useRef } from "react";
 import PropTypes from "prop-types";
 import { Button, Modal } from "@/shared/components";
 
-export default function AddCustomModelModal({ isOpen, providerAlias, providerDisplayAlias, onSave, onClose }) {
-  const [modelId, setModelId] = useState("");
-  const [testStatus, setTestStatus] = useState(null); // null | "testing" | "ok" | "error"
-  const [testError, setTestError] = useState("");
-  const [saving, setSaving] = useState(false);
+function modalReducer(state, action) {
+  switch (action.type) {
+    case "RESET": return { modelId: "", testStatus: null, testError: "", saving: false };
+    case "SET_MODEL": return { ...state, modelId: action.value, testStatus: null, testError: "" };
+    case "TEST_START": return { ...state, testStatus: "testing", testError: "" };
+    case "TEST_RESULT": return { ...state, testStatus: action.ok ? "ok" : "error", testError: action.error || "" };
+    case "SAVE_START": return { ...state, saving: true };
+    case "SAVE_DONE": return { ...state, saving: false };
+    default: return state;
+  }
+}
 
-  // Reset state when modal opens
-  useEffect(() => {
-    if (isOpen) { setModelId(""); setTestStatus(null); setTestError(""); }
-  }, [isOpen]);
+export default function AddCustomModelModal({ isOpen, providerAlias, providerDisplayAlias, onSave, onClose }) {
+  const [state, dispatch] = useReducer(modalReducer, { modelId: "", testStatus: null, testError: "", saving: false });
+  const { modelId, testStatus, testError, saving } = state;
+  const prevIsOpenRef = useRef(false);
+
+  // Reset state when modal opens (prev-prop pattern — no extra render cycle)
+  if (isOpen && !prevIsOpenRef.current) {
+    prevIsOpenRef.current = true;
+    dispatch({ type: "RESET" });
+  } else if (!isOpen && prevIsOpenRef.current) {
+    prevIsOpenRef.current = false;
+  }
 
   // Strip provider's own alias prefix (e.g. "cc/model" -> "model" for cc provider)
   const stripAlias = (id) => {
@@ -24,8 +38,7 @@ export default function AddCustomModelModal({ isOpen, providerAlias, providerDis
   const handleTest = async () => {
     const cleanId = stripAlias(modelId.trim());
     if (!cleanId) return;
-    setTestStatus("testing");
-    setTestError("");
+    dispatch({ type: "TEST_START" });
     try {
       const res = await fetch("/api/models/test", {
         method: "POST",
@@ -33,22 +46,20 @@ export default function AddCustomModelModal({ isOpen, providerAlias, providerDis
         body: JSON.stringify({ model: `${providerAlias}/${cleanId}` }),
       });
       const data = await res.json();
-      setTestStatus(data.ok ? "ok" : "error");
-      setTestError(data.error || "");
+      dispatch({ type: "TEST_RESULT", ok: data.ok, error: data.error });
     } catch (err) {
-      setTestStatus("error");
-      setTestError(err.message);
+      dispatch({ type: "TEST_RESULT", ok: false, error: err.message });
     }
   };
 
   const handleSave = async () => {
     const cleanId = stripAlias(modelId.trim());
     if (!cleanId || saving) return;
-    setSaving(true);
+    dispatch({ type: "SAVE_START" });
     try {
       await onSave(cleanId);
     } finally {
-      setSaving(false);
+      dispatch({ type: "SAVE_DONE" });
     }
   };
 
@@ -60,16 +71,16 @@ export default function AddCustomModelModal({ isOpen, providerAlias, providerDis
     <Modal isOpen={isOpen} onClose={onClose} title="Add Custom Model">
       <div className="flex flex-col gap-4">
         <div>
-          <label className="text-sm font-medium mb-1.5 block">Model ID</label>
+          <label htmlFor="add-custom-model-id" className="text-sm font-medium mb-1.5 block">Model ID</label>
           <div className="flex gap-2">
             <input
+              id="add-custom-model-id"
               type="text"
               value={modelId}
-              onChange={(e) => { setModelId(e.target.value); setTestStatus(null); setTestError(""); }}
+              onChange={(e) => dispatch({ type: "SET_MODEL", value: e.target.value })}
               onKeyDown={handleKeyDown}
               placeholder="e.g. claude-opus-4-5"
               className="flex-1 px-3 py-2 text-sm border border-border rounded-lg bg-background focus:outline-none focus:border-primary"
-              autoFocus
             />
             <Button
               variant="secondary"

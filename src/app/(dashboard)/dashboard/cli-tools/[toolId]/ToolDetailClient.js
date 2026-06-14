@@ -5,12 +5,19 @@ import Link from "next/link";
 import { CardSkeleton } from "@/shared/components";
 import { CLI_TOOLS } from "@/shared/constants/cliTools";
 import { getModelsByProviderId, PROVIDER_ID_TO_ALIAS } from "@/shared/constants/models";
-import {
-  ClaudeToolCard, CodexToolCard, DroidToolCard, OpenClawToolCard,
-  HermesToolCard, DefaultToolCard, OpenCodeToolCard, CoworkToolCard,
-  CopilotToolCard, ClineToolCard, KiloToolCard, DeepSeekTuiToolCard,
-  JcodeToolCard,
-} from "../components";
+import ClaudeToolCard from "../components/ClaudeToolCard";
+import CodexToolCard from "../components/CodexToolCard";
+import DroidToolCard from "../components/DroidToolCard";
+import OpenClawToolCard from "../components/OpenClawToolCard";
+import HermesToolCard from "../components/HermesToolCard";
+import DefaultToolCard from "../components/DefaultToolCard";
+import OpenCodeToolCard from "../components/OpenCodeToolCard";
+import CoworkToolCard from "../components/CoworkToolCard";
+import CopilotToolCard from "../components/CopilotToolCard";
+import ClineToolCard from "../components/ClineToolCard";
+import KiloToolCard from "../components/KiloToolCard";
+import DeepSeekTuiToolCard from "../components/DeepSeekTuiToolCard";
+import JcodeToolCard from "../components/JcodeToolCard";
 
 const CLOUD_URL = process.env.NEXT_PUBLIC_CLOUD_URL;
 
@@ -27,16 +34,17 @@ export default function ToolDetailClient({ toolId, machineId }) {
   const [apiKeys, setApiKeys] = useState([]);
 
   useEffect(() => {
-    let mounted = true;
+    const controller = new AbortController();
+    const signal = controller.signal;
     (async () => {
       try {
         const [provRes, settingsRes, tunnelRes, keysRes] = await Promise.all([
-          fetch("/api/providers"),
-          fetch("/api/settings"),
-          fetch("/api/tunnel/status"),
-          fetch("/api/keys"),
+          fetch("/api/providers", { signal }),
+          fetch("/api/settings", { signal }),
+          fetch("/api/tunnel/status", { signal }),
+          fetch("/api/keys", { signal }),
         ]);
-        if (!mounted) return;
+        if (signal.aborted) return;
         if (provRes.ok) {
           const data = await provRes.json();
           setConnections(data.connections || []);
@@ -57,12 +65,12 @@ export default function ToolDetailClient({ toolId, machineId }) {
           setApiKeys(data.keys || []);
         }
       } catch (error) {
-        console.log("Error loading tool data:", error);
+        if (!signal.aborted) console.log("Error loading tool data:", error);
       } finally {
-        if (mounted) setLoading(false);
+        if (!signal.aborted) setLoading(false);
       }
     })();
-    return () => { mounted = false; };
+    return () => controller.abort();
   }, []);
 
   const getActiveProviders = () => connections.filter(c => c.isActive !== false);

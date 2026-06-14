@@ -242,10 +242,12 @@ export default function ProviderDetailPage() {
   // Fetch free models from Kilo API for kilocode provider
   useEffect(() => {
     if (providerId !== "kilocode") return;
-    fetch("/api/providers/kilo/free-models")
+    const controller = new AbortController();
+    fetch("/api/providers/kilo/free-models", { signal: controller.signal })
       .then((res) => res.json())
-      .then((data) => { if (data.models?.length) setKiloFreeModels(data.models); })
+      .then((data) => { if (!controller.signal.aborted && data.models?.length) setKiloFreeModels(data.models); })
       .catch(() => {});
+    return () => controller.abort();
   }, [providerId]);
 
   const fetchConnections = useCallback(async () => {
@@ -256,10 +258,12 @@ export default function ProviderDetailPage() {
         fetch("/api/proxy-pools?isActive=true", { cache: "no-store" }),
         fetch("/api/settings", { cache: "no-store" }),
       ]);
-      const connectionsData = await connectionsRes.json();
-      const nodesData = await nodesRes.json();
-      const proxyPoolsData = await proxyPoolsRes.json();
-      const settingsData = settingsRes.ok ? await settingsRes.json() : {};
+      const [connectionsData, nodesData, proxyPoolsData, settingsData] = await Promise.all([
+        connectionsRes.json(),
+        nodesRes.json(),
+        proxyPoolsRes.json(),
+        settingsRes.ok ? settingsRes.json() : {},
+      ]);
       if (connectionsRes.ok) {
         const filtered = (connectionsData.connections || []).filter(c => c.provider === providerId);
         setConnections(filtered);
@@ -275,7 +279,8 @@ export default function ProviderDetailPage() {
       const thinkingCfg = (settingsData.providerThinking || {})[providerId] || {};
       setThinkingMode(thinkingCfg.mode || "auto");
       if (nodesRes.ok) {
-        let node = (nodesData.nodes || []).find((entry) => entry.id === providerId) || null;
+        const nodesById = new Map((nodesData.nodes || []).map((entry) => [entry.id, entry]));
+        let node = nodesById.get(providerId) || null;
 
         // Newly created compatible nodes can be briefly unavailable on one worker.
         // Retry a few times before showing "Provider not found".
@@ -285,7 +290,8 @@ export default function ProviderDetailPage() {
             const retryRes = await fetch("/api/provider-nodes", { cache: "no-store" });
             if (!retryRes.ok) continue;
             const retryData = await retryRes.json();
-            node = (retryData.nodes || []).find((entry) => entry.id === providerId) || null;
+            const retryMap = new Map((retryData.nodes || []).map((entry) => [entry.id, entry]));
+            node = retryMap.get(providerId) || null;
             if (node) break;
           }
         }
@@ -460,29 +466,18 @@ export default function ProviderDetailPage() {
         return;
       }
 
-      let importedCount = 0;
-      for (const model of models) {
-        const modelId = model.id || model.name;
-        if (!modelId) continue;
-        
-        // Qoder model ID format may be "qoder/auto" or "auto", need to remove prefix
-        const cleanModelId = modelId.replace(/^qoder\//, "");
-        const fullModel = `${providerStorageAlias}/${cleanModelId}`;
-        
-        // Check if already exists
-        if (Object.values(modelAliases).includes(fullModel)) {
-          continue;
-        }
-        
-        // Use model ID as alias
-        const alias = cleanModelId;
-        if (modelAliases[alias]) {
-          continue;
-        }
-        
-        await handleSetAlias(cleanModelId, alias, providerStorageAlias);
-        importedCount += 1;
-      }
+      const existingAliasValues = new Set(Object.values(modelAliases));
+      const toImport = models.flatMap(model => {
+          const modelId = model.id || model.name;
+          if (!modelId) return [];
+          const cleanModelId = modelId.replace(/^qoder\//, "");
+          const fullModel = `${providerStorageAlias}/${cleanModelId}`;
+          if (existingAliasValues.has(fullModel)) return [];
+          if (modelAliases[cleanModelId]) return [];
+          return [cleanModelId];
+        });
+      await Promise.all(toImport.map(cleanModelId => handleSetAlias(cleanModelId, cleanModelId, providerStorageAlias)));
+      const importedCount = toImport.length;
       
       if (importedCount === 0) {
         alert(translate("All models already exist, no new models added"));
@@ -563,9 +558,11 @@ export default function ProviderDetailPage() {
         setModelsTestError(data.error || "Failed to fetch models");
         return;
       }
-      const rawIds = (data.models || [])
-        .map((m) => m?.id || m?.name || m?.model)
-        .filter((id) => typeof id === "string" && id.trim() !== "");
+      const rawIds = (data.models || []).reduce((acc, m) => {
+        const id = m?.id || m?.name || m?.model;
+        if (typeof id === "string" && id.trim() !== "") acc.push(id);
+        return acc;
+      }, []);
 
       const matched = rawIds.filter((id) => {
         const namePart = id.split("/").pop().toLowerCase();
@@ -601,7 +598,7 @@ export default function ProviderDetailPage() {
         }
       });
 
-      const working = tested.filter((m) => m.ok).map(({ id, name }) => ({ id, name }));
+      const working = tested.reduce((acc, m) => { if (m.ok) acc.push({ id: m.id, name: m.name }); return acc; }, []);
       const failed = tested.filter((m) => !m.ok);
 
       if (working.length > 0) {
@@ -830,8 +827,9 @@ export default function ProviderDetailPage() {
     }
   };
 
-  const selectedConnections = connections.filter((conn) => selectedConnectionIds.includes(conn.id));
-  const allSelected = connections.length > 0 && selectedConnectionIds.length === connections.length;
+  const validSelectedIds = selectedConnectionIds.filter((id) => connections.some((conn) => conn.id === id));
+  const selectedConnections = connections.filter((conn) => validSelectedIds.includes(conn.id));
+  const allSelected = connections.length > 0 && validSelectedIds.length === connections.length;
 
   const toggleSelectConnection = (connectionId) => {
     setSelectedConnectionIds((prev) => (
@@ -853,10 +851,6 @@ export default function ProviderDetailPage() {
     setSelectedConnectionIds([]);
     setBulkProxyPoolId("__none__");
   };
-
-  useEffect(() => {
-    setSelectedConnectionIds((prev) => prev.filter((id) => connections.some((conn) => conn.id === id)));
-  }, [connections]);
 
   const selectedProxySummary = (() => {
     if (selectedConnections.length === 0) return "";
@@ -885,20 +879,20 @@ export default function ProviderDetailPage() {
   const applyProxyAssignments = async (assignments) => {
     setBulkUpdatingProxy(true);
     try {
-      let failed = 0;
-      for (const { connectionId, proxyPoolId } of assignments) {
+      const results = await Promise.all(assignments.map(async ({ connectionId, proxyPoolId }) => {
         try {
           const res = await fetch(`/api/providers/${connectionId}`, {
             method: "PUT",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ proxyPoolId }),
           });
-          if (!res.ok) failed += 1;
+          return res.ok;
         } catch (e) {
           console.log("Error applying proxy for", connectionId, e);
-          failed += 1;
+          return false;
         }
-      }
+      }));
+      const failed = results.filter(r => !r).length;
       if (failed > 0) alert(`Updated with ${failed} failed request(s).`);
       await fetchConnections();
       setShowBulkProxyModal(false);
@@ -984,7 +978,7 @@ export default function ProviderDetailPage() {
     >
       <div className="flex flex-col gap-3">
         <div className="flex flex-col">
-          <button
+          <button type="button"
             onClick={handleApplyOneToOne}
             disabled={bulkUpdatingProxy || activePools.length === 0}
             className="flex items-center gap-2 rounded-lg px-3 py-2 text-left transition-colors hover:bg-black/[0.04] dark:hover:bg-white/[0.04] disabled:cursor-not-allowed disabled:opacity-50"
@@ -992,7 +986,7 @@ export default function ProviderDetailPage() {
             <span className="material-symbols-outlined text-text-muted text-[18px]">sync_alt</span>
             <span className="text-sm text-text-main">One-to-one (rotate)</span>
           </button>
-          <button
+          <button type="button"
             onClick={() => handleApplySinglePool(null)}
             disabled={bulkUpdatingProxy}
             className="flex items-center gap-2 rounded-lg px-3 py-2 text-left transition-colors hover:bg-black/[0.04] dark:hover:bg-white/[0.04] disabled:cursor-not-allowed disabled:opacity-50"
@@ -1001,7 +995,7 @@ export default function ProviderDetailPage() {
             <span className="text-sm text-text-main">None (unbind all)</span>
           </button>
           {proxyPools.map((pool) => (
-            <button
+            <button type="button"
               key={pool.id}
               onClick={() => handleApplySinglePool(pool.id)}
               disabled={bulkUpdatingProxy || pool.isActive !== true}
@@ -1045,7 +1039,7 @@ export default function ProviderDetailPage() {
     }
   };
 
-  const renderModelsSection = () => {
+  const modelsSection = (() => {
     if (isCompatible) {
       return (
         <CompatibleModelsSection
@@ -1071,21 +1065,17 @@ export default function ProviderDetailPage() {
     const displayModels = allModels.filter((m) => !disabledSet.has(m.id));
     const disabledDisplayModels = allModels.filter((m) => disabledSet.has(m.id));
     // Custom models added by user (stored as aliases: modelId → providerAlias/modelId)
-    const customModels = Object.entries(modelAliases)
-      .filter(([alias, fullModel]) => {
+    const customModels = Object.entries(modelAliases).reduce((acc, [alias, fullModel]) => {
         const prefix = `${providerStorageAlias}/`;
-        if (!fullModel.startsWith(prefix)) return false;
+        if (!fullModel.startsWith(prefix)) return acc;
         const modelId = fullModel.slice(prefix.length);
         // Only show if not already in hardcoded list
         // For passthroughModels, include all aliases (model IDs may contain slashes like "anthropic/claude-3")
-        if (providerInfo.passthroughModels) return !models.some((m) => m.id === modelId);
-        return !models.some((m) => m.id === modelId) && alias === modelId;
-      })
-      .map(([alias, fullModel]) => ({
-        id: fullModel.slice(`${providerStorageAlias}/`.length),
-        alias,
-        fullModel,
-      }));
+        if (providerInfo.passthroughModels) { if (models.some((m) => m.id === modelId)) return acc; }
+        else if (models.some((m) => m.id === modelId) || alias !== modelId) return acc;
+        acc.push({ id: modelId, alias, fullModel });
+        return acc;
+      }, []);
 
     return (
       <div className="flex flex-wrap gap-3">
@@ -1134,7 +1124,7 @@ export default function ProviderDetailPage() {
         })}
 
         {/* Add model button — inline, same style as model chips */}
-        <button
+        <button type="button"
           onClick={() => setShowAddCustomModel(true)}
           className="flex w-full items-center justify-center gap-1.5 rounded-lg border border-dashed border-primary/40 px-3 py-2 text-xs text-primary transition-colors hover:border-primary hover:bg-primary/5 sm:w-auto"
         >
@@ -1144,7 +1134,7 @@ export default function ProviderDetailPage() {
 
         {/* Fetch models from provider's public API (e.g. OpenCode Free) */}
         {providerInfo?.modelsFetcher && (
-          <button
+          <button type="button"
             onClick={handleFetchSuggested}
             disabled={fetchingModels}
             className="flex w-full items-center justify-center gap-1.5 rounded-lg border border-dashed border-emerald-500/40 px-3 py-2 text-xs text-emerald-600 dark:text-emerald-400 transition-colors hover:border-emerald-500 hover:bg-emerald-500/5 sm:w-auto disabled:opacity-50 disabled:cursor-not-allowed"
@@ -1159,7 +1149,7 @@ export default function ProviderDetailPage() {
         {/* Auto-Fetch & Test — for connection-based providers without a public fetcher (e.g. NVIDIA).
             Pulls the live catalog, keeps minimax/glm/deepseek/gpt/nemotron/kimi families, tests them. */}
         {!isCompatible && !providerInfo?.modelsFetcher && connections.some((c) => c.isActive !== false) && (
-          <button
+          <button type="button"
             onClick={handleAutoFetchAndTest}
             disabled={fetchingModels}
             className="flex w-full items-center justify-center gap-1.5 rounded-lg border border-dashed border-emerald-500/40 px-3 py-2 text-xs text-emerald-600 dark:text-emerald-400 transition-colors hover:border-emerald-500 hover:bg-emerald-500/5 sm:w-auto disabled:opacity-50 disabled:cursor-not-allowed"
@@ -1173,7 +1163,7 @@ export default function ProviderDetailPage() {
 
         {/* Import Qoder models button — only show for qoder provider */}
         {providerId === "qoder" && connections.some((conn) => conn.isActive !== false) && (
-          <button
+          <button type="button"
             onClick={handleImportQoderModels}
             disabled={importingQoderModels}
             className="flex w-full items-center justify-center gap-1.5 rounded-lg border border-dashed border-blue-500/40 px-3 py-2 text-xs text-blue-600 dark:text-blue-400 transition-colors hover:border-blue-500 hover:bg-blue-500/5 sm:w-auto disabled:opacity-50 disabled:cursor-not-allowed"
@@ -1199,7 +1189,7 @@ export default function ProviderDetailPage() {
               <p className="text-xs text-text-muted mb-2">{hasCtx ? "Suggested free models (≥200k context):" : "Suggested free models:"}</p>
               <div className="flex flex-wrap gap-2">
                 {notAdded.map((m) => (
-                  <button
+                  <button type="button"
                     key={m.id}
                     onClick={async () => {
                       const alias = providerInfo?.passthroughModels ? m.id.split("/").pop() : m.id;
@@ -1223,7 +1213,7 @@ export default function ProviderDetailPage() {
             <p className="text-xs text-text-muted mb-2">Disabled models ({disabledDisplayModels.length}):</p>
             <div className="flex flex-wrap gap-2">
               {disabledDisplayModels.map((m) => (
-                <button
+                <button type="button"
                   key={m.id}
                   onClick={() => handleEnableModel(m.id)}
                   className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-dashed border-black/10 dark:border-white/10 text-xs text-text-muted hover:text-primary hover:border-primary/40 hover:bg-primary/5 transition-colors"
@@ -1238,7 +1228,7 @@ export default function ProviderDetailPage() {
         )}
       </div>
     );
-  };
+  })();
 
   if (loading) {
     return (
@@ -1483,6 +1473,7 @@ export default function ProviderDetailPage() {
                       value={providerStickyLimit}
                       onChange={(e) => handleStickyLimitChange(e.target.value)}
                       placeholder="1"
+                      aria-label="Sticky request limit"
                       className="w-14 px-2 py-1 text-xs border border-border rounded-md bg-background focus:outline-none focus:border-primary"
                     />
                   </div>
@@ -1614,7 +1605,7 @@ export default function ProviderDetailPage() {
             const allIds = [
               ...models,
               ...kiloFreeModels.filter((fm) => !models.some((m) => m.id === fm.id)),
-            ].filter((m) => !m.type || m.type === "llm").map((m) => m.id);
+            ].reduce((acc, m) => { if (!m.type || m.type === "llm") acc.push(m.id); return acc; }, []);
             const activeIds = allIds.filter((id) => !disabledModelIds.includes(id));
             return (
               <div className="flex gap-2">
@@ -1635,7 +1626,7 @@ export default function ProviderDetailPage() {
         {!!modelsTestError && (
           <p className="text-xs text-red-500 mb-3 break-words">{modelsTestError}</p>
         )}
-        {renderModelsSection()}
+        {modelsSection}
       </Card>
 
       {bulkActionModal}

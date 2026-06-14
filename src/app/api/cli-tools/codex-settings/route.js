@@ -73,6 +73,24 @@ const readConfig = async () => {
   }
 };
 
+// Read auth.json
+const readAuth = async () => {
+  try {
+    const content = await fs.readFile(getCodexAuthPath(), "utf-8");
+    return JSON.parse(content);
+  } catch (error) {
+    if (error.code === "ENOENT") return null;
+    throw error;
+  }
+};
+
+// Read config.toml as parsed object
+const readConfigParsed = async () => {
+  const raw = await readConfig();
+  if (!raw) return null;
+  return parsedToWritable(parseTOML(raw));
+};
+
 // Check if config has 9Router settings
 const has9RouterConfig = (config) => {
   if (!config) return false;
@@ -101,7 +119,6 @@ export async function GET() {
       configPath: getCodexConfigPath(),
     });
   } catch (error) {
-    console.log("Error checking codex settings:", error);
     return NextResponse.json({ error: "Failed to check codex settings" }, { status: 500 });
   }
 }
@@ -122,11 +139,7 @@ export async function POST(request) {
     await fs.mkdir(codexDir, { recursive: true });
 
     // Read and parse existing config
-    let parsed = {};
-    try {
-      const existingConfig = await fs.readFile(configPath, "utf-8");
-      parsed = parsedToWritable(parseTOML(existingConfig));
-    } catch { /* No existing config */ }
+    let parsed = (await readConfigParsed()) || {};
 
     // Update only 9Router related fields (api_key goes to auth.json, not config.toml)
     parsed.model = model;
@@ -153,11 +166,7 @@ export async function POST(request) {
 
     // Update auth.json with OPENAI_API_KEY (Codex reads this first)
     const authPath = getCodexAuthPath();
-    let authData = {};
-    try {
-      const existingAuth = await fs.readFile(authPath, "utf-8");
-      authData = JSON.parse(existingAuth);
-    } catch { /* No existing auth */ }
+    let authData = (await readAuth()) || {};
     
     // Force apikey mode (keep existing tokens untouched for ChatGPT login reuse)
     authData.OPENAI_API_KEY = apiKey;
@@ -170,7 +179,6 @@ export async function POST(request) {
       configPath,
     });
   } catch (error) {
-    console.log("Error updating codex settings:", error);
     return NextResponse.json({ error: "Failed to update codex settings" }, { status: 500 });
   }
 }
@@ -181,18 +189,12 @@ export async function DELETE() {
     const configPath = getCodexConfigPath();
 
     // Read and parse existing config
-    let parsed = {};
-    try {
-      const existingConfig = await fs.readFile(configPath, "utf-8");
-      parsed = parsedToWritable(parseTOML(existingConfig));
-    } catch (error) {
-      if (error.code === "ENOENT") {
-        return NextResponse.json({
-          success: true,
-          message: "No config file to reset",
-        });
-      }
-      throw error;
+    const parsed = await readConfigParsed();
+    if (!parsed) {
+      return NextResponse.json({
+        success: true,
+        message: "No config file to reset",
+      });
     }
 
     // Remove 9Router related root fields only if they point to 9router
@@ -213,9 +215,8 @@ export async function DELETE() {
 
     // Remove OPENAI_API_KEY from auth.json
     const authPath = getCodexAuthPath();
-    try {
-      const existingAuth = await fs.readFile(authPath, "utf-8");
-      const authData = JSON.parse(existingAuth);
+    const authData = await readAuth();
+    if (authData) {
       delete authData.OPENAI_API_KEY;
       delete authData.auth_mode;
 
@@ -225,14 +226,13 @@ export async function DELETE() {
       } else {
         await fs.writeFile(authPath, JSON.stringify(authData, null, 2));
       }
-    } catch { /* No auth file */ }
+    }
 
     return NextResponse.json({
       success: true,
       message: "9Router settings removed successfully",
     });
   } catch (error) {
-    console.log("Error resetting codex settings:", error);
     return NextResponse.json({ error: "Failed to reset codex settings" }, { status: 500 });
   }
 }

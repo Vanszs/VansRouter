@@ -28,14 +28,10 @@ export async function GET() {
     const json = await res.json();
     const allModels = json.data || [];
 
-    const freeModels = allModels
-      .filter((m) => m.isFree === true)
-      .map((m) => ({
-        id: m.id,
-        name: m.name,
-        isFree: true,
-        context_length: m.context_length || 0,
-      }));
+    const freeModels = allModels.reduce((acc, m) => {
+      if (m.isFree === true) acc.push({ id: m.id, name: m.name, isFree: true, context_length: m.context_length || 0 });
+      return acc;
+    }, []);
 
     cachedModels = freeModels;
     cacheTimestamp = now;

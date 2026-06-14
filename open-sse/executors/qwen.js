@@ -126,4 +126,3 @@ export class QwenExecutor extends DefaultExecutor {
   }
 }
 
-export default QwenExecutor;

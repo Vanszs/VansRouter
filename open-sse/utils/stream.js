@@ -33,7 +33,7 @@ const STREAM_MODE = {
  * @param {function} options.onStreamComplete - Callback when stream completes (content, usage)
  * @param {string} options.apiKey - API key for usage tracking
  */
-export function createSSEStream(options = {}) {
+function createSSEStream(options = {}) {
   const {
     mode = STREAM_MODE.TRANSLATE,
     targetFormat,

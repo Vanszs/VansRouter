@@ -216,25 +216,23 @@ export async function getActiveRequests() {
   await ensureRingInitialized();
   const seen = new Set();
   const recentRequests = [...recentRing.items]
-    .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
-    .map((e) => {
+    .toSorted((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
+    .reduce((acc, e) => {
+      if (acc.length >= 20) return acc;
       const t = e.tokens || {};
-      return {
-        timestamp: e.timestamp, model: e.model, provider: e.provider || "",
-        promptTokens: t.prompt_tokens || t.input_tokens || 0,
-        completionTokens: t.completion_tokens || t.output_tokens || 0,
-        status: e.status || "ok",
-      };
-    })
-    .filter((e) => {
-      if (e.promptTokens === 0 && e.completionTokens === 0) return false;
+      const promptTokens = t.prompt_tokens || t.input_tokens || 0;
+      const completionTokens = t.completion_tokens || t.output_tokens || 0;
+      if (promptTokens === 0 && completionTokens === 0) return acc;
       const minute = e.timestamp ? e.timestamp.slice(0, 16) : "";
-      const key = `${e.model}|${e.provider}|${e.promptTokens}|${e.completionTokens}|${minute}`;
-      if (seen.has(key)) return false;
+      const key = `${e.model}|${e.provider || ""}|${promptTokens}|${completionTokens}|${minute}`;
+      if (seen.has(key)) return acc;
       seen.add(key);
-      return true;
-    })
-    .slice(0, 20);
+      acc.push({
+        timestamp: e.timestamp, model: e.model, provider: e.provider || "",
+        promptTokens, completionTokens, status: e.status || "ok",
+      });
+      return acc;
+    }, []);
 
   const errorProvider = (Date.now() - lastErrorProvider.ts < 10000) ? lastErrorProvider.provider : "";
   return { activeRequests, recentRequests, errorProvider };
@@ -317,9 +315,8 @@ function loadDaysInRange(adapter, maxDays) {
 }
 
 export async function getUsageStats(period = "all") {
-  const db = await getAdapter();
-
-  const [{ getProviderConnections }, { getApiKeys }, { getProviderNodes }] = await Promise.all([
+  const [db, { getProviderConnections }, { getApiKeys }, { getProviderNodes }] = await Promise.all([
+    getAdapter(),
     import("./connectionsRepo.js"),
     import("./apiKeysRepo.js"),
     import("./nodesRepo.js"),
@@ -344,25 +341,22 @@ export async function getUsageStats(period = "all") {
   // recentRequests from live history (last 100 entries enough for 20 deduped)
   const recentRows = db.all(`SELECT timestamp, provider, model, tokens, status FROM usageHistory ORDER BY id DESC LIMIT 100`);
   const seen = new Set();
-  const recentRequests = recentRows
-    .map((r) => {
-      const t = parseJson(r.tokens, {}) || {};
-      return {
-        timestamp: r.timestamp, model: r.model, provider: r.provider || "",
-        promptTokens: t.prompt_tokens || t.input_tokens || 0,
-        completionTokens: t.completion_tokens || t.output_tokens || 0,
-        status: r.status || "ok",
-      };
-    })
-    .filter((e) => {
-      if (e.promptTokens === 0 && e.completionTokens === 0) return false;
-      const minute = e.timestamp ? e.timestamp.slice(0, 16) : "";
-      const key = `${e.model}|${e.provider}|${e.promptTokens}|${e.completionTokens}|${minute}`;
-      if (seen.has(key)) return false;
-      seen.add(key);
-      return true;
-    })
-    .slice(0, 20);
+  const recentRequests = [];
+  for (const r of recentRows) {
+    if (recentRequests.length >= 20) break;
+    const t = parseJson(r.tokens, {}) || {};
+    const promptTokens = t.prompt_tokens || t.input_tokens || 0;
+    const completionTokens = t.completion_tokens || t.output_tokens || 0;
+    if (promptTokens === 0 && completionTokens === 0) continue;
+    const minute = r.timestamp ? r.timestamp.slice(0, 16) : "";
+    const key = `${r.model}|${r.provider || ""}|${promptTokens}|${completionTokens}|${minute}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    recentRequests.push({
+      timestamp: r.timestamp, model: r.model, provider: r.provider || "",
+      promptTokens, completionTokens, status: r.status || "ok",
+    });
+  }
 
   const stats = {
     totalRequests: 0,

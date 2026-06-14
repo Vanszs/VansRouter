@@ -80,7 +80,7 @@ export function parseSSEToOpenAIResponse(rawSSE, fallbackModel) {
   const message = { role: "assistant", content: contentParts.join("") || (toolCallMap.size > 0 ? null : "") };
   if (reasoningParts.length > 0) message.reasoning_content = reasoningParts.join("");
   if (toolCallMap.size > 0) {
-    message.tool_calls = [...toolCallMap.entries()].sort((a, b) => a[0] - b[0]).map(([, tc]) => tc);
+    message.tool_calls = [...toolCallMap.entries()].toSorted((a, b) => a[0] - b[0]).map(([, tc]) => tc);
   }
 
   const result = {

@@ -192,7 +192,7 @@ export function setUnexpectedExitHandler(handler) {
   unexpectedExitHandler = handler;
 }
 
-export async function spawnCloudflared(tunnelToken) {
+async function spawnCloudflared(tunnelToken) {
   const binaryPath = await ensureCloudflared();
 
   const child = spawn(binaryPath, ["tunnel", "run", "--dns-resolver-addrs", "1.1.1.1:53", "--token", tunnelToken], {

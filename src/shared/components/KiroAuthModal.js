@@ -8,6 +8,102 @@ import { Modal, Button, Input } from "@/shared/components";
  * Kiro Auth Method Selection Modal
  * Auto-detects token from AWS SSO cache or allows manual import
  */
+function KiroMethodSelection({ onMethodSelect }) {
+  return (
+          <div className="space-y-3">
+            <p className="text-sm text-text-muted mb-4">
+              Choose your authentication method:
+            </p>
+
+            {/* AWS Builder ID */}
+            <button
+              type="button"
+              onClick={() => onMethodSelect("builder-id")}
+              className="w-full p-4 text-left border border-border rounded-lg hover:bg-sidebar transition-colors"
+            >
+              <div className="flex items-start gap-3">
+                <span className="material-symbols-outlined text-primary mt-0.5">shield</span>
+                <div className="flex-1">
+                  <h3 className="font-semibold mb-1">AWS Builder ID</h3>
+                  <p className="text-sm text-text-muted">
+                    Recommended for most users. Free AWS account required.
+                  </p>
+                </div>
+              </div>
+            </button>
+
+            {/* AWS IAM Identity Center (IDC) */}
+            <button
+              type="button"
+              onClick={() => handleMethodSelect("idc")}
+              className="w-full p-4 text-left border border-border rounded-lg hover:bg-sidebar transition-colors"
+            >
+              <div className="flex items-start gap-3">
+                <span className="material-symbols-outlined text-primary mt-0.5">business</span>
+                <div className="flex-1">
+                  <h3 className="font-semibold mb-1">AWS IAM Identity Center</h3>
+                  <p className="text-sm text-text-muted">
+                    For enterprise users with custom AWS IAM Identity Center.
+                  </p>
+                </div>
+              </div>
+            </button>
+
+            {/* Google Social Login - HIDDEN */}
+            <button
+              type="button"
+              onClick={() => handleMethodSelect("social-google")}
+              className="hidden w-full p-4 text-left border border-border rounded-lg hover:bg-sidebar transition-colors"
+            >
+              <div className="flex items-start gap-3">
+                <span className="material-symbols-outlined text-primary mt-0.5">account_circle</span>
+                <div className="flex-1">
+                  <h3 className="font-semibold mb-1">Google Account</h3>
+                  <p className="text-sm text-text-muted">
+                    Login with your Google account (manual callback).
+                  </p>
+                </div>
+              </div>
+            </button>
+
+            {/* GitHub Social Login - HIDDEN */}
+            <button
+              type="button"
+              onClick={() => handleMethodSelect("social-github")}
+              className="hidden w-full p-4 text-left border border-border rounded-lg hover:bg-sidebar transition-colors"
+            >
+              <div className="flex items-start gap-3">
+                <span className="material-symbols-outlined text-primary mt-0.5">code</span>
+                <div className="flex-1">
+                  <h3 className="font-semibold mb-1">GitHub Account</h3>
+                  <p className="text-sm text-text-muted">
+                    Login with your GitHub account (manual callback).
+                  </p>
+                </div>
+              </div>
+            </button>
+
+            {/* Import Token */}
+            <button
+              type="button"
+              onClick={() => handleMethodSelect("import")}
+              className="w-full p-4 text-left border border-border rounded-lg hover:bg-sidebar transition-colors"
+            >
+              <div className="flex items-start gap-3">
+                <span className="material-symbols-outlined text-primary mt-0.5">file_upload</span>
+                <div className="flex-1">
+                  <h3 className="font-semibold mb-1">Import Token</h3>
+                  <p className="text-sm text-text-muted">
+                    Paste refresh token from Kiro IDE.
+                  </p>
+                </div>
+              </div>
+            </button>
+          </div>
+  );
+}
+
+
 export default function KiroAuthModal({ isOpen, onMethodSelect, onClose }) {
   const [selectedMethod, setSelectedMethod] = useState(null);
   const [idcStartUrl, setIdcStartUrl] = useState("");
@@ -104,102 +200,17 @@ export default function KiroAuthModal({ isOpen, onMethodSelect, onClose }) {
     <Modal isOpen={isOpen} title="Connect Kiro" onClose={onClose} size="lg">
       <div className="flex flex-col gap-4">
         {/* Method Selection */}
-        {!selectedMethod && (
-          <div className="space-y-3">
-            <p className="text-sm text-text-muted mb-4">
-              Choose your authentication method:
-            </p>
-
-            {/* AWS Builder ID */}
-            <button
-              onClick={() => onMethodSelect("builder-id")}
-              className="w-full p-4 text-left border border-border rounded-lg hover:bg-sidebar transition-colors"
-            >
-              <div className="flex items-start gap-3">
-                <span className="material-symbols-outlined text-primary mt-0.5">shield</span>
-                <div className="flex-1">
-                  <h3 className="font-semibold mb-1">AWS Builder ID</h3>
-                  <p className="text-sm text-text-muted">
-                    Recommended for most users. Free AWS account required.
-                  </p>
-                </div>
-              </div>
-            </button>
-
-            {/* AWS IAM Identity Center (IDC) */}
-            <button
-              onClick={() => handleMethodSelect("idc")}
-              className="w-full p-4 text-left border border-border rounded-lg hover:bg-sidebar transition-colors"
-            >
-              <div className="flex items-start gap-3">
-                <span className="material-symbols-outlined text-primary mt-0.5">business</span>
-                <div className="flex-1">
-                  <h3 className="font-semibold mb-1">AWS IAM Identity Center</h3>
-                  <p className="text-sm text-text-muted">
-                    For enterprise users with custom AWS IAM Identity Center.
-                  </p>
-                </div>
-              </div>
-            </button>
-
-            {/* Google Social Login - HIDDEN */}
-            <button
-              onClick={() => handleMethodSelect("social-google")}
-              className="hidden w-full p-4 text-left border border-border rounded-lg hover:bg-sidebar transition-colors"
-            >
-              <div className="flex items-start gap-3">
-                <span className="material-symbols-outlined text-primary mt-0.5">account_circle</span>
-                <div className="flex-1">
-                  <h3 className="font-semibold mb-1">Google Account</h3>
-                  <p className="text-sm text-text-muted">
-                    Login with your Google account (manual callback).
-                  </p>
-                </div>
-              </div>
-            </button>
-
-            {/* GitHub Social Login - HIDDEN */}
-            <button
-              onClick={() => handleMethodSelect("social-github")}
-              className="hidden w-full p-4 text-left border border-border rounded-lg hover:bg-sidebar transition-colors"
-            >
-              <div className="flex items-start gap-3">
-                <span className="material-symbols-outlined text-primary mt-0.5">code</span>
-                <div className="flex-1">
-                  <h3 className="font-semibold mb-1">GitHub Account</h3>
-                  <p className="text-sm text-text-muted">
-                    Login with your GitHub account (manual callback).
-                  </p>
-                </div>
-              </div>
-            </button>
-
-            {/* Import Token */}
-            <button
-              onClick={() => handleMethodSelect("import")}
-              className="w-full p-4 text-left border border-border rounded-lg hover:bg-sidebar transition-colors"
-            >
-              <div className="flex items-start gap-3">
-                <span className="material-symbols-outlined text-primary mt-0.5">file_upload</span>
-                <div className="flex-1">
-                  <h3 className="font-semibold mb-1">Import Token</h3>
-                  <p className="text-sm text-text-muted">
-                    Paste refresh token from Kiro IDE.
-                  </p>
-                </div>
-              </div>
-            </button>
-          </div>
-        )}
+        {!selectedMethod && <KiroMethodSelection onMethodSelect={onMethodSelect} />}
 
         {/* IDC Configuration */}
         {selectedMethod === "idc" && (
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium mb-2">
+              <label htmlFor="kiro-idc-start-url" className="block text-sm font-medium mb-2">
                 IDC Start URL <span className="text-red-500">*</span>
               </label>
               <Input
+                id="kiro-idc-start-url"
                 value={idcStartUrl}
                 onChange={(e) => setIdcStartUrl(e.target.value)}
                 placeholder="https://your-org.awsapps.com/start"
@@ -211,10 +222,11 @@ export default function KiroAuthModal({ isOpen, onMethodSelect, onClose }) {
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-2">
+              <label htmlFor="kiro-idc-region" className="block text-sm font-medium mb-2">
                 AWS Region
               </label>
               <Input
+                id="kiro-idc-region"
                 value={idcRegion}
                 onChange={(e) => setIdcRegion(e.target.value)}
                 placeholder="us-east-1"
@@ -342,10 +354,11 @@ export default function KiroAuthModal({ isOpen, onMethodSelect, onClose }) {
                 )}
 
                 <div>
-                  <label className="block text-sm font-medium mb-2">
+                  <label htmlFor="kiro-refresh-token" className="block text-sm font-medium mb-2">
                     Refresh Token <span className="text-red-500">*</span>
                   </label>
                   <Input
+                    id="kiro-refresh-token"
                     value={refreshToken}
                     onChange={(e) => setRefreshToken(e.target.value)}
                     placeholder="Token will be auto-filled..."

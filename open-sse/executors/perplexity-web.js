@@ -88,7 +88,6 @@ function cleanResponse(text, strip = true) {
 }
 
 async function* readPplxSseEvents(body, signal) {
-  const reader = body.getReader();
   const decoder = new TextDecoder();
   let buffer = "";
   let dataLines = [];
@@ -102,35 +101,29 @@ async function* readPplxSseEvents(body, signal) {
     try { return JSON.parse(trimmed); } catch { return null; }
   }
 
-  try {
+  for await (const value of body) {
+    if (signal?.aborted) return;
+    buffer += decoder.decode(value, { stream: true });
     while (true) {
-      if (signal?.aborted) return;
-      const { value, done } = await reader.read();
-      if (done) break;
-      buffer += decoder.decode(value, { stream: true });
-      while (true) {
-        const idx = buffer.indexOf("\n");
-        if (idx < 0) break;
-        const rawLine = buffer.slice(0, idx);
-        buffer = buffer.slice(idx + 1);
-        const line = rawLine.endsWith("\r") ? rawLine.slice(0, -1) : rawLine;
-        if (line === "") {
-          const parsed = flush();
-          if (parsed === "done") return;
-          if (parsed) yield parsed;
-          continue;
-        }
-        if (line.startsWith("data:")) dataLines.push(line.slice(5).trimStart());
-        if (line === "event: end_of_stream") return;
+      const idx = buffer.indexOf("\n");
+      if (idx < 0) break;
+      const rawLine = buffer.slice(0, idx);
+      buffer = buffer.slice(idx + 1);
+      const line = rawLine.endsWith("\r") ? rawLine.slice(0, -1) : rawLine;
+      if (line === "") {
+        const parsed = flush();
+        if (parsed === "done") return;
+        if (parsed) yield parsed;
+        continue;
       }
+      if (line.startsWith("data:")) dataLines.push(line.slice(5).trimStart());
+      if (line === "event: end_of_stream") return;
     }
-    buffer += decoder.decode();
-    if (buffer.trim().startsWith("data:")) dataLines.push(buffer.trim().slice(5).trimStart());
-    const tail = flush();
-    if (tail && tail !== "done") yield tail;
-  } finally {
-    reader.releaseLock();
   }
+  buffer += decoder.decode();
+  if (buffer.trim().startsWith("data:")) dataLines.push(buffer.trim().slice(5).trimStart());
+  const tail = flush();
+  if (tail && tail !== "done") yield tail;
 }
 
 function parseOpenAIMessages(messages) {
@@ -142,7 +135,7 @@ function parseOpenAIMessages(messages) {
     let content = "";
     if (typeof msg.content === "string") content = msg.content;
     else if (Array.isArray(msg.content)) {
-      content = msg.content.filter((c) => c.type === "text").map((c) => String(c.text || "")).join(" ");
+      content = msg.content.reduce((acc, c) => c.type === "text" ? acc + (acc ? " " : "") + String(c.text || "") : acc, "");
     }
     if (!content.trim()) continue;
     if (role === "system") systemMsg += content + "\n";
@@ -504,4 +497,3 @@ export class PerplexityWebExecutor extends BaseExecutor {
 
 export { parseOpenAIMessages, buildQuery, buildPplxRequestBody, formatToolsHint, sessionKey };
 
-export default PerplexityWebExecutor;

@@ -7,6 +7,21 @@ import dynamic from "next/dynamic";
 
 const Editor = dynamic(() => import("@monaco-editor/react"), { ssr: false });
 
+function saveTranslatorFile(file, content) {
+  return fetch("/api/translator/save", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ file, content })
+  }).catch(() => {});
+}
+
+const META_BADGE_COLORS = {
+  blue: "bg-blue-500/10 text-blue-500",
+  orange: "bg-orange-500/10 text-orange-500",
+  green: "bg-green-500/10 text-green-500",
+  purple: "bg-purple-500/10 text-purple-500",
+};
+
 // 7 steps matching requestLogger files exactly
 const STEPS = [
   { id: 1, label: "Client Request",         file: "1_req_client.json",  lang: "json", desc: "Raw request from client" },
@@ -78,11 +93,7 @@ export default function TranslatorPage() {
     } catch { /* ignore */ }
   };
 
-  const save = (file, content) => fetch("/api/translator/save", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ file, content })
-  }).catch(() => {});
+  const save = saveTranslatorFile;
 
   // Step 1 → Step 3: source → OpenAI intermediate
   const handleToOpenAI = async () => {
@@ -239,7 +250,7 @@ export default function TranslatorPage() {
             <div className="p-4 space-y-3">
               {/* Step header */}
               <div className="flex items-center justify-between">
-                <button onClick={() => toggle(step.id)} className="flex items-center gap-2 flex-1 text-left group">
+                <button type="button" onClick={() => toggle(step.id)} className="flex items-center gap-2 flex-1 text-left group">
                   <span className="material-symbols-outlined text-[20px] text-text-muted group-hover:text-primary transition-colors">
                     {isExpanded ? "expand_more" : "chevron_right"}
                   </span>
@@ -289,12 +300,7 @@ export default function TranslatorPage() {
 }
 
 function MetaBadge({ label, value, color }) {
-  const colors = {
-    blue: "bg-blue-500/10 text-blue-500",
-    orange: "bg-orange-500/10 text-orange-500",
-    green: "bg-green-500/10 text-green-500",
-    purple: "bg-purple-500/10 text-purple-500",
-  };
+  const colors = META_BADGE_COLORS;
   return (
     <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-mono ${colors[color]}`}>
       <span className="text-text-muted/70 font-sans text-[10px]">{label}:</span>{value}

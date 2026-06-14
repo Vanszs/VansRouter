@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback, useReducer } from "react";
 import { Card, Button, ModelSelectModal, ManualConfigModal, Tooltip } from "@/shared/components";
 import Image from "next/image";
 import BaseUrlSelect from "./BaseUrlSelect";
@@ -9,244 +9,8 @@ import { matchKnownEndpoint } from "./cliEndpointMatch";
 
 const CLOUD_URL = process.env.NEXT_PUBLIC_CLOUD_URL;
 
-export default function ClaudeToolCard({
-  tool,
-  isExpanded,
-  onToggle,
-  activeProviders,
-  modelMappings,
-  onModelMappingChange,
-  baseUrl,
-  hasActiveProviders,
-  apiKeys,
-  cloudEnabled,
-  initialStatus,
-  tunnelEnabled,
-  tunnelPublicUrl,
-  tailscaleEnabled,
-  tailscaleUrl,
-}) {
-  const [claudeStatus, setClaudeStatus] = useState(initialStatus || null);
-  const [checkingClaude, setCheckingClaude] = useState(false);
-  const [applying, setApplying] = useState(false);
-  const [restoring, setRestoring] = useState(false);
-  const [message, setMessage] = useState(null);
-  const [showInstallGuide, setShowInstallGuide] = useState(false);
-  const [modalOpen, setModalOpen] = useState(false);
-  const [currentEditingAlias, setCurrentEditingAlias] = useState(null);
-  const [selectedApiKey, setSelectedApiKey] = useState("");
-  const [modelAliases, setModelAliases] = useState({});
-  const [showManualConfigModal, setShowManualConfigModal] = useState(false);
-  const [customBaseUrl, setCustomBaseUrl] = useState("");
-  const [ccFilterNaming, setCcFilterNaming] = useState(false);
-  const hasInitializedModels = useRef(false);
-
-  const getConfigStatus = () => {
-    if (!claudeStatus?.installed) return null;
-    const currentUrl = claudeStatus.settings?.env?.ANTHROPIC_BASE_URL;
-    if (!currentUrl) return "not_configured";
-    if (matchKnownEndpoint(currentUrl, { tunnelPublicUrl, tailscaleUrl, cloudUrl: cloudEnabled ? CLOUD_URL : null })) return "configured";
-    return "other";
-  };
-
-  const configStatus = getConfigStatus();
-
-  useEffect(() => {
-    if (apiKeys?.length > 0 && !selectedApiKey) {
-      setSelectedApiKey(apiKeys[0].key);
-    }
-  }, [apiKeys, selectedApiKey]);
-
-  useEffect(() => {
-    if (initialStatus) setClaudeStatus(initialStatus);
-  }, [initialStatus]);
-
-  useEffect(() => {
-    if (isExpanded && !claudeStatus) {
-      checkClaudeStatus();
-      fetchModelAliases();
-    }
-    if (isExpanded) fetchModelAliases();
-  }, [isExpanded]);
-
-  useEffect(() => {
-    fetch("/api/settings").then(r => r.json()).then(data => {
-      setCcFilterNaming(!!data.ccFilterNaming);
-    }).catch(() => {});
-  }, []);
-
-  const handleCcFilterNamingToggle = async (e) => {
-    const value = e.target.checked;
-    setCcFilterNaming(value);
-    await fetch("/api/settings", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ccFilterNaming: value }),
-    }).catch(() => {});
-  };
-
-  const fetchModelAliases = async () => {
-    try {
-      const res = await fetch("/api/models/alias");
-      const data = await res.json();
-      if (res.ok) setModelAliases(data.aliases || {});
-    } catch (error) {
-      console.log("Error fetching model aliases:", error);
-    }
-  };
-
-  useEffect(() => {
-    if (claudeStatus?.installed && !hasInitializedModels.current) {
-      hasInitializedModels.current = true;
-      const env = claudeStatus.settings?.env || {};
-
-      tool.defaultModels.forEach((model) => {
-        if (model.envKey) {
-          const value = env[model.envKey] || model.defaultValue || "";
-          // Only sync initial values from file once
-          if (value) {
-            onModelMappingChange(model.alias, value);
-          }
-        }
-      });
-      // Only set selectedApiKey if it exists in apiKeys list
-      const tokenFromFile = env.ANTHROPIC_AUTH_TOKEN;
-      if (tokenFromFile && apiKeys?.some(k => k.key === tokenFromFile)) {
-        setSelectedApiKey(tokenFromFile);
-      }
-    }
-  }, [claudeStatus, apiKeys, tool.defaultModels, onModelMappingChange]);
-
-  const checkClaudeStatus = async () => {
-    setCheckingClaude(true);
-    try {
-      const res = await fetch("/api/cli-tools/claude-settings");
-      const data = await res.json();
-      setClaudeStatus(data);
-    } catch (error) {
-      setClaudeStatus({ installed: false, error: error.message });
-    } finally {
-      setCheckingClaude(false);
-    }
-  };
-
-  const getEffectiveBaseUrl = () => {
-    const url = customBaseUrl || baseUrl;
-    return url.endsWith("/v1") ? url : `${url}/v1`;
-  };
-
-  const getDisplayUrl = () => {
-    const url = customBaseUrl || baseUrl;
-    return url.endsWith("/v1") ? url : `${url}/v1`;
-  };
-
-  const handleApplySettings = async () => {
-    setApplying(true);
-    setMessage(null);
-    try {
-      const env = { ANTHROPIC_BASE_URL: getEffectiveBaseUrl() };
-
-      // Get key from dropdown, fallback to first key or sk_9router for localhost
-      const keyToUse = selectedApiKey?.trim()
-        || (apiKeys?.length > 0 ? apiKeys[0].key : null)
-        || (!cloudEnabled ? "sk_9router" : null);
-
-      if (keyToUse) {
-        env.ANTHROPIC_AUTH_TOKEN = keyToUse;
-      }
-
-      tool.defaultModels.forEach((model) => {
-        const targetModel = modelMappings[model.alias];
-        if (targetModel && model.envKey) env[model.envKey] = targetModel;
-      });
-      const res = await fetch("/api/cli-tools/claude-settings", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ env }),
-      });
-      const data = await res.json();
-      if (res.ok) {
-        setMessage({ type: "success", text: "Settings applied successfully!" });
-        setClaudeStatus(prev => ({ ...prev, hasBackup: true, settings: { ...prev?.settings, env } }));
-      } else {
-        setMessage({ type: "error", text: data.error || "Failed to apply settings" });
-      }
-    } catch (error) {
-      setMessage({ type: "error", text: error.message });
-    } finally {
-      setApplying(false);
-    }
-  };
-
-  const handleResetSettings = async () => {
-    setRestoring(true);
-    setMessage(null);
-    try {
-      const res = await fetch("/api/cli-tools/claude-settings", { method: "DELETE" });
-      const data = await res.json();
-      if (res.ok) {
-        setMessage({ type: "success", text: "Settings reset successfully!" });
-        tool.defaultModels.forEach((model) => onModelMappingChange(model.alias, model.defaultValue || ""));
-        setSelectedApiKey("");
-      } else {
-        setMessage({ type: "error", text: data.error || "Failed to reset settings" });
-      }
-    } catch (error) {
-      setMessage({ type: "error", text: error.message });
-    } finally {
-      setRestoring(false);
-    }
-  };
-
-  const openModelSelector = (alias) => {
-    setCurrentEditingAlias(alias);
-    setModalOpen(true);
-  };
-
-  const handleModelSelect = (model) => {
-    if (currentEditingAlias) onModelMappingChange(currentEditingAlias, model.value);
-  };
-
-  // Generate settings.json content for manual copy
-  const getManualConfigs = () => {
-    const keyToUse = (selectedApiKey && selectedApiKey.trim())
-      ? selectedApiKey
-      : (!cloudEnabled ? "sk_9router" : "<API_KEY_FROM_DASHBOARD>");
-    const env = { ANTHROPIC_BASE_URL: getEffectiveBaseUrl(), ANTHROPIC_AUTH_TOKEN: keyToUse };
-    tool.defaultModels.forEach((model) => {
-      const targetModel = modelMappings[model.alias];
-      if (targetModel && model.envKey) env[model.envKey] = targetModel;
-    });
-
-    return [
-      {
-        filename: "~/.claude/settings.json",
-        content: JSON.stringify({ hasCompletedOnboarding: true, env }, null, 2),
-      },
-    ];
-  };
-
+function ClaudeExpandedSection({ applying, ccFilterNaming, checkingClaude, claudeStatus, customBaseUrl, env, getDisplayUrl, handleApplySettings, handleCcFilterNamingToggle, handleResetSettings, message, openModelSelector, restoring, selectedApiKey, setCustomBaseUrl, setSelectedApiKey, setShowInstallGuide, setShowManualConfigModal, showInstallGuide, value }) {
   return (
-    <Card padding="xs" className="overflow-hidden">
-      <div className="flex items-start justify-between gap-3 hover:cursor-pointer sm:items-center" onClick={onToggle}>
-        <div className="flex min-w-0 items-center gap-3">
-          <div className="size-8 flex items-center justify-center shrink-0">
-            <Image src="/providers/claude.png" alt={tool.name} width={32} height={32} className="size-8 object-contain rounded-lg" sizes="32px" onError={(e) => { e.target.style.display = "none"; }} />
-          </div>
-          <div className="min-w-0">
-            <div className="flex min-w-0 flex-wrap items-center gap-2">
-              <h3 className="font-medium text-sm">{tool.name}</h3>
-              {configStatus === "configured" && <span className="px-1.5 py-0.5 text-[10px] font-medium bg-green-500/10 text-green-600 dark:text-green-400 rounded-full">Connected</span>}
-              {configStatus === "not_configured" && <span className="px-1.5 py-0.5 text-[10px] font-medium bg-yellow-500/10 text-yellow-600 dark:text-yellow-400 rounded-full">Not configured</span>}
-              {configStatus === "other" && <span className="px-1.5 py-0.5 text-[10px] font-medium bg-blue-500/10 text-blue-600 dark:text-blue-400 rounded-full">Other</span>}
-            </div>
-            <p className="text-xs text-text-muted truncate">{tool.description}</p>
-          </div>
-        </div>
-        <span className={`material-symbols-outlined text-text-muted text-[20px] transition-transform ${isExpanded ? "rotate-180" : ""}`}>expand_more</span>
-      </div>
-
-      {isExpanded && (
         <div className="mt-4 pt-4 border-t border-border flex flex-col gap-4">
           {checkingClaude && (
             <div className="flex items-center gap-2 text-text-muted">
@@ -333,10 +97,10 @@ export default function ClaudeToolCard({
                     <span className="text-xs font-semibold text-text-main sm:text-right sm:text-sm">{model.name}</span>
                     <span className="material-symbols-outlined hidden text-text-muted text-[14px] sm:inline">arrow_forward</span>
                     <div className="relative w-full min-w-0">
-                      <input type="text" value={modelMappings[model.alias] || ""} onChange={(e) => onModelMappingChange(model.alias, e.target.value)} placeholder="provider/model-id" className="w-full min-w-0 pl-2 pr-7 py-2 bg-surface rounded border border-border text-xs focus:outline-none focus:ring-1 focus:ring-primary/50 sm:py-1.5" />
-                      {modelMappings[model.alias] && <button onClick={() => onModelMappingChange(model.alias, "")} className="absolute right-1 top-1/2 -translate-y-1/2 p-0.5 text-text-muted hover:text-red-500 rounded transition-colors" title="Clear"><span className="material-symbols-outlined text-[14px]">close</span></button>}
+                      <input type="text" value={modelMappings[model.alias] || ""} onChange={(e) => onModelMappingChange(model.alias, e.target.value)} aria-label="Model ID" placeholder="provider/model-id" className="w-full min-w-0 pl-2 pr-7 py-2 bg-surface rounded border border-border text-xs focus:outline-none focus:ring-1 focus:ring-primary/50 sm:py-1.5" />
+                      {modelMappings[model.alias] && <button type="button" onClick={() => onModelMappingChange(model.alias, "")} className="absolute right-1 top-1/2 -translate-y-1/2 p-0.5 text-text-muted hover:text-red-500 rounded transition-colors" title="Clear"><span className="material-symbols-outlined text-[14px]">close</span></button>}
                     </div>
-                    <button onClick={() => openModelSelector(model.alias)} disabled={!hasActiveProviders} className={`w-full sm:w-auto rounded border px-2 py-2 text-xs transition-colors sm:py-1.5 whitespace-nowrap sm:shrink-0 ${hasActiveProviders ? "bg-surface border-border text-text-main hover:border-primary cursor-pointer" : "opacity-50 cursor-not-allowed border-border"}`}>Select Model</button>
+                    <button type="button" onClick={() => openModelSelector(model.alias)} disabled={!hasActiveProviders} className={`w-full sm:w-auto rounded border px-2 py-2 text-xs transition-colors sm:py-1.5 whitespace-nowrap sm:shrink-0 ${hasActiveProviders ? "bg-surface border-border text-text-main hover:border-primary cursor-pointer" : "opacity-50 cursor-not-allowed border-border"}`}>Select Model</button>
                   </div>
                 ))}
 
@@ -375,7 +139,252 @@ export default function ClaudeToolCard({
             </>
           )}
         </div>
-      )}
+  );
+}
+
+
+export default function ClaudeToolCard({
+  tool,
+  isExpanded,
+  onToggle,
+  activeProviders,
+  modelMappings,
+  onModelMappingChange,
+  baseUrl,
+  hasActiveProviders,
+  apiKeys,
+  cloudEnabled,
+  initialStatus,
+  tunnelEnabled,
+  tunnelPublicUrl,
+  tailscaleEnabled,
+  tailscaleUrl,
+}) {
+  const [state, dispatch] = useReducer((s, a) => {
+    switch (a.type) {
+      case "CHECK_START": return { ...s, checking: true };
+      case "CHECK_DONE": return { ...s, status: a.data, checking: false };
+      case "APPLY_START": return { ...s, applying: true, message: null };
+      case "APPLY_DONE": return { ...s, applying: false, message: a.message };
+      case "RESTORE_START": return { ...s, restoring: true, message: null };
+      case "RESTORE_DONE": return { ...s, restoring: false, message: a.message };
+      default: return s;
+    }
+  }, { status: initialStatus || null, checking: false, applying: false, restoring: false, message: null });
+  const claudeStatus = state.status;
+  const checkingClaude = state.checking;
+  const { applying, restoring, message } = state;
+  const [showInstallGuide, setShowInstallGuide] = useState(false);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [currentEditingAlias, setCurrentEditingAlias] = useState(null);
+  const [selectedApiKeyOverride, setSelectedApiKey] = useState(null);
+  const tokenFromFile = claudeStatus?.settings?.env?.ANTHROPIC_AUTH_TOKEN;
+  const derivedApiKey = tokenFromFile && apiKeys?.some(k => k.key === tokenFromFile) ? tokenFromFile : null;
+  const selectedApiKey = selectedApiKeyOverride ?? derivedApiKey ?? (apiKeys?.length > 0 ? apiKeys[0].key : "");
+  const [modelAliases, setModelAliases] = useState({});
+  const [showManualConfigModal, setShowManualConfigModal] = useState(false);
+  const [customBaseUrl, setCustomBaseUrl] = useState("");
+  const [ccFilterNaming, setCcFilterNaming] = useState(false);
+  const hasInitializedModels = useRef(false);
+
+  const getConfigStatus = () => {
+    if (!claudeStatus?.installed) return null;
+    const currentUrl = claudeStatus.settings?.env?.ANTHROPIC_BASE_URL;
+    if (!currentUrl) return "not_configured";
+    if (matchKnownEndpoint(currentUrl, { tunnelPublicUrl, tailscaleUrl, cloudUrl: cloudEnabled ? CLOUD_URL : null })) return "configured";
+    return "other";
+  };
+
+  const configStatus = getConfigStatus();
+
+  const fetchModelAliases = useCallback(async () => {
+    try {
+      const res = await fetch("/api/models/alias");
+      const data = await res.json();
+      if (res.ok) setModelAliases(data.aliases || {});
+    } catch (error) {
+      console.log("Error fetching model aliases:", error);
+    }
+  }, []);
+
+
+
+  const checkClaudeStatus = useCallback(async () => {
+    dispatch({ type: "CHECK_START" });
+    try {
+      const res = await fetch("/api/cli-tools/claude-settings");
+      const data = await res.json();
+      dispatch({ type: "CHECK_DONE", data });
+    } catch (error) {
+      dispatch({ type: "CHECK_DONE", data: { installed: false, error: error.message } });
+    }
+  }, []);
+
+
+
+  const statusFetchedRef = useRef(!!initialStatus);
+  const aliasesFetchedRef = useRef(false);
+
+  const initializeCard = useCallback(async () => {
+    if (!statusFetchedRef.current) {
+      statusFetchedRef.current = true;
+      await checkClaudeStatus();
+    }
+    if (!aliasesFetchedRef.current) {
+      aliasesFetchedRef.current = true;
+      await fetchModelAliases();
+    }
+  }, [checkClaudeStatus, fetchModelAliases]);
+
+  const handleToggle = useCallback(() => {
+    if (!isExpanded) initializeCard();
+    onToggle();
+  }, [isExpanded, initializeCard, onToggle]);
+
+  useEffect(() => { initializeCard(); }, [initializeCard]);
+
+  useEffect(() => {
+    fetch("/api/settings").then(r => r.json()).then(data => {
+      setCcFilterNaming(!!data.ccFilterNaming);
+    }).catch(() => {});
+  }, []);
+
+  const handleCcFilterNamingToggle = async (e) => {
+    const value = e.target.checked;
+    setCcFilterNaming(value);
+    await fetch("/api/settings", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ccFilterNaming: value }),
+    }).catch(() => {});
+  };
+  useEffect(() => {
+    if (claudeStatus?.installed && !hasInitializedModels.current) {
+      hasInitializedModels.current = true;
+      const env = claudeStatus.settings?.env || {};
+
+      tool.defaultModels.forEach((model) => {
+        if (model.envKey) {
+          const value = env[model.envKey] || model.defaultValue || "";
+          // Only sync initial values from file once
+          if (value) {
+            onModelMappingChange(model.alias, value);
+          }
+        }
+      });
+    }
+  }, [claudeStatus, tool.defaultModels, onModelMappingChange]);
+  const getEffectiveBaseUrl = () => {
+    const url = customBaseUrl || baseUrl;
+    return url.endsWith("/v1") ? url : `${url}/v1`;
+  };
+
+  const getDisplayUrl = () => {
+    const url = customBaseUrl || baseUrl;
+    return url.endsWith("/v1") ? url : `${url}/v1`;
+  };
+
+  const handleApplySettings = async () => {
+    dispatch({ type: "APPLY_START" });
+    try {
+      const env = { ANTHROPIC_BASE_URL: getEffectiveBaseUrl() };
+
+      // Get key from dropdown, fallback to first key or sk_9router for localhost
+      const keyToUse = selectedApiKey?.trim()
+        || (apiKeys?.length > 0 ? apiKeys[0].key : null)
+        || (!cloudEnabled ? "sk_9router" : null);
+
+      if (keyToUse) {
+        env.ANTHROPIC_AUTH_TOKEN = keyToUse;
+      }
+
+      tool.defaultModels.forEach((model) => {
+        const targetModel = modelMappings[model.alias];
+        if (targetModel && model.envKey) env[model.envKey] = targetModel;
+      });
+      const res = await fetch("/api/cli-tools/claude-settings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ env }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        dispatch({ type: "APPLY_DONE", message: { type: "success", text: "Settings applied successfully!" } });
+        dispatch({ type: "CHECK_DONE", data: { ...claudeStatus, hasBackup: true, settings: { ...claudeStatus?.settings, env } } });
+      } else {
+        dispatch({ type: "APPLY_DONE", message: { type: "error", text: data.error || "Failed to apply settings" } });
+      }
+    } catch (error) {
+      dispatch({ type: "APPLY_DONE", message: { type: "error", text: error.message } });
+    }
+  };
+
+  const handleResetSettings = async () => {
+    dispatch({ type: "RESTORE_START" });
+    try {
+      const res = await fetch("/api/cli-tools/claude-settings", { method: "DELETE" });
+      const data = await res.json();
+      if (res.ok) {
+        dispatch({ type: "RESTORE_DONE", message: { type: "success", text: "Settings reset successfully!" } });
+        tool.defaultModels.forEach((model) => onModelMappingChange(model.alias, model.defaultValue || ""));
+        setSelectedApiKey("");
+      } else {
+        dispatch({ type: "RESTORE_DONE", message: { type: "error", text: data.error || "Failed to reset settings" } });
+      }
+    } catch (error) {
+      dispatch({ type: "RESTORE_DONE", message: { type: "error", text: error.message } });
+    }
+  };
+
+  const openModelSelector = (alias) => {
+    setCurrentEditingAlias(alias);
+    setModalOpen(true);
+  };
+
+  const handleModelSelect = (model) => {
+    if (currentEditingAlias) onModelMappingChange(currentEditingAlias, model.value);
+  };
+
+  // Generate settings.json content for manual copy
+  const getManualConfigs = () => {
+    const keyToUse = (selectedApiKey && selectedApiKey.trim())
+      ? selectedApiKey
+      : (!cloudEnabled ? "sk_9router" : "<API_KEY_FROM_DASHBOARD>");
+    const env = { ANTHROPIC_BASE_URL: getEffectiveBaseUrl(), ANTHROPIC_AUTH_TOKEN: keyToUse };
+    tool.defaultModels.forEach((model) => {
+      const targetModel = modelMappings[model.alias];
+      if (targetModel && model.envKey) env[model.envKey] = targetModel;
+    });
+
+    return [
+      {
+        filename: "~/.claude/settings.json",
+        content: JSON.stringify({ hasCompletedOnboarding: true, env }, null, 2),
+      },
+    ];
+  };
+
+  return (
+    <Card padding="xs" className="overflow-hidden">
+      <button type="button" className="flex w-full items-start justify-between gap-3 hover:cursor-pointer sm:items-center text-left" onClick={handleToggle} aria-expanded={expanded} aria-label="Toggle section">
+        <div className="flex min-w-0 items-center gap-3">
+          <div className="size-8 flex items-center justify-center shrink-0">
+            <Image src="/providers/claude.png" alt={tool.name} width={32} height={32} className="size-8 object-contain rounded-lg" sizes="32px" onError={(e) => { e.target.style.display = "none"; }} />
+          </div>
+          <div className="min-w-0">
+            <div className="flex min-w-0 flex-wrap items-center gap-2">
+              <h3 className="font-medium text-sm">{tool.name}</h3>
+              {configStatus === "configured" && <span className="px-1.5 py-0.5 text-[10px] font-medium bg-green-500/10 text-green-600 dark:text-green-400 rounded-full">Connected</span>}
+              {configStatus === "not_configured" && <span className="px-1.5 py-0.5 text-[10px] font-medium bg-yellow-500/10 text-yellow-600 dark:text-yellow-400 rounded-full">Not configured</span>}
+              {configStatus === "other" && <span className="px-1.5 py-0.5 text-[10px] font-medium bg-blue-500/10 text-blue-600 dark:text-blue-400 rounded-full">Other</span>}
+            </div>
+            <p className="text-xs text-text-muted truncate">{tool.description}</p>
+          </div>
+        </div>
+        <span className={`material-symbols-outlined text-text-muted text-[20px] transition-transform ${isExpanded ? "rotate-180" : ""}`}>expand_more</span>
+      </button>
+
+      {isExpanded && <ClaudeExpandedSection applying={applying} ccFilterNaming={ccFilterNaming} checkingClaude={checkingClaude} claudeStatus={claudeStatus} customBaseUrl={customBaseUrl} env={env} getDisplayUrl={getDisplayUrl} handleApplySettings={handleApplySettings} handleCcFilterNamingToggle={handleCcFilterNamingToggle} handleResetSettings={handleResetSettings} message={message} openModelSelector={openModelSelector} restoring={restoring} selectedApiKey={selectedApiKey} setCustomBaseUrl={setCustomBaseUrl} setSelectedApiKey={setSelectedApiKey} setShowInstallGuide={setShowInstallGuide} setShowManualConfigModal={setShowManualConfigModal} showInstallGuide={showInstallGuide} value={value} />}
 
       <ModelSelectModal isOpen={modalOpen} onClose={() => setModalOpen(false)} onSelect={handleModelSelect} selectedModel={currentEditingAlias ? modelMappings[currentEditingAlias] : null} activeProviders={activeProviders} modelAliases={modelAliases} title={`Select model for ${currentEditingAlias}`} />
 

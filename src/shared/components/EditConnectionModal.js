@@ -1,12 +1,25 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useReducer, useRef } from "react";
 import PropTypes from "prop-types";
 import Modal from "@/shared/components/Modal";
 import Input from "@/shared/components/Input";
 import Button from "@/shared/components/Button";
 import Badge from "@/shared/components/Badge";
 import { isOpenAICompatibleProvider, isAnthropicCompatibleProvider } from "@/shared/constants/providers";
+
+function asyncReducer(state, action) {
+  switch (action.type) {
+    case "RESET": return { testing: false, testResult: null, validating: false, validationResult: null, saving: false };
+    case "TEST_START": return { ...state, testing: true, testResult: null };
+    case "TEST_DONE": return { ...state, testing: false, testResult: action.result };
+    case "VALIDATE_START": return { ...state, validating: true, validationResult: null };
+    case "VALIDATE_DONE": return { ...state, validating: false, validationResult: action.result };
+    case "SAVE_START": return { ...state, saving: true };
+    case "SAVE_DONE": return { ...state, saving: false };
+    default: return state;
+  }
+}
 
 export default function EditConnectionModal({ isOpen, connection, proxyPools, onSave, onClose }) {
   const [formData, setFormData] = useState({
@@ -20,21 +33,19 @@ export default function EditConnectionModal({ isOpen, connection, proxyPools, on
     deployment: "",
     organization: "",
   });
-  const [cloudflareData, setCloudflareData] = useState({ accountId: "" });
-  const [testing, setTesting] = useState(false);
-  const [testResult, setTestResult] = useState(null);
-  const [validating, setValidating] = useState(false);
-  const [validationResult, setValidationResult] = useState(null);
-  const [saving, setSaving] = useState(false);
+  const cloudflareData = { accountId: connection?.provider === "cloudflare-ai" && connection.providerSpecificData ? connection.providerSpecificData.accountId || "" : "" };
+  const [async_, dispatch] = useReducer(asyncReducer, { testing: false, testResult: null, validating: false, validationResult: null, saving: false });
+  const { testing, testResult, validating, validationResult, saving } = async_;
 
-  useEffect(() => {
+  const prevConnectionRef = useRef(connection);
+  if (connection !== prevConnectionRef.current) {
+    prevConnectionRef.current = connection;
     if (connection) {
       setFormData({
         name: connection.name || "",
         priority: connection.priority || 1,
         apiKey: "",
       });
-      // Load Azure-specific data if present
       if (connection.provider === "azure" && connection.providerSpecificData) {
         setAzureData({
           azureEndpoint: connection.providerSpecificData.azureEndpoint || "",
@@ -43,13 +54,9 @@ export default function EditConnectionModal({ isOpen, connection, proxyPools, on
           organization: connection.providerSpecificData.organization || "",
         });
       }
-      if (connection.provider === "cloudflare-ai" && connection.providerSpecificData) {
-        setCloudflareData({ accountId: connection.providerSpecificData.accountId || "" });
-      }
-      setTestResult(null);
-      setValidationResult(null);
+      dispatch({ type: "RESET" });
     }
-  }, [connection]);
+  }
 
   const isOAuth = connection?.authType === "oauth";
   const isAzure = connection?.provider === "azure";
@@ -60,23 +67,19 @@ export default function EditConnectionModal({ isOpen, connection, proxyPools, on
 
   const handleTest = async () => {
     if (!connection?.provider) return;
-    setTesting(true);
-    setTestResult(null);
+    dispatch({ type: "TEST_START" });
     try {
       const res = await fetch(`/api/providers/${connection.id}/test`, { method: "POST" });
       const data = await res.json();
-      setTestResult(data.valid ? "success" : "failed");
+      dispatch({ type: "TEST_DONE", result: data.valid ? "success" : "failed" });
     } catch {
-      setTestResult("failed");
-    } finally {
-      setTesting(false);
+      dispatch({ type: "TEST_DONE", result: "failed" });
     }
   };
 
   const handleValidate = async () => {
     if (!connection?.provider || !formData.apiKey) return;
-    setValidating(true);
-    setValidationResult(null);
+    dispatch({ type: "VALIDATE_START" });
     try {
       const res = await fetch("/api/providers/validate", {
         method: "POST",
@@ -89,17 +92,15 @@ export default function EditConnectionModal({ isOpen, connection, proxyPools, on
         }),
       });
       const data = await res.json();
-      setValidationResult(data.valid ? "success" : "failed");
+      dispatch({ type: "VALIDATE_DONE", result: data.valid ? "success" : "failed" });
     } catch {
-      setValidationResult("failed");
-    } finally {
-      setValidating(false);
+      dispatch({ type: "VALIDATE_DONE", result: "failed" });
     }
   };
 
   const handleSubmit = async () => {
     if (!connection) return;
-    setSaving(true);
+    dispatch({ type: "SAVE_START" });
     try {
       const updates = {
         name: formData.name,
@@ -110,8 +111,7 @@ export default function EditConnectionModal({ isOpen, connection, proxyPools, on
         let isValid = validationResult === "success";
         if (!isValid) {
           try {
-            setValidating(true);
-            setValidationResult(null);
+            dispatch({ type: "VALIDATE_START" });
             const res = await fetch("/api/providers/validate", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
@@ -124,11 +124,9 @@ export default function EditConnectionModal({ isOpen, connection, proxyPools, on
             });
             const data = await res.json();
             isValid = !!data.valid;
-            setValidationResult(isValid ? "success" : "failed");
+            dispatch({ type: "VALIDATE_DONE", result: isValid ? "success" : "failed" });
           } catch {
-            setValidationResult("failed");
-          } finally {
-            setValidating(false);
+            dispatch({ type: "VALIDATE_DONE", result: "failed" });
           }
         }
         if (isValid) {
@@ -153,7 +151,7 @@ export default function EditConnectionModal({ isOpen, connection, proxyPools, on
       
       await onSave(updates);
     } finally {
-      setSaving(false);
+      dispatch({ type: "SAVE_DONE" });
     }
   };
 

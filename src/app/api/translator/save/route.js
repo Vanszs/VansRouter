@@ -2,6 +2,17 @@ import { NextResponse } from "next/server";
 import fs from "fs";
 import path from "path";
 
+const ALLOWED_FILES = [
+  "1_req_client.json",
+  "2_req_source.json",
+  "3_req_openai.json",
+  "4_req_target.json",
+  "5_res_provider.txt",
+  "6_res_openai.txt",
+  "7_res_client.txt",
+  "7_res_client.json",
+];
+
 export async function POST(request) {
   try {
     const { file, content } = await request.json();
@@ -10,19 +21,7 @@ export async function POST(request) {
       return NextResponse.json({ success: false, error: "File and content required" }, { status: 400 });
     }
 
-    // Security: only allow specific filenames
-    const allowedFiles = [
-      "1_req_client.json",
-      "2_req_source.json",
-      "3_req_openai.json",
-      "4_req_target.json",
-      "5_res_provider.txt",
-      "6_res_openai.txt",
-      "7_res_client.txt",
-      "7_res_client.json",
-    ];
-
-    if (!allowedFiles.includes(file)) {
+    if (!ALLOWED_FILES.includes(file)) {
       return NextResponse.json({ success: false, error: "Invalid file name" }, { status: 400 });
     }
 

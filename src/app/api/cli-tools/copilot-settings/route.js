@@ -53,7 +53,6 @@ export async function GET() {
       currentUrl: entry?.models?.[0]?.url || null,
     });
   } catch (error) {
-    console.log("Error checking copilot settings:", error);
     return NextResponse.json({ error: "Failed to check copilot settings" }, { status: 500 });
   }
 }
@@ -71,12 +70,8 @@ export async function POST(request) {
     await fs.mkdir(path.dirname(configPath), { recursive: true });
 
     // Read existing config array
-    let config = [];
-    try {
-      const existing = await fs.readFile(configPath, "utf-8");
-      const parsed = JSON.parse(existing);
-      config = Array.isArray(parsed) ? parsed : [];
-    } catch { /* No existing config */ }
+    const parsed = await readConfig();
+    let config = Array.isArray(parsed) ? parsed : [];
 
     const endpointUrl = `${baseUrl}/chat/completions#models.ai.azure.com`;
     const keyToUse = apiKey || "sk_9router";
@@ -112,7 +107,6 @@ export async function POST(request) {
       configPath,
     });
   } catch (error) {
-    console.log("Error updating copilot settings:", error);
     return NextResponse.json({ error: "Failed to update copilot settings" }, { status: 500 });
   }
 }
@@ -123,16 +117,11 @@ export async function DELETE() {
     const configPath = getConfigPath();
 
     let config = [];
-    try {
-      const existing = await fs.readFile(configPath, "utf-8");
-      const parsed = JSON.parse(existing);
-      config = Array.isArray(parsed) ? parsed : [];
-    } catch (error) {
-      if (error.code === "ENOENT") {
-        return NextResponse.json({ success: true, message: "No config file to reset" });
-      }
-      throw error;
+    const parsed = await readConfig();
+    if (!parsed) {
+      return NextResponse.json({ success: true, message: "No config file to reset" });
     }
+    config = Array.isArray(parsed) ? parsed : [];
 
     config = config.filter((e) => e.name !== "9Router");
     await fs.writeFile(configPath, JSON.stringify(config, null, 2));
@@ -142,7 +131,6 @@ export async function DELETE() {
       message: "9Router removed from Copilot config",
     });
   } catch (error) {
-    console.log("Error resetting copilot settings:", error);
     return NextResponse.json({ error: "Failed to reset copilot settings" }, { status: 500 });
   }
 }

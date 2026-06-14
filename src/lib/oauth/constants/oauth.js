@@ -126,7 +126,7 @@ export function getOAuthClientMetadata() {
 }
 
 // OpenAI OAuth Configuration (Authorization Code Flow with PKCE)
-export const OPENAI_CONFIG = {
+const OPENAI_CONFIG = {
   clientId: "app_EMoamEEZ73f0CkXaXp7hrann",
   authorizeUrl: "https://auth.openai.com/oauth/authorize",
   tokenUrl: "https://auth.openai.com/oauth/token",
@@ -261,7 +261,7 @@ export const CODEBUDDY_CONFIG = {
 export const OAUTH_TIMEOUT = 300000;
 
 // Provider list
-export const PROVIDERS = {
+const PROVIDERS = {
   CLAUDE: "claude",
   CODEX: "codex",
   GEMINI: "gemini-cli",

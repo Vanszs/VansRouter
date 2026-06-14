@@ -4,6 +4,25 @@ import { useCallback, useEffect, useMemo, useState, useRef } from "react";
 import { Badge, Button, Card, CardSkeleton, Input, Modal, Toggle, ConfirmModal } from "@/shared/components";
 import { useNotificationStore } from "@/store/notificationStore";
 
+function parseProxyLine(line) {
+  const trimmed = line.trim();
+  if (!trimmed) return null;
+  if (trimmed.includes("://")) {
+    const parsed = new URL(trimmed);
+    const hostLabel = parsed.port ? `${parsed.hostname}:${parsed.port}` : parsed.hostname;
+    return { proxyUrl: parsed.toString(), name: `Imported ${hostLabel}` };
+  }
+  const parts = trimmed.split(":");
+  if (parts.length === 4) {
+    const [host, port, username, password] = parts;
+    if (!host || !port || !username || !password) throw new Error("Invalid host:port:user:pass format");
+    const proxyUrl = `http://${encodeURIComponent(username)}:${encodeURIComponent(password)}@${host}:${port}`;
+    const parsed = new URL(proxyUrl);
+    return { proxyUrl: parsed.toString(), name: `Imported ${host}:${port}` };
+  }
+  throw new Error("Unsupported format");
+}
+
 function getStatusVariant(status) {
   if (status === "active") return "success";
   if (status === "error") return "error";
@@ -27,6 +46,9 @@ function normalizeFormData(data = {}) {
   };
 }
 
+const VERCEL_TOKEN_HINT = <>Token is used once for deployment and not stored. <a href="https://vercel.com/account/tokens" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">Get token →</a></>;
+const CF_TOKEN_HINT = <>Requires &quot;Workers Scripts: Edit&quot; permission. <a href="https://dash.cloudflare.com/profile/api-tokens" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">Get token →</a></>;
+
 export default function ProxyPoolsPage() {
   const [proxyPools, setProxyPools] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -37,7 +59,7 @@ export default function ProxyPoolsPage() {
   const [showDenoModal, setShowDenoModal] = useState(false);
   const [showRelayMenu, setShowRelayMenu] = useState(false);
   const [editingProxyPool, setEditingProxyPool] = useState(null);
-  const [formData, setFormData] = useState(normalizeFormData());
+  const [formData, setFormData] = useState(() => normalizeFormData());
   const [batchImportText, setBatchImportText] = useState("");
   const [vercelForm, setVercelForm] = useState({ vercelToken: "", projectName: "vercel-relay" });
   const [cloudflareForm, setCloudflareForm] = useState({ accountId: "", apiToken: "", projectName: "cloudflare-relay" });
@@ -208,7 +230,8 @@ export default function ProxyPoolsPage() {
     }
   };
 
-  const allSelected = proxyPools.length > 0 && selectedIds.length === proxyPools.length;
+  const validSelectedIds = selectedIds.filter((id) => proxyPools.some((p) => p.id === id));
+  const allSelected = proxyPools.length > 0 && validSelectedIds.length === proxyPools.length;
   const toggleSelect = (id) => setSelectedIds((prev) => prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]);
   const toggleSelectAll = () => setSelectedIds(allSelected ? [] : proxyPools.map((p) => p.id));
   const clearSelection = () => setSelectedIds([]);
@@ -218,17 +241,18 @@ export default function ProxyPoolsPage() {
     if (targets.length === 0) return;
     setBulkBusy(true);
     try {
-      let ok = 0; let failed = 0;
-      for (const id of targets) {
+      const results = await Promise.all(targets.map(async (id) => {
         try {
           const res = await fetch(`/api/proxy-pools/${id}`, {
             method: "PUT",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ isActive }),
           });
-          if (res.ok) ok += 1; else failed += 1;
-        } catch { failed += 1; }
-      }
+          return res.ok ? "ok" : "fail";
+        } catch { return "fail"; }
+      }));
+      const ok = results.filter(r => r === "ok").length;
+      const failed = results.filter(r => r === "fail").length;
       await fetchProxyPools();
       notify.success(`${isActive ? "Activated" : "Deactivated"} ${ok}${failed ? `, failed ${failed}` : ""}`);
     } finally {
@@ -245,15 +269,17 @@ export default function ProxyPoolsPage() {
         setConfirmState(null);
         setBulkBusy(true);
         try {
-          let ok = 0; let blocked = 0; let failed = 0;
-          for (const id of selectedIds) {
+          const results = await Promise.all(selectedIds.map(async (id) => {
             try {
               const res = await fetch(`/api/proxy-pools/${id}`, { method: "DELETE" });
-              if (res.ok) ok += 1;
-              else if (res.status === 409) blocked += 1;
-              else failed += 1;
-            } catch { failed += 1; }
-          }
+              if (res.ok) return "ok";
+              if (res.status === 409) return "blocked";
+              return "fail";
+            } catch { return "fail"; }
+          }));
+          const ok = results.filter(r => r === "ok").length;
+          const blocked = results.filter(r => r === "blocked").length;
+          const failed = results.filter(r => r === "fail").length;
           await fetchProxyPools();
           clearSelection();
           notify.success(`Deleted ${ok}${blocked ? `, ${blocked} bound` : ""}${failed ? `, ${failed} failed` : ""}`);
@@ -306,15 +332,13 @@ export default function ProxyPoolsPage() {
           setConfirmState(null);
           setBulkBusy(true);
           try {
-            for (const id of deadIds) {
-              try {
-                await fetch(`/api/proxy-pools/${id}`, {
-                  method: "PUT",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({ isActive: false }),
-                });
-              } catch {}
-            }
+            await Promise.all(deadIds.map(id =>
+              fetch(`/api/proxy-pools/${id}`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ isActive: false }),
+              }).catch(() => {})
+            ));
             await fetchProxyPools();
             notify.success(`Disabled ${deadIds.length} dead proxies`);
           } finally {
@@ -326,11 +350,6 @@ export default function ProxyPoolsPage() {
       notify.success(`Health check done. Alive: ${alive}, Dead: ${deadIds.length}`);
     }
   };
-
-  // Cleanup selectedIds when pools change
-  useEffect(() => {
-    setSelectedIds((prev) => prev.filter((id) => proxyPools.some((p) => p.id === id)));
-  }, [proxyPools]);
 
   const openBatchImportModal = () => {
     setBatchImportText("");
@@ -447,42 +466,10 @@ export default function ProxyPoolsPage() {
     }
   };
 
-  const parseProxyLine = (line) => {
-    const trimmed = line.trim();
-    if (!trimmed) return null;
-
-    if (trimmed.includes("://")) {
-      const parsed = new URL(trimmed);
-      const hostLabel = parsed.port ? `${parsed.hostname}:${parsed.port}` : parsed.hostname;
-      return {
-        proxyUrl: parsed.toString(),
-        name: `Imported ${hostLabel}`,
-      };
-    }
-
-    const parts = trimmed.split(":");
-    if (parts.length === 4) {
-      const [host, port, username, password] = parts;
-      if (!host || !port || !username || !password) {
-        throw new Error("Invalid host:port:user:pass format");
-      }
-
-      const proxyUrl = `http://${encodeURIComponent(username)}:${encodeURIComponent(password)}@${host}:${port}`;
-      const parsed = new URL(proxyUrl);
-      return {
-        proxyUrl: parsed.toString(),
-        name: `Imported ${host}:${port}`,
-      };
-    }
-
-    throw new Error("Unsupported format");
-  };
-
   const handleBatchImport = async () => {
     const lines = batchImportText
       .split(/\r?\n/)
-      .map((line) => line.trim())
-      .filter(Boolean);
+      .flatMap((line) => { const t = line.trim(); return t ? [t] : []; });
 
     if (lines.length === 0) {
       notify.warning("Please paste at least one proxy line.");
@@ -521,13 +508,13 @@ export default function ProxyPoolsPage() {
       let skipped = 0;
       let failed = 0;
 
-      for (const entry of parsedEntries) {
+      const toCreate = parsedEntries.filter(entry => {
         const dedupeKey = `${entry.proxyUrl}|||`;
-        if (existingKeys.has(dedupeKey)) {
-          skipped += 1;
-          continue;
-        }
+        if (existingKeys.has(dedupeKey)) { skipped += 1; return false; }
+        return true;
+      });
 
+      const results = await Promise.all(toCreate.map(async (entry) => {
         const res = await fetch("/api/proxy-pools", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -538,13 +525,11 @@ export default function ProxyPoolsPage() {
             isActive: true,
           }),
         });
+        return res.ok;
+      }));
 
-        if (res.ok) {
-          created += 1;
-          existingKeys.add(dedupeKey);
-        } else {
-          failed += 1;
-        }
+      for (const ok of results) {
+        if (ok) created += 1; else failed += 1;
       }
 
       await fetchProxyPools();
@@ -595,7 +580,7 @@ export default function ProxyPoolsPage() {
 
             {showRelayMenu && (
               <div className="absolute left-0 top-full z-50 mt-1 w-48 rounded-xl border border-black/10 bg-white p-1 shadow-xl dark:border-white/10 dark:bg-zinc-900 sm:left-auto sm:right-0">
-                <button
+                <button type="button"
                   onClick={() => {
                     openCloudflareModal();
                     setShowRelayMenu(false);
@@ -605,7 +590,7 @@ export default function ProxyPoolsPage() {
                   <span className="material-symbols-outlined text-[20px] text-orange-500">cloud</span>
                   Cloudflare Relay
                 </button>
-                <button
+                <button type="button"
                   onClick={() => {
                     openVercelModal();
                     setShowRelayMenu(false);
@@ -615,7 +600,7 @@ export default function ProxyPoolsPage() {
                   <span className="material-symbols-outlined text-[20px] text-blue-500">cloud_upload</span>
                   Vercel Relay
                 </button>
-                <button
+                <button type="button"
                   onClick={() => {
                     openDenoModal();
                     setShowRelayMenu(false);
@@ -705,6 +690,7 @@ export default function ProxyPoolsPage() {
                     type="checkbox"
                     checked={selectedIds.includes(pool.id)}
                     onChange={() => toggleSelect(pool.id)}
+                    aria-label={`Select proxy ${pool.name || pool.id}`}
                     className="mt-1 size-4 shrink-0 rounded border-black/20 dark:border-white/20"
                   />
                   <div className="min-w-0 flex-1">
@@ -744,7 +730,7 @@ export default function ProxyPoolsPage() {
                     onChange={() => handleToggleActive(pool)}
                     title={pool.isActive ? "Disable" : "Enable"}
                   />
-                  <button
+                  <button type="button"
                     onClick={() => handleTest(pool.id)}
                     className="p-2 rounded hover:bg-black/5 dark:hover:bg-white/5 text-text-muted hover:text-primary"
                     title="Test proxy"
@@ -757,14 +743,14 @@ export default function ProxyPoolsPage() {
                       {testingId === pool.id ? "progress_activity" : "science"}
                     </span>
                   </button>
-                  <button
+                  <button type="button"
                     onClick={() => openEditModal(pool)}
                     className="p-2 rounded hover:bg-black/5 dark:hover:bg-white/5 text-text-muted hover:text-primary"
                     title="Edit"
                   >
                     <span className="material-symbols-outlined text-[18px]">edit</span>
                   </button>
-                  <button
+                  <button type="button"
                     onClick={() => handleDelete(pool)}
                     className="p-2 rounded hover:bg-red-500/10 text-red-500"
                     title="Delete"
@@ -785,8 +771,9 @@ export default function ProxyPoolsPage() {
       >
         <div className="flex flex-col gap-4">
           <div>
-            <label className="text-sm font-medium text-text-main mb-1 block">Paste Proxy List (One per line)</label>
+            <label htmlFor="proxy-batch-import" className="text-sm font-medium text-text-main mb-1 block">Paste Proxy List (One per line)</label>
             <textarea
+              id="proxy-batch-import"
               value={batchImportText}
               onChange={(e) => setBatchImportText(e.target.value)}
               placeholder={"http://user:pass@127.0.0.1:7897\n127.0.0.1:7897:user:pass"}
@@ -831,7 +818,7 @@ export default function ProxyPoolsPage() {
             value={vercelForm.vercelToken}
             onChange={(e) => setVercelForm((prev) => ({ ...prev, vercelToken: e.target.value }))}
             placeholder="your-vercel-api-token"
-            hint={<>Token is used once for deployment and not stored. <a href="https://vercel.com/account/tokens" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">Get token →</a></>}
+            hint={VERCEL_TOKEN_HINT}
             type="password"
           />
           <Input
@@ -888,14 +875,14 @@ export default function ProxyPoolsPage() {
             value={cloudflareForm.accountId}
             onChange={(e) => setCloudflareForm((prev) => ({ ...prev, accountId: e.target.value }))}
             placeholder="your-cloudflare-account-id"
-            hint={<>Found on the right side of the Cloudflare dashboard overview page.</>}
+            hint="Found on the right side of the Cloudflare dashboard overview page."
           />
           <Input
             label="API Token"
             value={cloudflareForm.apiToken}
             onChange={(e) => setCloudflareForm((prev) => ({ ...prev, apiToken: e.target.value }))}
             placeholder="your-cloudflare-api-token"
-            hint={<>Requires "Workers Scripts: Edit" permission. <a href="https://dash.cloudflare.com/profile/api-tokens" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">Get token →</a></>}
+            hint={CF_TOKEN_HINT}
             type="password"
           />
           <Input
@@ -952,7 +939,7 @@ export default function ProxyPoolsPage() {
             value={denoForm.denoToken}
             onChange={(e) => setDenoForm((prev) => ({ ...prev, denoToken: e.target.value }))}
             placeholder="ddo_xxxxxxxxxxxxxxxx"
-            hint={<>Token is used once for deployment, not stored. Found in Organization Settings.</>}
+            hint="Token is used once for deployment, not stored. Found in Organization Settings."
             type="password"
           />
           <Input

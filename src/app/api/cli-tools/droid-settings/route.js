@@ -72,7 +72,6 @@ export async function GET() {
       settingsPath: getDroidSettingsPath(),
     });
   } catch (error) {
-    console.log("Error checking droid settings:", error);
     return NextResponse.json({ error: "Failed to check droid settings" }, { status: 500 });
   }
 }
@@ -98,11 +97,7 @@ export async function POST(request) {
     await fs.mkdir(droidDir, { recursive: true });
 
     // Read existing settings or create new
-    let settings = {};
-    try {
-      const existingSettings = await fs.readFile(settingsPath, "utf-8");
-      settings = JSON.parse(existingSettings);
-    } catch { /* No existing settings */ }
+    let settings = (await readSettings()) || {};
 
     // Ensure customModels array exists
     if (!settings.customModels) {
@@ -164,7 +159,6 @@ export async function POST(request) {
       settingsPath,
     });
   } catch (error) {
-    console.log("Error updating droid settings:", error);
     return NextResponse.json({ error: "Failed to update droid settings" }, { status: 500 });
   }
 }
@@ -175,18 +169,12 @@ export async function DELETE() {
     const settingsPath = getDroidSettingsPath();
 
     // Read existing settings
-    let settings = {};
-    try {
-      const existingSettings = await fs.readFile(settingsPath, "utf-8");
-      settings = JSON.parse(existingSettings);
-    } catch (error) {
-      if (error.code === "ENOENT") {
-        return NextResponse.json({
-          success: true,
-          message: "No settings file to reset",
-        });
-      }
-      throw error;
+    const settings = await readSettings();
+    if (!settings) {
+      return NextResponse.json({
+        success: true,
+        message: "No settings file to reset",
+      });
     }
 
     // Remove 9Router customModels
@@ -207,7 +195,6 @@ export async function DELETE() {
       message: "9Router settings removed successfully",
     });
   } catch (error) {
-    console.log("Error resetting droid settings:", error);
     return NextResponse.json({ error: "Failed to reset droid settings" }, { status: 500 });
   }
 }

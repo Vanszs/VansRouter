@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { DOCS_CONFIG, t } from "@/constants/docsConfig";
 import { DEFAULT_LANG } from "@/constants/languages";
@@ -11,12 +11,19 @@ import LanguageSwitcher from "./LanguageSwitcher";
 export default function DocsHeader({ lang = DEFAULT_LANG }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
+  useEffect(() => {
+    if (!mobileMenuOpen) return;
+    const onEsc = (e) => { if (e.key === "Escape") setMobileMenuOpen(false); };
+    document.addEventListener("keydown", onEsc);
+    return () => document.removeEventListener("keydown", onEsc);
+  }, [mobileMenuOpen]);
+
   return (
     <>
       <header className="sticky top-0 z-50 w-full border-b bg-white/80 backdrop-blur-sm border-gray-200">
         <div className=" mx-auto px-4 h-16 flex items-center justify-between">
           {/* Mobile menu button */}
-          <button
+          <button type="button"
             onClick={() => setMobileMenuOpen(true)}
             className="lg:hidden p-2 rounded-lg hover:bg-gray-100 transition-colors"
             aria-label="Open menu"
@@ -54,6 +61,7 @@ export default function DocsHeader({ lang = DEFAULT_LANG }) {
           <div
             className="mobile-menu-overlay lg:hidden"
             onClick={() => setMobileMenuOpen(false)}
+            aria-hidden="true"
           />
           
           <div className="mobile-menu-drawer lg:hidden">
@@ -61,7 +69,7 @@ export default function DocsHeader({ lang = DEFAULT_LANG }) {
               <span className="font-bold text-lg text-black">
                 <span className="text-[#E68A6E]">9</span>{DOCS_CONFIG.logo} Docs
               </span>
-              <button
+              <button type="button"
                 onClick={() => setMobileMenuOpen(false)}
                 className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
                 aria-label="Close menu"

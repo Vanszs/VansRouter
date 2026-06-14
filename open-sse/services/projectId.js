@@ -30,7 +30,7 @@ const CLEANUP_INTERVAL_MS = 10 * 60 * 1000;
 let _cleanupTimer = null;
 
 /** Run one sweep immediately: evict stale cache entries and abort orphaned pending fetches. */
-export function cleanupNow() {
+function cleanupNow() {
     const now = Date.now();
 
     for (const [id, entry] of projectIdCache) {
@@ -64,7 +64,7 @@ export function startCacheCleanup() {
 }
 
 /** Stop the periodic background cleanup (e.g. during graceful shutdown). */
-export function stopCacheCleanup() {
+function stopCacheCleanup() {
     if (!_cleanupTimer) return;
     clearInterval(_cleanupTimer);
     _cleanupTimer = null;

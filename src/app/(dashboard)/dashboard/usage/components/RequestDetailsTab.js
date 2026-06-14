@@ -93,119 +93,8 @@ function maskKey(fullKey) {
   return fullKey.length > 8 ? `${fullKey.slice(0, 8)}...` : fullKey;
 }
 
-export default function RequestDetailsTab() {
-  const [details, setDetails] = useState([]);
-  const [totalItems, setTotalItems] = useState(0);
-  const [totalPages, setTotalPages] = useState(0);
-  const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(20);
-  const [loading, setLoading] = useState(false);
-  const [selectedDetail, setSelectedDetail] = useState(null);
-  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-  const [providers, setProviders] = useState([]);
-  const [providerNameCache, setProviderNameCache] = useState(null);
-  // Filter input state (not applied until Search clicked)
-  const [filterProvider, setFilterProvider] = useState("");
-  const [filterStart, setFilterStart] = useState("");
-  const [filterEnd, setFilterEnd] = useState("");
-  // Applied filter state (triggers fetch)
-  const [appliedProvider, setAppliedProvider] = useState("");
-  const [appliedStart, setAppliedStart] = useState("");
-  const [appliedEnd, setAppliedEnd] = useState("");
-  // Guard: don't fetch until default filter is ready
-  const [isFilterReady, setIsFilterReady] = useState(false);
-
-  // Set default date range to last 7 days after mount (avoid SSR mismatch)
-  useEffect(() => {
-    // Small delay to let server warm up before first fetch
-    const t = setTimeout(() => {
-      const d = new Date();
-      d.setDate(d.getDate() - 7);
-      const weekAgo = d.toISOString().slice(0, 16);
-      setFilterStart(weekAgo);
-      setAppliedStart(weekAgo);
-      setIsFilterReady(true);
-    }, 500);
-    return () => clearTimeout(t);
-  }, []);
-
-  // Fetch providers once
-  useEffect(() => {
-    let cancelled = false;
-    fetch("/api/usage/providers")
-      .then(r => r.json())
-      .then(async d => {
-        if (cancelled) return;
-        setProviders(d.providers || []);
-        const cache = await fetchProviderNames();
-        if (!cancelled) setProviderNameCache(cache.providerNameCache);
-      })
-      .catch(() => {});
-    return () => { cancelled = true; };
-  }, []);
-
-  // Fetch details — guarded by isFilterReady to prevent unfiltered initial request
-  useEffect(() => {
-    if (!isFilterReady) return;
-    if (!appliedStart) return;
-
-    let cancelled = false;
-    setLoading(true);
-    const params = new URLSearchParams({ page: String(page), pageSize: String(pageSize) });
-    if (appliedProvider) params.append("provider", appliedProvider);
-    params.append("startDate", appliedStart);
-    if (appliedEnd) params.append("endDate", appliedEnd);
-
-    fetch(`/api/usage/request-details?${params}`)
-      .then(r => {
-        if (!r.ok) throw new Error(`HTTP ${r.status}`);
-        return r.json();
-      })
-      .then(data => {
-        if (cancelled) return;
-        setDetails(Array.isArray(data.details) ? data.details : []);
-        setTotalItems(data.pagination?.totalItems ?? 0);
-        setTotalPages(data.pagination?.totalPages ?? 0);
-      })
-      .catch(err => {
-        if (!cancelled) console.error("request-details fetch failed:", err);
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
-    return () => { cancelled = true; };
-  }, [isFilterReady, page, pageSize, appliedProvider, appliedStart, appliedEnd]);
-
-  const handleApplyFilters = () => {
-    setPage(1);
-    setAppliedProvider(filterProvider);
-    setAppliedStart(filterStart);
-    setAppliedEnd(filterEnd);
-  };
-
-  const handleClearFilters = () => {
-    const weekAgo = (() => { const d = new Date(); d.setDate(d.getDate() - 7); return d.toISOString().slice(0, 16); })();
-    setFilterProvider(""); setFilterStart(weekAgo); setFilterEnd("");
-    setPage(1);
-    setAppliedProvider(""); setAppliedStart(weekAgo); setAppliedEnd("");
-  };
-
-  const handlePageChange = (newPage) => setPage(newPage);
-  const handlePageSizeChange = (newSize) => { setPageSize(newSize); setPage(1); };
-  const handleViewDetail = (detail) => {
-    setSelectedDetail(detail);
-    setIsDrawerOpen(true);
-    // Fetch full detail (list strips heavy request/response bodies)
-    fetch(`/api/usage/request-details/${encodeURIComponent(detail.id)}`)
-      .then(r => r.ok ? r.json() : null)
-      .then(data => { if (data?.detail) setSelectedDetail(data.detail); })
-      .catch(() => {});
-  };
-
-  const pagination = { page, pageSize, totalItems, totalPages, hasNext: page < totalPages, hasPrev: page > 1 };
-
+function RequestFilters({ filterProvider, setFilterProvider, filterStart, setFilterStart, filterEnd, setFilterEnd, providers, cn, handleClear }) {
   return (
-    <div className="flex min-w-0 flex-col gap-6">
       <Card padding="md">
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <div className="flex min-w-0 flex-col gap-2">
@@ -248,39 +137,13 @@ export default function RequestDetailsTab() {
           </div>
         </div>
       </Card>
+  );
+}
 
-      <Card padding="none">
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[880px]">
-            <thead>
-              <tr className="border-b border-black/5 dark:border-white/5">
-                <th className="text-left p-4 text-sm font-semibold text-text-main">Timestamp</th>
-                <th className="text-left p-4 text-sm font-semibold text-text-main">Model</th>
-                <th className="text-left p-4 text-sm font-semibold text-text-main">Provider</th>
-                <th className="text-right p-4 text-sm font-semibold text-text-main">Input Tokens</th>
-                <th className="text-right p-4 text-sm font-semibold text-text-main">Output Tokens</th>
-                <th className="text-left p-4 text-sm font-semibold text-text-main">Latency</th>
-                <th className="text-center p-4 text-sm font-semibold text-text-main">Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {loading || !isFilterReady ? (
-                <tr>
-                  <td colSpan="7" className="p-8 text-center text-text-muted">
-                    <div className="flex items-center justify-center gap-2">
-                      <span className="material-symbols-outlined animate-spin text-[20px]">progress_activity</span>
-                      Loading...
-                    </div>
-                  </td>
-                </tr>
-              ) : details.length === 0 ? (
-                <tr>
-                  <td colSpan="7" className="p-8 text-center text-text-muted">
-                    No request details found
-                  </td>
-                </tr>
-              ) : (
-                details.map((detail, index) => (
+
+function RequestRow({ detail, index, setSelectedRequest }) {
+  return (
+    <tr
                   <tr
                     key={`${detail.id}-${index}`}
                     className="border-b border-black/5 dark:border-white/5 last:border-b-0 hover:bg-black/[0.02] dark:hover:bg-white/[0.02] transition-colors"
@@ -317,7 +180,158 @@ export default function RequestDetailsTab() {
                         Detail
                       </Button>
                     </td>
-                  </tr>
+  );
+}
+
+
+export default function RequestDetailsTab() {
+  const [details, setDetails] = useState([]);
+  const [totalItems, setTotalItems] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
+  const [loading, setLoading] = useState(false);
+  const [selectedDetail, setSelectedDetail] = useState(null);
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [providers, setProviders] = useState([]);
+  const [providerNameCache, setProviderNameCache] = useState(null);
+  // Filter input state (not applied until Search clicked)
+  const [filterProvider, setFilterProvider] = useState("");
+  const [filterStart, setFilterStart] = useState("");
+  const [filterEnd, setFilterEnd] = useState("");
+  // Applied filter state (triggers fetch)
+  const [appliedProvider, setAppliedProvider] = useState("");
+  const [appliedStart, setAppliedStart] = useState("");
+  const [appliedEnd, setAppliedEnd] = useState("");
+  // Guard: don't fetch until default filter is ready
+  const [isFilterReady, setIsFilterReady] = useState(false);
+
+  // Set default date range to last 7 days after mount (avoid SSR mismatch)
+  useEffect(() => {
+    // Small delay to let server warm up before first fetch
+    const t = setTimeout(() => {
+      const d = new Date();
+      d.setDate(d.getDate() - 7);
+      const weekAgo = d.toISOString().slice(0, 16);
+      setFilterStart(weekAgo);
+      setAppliedStart(weekAgo);
+      setIsFilterReady(true);
+    }, 500);
+    return () => clearTimeout(t);
+  }, []);
+
+  // Fetch providers once
+  useEffect(() => {
+    const controller = new AbortController();
+    fetch("/api/usage/providers", { signal: controller.signal })
+      .then(r => r.json())
+      .then(async d => {
+        if (controller.signal.aborted) return;
+        setProviders(d.providers || []);
+        const cache = await fetchProviderNames();
+        if (!controller.signal.aborted) setProviderNameCache(cache.providerNameCache);
+      })
+      .catch(() => {});
+    return () => controller.abort();
+  }, []);
+
+  // Fetch details — guarded by isFilterReady to prevent unfiltered initial request
+  useEffect(() => {
+    if (!isFilterReady) return;
+    if (!appliedStart) return;
+
+    const controller = new AbortController();
+    setLoading(true);
+    const params = new URLSearchParams({ page: String(page), pageSize: String(pageSize) });
+    if (appliedProvider) params.append("provider", appliedProvider);
+    params.append("startDate", appliedStart);
+    if (appliedEnd) params.append("endDate", appliedEnd);
+
+    fetch(`/api/usage/request-details?${params}`, { signal: controller.signal })
+      .then(r => {
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        return r.json();
+      })
+      .then(data => {
+        if (controller.signal.aborted) return;
+        setDetails(Array.isArray(data.details) ? data.details : []);
+        setTotalItems(data.pagination?.totalItems ?? 0);
+        setTotalPages(data.pagination?.totalPages ?? 0);
+      })
+      .catch(err => {
+        if (!controller.signal.aborted) console.error("request-details fetch failed:", err);
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setLoading(false);
+      });
+    return () => controller.abort();
+  }, [isFilterReady, page, pageSize, appliedProvider, appliedStart, appliedEnd]);
+
+  const handleApplyFilters = () => {
+    setPage(1);
+    setAppliedProvider(filterProvider);
+    setAppliedStart(filterStart);
+    setAppliedEnd(filterEnd);
+  };
+
+  const handleClearFilters = () => {
+    const weekAgo = (() => { const d = new Date(); d.setDate(d.getDate() - 7); return d.toISOString().slice(0, 16); })();
+    setFilterProvider(""); setFilterStart(weekAgo); setFilterEnd("");
+    setPage(1);
+    setAppliedProvider(""); setAppliedStart(weekAgo); setAppliedEnd("");
+  };
+
+  const handlePageChange = (newPage) => setPage(newPage);
+  const handlePageSizeChange = (newSize) => { setPageSize(newSize); setPage(1); };
+  const handleViewDetail = (detail) => {
+    setSelectedDetail(detail);
+    setIsDrawerOpen(true);
+    // Fetch full detail (list strips heavy request/response bodies)
+    fetch(`/api/usage/request-details/${encodeURIComponent(detail.id)}`)
+      .then(r => r.ok ? r.json() : null)
+      .then(data => { if (data?.detail) setSelectedDetail(data.detail); })
+      .catch(() => {});
+  };
+
+  const pagination = { page, pageSize, totalItems, totalPages, hasNext: page < totalPages, hasPrev: page > 1 };
+
+  return (
+    <div className="flex min-w-0 flex-col gap-6">
+      <RequestFilters filterProvider={filterProvider} setFilterProvider={setFilterProvider} filterStart={filterStart} setFilterStart={setFilterStart} filterEnd={filterEnd} setFilterEnd={setFilterEnd} providers={providers} cn={cn} handleClear={handleClear} />
+
+      <Card padding="none">
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[880px]">
+            <thead>
+              <tr className="border-b border-black/5 dark:border-white/5">
+                <th className="text-left p-4 text-sm font-semibold text-text-main">Timestamp</th>
+                <th className="text-left p-4 text-sm font-semibold text-text-main">Model</th>
+                <th className="text-left p-4 text-sm font-semibold text-text-main">Provider</th>
+                <th className="text-right p-4 text-sm font-semibold text-text-main">Input Tokens</th>
+                <th className="text-right p-4 text-sm font-semibold text-text-main">Output Tokens</th>
+                <th className="text-left p-4 text-sm font-semibold text-text-main">Latency</th>
+                <th className="text-center p-4 text-sm font-semibold text-text-main">Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {loading || !isFilterReady ? (
+                <tr>
+                  <td colSpan="7" className="p-8 text-center text-text-muted">
+                    <div className="flex items-center justify-center gap-2">
+                      <span className="material-symbols-outlined animate-spin text-[20px]">progress_activity</span>
+                      Loading...
+                    </div>
+                  </td>
+                </tr>
+              ) : details.length === 0 ? (
+                <tr>
+                  <td colSpan="7" className="p-8 text-center text-text-muted">
+                    No request details found
+                  </td>
+                </tr>
+              ) : (
+                details.map((detail, index) => (
+                  <RequestRow key={index} detail={detail} index={index} setSelectedRequest={setSelectedRequest} />
                 ))
               )}
             </tbody>

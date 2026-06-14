@@ -58,9 +58,10 @@ export async function PUT(request, { params }) {
       updates.apiType = apiType;
     }
 
-    const updated = await updateProviderNode(id, updates);
-
-    const connections = await getProviderConnections({ provider: id });
+    const [updated, connections] = await Promise.all([
+      updateProviderNode(id, updates),
+      getProviderConnections({ provider: id }),
+    ]);
     await Promise.all(connections.map((connection) => (
       updateProviderConnection(connection.id, {
         providerSpecificData: {

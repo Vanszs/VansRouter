@@ -50,7 +50,7 @@ function parseOpenAIMessages(messages) {
     if (typeof msg.content === "string") {
       content = msg.content;
     } else if (Array.isArray(msg.content)) {
-      content = msg.content.filter((c) => c.type === "text").map((c) => String(c.text || "")).join(" ");
+      content = msg.content.reduce((acc, c) => c.type === "text" ? acc + (acc ? " " : "") + String(c.text || "") : acc, "");
     }
     if (!content.trim()) continue;
     extracted.push({ role, text: content });
@@ -70,31 +70,24 @@ function parseOpenAIMessages(messages) {
 }
 
 async function* readGrokNdjsonEvents(body, signal) {
-  const reader = body.getReader();
   const decoder = new TextDecoder();
   let buffer = "";
-  try {
+  for await (const value of body) {
+    if (signal?.aborted) return;
+    buffer += decoder.decode(value, { stream: true });
     while (true) {
-      if (signal?.aborted) return;
-      const { value, done } = await reader.read();
-      if (done) break;
-      buffer += decoder.decode(value, { stream: true });
-      while (true) {
-        const idx = buffer.indexOf("\n");
-        if (idx < 0) break;
-        const line = buffer.slice(0, idx).trim();
-        buffer = buffer.slice(idx + 1);
-        if (!line) continue;
-        try { yield JSON.parse(line); } catch { /* skip */ }
-      }
+      const idx = buffer.indexOf("\n");
+      if (idx < 0) break;
+      const line = buffer.slice(0, idx).trim();
+      buffer = buffer.slice(idx + 1);
+      if (!line) continue;
+      try { yield JSON.parse(line); } catch { /* skip */ }
     }
-    buffer += decoder.decode();
-    const remaining = buffer.trim();
-    if (remaining) {
-      try { yield JSON.parse(remaining); } catch { /* skip */ }
-    }
-  } finally {
-    reader.releaseLock();
+  }
+  buffer += decoder.decode();
+  const remaining = buffer.trim();
+  if (remaining) {
+    try { yield JSON.parse(remaining); } catch { /* skip */ }
   }
 }
 
@@ -342,4 +335,3 @@ export class GrokWebExecutor extends BaseExecutor {
   }
 }
 
-export default GrokWebExecutor;

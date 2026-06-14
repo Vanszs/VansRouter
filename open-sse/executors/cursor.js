@@ -562,12 +562,13 @@ export class CursorExecutor extends BaseExecutor {
         if (toolCallsMap.has(tc.id)) {
           // Accumulate arguments for existing tool call
           const existing = toolCallsMap.get(tc.id);
+          const tcFnArgs = tc.function.arguments;
           const oldArgsLen = existing.function.arguments.length;
-          existing.function.arguments += tc.function.arguments;
+          existing.function.arguments += tcFnArgs;
           existing.isLast = tc.isLast;
 
           // Stream the delta arguments
-          if (tc.function.arguments) {
+          if (tcFnArgs) {
             emittedToolCallIds.add(tc.id);
             chunks.push(
               `data: ${JSON.stringify({
@@ -586,7 +587,7 @@ export class CursorExecutor extends BaseExecutor {
                           type: "function",
                           function: {
                             name: tc.function.name,
-                            arguments: tc.function.arguments
+                            arguments: tcFnArgs
                           }
                         }
                       ]
@@ -792,4 +793,3 @@ export class CursorExecutor extends BaseExecutor {
   }
 }
 
-export default CursorExecutor;

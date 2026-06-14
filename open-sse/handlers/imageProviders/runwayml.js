@@ -30,15 +30,19 @@ export default {
     if (!id) throw new Error("Runway: no task id returned");
     const taskUrl = `${BASE_URL}/tasks/${id}`;
     const deadline = Date.now() + POLL_TIMEOUT_MS;
-    while (Date.now() < deadline) {
+
+    async function poll() {
       await sleep(POLL_INTERVAL_MS);
       const r = await fetch(taskUrl, { headers });
       if (!r.ok) throw new Error(`Runway status ${r.status}`);
       const s = await r.json();
       if (s.status === "SUCCEEDED") return s;
       if (s.status === "FAILED" || s.status === "CANCELLED") throw new Error(s.failure || "Runway task failed");
+      if (Date.now() >= deadline) throw new Error("Runway polling timeout");
+      return poll();
     }
-    throw new Error("Runway polling timeout");
+
+    return poll();
   },
   normalize: (responseBody) => {
     const outputs = Array.isArray(responseBody.output) ? responseBody.output : [];

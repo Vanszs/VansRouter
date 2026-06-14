@@ -64,8 +64,10 @@ export async function PUT(request, { params }) {
 export async function DELETE(request, { params }) {
   try {
     const { id } = await params;
-    const prev = await getComboById(id);
-    const success = await deleteCombo(id);
+    const [prev, success] = await Promise.all([
+      getComboById(id),
+      deleteCombo(id),
+    ]);
     
     if (!success) {
       return NextResponse.json({ error: "Combo not found" }, { status: 404 });

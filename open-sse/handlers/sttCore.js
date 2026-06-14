@@ -73,16 +73,23 @@ async function transcribeAssemblyAI(cfg, file, model, token) {
   if (!sub.ok) return upstreamError(sub);
   const { id } = await sub.json();
 
-  const start = Date.now();
-  while (Date.now() - start < 120_000) {
+  const deadline = Date.now() + 120_000;
+
+  async function poll() {
     await new Promise((r) => setTimeout(r, 2000));
-    const poll = await fetch(`${cfg.baseUrl}/${id}`, { headers: auth });
-    if (!poll.ok) continue;
-    const r = await poll.json();
+    const pollRes = await fetch(`${cfg.baseUrl}/${id}`, { headers: auth });
+    if (!pollRes.ok) {
+      if (Date.now() >= deadline) return createErrorResult(504, "AssemblyAI timeout after 120s");
+      return poll();
+    }
+    const r = await pollRes.json();
     if (r.status === "completed") return jsonResponse({ text: r.text || "" });
     if (r.status === "error") return createErrorResult(500, r.error || "AssemblyAI failed");
+    if (Date.now() >= deadline) return createErrorResult(504, "AssemblyAI timeout after 120s");
+    return poll();
   }
-  return createErrorResult(504, "AssemblyAI timeout after 120s");
+
+  return poll();
 }
 
 // Nvidia NIM: multipart, normalize response
@@ -118,7 +125,7 @@ async function transcribeGemini(cfg, file, model, token, formData) {
   });
   if (!res.ok) return upstreamError(res);
   const data = await res.json();
-  const text = data?.candidates?.[0]?.content?.parts?.map((p) => p.text).filter(Boolean).join("") || "";
+  const text = data?.candidates?.[0]?.content?.parts?.flatMap((p) => p.text ? [p.text] : []).join("") || "";
   return jsonResponse({ text });
 }
 

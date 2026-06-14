@@ -63,8 +63,10 @@ function lookup(fullId) {
     ["embedding", providerInfo?.embeddingConfig],
   ];
   for (const [kind, cfg] of subs) {
-    const sm = cfg?.models?.find((x) => x.id === modelId);
-    if (sm) return buildInfo({ alias, providerId, model: sm, kind, providerInfo });
+    if (!cfg?.models) continue;
+    for (const sm of cfg.models) {
+      if (sm.id === modelId) return buildInfo({ alias, providerId, model: sm, kind, providerInfo });
+    }
   }
 
   // Web search/fetch — virtual model id "search" / "fetch"

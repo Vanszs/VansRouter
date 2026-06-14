@@ -1,0 +1,82 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - complementary [ref=e4]:
+      - link "VansAI v0.4.80" [ref=e10] [cursor=pointer]:
+        - /url: /dashboard
+        - img [ref=e12]
+        - generic [ref=e17]:
+          - heading "VansAI" [level=1] [ref=e18]
+          - generic [ref=e19]: v0.4.80
+      - navigation [ref=e20]:
+        - link "api Endpoint" [ref=e21] [cursor=pointer]:
+          - /url: /dashboard/endpoint
+          - generic [ref=e22]: api
+          - generic [ref=e23]: Endpoint
+        - link "dns Providers" [ref=e24] [cursor=pointer]:
+          - /url: /dashboard/providers
+          - generic [ref=e25]: dns
+          - generic [ref=e26]: Providers
+        - link "layers Combos" [ref=e27] [cursor=pointer]:
+          - /url: /dashboard/combos
+          - generic [ref=e28]: layers
+          - generic [ref=e29]: Combos
+        - link "bar_chart Usage" [ref=e30] [cursor=pointer]:
+          - /url: /dashboard/usage
+          - generic [ref=e31]: bar_chart
+          - generic [ref=e32]: Usage
+        - link "data_usage Quota Tracker" [ref=e33] [cursor=pointer]:
+          - /url: /dashboard/quota
+          - generic [ref=e34]: data_usage
+          - generic [ref=e35]: Quota Tracker
+        - link "security MITM" [ref=e36] [cursor=pointer]:
+          - /url: /dashboard/mitm
+          - generic [ref=e37]: security
+          - generic [ref=e38]: MITM
+        - link "terminal CLI Tools" [ref=e39] [cursor=pointer]:
+          - /url: /dashboard/cli-tools
+          - generic [ref=e40]: terminal
+          - generic [ref=e41]: CLI Tools
+        - generic [ref=e42]:
+          - paragraph [ref=e43]: System
+          - button "perm_media Media Providers expand_more" [ref=e44]:
+            - generic [ref=e45]: perm_media
+            - generic [ref=e46]: Media Providers
+            - generic [ref=e47]: expand_more
+          - link "lan Proxy Pools" [ref=e48] [cursor=pointer]:
+            - /url: /dashboard/proxy-pools
+            - generic [ref=e49]: lan
+            - generic [ref=e50]: Proxy Pools
+          - link "extension Skills" [ref=e51] [cursor=pointer]:
+            - /url: /dashboard/skills
+            - generic [ref=e52]: extension
+            - generic [ref=e53]: Skills
+          - link "terminal Console Log" [ref=e54] [cursor=pointer]:
+            - /url: /dashboard/console-log
+            - generic [ref=e55]: terminal
+            - generic [ref=e56]: Console Log
+          - button "computer Remote" [ref=e57]:
+            - generic [ref=e58]: computer
+            - generic [ref=e59]: Remote
+          - link "settings Settings" [ref=e60] [cursor=pointer]:
+            - /url: /dashboard/profile
+            - generic [ref=e61]: settings
+            - generic [ref=e62]: Settings
+    - main [ref=e63]:
+      - generic [ref=e64]:
+        - generic [ref=e66]:
+          - generic [ref=e67]:
+            - generic [ref=e68]: api
+            - heading "Endpoint" [level=1] [ref=e69]
+          - paragraph [ref=e70]: API endpoint configuration
+        - generic [ref=e71]:
+          - button "Donate" [ref=e72]:
+            - generic [ref=e73]: volunteer_activism
+            - generic [ref=e74]: Donate
+          - button "Switch to dark mode" [ref=e75]:
+            - generic [ref=e76]: dark_mode
+          - button "🇺🇸" [ref=e77]:
+            - generic [ref=e78]: 🇺🇸
+          - button "grid_view" [ref=e80]:
+            - generic [ref=e81]: grid_view
+  - button "Open Next.js Dev Tools" [ref=e102] [cursor=pointer]:
+    - img [ref=e103]

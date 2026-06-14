@@ -163,6 +163,7 @@ function killTunnelByPidFile() {
   killByPidFile(path.join(tunnelDir, "tailscale.pid"));
 }
 
+// SECURITY: only matches localhost/127.0.0.1 processes to kill stale tunnels — no remote exposure
 // Kill cloudflared whose --url targets this app's port (covers stale PID file case)
 function killCloudflaredByAppPort(appPort) {
   if (!appPort) return [];

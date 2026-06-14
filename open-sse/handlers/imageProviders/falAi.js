@@ -19,7 +19,8 @@ export default {
   async parseResponse(response, { headers }) {
     const { status_url, response_url } = await response.json();
     const deadline = Date.now() + POLL_TIMEOUT_MS;
-    while (Date.now() < deadline) {
+
+    async function poll() {
       await sleep(POLL_INTERVAL_MS);
       const r = await fetch(status_url, { headers });
       if (!r.ok) throw new Error(`Fal status ${r.status}`);
@@ -29,8 +30,11 @@ export default {
         return await fr.json();
       }
       if (s.status === "FAILED") throw new Error(s.error || "Fal generation failed");
+      if (Date.now() >= deadline) throw new Error("Fal polling timeout");
+      return poll();
     }
-    throw new Error("Fal polling timeout");
+
+    return poll();
   },
   normalize: (responseBody) => {
     const images = Array.isArray(responseBody.images)

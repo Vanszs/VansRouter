@@ -1,254 +1,22 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback, useReducer } from "react";
 import { Card, Button, ModelSelectModal, ManualConfigModal } from "@/shared/components";
 import Image from "next/image";
 import BaseUrlSelect from "./BaseUrlSelect";
 import ApiKeySelect from "./ApiKeySelect";
 import { matchKnownEndpoint } from "./cliEndpointMatch";
 
-export default function OpenClawToolCard({
-  tool,
-  isExpanded,
-  onToggle,
-  baseUrl,
-  hasActiveProviders,
-  apiKeys,
-  activeProviders,
-  cloudEnabled,
-  initialStatus,
-  tunnelEnabled,
-  tunnelPublicUrl,
-  tailscaleEnabled,
-  tailscaleUrl,
-}) {
-  const [openclawStatus, setOpenclawStatus] = useState(initialStatus || null);
-  const [checkingOpenclaw, setCheckingOpenclaw] = useState(false);
-  const [applying, setApplying] = useState(false);
-  const [restoring, setRestoring] = useState(false);
-  const [message, setMessage] = useState(null);
-  const [selectedApiKey, setSelectedApiKey] = useState("");
-  const [selectedModel, setSelectedModel] = useState("");
-  const [agentModels, setAgentModels] = useState({}); // { [agentId]: modelId }
-  const [agentModalFor, setAgentModalFor] = useState(null); // agentId opening modal
-  const [modalOpen, setModalOpen] = useState(false);
-  const [modelAliases, setModelAliases] = useState({});
-  const [showManualConfigModal, setShowManualConfigModal] = useState(false);
-  const [customBaseUrl, setCustomBaseUrl] = useState("");
-  const hasInitializedModel = useRef(false);
+const normalizeLocalhost = (url) => url.replace("://localhost", "://127.0.0.1");
+function getLocalBaseUrl() {
+  if (typeof window !== "undefined") {
+    return normalizeLocalhost(window.location.origin);
+  }
+  return "http://127.0.0.1:20128";
+}
 
-  const getConfigStatus = () => {
-    if (!openclawStatus?.installed) return null;
-    const currentProvider = openclawStatus.settings?.models?.providers?.["9router"];
-    if (!currentProvider) return "not_configured";
-    return matchKnownEndpoint(currentProvider.baseUrl, { tunnelPublicUrl, tailscaleUrl }) ? "configured" : "other";
-  };
-
-  const configStatus = getConfigStatus();
-
-  useEffect(() => {
-    if (apiKeys?.length > 0 && !selectedApiKey) {
-      setSelectedApiKey(apiKeys[0].key);
-    }
-  }, [apiKeys, selectedApiKey]);
-
-  useEffect(() => {
-    if (initialStatus) setOpenclawStatus(initialStatus);
-  }, [initialStatus]);
-
-  useEffect(() => {
-    if (isExpanded && !openclawStatus) {
-      checkOpenclawStatus();
-      fetchModelAliases();
-    }
-    if (isExpanded) fetchModelAliases();
-  }, [isExpanded]);
-
-  const fetchModelAliases = async () => {
-    try {
-      const res = await fetch("/api/models/alias");
-      const data = await res.json();
-      if (res.ok) setModelAliases(data.aliases || {});
-    } catch (error) {
-      console.log("Error fetching model aliases:", error);
-    }
-  };
-
-  useEffect(() => {
-    if (openclawStatus?.installed && !hasInitializedModel.current) {
-      hasInitializedModel.current = true;
-      const provider = openclawStatus.settings?.models?.providers?.["9router"];
-      if (provider) {
-        const primaryModel = openclawStatus.settings?.agents?.defaults?.model?.primary;
-        if (primaryModel) setSelectedModel(primaryModel.replace("9router/", ""));
-        if (provider.apiKey && apiKeys?.some(k => k.key === provider.apiKey)) {
-          setSelectedApiKey(provider.apiKey);
-        }
-      }
-      // Init per-agent models from enriched agents list
-      const agentList = openclawStatus.agents || [];
-      const initAgentModels = {};
-      agentList.forEach((agent) => {
-        if (agent.currentModel) initAgentModels[agent.id] = agent.currentModel;
-      });
-      setAgentModels(initAgentModels);
-    }
-  }, [openclawStatus, apiKeys]);
-
-  const checkOpenclawStatus = async () => {
-    setCheckingOpenclaw(true);
-    try {
-      const res = await fetch("/api/cli-tools/openclaw-settings");
-      const data = await res.json();
-      setOpenclawStatus(data);
-    } catch (error) {
-      setOpenclawStatus({ installed: false, error: error.message });
-    } finally {
-      setCheckingOpenclaw(false);
-    }
-  };
-
-  const normalizeLocalhost = (url) => url.replace("://localhost", "://127.0.0.1");
-
-  const getLocalBaseUrl = () => {
-    if (typeof window !== "undefined") {
-      return normalizeLocalhost(window.location.origin);
-    }
-    return "http://127.0.0.1:20128";
-  };
-
-  const getEffectiveBaseUrl = () => {
-    const url = customBaseUrl || getLocalBaseUrl();
-    return url.endsWith("/v1") ? url : `${url}/v1`;
-  };
-
-  const getDisplayUrl = () => {
-    const url = customBaseUrl || getLocalBaseUrl();
-    return url.endsWith("/v1") ? url : `${url}/v1`;
-  };
-
-  const handleApplySettings = async () => {
-    setApplying(true);
-    setMessage(null);
-    try {
-      const keyToUse = selectedApiKey?.trim()
-        || (apiKeys?.length > 0 ? apiKeys[0].key : null)
-        || (!cloudEnabled ? "sk_9router" : null);
-
-      const res = await fetch("/api/cli-tools/openclaw-settings", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          baseUrl: getEffectiveBaseUrl(),
-          apiKey: keyToUse,
-          model: selectedModel,
-          agentModels,
-        }),
-      });
-      const data = await res.json();
-      if (res.ok) {
-        setMessage({ type: "success", text: "Settings applied successfully!" });
-        checkOpenclawStatus();
-      } else {
-        setMessage({ type: "error", text: data.error || "Failed to apply settings" });
-      }
-    } catch (error) {
-      setMessage({ type: "error", text: error.message });
-    } finally {
-      setApplying(false);
-    }
-  };
-
-  const handleResetSettings = async () => {
-    setRestoring(true);
-    setMessage(null);
-    try {
-      const res = await fetch("/api/cli-tools/openclaw-settings", { method: "DELETE" });
-      const data = await res.json();
-      if (res.ok) {
-        setMessage({ type: "success", text: "Settings reset successfully!" });
-        setSelectedModel("");
-        setSelectedApiKey("");
-        checkOpenclawStatus();
-      } else {
-        setMessage({ type: "error", text: data.error || "Failed to reset settings" });
-      }
-    } catch (error) {
-      setMessage({ type: "error", text: error.message });
-    } finally {
-      setRestoring(false);
-    }
-  };
-
-  const handleModelSelect = (model) => {
-    if (agentModalFor) {
-      setAgentModels(prev => ({ ...prev, [agentModalFor]: model.value }));
-      setAgentModalFor(null);
-    } else {
-      setSelectedModel(model.value);
-    }
-    setModalOpen(false);
-  };
-
-  const getManualConfigs = () => {
-    const keyToUse = (selectedApiKey && selectedApiKey.trim())
-      ? selectedApiKey
-      : (!cloudEnabled ? "sk_9router" : "<API_KEY_FROM_DASHBOARD>");
-
-    const settingsContent = {
-      agents: {
-        defaults: {
-          model: {
-            primary: `9router/${selectedModel || "provider/model-id"}`,
-          },
-        },
-      },
-      models: {
-        providers: {
-          "9router": {
-            baseUrl: getEffectiveBaseUrl(),
-            apiKey: keyToUse,
-            api: "openai-completions",
-            models: [
-              {
-                id: selectedModel || "provider/model-id",
-                name: (selectedModel || "provider/model-id").split("/").pop(),
-              },
-            ],
-          },
-        },
-      },
-    };
-
-    return [
-      {
-        filename: "~/.openclaw/openclaw.json",
-        content: JSON.stringify(settingsContent, null, 2),
-      },
-    ];
-  };
-
+function OpenClawExpandedSection({ agentModels, applying, checkingOpenclaw, customBaseUrl, getDisplayUrl, handleApplySettings, handleResetSettings, message, openclawStatus, provider, restoring, selectedApiKey, selectedModel, setAgentModalFor, setAgentModels, setCustomBaseUrl, setModalOpen, setSelectedApiKey, setSelectedModel, setShowManualConfigModal }) {
   return (
-    <Card padding="xs" className="overflow-hidden">
-      <div className="flex items-start justify-between gap-3 hover:cursor-pointer sm:items-center" onClick={onToggle}>
-        <div className="flex min-w-0 items-center gap-3">
-          <div className="size-8 flex items-center justify-center shrink-0">
-            <Image src="/providers/openclaw.png" alt={tool.name} width={32} height={32} className="size-8 object-contain rounded-lg" sizes="32px" onError={(e) => { e.target.style.display = "none"; }} />
-          </div>
-          <div className="min-w-0">
-            <div className="flex min-w-0 flex-wrap items-center gap-2">
-              <h3 className="font-medium text-sm">{tool.name}</h3>
-              {configStatus === "configured" && <span className="px-1.5 py-0.5 text-[10px] font-medium bg-green-500/10 text-green-600 dark:text-green-400 rounded-full">Connected</span>}
-              {configStatus === "not_configured" && <span className="px-1.5 py-0.5 text-[10px] font-medium bg-yellow-500/10 text-yellow-600 dark:text-yellow-400 rounded-full">Not configured</span>}
-              {configStatus === "other" && <span className="px-1.5 py-0.5 text-[10px] font-medium bg-blue-500/10 text-blue-600 dark:text-blue-400 rounded-full">Other</span>}
-            </div>
-            <p className="text-xs text-text-muted truncate">{tool.description}</p>
-          </div>
-        </div>
-        <span className={`material-symbols-outlined text-text-muted text-[20px] transition-transform ${isExpanded ? "rotate-180" : ""}`}>expand_more</span>
-      </div>
-
-      {isExpanded && (
         <div className="mt-4 pt-4 border-t border-border flex flex-col gap-4">
           {checkingOpenclaw && (
             <div className="flex items-center gap-2 text-text-muted">
@@ -318,14 +86,14 @@ export default function OpenClawToolCard({
                   <span className="text-xs font-semibold text-text-main sm:text-right sm:text-sm">Default Model</span>
                   <span className="material-symbols-outlined hidden text-text-muted text-[14px] sm:inline">arrow_forward</span>
                   <div className="relative w-full min-w-0">
-                    <input type="text" value={selectedModel} onChange={(e) => setSelectedModel(e.target.value)} placeholder="provider/model-id" className="w-full min-w-0 pl-2 pr-7 py-2 bg-surface rounded border border-border text-xs focus:outline-none focus:ring-1 focus:ring-primary/50 sm:py-1.5" />
-                    {selectedModel && <button onClick={() => setSelectedModel("")} className="absolute right-1 top-1/2 -translate-y-1/2 p-0.5 text-text-muted hover:text-red-500 rounded transition-colors" title="Clear"><span className="material-symbols-outlined text-[14px]">close</span></button>}
+                    <input type="text" value={selectedModel} onChange={(e) => setSelectedModel(e.target.value)} aria-label="Model ID" placeholder="provider/model-id" className="w-full min-w-0 pl-2 pr-7 py-2 bg-surface rounded border border-border text-xs focus:outline-none focus:ring-1 focus:ring-primary/50 sm:py-1.5" />
+                    {selectedModel && <button type="button" onClick={() => setSelectedModel("")} className="absolute right-1 top-1/2 -translate-y-1/2 p-0.5 text-text-muted hover:text-red-500 rounded transition-colors" title="Clear"><span className="material-symbols-outlined text-[14px]">close</span></button>}
                   </div>
-                  <button onClick={() => { setAgentModalFor(null); setModalOpen(true); }} disabled={!hasActiveProviders} className={`w-full sm:w-auto rounded border px-2 py-2 text-xs transition-colors sm:py-1.5 whitespace-nowrap sm:shrink-0 ${hasActiveProviders ? "bg-surface border-border text-text-main hover:border-primary cursor-pointer" : "opacity-50 cursor-not-allowed border-border"}`}>Select</button>
+                  <button type="button" onClick={() => { setAgentModalFor(null); setModalOpen(true); }} disabled={!hasActiveProviders} className={`w-full sm:w-auto rounded border px-2 py-2 text-xs transition-colors sm:py-1.5 whitespace-nowrap sm:shrink-0 ${hasActiveProviders ? "bg-surface border-border text-text-main hover:border-primary cursor-pointer" : "opacity-50 cursor-not-allowed border-border"}`}>Select</button>
                 </div>
 
                 {/* Per-agent model overrides */}
-                {(openclawStatus.agents || []).filter(a => a.agentDir).map((agent) => (
+                {(openclawStatus.agents || []).flatMap(agent => !agent.agentDir ? [] : [(
                   <div key={agent.id} className="flex items-center gap-2 pl-4">
                     <span className="w-32 shrink-0 text-xs text-primary text-right truncate" title={agent.name || agent.id}>Agent {agent.name || agent.id}</span>
                     <span className="material-symbols-outlined hidden text-text-muted text-[14px] sm:inline">arrow_forward</span>
@@ -335,13 +103,14 @@ export default function OpenClawToolCard({
                         value={agentModels[agent.id] || ""}
                         onChange={(e) => setAgentModels(prev => ({ ...prev, [agent.id]: e.target.value }))}
                         placeholder={`default (${selectedModel || "provider/model-id"})`}
+                        aria-label={`Model for agent ${agent.name || agent.id}`}
                         className="w-full min-w-0 pl-2 pr-7 py-2 bg-surface rounded border border-border text-xs focus:outline-none focus:ring-1 focus:ring-primary/50 sm:py-1.5"
                       />
-                      {agentModels[agent.id] && <button onClick={() => setAgentModels(prev => ({ ...prev, [agent.id]: "" }))} className="absolute right-1 top-1/2 -translate-y-1/2 p-0.5 text-text-muted hover:text-red-500 rounded transition-colors" title="Clear"><span className="material-symbols-outlined text-[14px]">close</span></button>}
+                      {agentModels[agent.id] && <button type="button" onClick={() => setAgentModels(prev => ({ ...prev, [agent.id]: "" }))} className="absolute right-1 top-1/2 -translate-y-1/2 p-0.5 text-text-muted hover:text-red-500 rounded transition-colors" title="Clear"><span className="material-symbols-outlined text-[14px]">close</span></button>}
                     </div>
-                    <button onClick={() => { setAgentModalFor(agent.id); setModalOpen(true); }} disabled={!hasActiveProviders} className={`w-full sm:w-auto rounded border px-2 py-2 text-xs transition-colors sm:py-1.5 whitespace-nowrap sm:shrink-0 ${hasActiveProviders ? "bg-surface border-border text-text-main hover:border-primary cursor-pointer" : "opacity-50 cursor-not-allowed border-border"}`}>Select</button>
+                    <button type="button" onClick={() => { setAgentModalFor(agent.id); setModalOpen(true); }} disabled={!hasActiveProviders} className={`w-full sm:w-auto rounded border px-2 py-2 text-xs transition-colors sm:py-1.5 whitespace-nowrap sm:shrink-0 ${hasActiveProviders ? "bg-surface border-border text-text-main hover:border-primary cursor-pointer" : "opacity-50 cursor-not-allowed border-border"}`}>Select</button>
                   </div>
-                ))}
+                )])}
               </div>
 
               {message && (
@@ -365,7 +134,248 @@ export default function OpenClawToolCard({
             </>
           )}
         </div>
-      )}
+  );
+}
+
+
+export default function OpenClawToolCard({
+  tool,
+  isExpanded,
+  onToggle,
+  baseUrl,
+  hasActiveProviders,
+  apiKeys,
+  activeProviders,
+  cloudEnabled,
+  initialStatus,
+  tunnelEnabled,
+  tunnelPublicUrl,
+  tailscaleEnabled,
+  tailscaleUrl,
+}) {
+  const [state, dispatch] = useReducer((s, a) => {
+    switch (a.type) {
+      case "CHECK_START": return { ...s, checking: true };
+      case "CHECK_DONE": return { ...s, status: a.data, checking: false };
+      case "APPLY_START": return { ...s, applying: true, message: null };
+      case "APPLY_DONE": return { ...s, applying: false, message: a.message };
+      case "RESTORE_START": return { ...s, restoring: true, message: null };
+      case "RESTORE_DONE": return { ...s, restoring: false, message: a.message };
+      default: return s;
+    }
+  }, { status: initialStatus || null, checking: false, applying: false, restoring: false, message: null });
+  const openclawStatus = state.status;
+  const checkingOpenclaw = state.checking;
+  const { applying, restoring, message } = state;
+  const [selectedApiKeyOverride, setSelectedApiKey] = useState(null);
+  const selectedApiKey = selectedApiKeyOverride ?? (apiKeys?.length > 0 ? apiKeys[0].key : "");
+  const [selectedModel, setSelectedModel] = useState("");
+  const [agentModels, setAgentModels] = useState({}); // { [agentId]: modelId }
+  const [agentModalFor, setAgentModalFor] = useState(null); // agentId opening modal
+  const [modalOpen, setModalOpen] = useState(false);
+  const [modelAliases, setModelAliases] = useState({});
+  const [showManualConfigModal, setShowManualConfigModal] = useState(false);
+  const [customBaseUrl, setCustomBaseUrl] = useState("");
+  const hasInitializedModel = useRef(false);
+
+  const getConfigStatus = () => {
+    if (!openclawStatus?.installed) return null;
+    const currentProvider = openclawStatus.settings?.models?.providers?.["9router"];
+    if (!currentProvider) return "not_configured";
+    return matchKnownEndpoint(currentProvider.baseUrl, { tunnelPublicUrl, tailscaleUrl }) ? "configured" : "other";
+  };
+
+  const configStatus = getConfigStatus();
+
+  const fetchModelAliases = useCallback(async () => {
+    try {
+      const res = await fetch("/api/models/alias");
+      const data = await res.json();
+      if (res.ok) setModelAliases(data.aliases || {});
+    } catch (error) {
+      console.log("Error fetching model aliases:", error);
+    }
+  }, []);
+
+
+
+  const checkOpenclawStatus = useCallback(async () => {
+    dispatch({ type: "CHECK_START" });
+    try {
+      const res = await fetch("/api/cli-tools/openclaw-settings");
+      const data = await res.json();
+      dispatch({ type: "CHECK_DONE", data });
+    } catch (error) {
+      dispatch({ type: "CHECK_DONE", data: { installed: false, error: error.message } });
+    }
+  }, []);
+
+
+
+  const statusFetchedRef = useRef(!!initialStatus);
+  const aliasesFetchedRef = useRef(false);
+
+  const initializeCard = useCallback(async () => {
+    if (!statusFetchedRef.current) {
+      statusFetchedRef.current = true;
+      await checkOpenclawStatus();
+    }
+    if (!aliasesFetchedRef.current) {
+      aliasesFetchedRef.current = true;
+      await fetchModelAliases();
+    }
+  }, [checkOpenclawStatus, fetchModelAliases]);
+
+  const handleToggle = useCallback(() => {
+    if (!isExpanded) initializeCard();
+    onToggle();
+  }, [isExpanded, initializeCard, onToggle]);
+
+  useEffect(() => { initializeCard(); }, [initializeCard]);
+  if (openclawStatus?.installed && !hasInitializedModel.current) {
+    hasInitializedModel.current = true;
+    const provider = openclawStatus.settings?.models?.providers?.["9router"];
+    if (provider) {
+      const primaryModel = openclawStatus.settings?.agents?.defaults?.model?.primary;
+      if (primaryModel && !selectedModel) setSelectedModel(primaryModel.replace("9router/", ""));
+      if (provider.apiKey && apiKeys?.some(k => k.key === provider.apiKey) && !selectedApiKeyOverride) {
+        setSelectedApiKey(provider.apiKey);
+      }
+    }
+    // Init per-agent models from enriched agents list
+    const agentList = openclawStatus.agents || [];
+    const initAgentModels = {};
+    agentList.forEach((agent) => {
+      if (agent.currentModel) initAgentModels[agent.id] = agent.currentModel;
+    });
+    if (Object.keys(initAgentModels).length > 0) setAgentModels(initAgentModels);
+  }
+  const getEffectiveBaseUrl = () => {
+    const url = customBaseUrl || getLocalBaseUrl();
+    return url.endsWith("/v1") ? url : `${url}/v1`;
+  };
+
+  const getDisplayUrl = () => {
+    const url = customBaseUrl || getLocalBaseUrl();
+    return url.endsWith("/v1") ? url : `${url}/v1`;
+  };
+
+  const handleApplySettings = async () => {
+    dispatch({ type: "APPLY_START" });
+    try {
+      const keyToUse = selectedApiKey?.trim()
+        || (apiKeys?.length > 0 ? apiKeys[0].key : null)
+        || (!cloudEnabled ? "sk_9router" : null);
+
+      const res = await fetch("/api/cli-tools/openclaw-settings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          baseUrl: getEffectiveBaseUrl(),
+          apiKey: keyToUse,
+          model: selectedModel,
+          agentModels,
+        }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        dispatch({ type: "APPLY_DONE", message: { type: "success", text: "Settings applied successfully!" } });
+        checkOpenclawStatus();
+      } else {
+        dispatch({ type: "APPLY_DONE", message: { type: "error", text: data.error || "Failed to apply settings" } });
+      }
+    } catch (error) {
+      dispatch({ type: "APPLY_DONE", message: { type: "error", text: error.message } });
+    }
+  };
+
+  const handleResetSettings = async () => {
+    dispatch({ type: "RESTORE_START" });
+    try {
+      const res = await fetch("/api/cli-tools/openclaw-settings", { method: "DELETE" });
+      const data = await res.json();
+      if (res.ok) {
+        dispatch({ type: "RESTORE_DONE", message: { type: "success", text: "Settings reset successfully!" } });
+        setSelectedModel("");
+        setSelectedApiKey("");
+        checkOpenclawStatus();
+      } else {
+        dispatch({ type: "RESTORE_DONE", message: { type: "error", text: data.error || "Failed to reset settings" } });
+      }
+    } catch (error) {
+      dispatch({ type: "RESTORE_DONE", message: { type: "error", text: error.message } });
+    }
+  };
+
+  const handleModelSelect = (model) => {
+    if (agentModalFor) {
+      setAgentModels(prev => ({ ...prev, [agentModalFor]: model.value }));
+      setAgentModalFor(null);
+    } else {
+      setSelectedModel(model.value);
+    }
+    setModalOpen(false);
+  };
+
+  const getManualConfigs = () => {
+    const keyToUse = (selectedApiKey && selectedApiKey.trim())
+      ? selectedApiKey
+      : (!cloudEnabled ? "sk_9router" : "<API_KEY_FROM_DASHBOARD>");
+
+    const settingsContent = {
+      agents: {
+        defaults: {
+          model: {
+            primary: `9router/${selectedModel || "provider/model-id"}`,
+          },
+        },
+      },
+      models: {
+        providers: {
+          "9router": {
+            baseUrl: getEffectiveBaseUrl(),
+            apiKey: keyToUse,
+            api: "openai-completions",
+            models: [
+              {
+                id: selectedModel || "provider/model-id",
+                name: (selectedModel || "provider/model-id").split("/").pop(),
+              },
+            ],
+          },
+        },
+      },
+    };
+
+    return [
+      {
+        filename: "~/.openclaw/openclaw.json",
+        content: JSON.stringify(settingsContent, null, 2),
+      },
+    ];
+  };
+
+  return (
+    <Card padding="xs" className="overflow-hidden">
+      <button type="button" className="flex w-full items-start justify-between gap-3 hover:cursor-pointer sm:items-center text-left" onClick={handleToggle} aria-expanded={expanded} aria-label="Toggle section">
+        <div className="flex min-w-0 items-center gap-3">
+          <div className="size-8 flex items-center justify-center shrink-0">
+            <Image src="/providers/openclaw.png" alt={tool.name} width={32} height={32} className="size-8 object-contain rounded-lg" sizes="32px" onError={(e) => { e.target.style.display = "none"; }} />
+          </div>
+          <div className="min-w-0">
+            <div className="flex min-w-0 flex-wrap items-center gap-2">
+              <h3 className="font-medium text-sm">{tool.name}</h3>
+              {configStatus === "configured" && <span className="px-1.5 py-0.5 text-[10px] font-medium bg-green-500/10 text-green-600 dark:text-green-400 rounded-full">Connected</span>}
+              {configStatus === "not_configured" && <span className="px-1.5 py-0.5 text-[10px] font-medium bg-yellow-500/10 text-yellow-600 dark:text-yellow-400 rounded-full">Not configured</span>}
+              {configStatus === "other" && <span className="px-1.5 py-0.5 text-[10px] font-medium bg-blue-500/10 text-blue-600 dark:text-blue-400 rounded-full">Other</span>}
+            </div>
+            <p className="text-xs text-text-muted truncate">{tool.description}</p>
+          </div>
+        </div>
+        <span className={`material-symbols-outlined text-text-muted text-[20px] transition-transform ${isExpanded ? "rotate-180" : ""}`}>expand_more</span>
+      </button>
+
+      {isExpanded && <OpenClawExpandedSection agentModels={agentModels} applying={applying} checkingOpenclaw={checkingOpenclaw} customBaseUrl={customBaseUrl} getDisplayUrl={getDisplayUrl} handleApplySettings={handleApplySettings} handleResetSettings={handleResetSettings} message={message} openclawStatus={openclawStatus} provider={provider} restoring={restoring} selectedApiKey={selectedApiKey} selectedModel={selectedModel} setAgentModalFor={setAgentModalFor} setAgentModels={setAgentModels} setCustomBaseUrl={setCustomBaseUrl} setModalOpen={setModalOpen} setSelectedApiKey={setSelectedApiKey} setSelectedModel={setSelectedModel} setShowManualConfigModal={setShowManualConfigModal} />}
 
       <ModelSelectModal
         isOpen={modalOpen}

@@ -851,14 +851,14 @@ export function getDefaultModel(aliasOrId) {
   return models?.[0]?.id || null;
 }
 
-export function isValidModel(aliasOrId, modelId, passthroughProviders = new Set()) {
+function isValidModel(aliasOrId, modelId, passthroughProviders = new Set()) {
   if (passthroughProviders.has(aliasOrId)) return true;
   const models = PROVIDER_MODELS[aliasOrId];
   if (!models) return false;
   return models.some(m => m.id === modelId);
 }
 
-export function findModelName(aliasOrId, modelId) {
+function findModelName(aliasOrId, modelId) {
   const models = PROVIDER_MODELS[aliasOrId];
   if (!models) return modelId;
   const found = models.find(m => m.id === modelId);
@@ -889,7 +889,7 @@ export function getModelUpstreamId(aliasOrId, modelId) {
   return modelId;
 }
 
-export function getModelQuotaFamily(aliasOrId, modelId) {
+function getModelQuotaFamily(aliasOrId, modelId) {
   const models = PROVIDER_MODELS[aliasOrId];
   const found = models?.find(m => m.id === modelId);
   return found?.quotaFamily || "normal";

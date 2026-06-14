@@ -1,7 +1,7 @@
 // Gemini helper functions for translator
 
 // Unsupported JSON Schema constraints that should be removed for Antigravity
-export const UNSUPPORTED_SCHEMA_CONSTRAINTS = [
+const UNSUPPORTED_SCHEMA_CONSTRAINTS = new Set([
   // Basic constraints (not supported by Gemini API)
   "minLength", "maxLength", "exclusiveMinimum", "exclusiveMaximum",
   "pattern", "minItems", "maxItems", "format",
@@ -20,7 +20,7 @@ export const UNSUPPORTED_SCHEMA_CONSTRAINTS = [
   // UI/Styling properties (from Cursor tools - NOT JSON Schema standard)
   "cornerRadius", "fillColor", "fontFamily", "fontSize", "fontWeight",
   "gap", "padding", "strokeColor", "strokeThickness", "textColor"
-];
+]);
 
 // Default safety settings
 export const DEFAULT_SAFETY_SETTINGS = [
@@ -41,22 +41,25 @@ export function convertOpenAIContentToParts(content) {
     for (const item of content) {
       if (item.type === "text") {
         parts.push({ text: item.text });
-      } else if (item.type === "image_url" && item.image_url?.url?.startsWith("data:")) {
-        const url = item.image_url.url;
-        const commaIndex = url.indexOf(",");
-        if (commaIndex !== -1) {
-          const mimePart = url.substring(5, commaIndex); // skip "data:"
-          const data = url.substring(commaIndex + 1);
-          const mimeType = mimePart.split(";")[0];
+      } else if (item.type === "image_url") {
+        const imgUrlObj = item.image_url;
+        const imgUrl = imgUrlObj?.url;
+        if (imgUrl?.startsWith("data:")) {
+          const commaIndex = imgUrl.indexOf(",");
+          if (commaIndex !== -1) {
+            const mimePart = imgUrl.substring(5, commaIndex); // skip "data:"
+            const data = imgUrl.substring(commaIndex + 1);
+            const mimeType = mimePart.split(";")[0];
 
+            parts.push({
+              inlineData: { mime_type: mimeType, data: data }
+            });
+          }
+        } else if (imgUrl && (imgUrl.startsWith("http://") || imgUrl.startsWith("https://"))) {
           parts.push({
-            inlineData: { mime_type: mimeType, data: data }
+            fileData: { fileUri: imgUrl, mimeType: "image/*" }
           });
         }
-      } else if (item.type === "image_url" && item.image_url?.url && (item.image_url.url.startsWith("http://") || item.image_url.url.startsWith("https://"))) {
-        parts.push({
-          fileData: { fileUri: item.image_url.url, mimeType: "image/*" }
-        });
       } else if (item.type === "input_audio" && item.input_audio?.data) {
         const format = item.input_audio.format || "wav";
         const mimeType = format === "mp3" ? "audio/mpeg" : `audio/${format}`;
@@ -85,7 +88,7 @@ export function convertOpenAIContentToParts(content) {
 export function extractTextContent(content) {
   if (typeof content === "string") return content;
   if (Array.isArray(content)) {
-    return content.filter(c => c.type === "text").map(c => c.text).join("");
+    return content.reduce((acc, c) => c.type === "text" ? acc + c.text : acc, "");
   }
   return "";
 }
@@ -132,7 +135,7 @@ function removeUnsupportedKeywords(obj, keywords, isPropertiesBlock = false) {
   }
 
   for (const key of Object.keys(obj)) {
-    if (!isPropertiesBlock && (keywords.includes(key) || key.startsWith("x-"))) {
+    if (!isPropertiesBlock && (keywords.has(key) || key.startsWith("x-"))) {
       delete obj[key];
       continue;
     }
@@ -194,8 +197,10 @@ function mergeAllOf(obj) {
       }
       if (item.required && Array.isArray(item.required)) {
         if (!merged.required) merged.required = [];
+        if (!merged._requiredSet) merged._requiredSet = new Set();
         for (const req of item.required) {
-          if (!merged.required.includes(req)) {
+          if (!merged._requiredSet.has(req)) {
+            merged._requiredSet.add(req);
             merged.required.push(req);
           }
         }

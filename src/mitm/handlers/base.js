@@ -55,14 +55,13 @@ async function pipeSSE(routerRes, res, dumper) {
     return;
   }
 
-  const reader = routerRes.body.getReader();
   const decoder = new TextDecoder();
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) { if (dumper) dumper.end(); res.end(); break; }
+  for await (const value of routerRes.body) {
     if (dumper) dumper.writeChunk(value);
     res.write(decoder.decode(value, { stream: true }));
   }
+  if (dumper) dumper.end();
+  res.end();
 }
 
 /**
@@ -86,14 +85,10 @@ async function pipeTransformedSSE(routerRes, res, transformFn, state) {
     return;
   }
 
-  const reader = routerRes.body.getReader();
   const decoder = new TextDecoder("utf-8", { fatal: false });
   let buffer = "";
 
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) break;
-
+  for await (const value of routerRes.body) {
     buffer += decoder.decode(value, { stream: true });
     const lines = buffer.split("\n");
     buffer = lines.pop() || "";
@@ -167,14 +162,10 @@ async function pipeTransformedEventStream(routerRes, res, transformFn, state) {
     return;
   }
 
-  const reader = routerRes.body.getReader();
   const decoder = new TextDecoder("utf-8", { fatal: false });
   let buffer = "";
 
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) break;
-
+  for await (const value of routerRes.body) {
     buffer += decoder.decode(value, { stream: true });
     const lines = buffer.split("\n");
     buffer = lines.pop() || "";

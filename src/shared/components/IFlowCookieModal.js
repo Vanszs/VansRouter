@@ -91,10 +91,11 @@ export default function IFlowCookieModal({ isOpen, onSuccess, onClose }) {
             </div>
 
             <div className="space-y-2">
-              <label className="block text-sm font-medium text-text-primary">
+              <label htmlFor="iflow-cookie-string" className="block text-sm font-medium text-text-primary">
                 Cookie String
               </label>
               <textarea
+                id="iflow-cookie-string"
                 value={cookie}
                 onChange={(e) => setCookie(e.target.value)}
                 placeholder="BXAuth=xxx; ..."

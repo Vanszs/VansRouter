@@ -64,7 +64,6 @@ export async function GET() {
       authPath: getAuthPath(),
     });
   } catch (error) {
-    console.log("Error checking kilo settings:", error);
     return NextResponse.json({ error: "Failed to check kilo settings" }, { status: 500 });
   }
 }
@@ -99,7 +98,6 @@ export async function POST(request) {
 
     return NextResponse.json({ success: true, message: "Kilo Code settings applied successfully!", authPath: getAuthPath() });
   } catch (error) {
-    console.log("Error updating kilo settings:", error);
     return NextResponse.json({ error: "Failed to update kilo settings" }, { status: 500 });
   }
 }
@@ -125,7 +123,6 @@ export async function DELETE() {
 
     return NextResponse.json({ success: true, message: "9Router settings removed from Kilo Code" });
   } catch (error) {
-    console.log("Error resetting kilo settings:", error);
     return NextResponse.json({ error: "Failed to reset kilo settings" }, { status: 500 });
   }
 }

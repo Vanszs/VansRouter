@@ -44,13 +44,10 @@ export default {
 
     // Parse SSE stream, accumulate base64 audio chunks
     const chunks = [];
-    const reader = res.body.getReader();
     const decoder = new TextDecoder();
     let buffer = "";
 
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
+    for await (const value of res.body) {
       buffer += decoder.decode(value, { stream: true });
       const lines = buffer.split("\n");
       buffer = lines.pop();

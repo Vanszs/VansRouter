@@ -8,7 +8,7 @@ import { ConfirmModal } from "./Modal";
 
 function MenuItem({ icon, label, onClick, trailing, danger }) {
   return (
-    <button
+    <button type="button"
       onClick={onClick}
       className={`flex items-center gap-3 w-full px-4 py-2.5 text-sm transition-colors ${
         danger
@@ -69,7 +69,7 @@ export default function HeaderMenu({ onLogout }) {
   return (
     <>
       <div className="relative" ref={menuRef}>
-        <button
+        <button type="button"
           onClick={() => setIsOpen((v) => !v)}
           className="flex items-center justify-center p-2 rounded-lg text-text-muted hover:text-text-main hover:bg-black/5 dark:hover:bg-white/5 transition-all"
           title="Menu"

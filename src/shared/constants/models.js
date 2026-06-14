@@ -3,14 +3,11 @@ export {
   PROVIDER_MODELS,
   getProviderModels,
   getDefaultModel,
-  isValidModel as isValidModelCore,
-  findModelName,
   getModelTargetFormat,
   getModelStrip,
   PROVIDER_ID_TO_ALIAS,
   getModelsByProviderId,
   getModelUpstreamId,
-  getModelQuotaFamily
 } from "open-sse/config/providerModels.js";
 
 import { AI_PROVIDERS, isOpenAICompatibleProvider } from "./providers.js";
@@ -18,13 +15,14 @@ import { PROVIDER_MODELS as MODELS } from "open-sse/config/providerModels.js";
 
 // Providers that accept any model (passthrough)
 const PASSTHROUGH_PROVIDERS = new Set(
-  Object.entries(AI_PROVIDERS)
-    .filter(([, p]) => p.passthroughModels)
-    .map(([key]) => key)
+  Object.entries(AI_PROVIDERS).reduce((acc, [key, p]) => {
+    if (p.passthroughModels) acc.push(key);
+    return acc;
+  }, [])
 );
 
 // Wrap isValidModel with passthrough providers
-export function isValidModel(aliasOrId, modelId) {
+function isValidModel(aliasOrId, modelId) {
   if (isOpenAICompatibleProvider(aliasOrId)) return true;
   if (PASSTHROUGH_PROVIDERS.has(aliasOrId)) return true;
   const models = MODELS[aliasOrId];

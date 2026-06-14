@@ -3,13 +3,8 @@ import { createErrorResult } from "../utils/error.js";
 import { HTTP_STATUS } from "../config/runtimeConfig.js";
 import { getTtsAdapter, synthesizeViaConfig } from "./ttsProviders/index.js";
 
-// Re-export voice fetchers + voices APIs for backward compat with existing routes
-export {
-  VOICE_FETCHERS,
-  fetchEdgeTtsVoices,
-  fetchLocalDeviceVoices,
-  fetchElevenLabsVoices,
-} from "./ttsProviders/index.js";
+// Re-export voice fetchers for existing routes
+export { VOICE_FETCHERS } from "./ttsProviders/index.js";
 
 // ── Response Formatter (DRY) ───────────────────────────────────
 function createTtsResponse(base64Audio, format, responseFormat) {

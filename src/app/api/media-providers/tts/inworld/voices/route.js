@@ -27,6 +27,7 @@ export async function GET(request) {
     const voices = data.voices || [];
 
     const byLang = {};
+    const seenVoiceByLang = {};
     for (const v of voices) {
       // Each voice has `languages: ["en", "es", ...]`
       const langs = Array.isArray(v.languages) && v.languages.length ? v.languages : ["en"];
@@ -37,8 +38,10 @@ export async function GET(request) {
             name: (() => { try { return langNames.of(code); } catch { return code; } })(),
             voices: [],
           };
+          seenVoiceByLang[code] = new Set();
         }
-        if (!byLang[code].voices.find((x) => x.id === v.voiceId)) {
+        if (!seenVoiceByLang[code].has(v.voiceId)) {
+          seenVoiceByLang[code].add(v.voiceId);
           byLang[code].voices.push({
             id: v.voiceId,
             name: v.displayName || v.voiceId,

@@ -34,7 +34,7 @@ const GEMINI_VOICES = [
 ].map((id) => ({ id, name: id, type: "tts" }));
 
 // ── TTS Config (config-driven, single source of truth) ─────────────────────
-export const TTS_MODELS_CONFIG = {
+const TTS_MODELS_CONFIG = {
   openai: {
     models: [
       { id: "gpt-4o-mini-tts", name: "GPT-4o Mini TTS", type: "tts" },

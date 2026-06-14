@@ -1,3 +1,5 @@
+// NOTE: driver.js → migrate.js → metaStore.js → driver.js forms a static import cycle,
+// but all cross-module references use dynamic `await import()` which breaks the cycle at runtime.
 import { ensureDirs, DATA_FILE } from "./paths.js";
 
 // Use global to survive Next.js dev hot-reload (module state resets on reload)

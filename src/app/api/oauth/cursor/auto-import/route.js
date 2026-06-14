@@ -76,10 +76,10 @@ const normalize = (value) => {
  * Extract tokens via better-sqlite3 (bundled dependency).
  * This is the preferred strategy — no external CLI required.
  */
-function extractTokensViaBetterSqlite(dbPath) {
-  // Dynamic require so the route stays importable even if native bindings fail
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const Database = require("better-sqlite3");
+async function extractTokensViaBetterSqlite(dbPath) {
+  // Dynamic import so the route stays importable even if native bindings fail,
+  // and so the dependency is mockable in tests (require() bypasses vi.mock).
+  const { default: Database } = await import("better-sqlite3");
   const db = new Database(dbPath, { readonly: true, fileMustExist: true });
 
   const query = (key) => {
@@ -169,6 +169,28 @@ async function extractTokensViaCLI(dbPath) {
   return { accessToken, machineId };
 }
 
+/** Resolve cursor DB path from candidate locations */
+async function resolveDbPath() {
+  const candidates = getCandidatePaths(process.platform);
+  const results = await Promise.all(
+    candidates.map(candidate => access(candidate, constants.R_OK).then(() => candidate, () => null))
+  );
+  return results.find(Boolean) || null;
+}
+
+/** Check if Cursor is installed on Linux (binary or .desktop file) */
+async function isCursorInstalledLinux() {
+  try {
+    await execFileAsync("which", ["cursor"], { timeout: 5000 });
+    return true;
+  } catch {
+    try {
+      await access(join(homedir(), ".local/share/applications/cursor.desktop"), constants.R_OK);
+      return true;
+    } catch { return false; }
+  }
+}
+
 /**
  * GET /api/oauth/cursor/auto-import
  * Auto-detect and extract Cursor tokens from local SQLite database.
@@ -177,20 +199,10 @@ async function extractTokensViaCLI(dbPath) {
 export async function GET() {
   try {
     const platform = process.platform;
-    const candidates = getCandidatePaths(platform);
-
-    let dbPath = null;
-    for (const candidate of candidates) {
-      try {
-        await access(candidate, constants.R_OK);
-        dbPath = candidate;
-        break;
-      } catch {
-        // Try next candidate
-      }
-    }
+    const dbPath = await resolveDbPath();
 
     if (!dbPath) {
+      const candidates = getCandidatePaths(platform);
       return NextResponse.json({
         found: false,
         error: `Cursor database not found. Checked locations:\n${candidates.join("\n")}\n\nMake sure Cursor IDE is installed and opened at least once.`,
@@ -199,17 +211,7 @@ export async function GET() {
 
     // On Linux, verify Cursor is actually installed (not just leftover config)
     if (platform === "linux") {
-      let cursorInstalled = false;
-      try {
-        await execFileAsync("which", ["cursor"], { timeout: 5000 });
-        cursorInstalled = true;
-      } catch {
-        try {
-          const desktopFile = join(homedir(), ".local/share/applications/cursor.desktop");
-          await access(desktopFile, constants.R_OK);
-          cursorInstalled = true;
-        } catch { /* not found */ }
-      }
+      const cursorInstalled = await isCursorInstalledLinux();
       if (!cursorInstalled) {
         return NextResponse.json({
           found: false,
@@ -220,7 +222,7 @@ export async function GET() {
 
     // Strategy 1: better-sqlite3 (bundled — no external tools required)
     try {
-      const tokens = extractTokensViaBetterSqlite(dbPath);
+      const tokens = await extractTokensViaBetterSqlite(dbPath);
       if (tokens.accessToken && tokens.machineId) {
         return NextResponse.json({
           found: true,

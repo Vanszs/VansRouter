@@ -90,7 +90,7 @@ export function startLocalServer(onCallback, fixedPort = null) {
  * @param {number} timeoutMs - Timeout in milliseconds
  * @returns {Promise<Object>} - Callback params
  */
-export function waitForCallback(timeoutMs = 300000) {
+function waitForCallback(timeoutMs = 300000) {
   return new Promise((resolve, reject) => {
     let resolved = false;
 

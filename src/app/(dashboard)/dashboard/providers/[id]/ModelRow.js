@@ -28,7 +28,7 @@ export default function ModelRow({ model, fullModel, alias, copied, onCopy, test
         </div>
         {onTest && (
           <div className="relative shrink-0 group/btn">
-            <button
+            <button type="button"
               onClick={onTest}
               disabled={isTesting}
               className={`rounded p-0.5 text-text-muted transition-opacity hover:bg-sidebar hover:text-primary ${isTesting ? "opacity-100" : "opacity-100 sm:opacity-0 sm:group-hover:opacity-100"}`}
@@ -43,7 +43,7 @@ export default function ModelRow({ model, fullModel, alias, copied, onCopy, test
           </div>
         )}
         <div className="relative shrink-0 group/btn">
-          <button
+          <button type="button"
             onClick={() => onCopy(fullModel, `model-${model.id}`)}
             className="rounded p-0.5 text-text-muted hover:bg-sidebar hover:text-primary"
           >
@@ -56,7 +56,7 @@ export default function ModelRow({ model, fullModel, alias, copied, onCopy, test
           </span>
         </div>
         {isCustom ? (
-          <button
+          <button type="button"
             onClick={onDeleteAlias}
             className="ml-auto rounded p-0.5 text-text-muted opacity-100 transition-opacity hover:bg-red-500/10 hover:text-red-500 sm:opacity-0 sm:group-hover:opacity-100"
             title="Remove custom model"
@@ -64,7 +64,7 @@ export default function ModelRow({ model, fullModel, alias, copied, onCopy, test
             <span className="material-symbols-outlined text-sm">close</span>
           </button>
         ) : onDisable ? (
-          <button
+          <button type="button"
             onClick={onDisable}
             className="ml-auto rounded p-0.5 text-text-muted opacity-100 transition-opacity hover:bg-red-500/10 hover:text-red-500 sm:opacity-0 sm:group-hover:opacity-100"
             title="Disable this model"

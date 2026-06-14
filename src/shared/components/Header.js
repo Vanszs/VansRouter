@@ -183,19 +183,19 @@ export default function Header({ onMenuClick, showMenuButton = true }) {
   const { title, description, icon, breadcrumbs } = pageInfo;
 
   useEffect(() => {
-    let cancelled = false;
+    const controller = new AbortController();
 
     async function loadAuthStatus() {
       try {
-        const res = await fetch("/api/auth/status", { cache: "no-store" });
+        const res = await fetch("/api/auth/status", { cache: "no-store", signal: controller.signal });
         if (!res.ok) return;
         const data = await res.json();
-        if (!cancelled) {
+        if (!controller.signal.aborted) {
           setDisplayName(data?.displayName || data?.oidcName || data?.oidcEmail || "");
           setLoginMethod(data?.loginMethod || "");
         }
       } catch {
-        if (!cancelled) {
+        if (!controller.signal.aborted) {
           setDisplayName("");
           setLoginMethod("");
         }
@@ -203,9 +203,7 @@ export default function Header({ onMenuClick, showMenuButton = true }) {
     }
 
     loadAuthStatus();
-    return () => {
-      cancelled = true;
-    };
+    return () => controller.abort();
   }, []);
 
   const handleLogout = async () => {
@@ -225,7 +223,7 @@ export default function Header({ onMenuClick, showMenuButton = true }) {
       {/* Mobile menu button */}
       <div className="flex items-center gap-3 lg:hidden shrink-0">
         {showMenuButton && (
-          <button
+          <button type="button"
             onClick={onMenuClick}
             className="text-text-main hover:text-primary transition-colors"
           >
@@ -307,7 +305,7 @@ export default function Header({ onMenuClick, showMenuButton = true }) {
           </div>
         )}
         <HeaderSearch />
-        <button
+        <button type="button"
           onClick={() => setDonateOpen(true)}
           className="flex items-center gap-1.5 px-3 h-8 rounded-lg border border-pink-500/30 bg-pink-500/10 text-pink-600 dark:text-pink-400 hover:bg-pink-500/20 transition-colors text-sm font-medium"
           aria-label="Donate"
@@ -342,6 +340,7 @@ function HeaderSearch() {
         value={query}
         onChange={(e) => setQuery(e.target.value)}
         placeholder={placeholder}
+        aria-label="Search"
         className="w-full h-8 pl-7 pr-7 rounded-lg border border-border bg-surface/60 text-sm focus:outline-none focus:border-primary/50 transition-colors"
       />
       {query && (

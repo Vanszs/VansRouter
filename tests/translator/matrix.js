@@ -58,7 +58,7 @@ export function buildProviderGroups() {
 }
 
 // CLI source formats that real clients emit (the "specials" the user cares about)
-export const CLI_SOURCE_FORMATS = [
+const CLI_SOURCE_FORMATS = [
   FORMATS.CLAUDE,
   FORMATS.OPENAI_RESPONSES,
   FORMATS.GEMINI,

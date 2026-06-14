@@ -113,15 +113,22 @@ async function waitForAppExit() {
 
   // Poll app port until free or max timeout
   const deadline = Date.now() + (waitMaxMs - waitMinMs);
-  while (Date.now() < deadline) {
+
+  async function pollPort() {
     const busy = await isAppPortBusy();
     if (!busy) {
       pushLog(`[updater] app port :${appPort} is free, proceeding`);
       return;
     }
+    if (Date.now() >= deadline) {
+      pushLog(`[updater] timeout waiting for app, proceeding anyway`);
+      return;
+    }
     await sleep(waitCheckMs);
+    return pollPort();
   }
-  pushLog(`[updater] timeout waiting for app, proceeding anyway`);
+
+  await pollPort();
 }
 
 function sleep(ms) {
@@ -186,6 +193,7 @@ async function waitForAppAndOpenBrowser() {
   while (Date.now() < deadline) {
     const busy = await isAppPortBusy();
     if (busy) {
+      // SECURITY: opens user's own browser to local dashboard — no remote exposure
       openBrowser(`http://localhost:${appPort}/dashboard`);
       pushLog(`[updater] app ready, opened dashboard`);
       return;

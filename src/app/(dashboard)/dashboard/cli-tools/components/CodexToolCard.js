@@ -1,220 +1,14 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback, useReducer } from "react";
 import { Card, Button, ModelSelectModal, ManualConfigModal } from "@/shared/components";
 import Image from "next/image";
 import BaseUrlSelect from "./BaseUrlSelect";
 import ApiKeySelect from "./ApiKeySelect";
 import { matchKnownEndpoint } from "./cliEndpointMatch";
 
-export default function CodexToolCard({ tool, isExpanded, onToggle, baseUrl, apiKeys, activeProviders, cloudEnabled, initialStatus, tunnelEnabled, tunnelPublicUrl, tailscaleEnabled, tailscaleUrl }) {
-  const [codexStatus, setCodexStatus] = useState(initialStatus || null);
-  const [checkingCodex, setCheckingCodex] = useState(false);
-  const [applying, setApplying] = useState(false);
-  const [restoring, setRestoring] = useState(false);
-  const [message, setMessage] = useState(null);
-  const [showInstallGuide, setShowInstallGuide] = useState(false);
-  const [selectedApiKey, setSelectedApiKey] = useState("");
-  const [selectedModel, setSelectedModel] = useState("");
-  const [subagentModel, setSubagentModel] = useState("");
-  const [modalOpen, setModalOpen] = useState(false);
-  const [subagentModalOpen, setSubagentModalOpen] = useState(false);
-  const [modelAliases, setModelAliases] = useState({});
-  const [showManualConfigModal, setShowManualConfigModal] = useState(false);
-  const [customBaseUrl, setCustomBaseUrl] = useState("");
-
-  useEffect(() => {
-    if (apiKeys?.length > 0 && !selectedApiKey) {
-      setSelectedApiKey(apiKeys[0].key);
-    }
-  }, [apiKeys, selectedApiKey]);
-
-  useEffect(() => {
-    if (initialStatus) setCodexStatus(initialStatus);
-  }, [initialStatus]);
-
-  useEffect(() => {
-    if (isExpanded && !codexStatus) {
-      checkCodexStatus();
-      fetchModelAliases();
-    }
-    if (isExpanded) fetchModelAliases();
-  }, [isExpanded]);
-
-  const fetchModelAliases = async () => {
-    try {
-      const res = await fetch("/api/models/alias");
-      const data = await res.json();
-      if (res.ok) setModelAliases(data.aliases || {});
-    } catch (error) {
-      console.log("Error fetching model aliases:", error);
-    }
-  };
-
-  // Parse model and subagent settings from config content
-  useEffect(() => {
-    if (codexStatus?.config) {
-      const modelMatch = codexStatus.config.match(/^model\s*=\s*"([^"]+)"/m);
-      if (modelMatch) setSelectedModel(modelMatch[1]);
-
-      // Parse subagent settings
-      const subagentModelMatch = codexStatus.config.match(/\[agents\.subagent\]\s*\n\s*model\s*=\s*"([^"]+)"/m);
-      if (subagentModelMatch) setSubagentModel(subagentModelMatch[1]);
-    }
-  }, [codexStatus]);
-
-  const getConfigStatus = () => {
-    if (!codexStatus?.installed) return null;
-    if (!codexStatus.config) return "not_configured";
-    const parsed = codexStatus.config.match(/base_url\s*=\s*"([^"]+)"/);
-    const currentUrl = parsed ? parsed[1] : "";
-    return matchKnownEndpoint(currentUrl, { tunnelPublicUrl, tailscaleUrl }) ? "configured" : "other";
-  };
-
-  const configStatus = getConfigStatus();
-
-  const getEffectiveBaseUrl = () => {
-    const url = customBaseUrl || `${baseUrl}/v1`;
-    // Ensure URL ends with /v1
-    return url.endsWith("/v1") ? url : `${url}/v1`;
-  };
-
-  const getDisplayUrl = () => customBaseUrl || `${baseUrl}/v1`;
-
-  const checkCodexStatus = async () => {
-    setCheckingCodex(true);
-    try {
-      const res = await fetch("/api/cli-tools/codex-settings");
-      const data = await res.json();
-      setCodexStatus(data);
-    } catch (error) {
-      setCodexStatus({ installed: false, error: error.message });
-    } finally {
-      setCheckingCodex(false);
-    }
-  };
-
-  const handleApplySettings = async () => {
-    setApplying(true);
-    setMessage(null);
-    try {
-      // Use sk_9router for localhost if no key, otherwise use selected key
-      const keyToUse = (selectedApiKey && selectedApiKey.trim())
-        ? selectedApiKey
-        : (!cloudEnabled ? "sk_9router" : selectedApiKey);
-
-      const res = await fetch("/api/cli-tools/codex-settings", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          baseUrl: getEffectiveBaseUrl(),
-          apiKey: keyToUse,
-          model: selectedModel,
-          subagentModel: subagentModel || selectedModel
-        }),
-      });
-      const data = await res.json();
-      if (res.ok) {
-        setMessage({ type: "success", text: "Settings applied successfully!" });
-        checkCodexStatus();
-      } else {
-        setMessage({ type: "error", text: data.error || "Failed to apply settings" });
-      }
-    } catch (error) {
-      setMessage({ type: "error", text: error.message });
-    } finally {
-      setApplying(false);
-    }
-  };
-
-  const handleResetSettings = async () => {
-    setRestoring(true);
-    setMessage(null);
-    try {
-      const res = await fetch("/api/cli-tools/codex-settings", { method: "DELETE" });
-      const data = await res.json();
-      if (res.ok) {
-        setMessage({ type: "success", text: "Settings reset successfully!" });
-        setSelectedModel("");
-        setSubagentModel("");
-        checkCodexStatus();
-      } else {
-        setMessage({ type: "error", text: data.error || "Failed to reset settings" });
-      }
-    } catch (error) {
-      setMessage({ type: "error", text: error.message });
-    } finally {
-      setRestoring(false);
-    }
-  };
-
-  const handleModelSelect = (model) => {
-    setSelectedModel(model.value);
-    // Auto-set subagent model if not set
-    if (!subagentModel) {
-      setSubagentModel(model.value);
-    }
-    setModalOpen(false);
-  };
-
-  const getManualConfigs = () => {
-    const keyToUse = (selectedApiKey && selectedApiKey.trim())
-      ? selectedApiKey
-      : (!cloudEnabled ? "sk_9router" : "<API_KEY_FROM_DASHBOARD>");
-
-    const effectiveSubagentModel = subagentModel || selectedModel;
-
-    const configContent = `# VansAI Configuration for Codex CLI
-model = "${selectedModel}"
-model_provider = "9router"
-
-[model_providers.9router]
-name = "VansAI"
-base_url = "${getEffectiveBaseUrl()}"
-wire_api = "responses"
-
-[agents.subagent]
-model = "${effectiveSubagentModel}"
-`;
-
-    const authContent = JSON.stringify({
-      auth_mode: "apikey",
-      OPENAI_API_KEY: keyToUse
-    }, null, 2);
-
-    return [
-      {
-        filename: "~/.codex/config.toml",
-        content: configContent,
-      },
-      {
-        filename: "~/.codex/auth.json",
-        content: authContent,
-      },
-    ];
-  };
-
+function CodexExpandedSection({ activeProviders, apiKeys, applying, checkingCodex, cloudEnabled, codexStatus, customBaseUrl, getDisplayUrl, handleApplySettings, handleResetSettings, message, parsed, restoring, selectedApiKey, selectedModel, setCustomBaseUrl, setModalOpen, setSelectedApiKey, setSelectedModel, setShowInstallGuide, setShowManualConfigModal, setSubagentModalOpen, setSubagentModel, showInstallGuide, subagentModel, tailscaleEnabled, tailscaleUrl, tool, tunnelEnabled, tunnelPublicUrl }) {
   return (
-    <Card padding="xs" className="overflow-hidden">
-      <div className="flex items-start justify-between gap-3 hover:cursor-pointer sm:items-center" onClick={onToggle}>
-        <div className="flex min-w-0 items-center gap-3">
-          <div className="size-8 flex items-center justify-center shrink-0">
-            <Image src="/providers/codex.png" alt={tool.name} width={32} height={32} className="size-8 object-contain rounded-lg" sizes="32px" onError={(e) => { e.target.style.display = "none"; }} />
-          </div>
-          <div className="min-w-0">
-            <div className="flex min-w-0 flex-wrap items-center gap-2">
-              <h3 className="font-medium text-sm">{tool.name}</h3>
-              {configStatus === "configured" && <span className="px-1.5 py-0.5 text-[10px] font-medium bg-green-500/10 text-green-600 dark:text-green-400 rounded-full">Connected</span>}
-              {configStatus === "not_configured" && <span className="px-1.5 py-0.5 text-[10px] font-medium bg-yellow-500/10 text-yellow-600 dark:text-yellow-400 rounded-full">Not configured</span>}
-              {configStatus === "other" && <span className="px-1.5 py-0.5 text-[10px] font-medium bg-blue-500/10 text-blue-600 dark:text-blue-400 rounded-full">Other</span>}
-            </div>
-            <p className="text-xs text-text-muted truncate">{tool.description}</p>
-          </div>
-        </div>
-        <span className={`material-symbols-outlined text-text-muted text-[20px] transition-transform ${isExpanded ? "rotate-180" : ""}`}>expand_more</span>
-      </div>
-
-      {isExpanded && (
         <div className="mt-4 pt-4 border-t border-border flex flex-col gap-4">
           {checkingCodex && (
             <div className="flex items-center gap-2 text-text-muted">
@@ -310,10 +104,10 @@ model = "${effectiveSubagentModel}"
                   <span className="text-xs font-semibold text-text-main sm:text-right sm:text-sm">Model</span>
                   <span className="material-symbols-outlined hidden text-text-muted text-[14px] sm:inline">arrow_forward</span>
                   <div className="relative w-full min-w-0">
-                    <input type="text" value={selectedModel} onChange={(e) => setSelectedModel(e.target.value)} placeholder="provider/model-id" className="w-full min-w-0 pl-2 pr-7 py-2 bg-surface rounded border border-border text-xs focus:outline-none focus:ring-1 focus:ring-primary/50 sm:py-1.5" />
-                    {selectedModel && <button onClick={() => setSelectedModel("")} className="absolute right-1 top-1/2 -translate-y-1/2 p-0.5 text-text-muted hover:text-red-500 rounded transition-colors" title="Clear"><span className="material-symbols-outlined text-[14px]">close</span></button>}
+                    <input type="text" value={selectedModel} onChange={(e) => setSelectedModel(e.target.value)} aria-label="Model ID" placeholder="provider/model-id" className="w-full min-w-0 pl-2 pr-7 py-2 bg-surface rounded border border-border text-xs focus:outline-none focus:ring-1 focus:ring-primary/50 sm:py-1.5" />
+                    {selectedModel && <button type="button" onClick={() => setSelectedModel("")} className="absolute right-1 top-1/2 -translate-y-1/2 p-0.5 text-text-muted hover:text-red-500 rounded transition-colors" title="Clear"><span className="material-symbols-outlined text-[14px]">close</span></button>}
                   </div>
-                  <button onClick={() => setModalOpen(true)} disabled={!activeProviders?.length} className={`w-full sm:w-auto rounded border px-2 py-2 text-xs transition-colors sm:py-1.5 whitespace-nowrap sm:shrink-0 ${activeProviders?.length ? "bg-surface border-border text-text-main hover:border-primary cursor-pointer" : "opacity-50 cursor-not-allowed border-border"}`}>Select Model</button>
+                  <button type="button" onClick={() => setModalOpen(true)} disabled={!activeProviders?.length} className={`w-full sm:w-auto rounded border px-2 py-2 text-xs transition-colors sm:py-1.5 whitespace-nowrap sm:shrink-0 ${activeProviders?.length ? "bg-surface border-border text-text-main hover:border-primary cursor-pointer" : "opacity-50 cursor-not-allowed border-border"}`}>Select Model</button>
                 </div>
 
                 {/* Subagent Model */}
@@ -326,10 +120,11 @@ model = "${effectiveSubagentModel}"
                       value={subagentModel}
                       onChange={(e) => setSubagentModel(e.target.value)}
                       placeholder={selectedModel || "provider/model-id (defaults to main model)"}
+                      aria-label="Subagent model"
                       className="w-full min-w-0 pl-2 pr-7 py-2 bg-surface rounded border border-border text-xs focus:outline-none focus:ring-1 focus:ring-primary/50 sm:py-1.5"
                     />
                     {subagentModel && (
-                      <button
+                      <button type="button"
                         onClick={() => setSubagentModel("")}
                         className="absolute right-1 top-1/2 -translate-y-1/2 p-0.5 text-text-muted hover:text-red-500 rounded transition-colors"
                         title="Clear (will use main model)"
@@ -338,7 +133,7 @@ model = "${effectiveSubagentModel}"
                       </button>
                     )}
                   </div>
-                  <button
+                  <button type="button"
                     onClick={() => setSubagentModalOpen(true)}
                     disabled={!activeProviders?.length}
                     className={`w-full sm:w-auto rounded border px-2 py-2 text-xs transition-colors sm:py-1.5 whitespace-nowrap sm:shrink-0 ${activeProviders?.length ? "bg-surface border-border text-text-main hover:border-primary cursor-pointer" : "opacity-50 cursor-not-allowed border-border"}`}
@@ -369,7 +164,228 @@ model = "${effectiveSubagentModel}"
             </>
           )}
         </div>
-      )}
+  );
+}
+
+
+export default function CodexToolCard({ tool, isExpanded, onToggle, baseUrl, apiKeys, activeProviders, cloudEnabled, initialStatus, tunnelEnabled, tunnelPublicUrl, tailscaleEnabled, tailscaleUrl }) {
+  const [state, dispatch] = useReducer((s, a) => {
+    switch (a.type) {
+      case "CHECK_START": return { ...s, checking: true };
+      case "CHECK_DONE": return { ...s, status: a.data, checking: false };
+      case "APPLY_START": return { ...s, applying: true, message: null };
+      case "APPLY_DONE": return { ...s, applying: false, message: a.message };
+      case "RESTORE_START": return { ...s, restoring: true, message: null };
+      case "RESTORE_DONE": return { ...s, restoring: false, message: a.message };
+      default: return s;
+    }
+  }, { status: initialStatus || null, checking: false, applying: false, restoring: false, message: null });
+  const codexStatus = state.status;
+  const checkingCodex = state.checking;
+  const { applying, restoring, message } = state;
+  const [showInstallGuide, setShowInstallGuide] = useState(false);
+  const [selectedApiKeyOverride, setSelectedApiKey] = useState(null);
+  const selectedApiKey = selectedApiKeyOverride ?? (apiKeys?.length > 0 ? apiKeys[0].key : "");
+  const [selectedModelOverride, setSelectedModel] = useState(null);
+  const selectedModel = selectedModelOverride ?? (() => {
+    if (codexStatus?.config) {
+      const modelMatch = codexStatus.config.match(/^model\s*=\s*"([^"]+)"/m);
+      if (modelMatch) return modelMatch[1];
+    }
+    return "";
+  })();
+  const [subagentModelOverride, setSubagentModel] = useState(null);
+  const subagentModel = subagentModelOverride ?? (() => {
+    if (codexStatus?.config) {
+      const subagentModelMatch = codexStatus.config.match(/\[agents\.subagent\]\s*\n\s*model\s*=\s*"([^"]+)"/m);
+      if (subagentModelMatch) return subagentModelMatch[1];
+    }
+    return "";
+  })();
+  const [modalOpen, setModalOpen] = useState(false);
+  const [subagentModalOpen, setSubagentModalOpen] = useState(false);
+  const [modelAliases, setModelAliases] = useState({});
+  const [showManualConfigModal, setShowManualConfigModal] = useState(false);
+  const [customBaseUrl, setCustomBaseUrl] = useState("");
+
+  const fetchModelAliases = useCallback(async () => {
+    try {
+      const res = await fetch("/api/models/alias");
+      const data = await res.json();
+      if (res.ok) setModelAliases(data.aliases || {});
+    } catch (error) {
+      console.log("Error fetching model aliases:", error);
+    }
+  }, []);
+
+
+
+  const checkCodexStatus = useCallback(async () => {
+    dispatch({ type: "CHECK_START" });
+    try {
+      const res = await fetch("/api/cli-tools/codex-settings");
+      const data = await res.json();
+      dispatch({ type: "CHECK_DONE", data });
+    } catch (error) {
+      dispatch({ type: "CHECK_DONE", data: { installed: false, error: error.message } });
+    }
+  }, []);
+
+
+
+  const statusFetchedRef = useRef(!!initialStatus);
+  const aliasesFetchedRef = useRef(false);
+
+  const initializeCard = useCallback(async () => {
+    if (!statusFetchedRef.current) {
+      statusFetchedRef.current = true;
+      await checkCodexStatus();
+    }
+    if (!aliasesFetchedRef.current) {
+      aliasesFetchedRef.current = true;
+      await fetchModelAliases();
+    }
+  }, [checkCodexStatus, fetchModelAliases]);
+
+  const handleToggle = useCallback(() => {
+    if (!isExpanded) initializeCard();
+    onToggle();
+  }, [isExpanded, initializeCard, onToggle]);
+
+  useEffect(() => { initializeCard(); }, [initializeCard]);
+
+  const getConfigStatus = () => {
+    if (!codexStatus?.installed) return null;
+    if (!codexStatus.config) return "not_configured";
+    const parsed = codexStatus.config.match(/base_url\s*=\s*"([^"]+)"/);
+    const currentUrl = parsed ? parsed[1] : "";
+    return matchKnownEndpoint(currentUrl, { tunnelPublicUrl, tailscaleUrl }) ? "configured" : "other";
+  };
+
+  const configStatus = getConfigStatus();
+
+  const getEffectiveBaseUrl = () => {
+    const url = customBaseUrl || `${baseUrl}/v1`;
+    // Ensure URL ends with /v1
+    return url.endsWith("/v1") ? url : `${url}/v1`;
+  };
+
+  const getDisplayUrl = () => customBaseUrl || `${baseUrl}/v1`;
+  const handleApplySettings = async () => {
+    dispatch({ type: "APPLY_START" });
+    try {
+      // Use sk_9router for localhost if no key, otherwise use selected key
+      const keyToUse = (selectedApiKey && selectedApiKey.trim())
+        ? selectedApiKey
+        : (!cloudEnabled ? "sk_9router" : selectedApiKey);
+
+      const res = await fetch("/api/cli-tools/codex-settings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          baseUrl: getEffectiveBaseUrl(),
+          apiKey: keyToUse,
+          model: selectedModel,
+          subagentModel: subagentModel || selectedModel
+        }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        dispatch({ type: "APPLY_DONE", message: { type: "success", text: "Settings applied successfully!" } });
+        checkCodexStatus();
+      } else {
+        dispatch({ type: "APPLY_DONE", message: { type: "error", text: data.error || "Failed to apply settings" } });
+      }
+    } catch (error) {
+      dispatch({ type: "APPLY_DONE", message: { type: "error", text: error.message } });
+    }
+  };
+
+  const handleResetSettings = async () => {
+    dispatch({ type: "RESTORE_START" });
+    try {
+      const res = await fetch("/api/cli-tools/codex-settings", { method: "DELETE" });
+      const data = await res.json();
+      if (res.ok) {
+        dispatch({ type: "RESTORE_DONE", message: { type: "success", text: "Settings reset successfully!" } });
+        setSelectedModel("");
+        setSubagentModel("");
+        checkCodexStatus();
+      } else {
+        dispatch({ type: "RESTORE_DONE", message: { type: "error", text: data.error || "Failed to reset settings" } });
+      }
+    } catch (error) {
+      dispatch({ type: "RESTORE_DONE", message: { type: "error", text: error.message } });
+    }
+  };
+
+  const handleModelSelect = (model) => {
+    setSelectedModel(model.value);
+    // Auto-set subagent model if not set
+    if (!subagentModel) {
+      setSubagentModel(model.value);
+    }
+    setModalOpen(false);
+  };
+
+  const getManualConfigs = () => {
+    const keyToUse = (selectedApiKey && selectedApiKey.trim())
+      ? selectedApiKey
+      : (!cloudEnabled ? "sk_9router" : "<API_KEY_FROM_DASHBOARD>");
+
+    const effectiveSubagentModel = subagentModel || selectedModel;
+
+    const configContent = `# VansAI Configuration for Codex CLI
+model = "${selectedModel}"
+model_provider = "9router"
+
+[model_providers.9router]
+name = "VansAI"
+base_url = "${getEffectiveBaseUrl()}"
+wire_api = "responses"
+
+[agents.subagent]
+model = "${effectiveSubagentModel}"
+`;
+
+    const authContent = JSON.stringify({
+      auth_mode: "apikey",
+      OPENAI_API_KEY: keyToUse
+    }, null, 2);
+
+    return [
+      {
+        filename: "~/.codex/config.toml",
+        content: configContent,
+      },
+      {
+        filename: "~/.codex/auth.json",
+        content: authContent,
+      },
+    ];
+  };
+
+  return (
+    <Card padding="xs" className="overflow-hidden">
+      <button type="button" className="flex w-full items-start justify-between gap-3 hover:cursor-pointer sm:items-center text-left" onClick={handleToggle} aria-expanded={expanded} aria-label="Toggle section">
+        <div className="flex min-w-0 items-center gap-3">
+          <div className="size-8 flex items-center justify-center shrink-0">
+            <Image src="/providers/codex.png" alt={tool.name} width={32} height={32} className="size-8 object-contain rounded-lg" sizes="32px" onError={(e) => { e.target.style.display = "none"; }} />
+          </div>
+          <div className="min-w-0">
+            <div className="flex min-w-0 flex-wrap items-center gap-2">
+              <h3 className="font-medium text-sm">{tool.name}</h3>
+              {configStatus === "configured" && <span className="px-1.5 py-0.5 text-[10px] font-medium bg-green-500/10 text-green-600 dark:text-green-400 rounded-full">Connected</span>}
+              {configStatus === "not_configured" && <span className="px-1.5 py-0.5 text-[10px] font-medium bg-yellow-500/10 text-yellow-600 dark:text-yellow-400 rounded-full">Not configured</span>}
+              {configStatus === "other" && <span className="px-1.5 py-0.5 text-[10px] font-medium bg-blue-500/10 text-blue-600 dark:text-blue-400 rounded-full">Other</span>}
+            </div>
+            <p className="text-xs text-text-muted truncate">{tool.description}</p>
+          </div>
+        </div>
+        <span className={`material-symbols-outlined text-text-muted text-[20px] transition-transform ${isExpanded ? "rotate-180" : ""}`}>expand_more</span>
+      </button>
+
+      {isExpanded && <CodexExpandedSection activeProviders={activeProviders} apiKeys={apiKeys} applying={applying} checkingCodex={checkingCodex} cloudEnabled={cloudEnabled} codexStatus={codexStatus} customBaseUrl={customBaseUrl} getDisplayUrl={getDisplayUrl} handleApplySettings={handleApplySettings} handleResetSettings={handleResetSettings} message={message} parsed={parsed} restoring={restoring} selectedApiKey={selectedApiKey} selectedModel={selectedModel} setCustomBaseUrl={setCustomBaseUrl} setModalOpen={setModalOpen} setSelectedApiKey={setSelectedApiKey} setSelectedModel={setSelectedModel} setShowInstallGuide={setShowInstallGuide} setShowManualConfigModal={setShowManualConfigModal} setSubagentModalOpen={setSubagentModalOpen} setSubagentModel={setSubagentModel} showInstallGuide={showInstallGuide} subagentModel={subagentModel} tailscaleEnabled={tailscaleEnabled} tailscaleUrl={tailscaleUrl} tool={tool} tunnelEnabled={tunnelEnabled} tunnelPublicUrl={tunnelPublicUrl} />}
 
       <ModelSelectModal
         isOpen={modalOpen}

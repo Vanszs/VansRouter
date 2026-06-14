@@ -457,19 +457,19 @@ export const PROVIDERS = {
   blackbox: { baseUrl: "https://api.blackbox.ai/chat/completions", format: "openai" },
 };
 
-export const OLLAMA_LOCAL_DEFAULT_HOST = "http://localhost:11434";
+const OLLAMA_LOCAL_DEFAULT_HOST = "http://localhost:11434";
 
 export function resolveOllamaLocalHost(credentials) {
   const raw = credentials?.providerSpecificData?.baseUrl?.trim();
   return (raw || OLLAMA_LOCAL_DEFAULT_HOST).replace(/\/$/, "");
 }
 
-export const XIAOMI_TOKENPLAN_REGIONS = {
+const XIAOMI_TOKENPLAN_REGIONS = {
   sgp: "https://token-plan-sgp.xiaomimimo.com/v1",
   cn: "https://token-plan-cn.xiaomimimo.com/v1",
   ams: "https://token-plan-ams.xiaomimimo.com/v1"
 };
-export const XIAOMI_TOKENPLAN_DEFAULT_REGION = "sgp";
+const XIAOMI_TOKENPLAN_DEFAULT_REGION = "sgp";
 
 export function resolveXiaomiTokenplanBaseUrl(credentials) {
   const region = credentials?.providerSpecificData?.region;

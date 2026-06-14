@@ -17,9 +17,10 @@ import * as log from "../utils/logger.js";
 
 // Derived from providers.js: any TTS provider not noAuth requires stored credentials
 const CREDENTIALED_PROVIDERS = new Set(
-  Object.entries(AI_PROVIDERS)
-    .filter(([, p]) => p.serviceKinds?.includes("tts") && !p.noAuth && p.ttsConfig?.authType !== "none")
-    .map(([id]) => id)
+  Object.entries(AI_PROVIDERS).reduce((acc, [id, p]) => {
+    if (p.serviceKinds?.includes("tts") && !p.noAuth && p.ttsConfig?.authType !== "none") acc.push(id);
+    return acc;
+  }, [])
 );
 
 export async function handleTts(request) {

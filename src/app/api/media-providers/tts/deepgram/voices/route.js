@@ -3,6 +3,8 @@ import { getProviderConnections } from "@/lib/localDb";
 
 const langNames = new Intl.DisplayNames(["en"], { type: "language" });
 
+const GENDER_TAGS = new Set(["masculine", "feminine"]);
+
 /**
  * GET /api/media-providers/tts/deepgram/voices[?lang=en]
  * Returns { languages, byLang } grouped by language code (same shape as edge-tts/elevenlabs/inworld)
@@ -28,6 +30,7 @@ export async function GET(request) {
     const ttsModels = data.tts || [];
 
     const byLang = {};
+    const seenVoiceByLang = {};
     for (const m of ttsModels) {
       // Deepgram returns `languages: ["en"]` or sometimes language inferred from canonical_name suffix
       const langs = Array.isArray(m.languages) && m.languages.length
@@ -40,13 +43,15 @@ export async function GET(request) {
             name: (() => { try { return langNames.of(code); } catch { return code; } })(),
             voices: [],
           };
+          seenVoiceByLang[code] = new Set();
         }
         const voiceId = m.canonical_name || m.name;
-        if (!byLang[code].voices.find((x) => x.id === voiceId)) {
+        if (!seenVoiceByLang[code].has(voiceId)) {
+          seenVoiceByLang[code].add(voiceId);
           byLang[code].voices.push({
             id: voiceId,
             name: m.name || voiceId,
-            gender: m.metadata?.tags?.find((t) => t === "masculine" || t === "feminine") || "",
+            gender: m.metadata?.tags?.find((t) => GENDER_TAGS.has(t)) || "",
             lang: code,
           });
         }

@@ -6,33 +6,33 @@
  */
 
 // xAI client_id for OAuth (PKCE public client)
-export const XAI_CLIENT_ID = "b1a00492-073a-47ea-816f-4c329264a828";
+const XAI_CLIENT_ID = "b1a00492-073a-47ea-816f-4c329264a828";
 
 // OAuth issuer + endpoints
-export const XAI_ISSUER = "https://auth.x.ai";
-export const XAI_AUTH_ENDPOINT_PATH = "/oauth2/authorize";
-export const XAI_TOKEN_ENDPOINT_PATH = "/oauth2/token";
-export const XAI_DISCOVERY_PATH = "/.well-known/openid-configuration";
+const XAI_ISSUER = "https://auth.x.ai";
+const XAI_AUTH_ENDPOINT_PATH = "/oauth2/authorize";
+const XAI_TOKEN_ENDPOINT_PATH = "/oauth2/token";
+const XAI_DISCOVERY_PATH = "/.well-known/openid-configuration";
 
 // Scopes (space-separated, matches Go upstream)
-export const XAI_SCOPE = "openid profile email offline_access grok-cli:access api:access";
+const XAI_SCOPE = "openid profile email offline_access grok-cli:access api:access";
 
 // xAI inference API base URL
-export const XAI_API_BASE = "https://api.x.ai/v1";
+const XAI_API_BASE = "https://api.x.ai/v1";
 
 // Loopback callback (PKCE)
-export const XAI_LOOPBACK_PORT = 56121;
-export const XAI_CALLBACK_PATH = "/callback";
-export const XAI_REDIRECT_URI = `http://127.0.0.1:${XAI_LOOPBACK_PORT}${XAI_CALLBACK_PATH}`;
+const XAI_LOOPBACK_PORT = 56121;
+const XAI_CALLBACK_PATH = "/callback";
+const XAI_REDIRECT_URI = `http://127.0.0.1:${XAI_LOOPBACK_PORT}${XAI_CALLBACK_PATH}`;
 
 // PKCE verifier length (bytes pre-base64url)
 export const XAI_PKCE_VERIFIER_BYTES = 96;
 
 // Refresh tokens this many seconds before expiry
-export const XAI_REFRESH_LEAD_SECONDS = 5 * 60;
+const XAI_REFRESH_LEAD_SECONDS = 5 * 60;
 
 // User-Agent — mirror Go grok-cli UA. Version is best-effort; xAI does not pin a specific version.
-export const XAI_USER_AGENT = "grok-cli/9router";
+const XAI_USER_AGENT = "grok-cli/9router";
 
 /**
  * Aggregated config object — mirrors the shape of CLAUDE_CONFIG/CODEX_CONFIG in oauth.js.

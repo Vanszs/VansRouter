@@ -1,4 +1,4 @@
-import { register } from "../index.js";
+import { register } from "../registry.js";
 import { FORMATS } from "../formats.js";
 import { CLAUDE_SYSTEM_PROMPT } from "../../config/appConstants.js";
 import { adjustMaxTokens } from "../helpers/maxTokensHelper.js";
@@ -92,10 +92,10 @@ export function openaiToClaudeRequest(model, body, stream) {
       const message = result.messages[i];
       if (message.role === "assistant" && Array.isArray(message.content) && message.content.length > 0) {
         // Find the last block that can have cache_control (not thinking blocks)
-        const validBlockTypes = ["text", "tool_use", "tool_result", "image"];
+        const validBlockTypes = new Set(["text", "tool_use", "tool_result", "image"]);
         for (let j = message.content.length - 1; j >= 0; j--) {
           const block = message.content[j];
-          if (validBlockTypes.includes(block.type)) {
+          if (validBlockTypes.has(block.type)) {
             block.cache_control = { type: "ephemeral" };
             break;
           }
@@ -327,7 +327,7 @@ function convertOpenAIToolChoice(choice) {
 function extractTextContent(content) {
   if (typeof content === "string") return content;
   if (Array.isArray(content)) {
-    return content.filter(c => c.type === "text").map(c => c.text).join("\n");
+    return content.reduce((acc, c) => c.type === "text" ? acc + (acc ? "\n" : "") + c.text : acc, "");
   }
   return "";
 }

@@ -81,11 +81,10 @@ export async function POST(request) {
       });
     }
 
-    const results = [];
-    for (const conn of connectionsToTest) {
+    const results = await Promise.all(connectionsToTest.map(async (conn) => {
       try {
         const data = await testSingleConnection(conn.id);
-        results.push({
+        return {
           provider: conn.provider,
           connectionId: conn.id,
           connectionName: conn.name || conn.email || conn.provider,
@@ -96,9 +95,9 @@ export async function POST(request) {
           diagnosis: data.diagnosis || null,
           statusCode: data.statusCode || null,
           testedAt: data.testedAt || new Date().toISOString(),
-        });
+        };
       } catch (error) {
-        results.push({
+        return {
           provider: conn.provider,
           connectionId: conn.id,
           connectionName: conn.name || conn.email || conn.provider,
@@ -109,9 +108,9 @@ export async function POST(request) {
           diagnosis: { type: "network_error", source: "local", code: null, message: error.message },
           statusCode: null,
           testedAt: new Date().toISOString(),
-        });
+        };
       }
-    }
+    }));
 
     return NextResponse.json({
       mode,

@@ -19,6 +19,7 @@ async function probeMcp(url) {
     const initRes = await fetch(url, {
       method: "POST",
       headers,
+      redirect: "manual",
       body: JSON.stringify({
         jsonrpc: "2.0", id: 1, method: "initialize",
         params: { protocolVersion: "2025-06-18", capabilities: {}, clientInfo: { name: "9router", version: "1" } },
@@ -41,6 +42,7 @@ async function probeMcp(url) {
     await fetch(url, {
       method: "POST",
       headers: listHeaders,
+      redirect: "manual",
       body: JSON.stringify({ jsonrpc: "2.0", method: "notifications/initialized", params: {} }),
       signal: ac.signal,
     }).catch(() => {});
@@ -49,6 +51,7 @@ async function probeMcp(url) {
     const listRes = await fetch(url, {
       method: "POST",
       headers: listHeaders,
+      redirect: "manual",
       body: JSON.stringify({ jsonrpc: "2.0", id: 2, method: "tools/list" }),
       signal: ac.signal,
     });

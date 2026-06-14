@@ -1,209 +1,24 @@
-"use client";
+import { cookies } from "next/headers";
+import { getSettings } from "@/lib/localDb";
+import { isOidcConfigured } from "@/lib/auth/oidc";
+import { getDashboardAuthSession } from "@/lib/auth/dashboardSession";
+import MasukClient from "./MasukClient";
 
-import { useState, useEffect } from "react";
-import { Card, Button, Input } from "@/shared/components";
-import { useRouter } from "next/navigation";
-
-export default function MasukPage() {
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
-  const [resetHint, setResetHint] = useState("");
-  const [retryAfter, setRetryAfter] = useState(0);
-  const [loading, setLoading] = useState(false);
-  const [hasPassword, setHasPassword] = useState(null);
-  const [authMode, setAuthMode] = useState("password");
-  const [oidcConfigured, setOidcConfigured] = useState(false);
-  const [oidcLoginLabel, setOidcLoginLabel] = useState("Masuk dengan OIDC");
-  const router = useRouter();
-
-  useEffect(() => {
-    if (retryAfter <= 0) return;
-    const id = setInterval(() => setRetryAfter((s) => (s > 0 ? s - 1 : 0)), 1000);
-    return () => clearInterval(id);
-  }, [retryAfter]);
-
-  useEffect(() => {
-    let mounted = true;
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 5000);
-    const baseUrl = typeof window !== "undefined" ? window.location.origin : "";
-
-    async function checkAuth() {
-      try {
-        const res = await fetch(`${baseUrl}/api/auth/status`, {
-          signal: controller.signal,
-        });
-        clearTimeout(timeoutId);
-        if (!mounted) return;
-
-        if (res.ok) {
-          const data = await res.json();
-          if (!mounted) return;
-          if (data.requireLogin === false) {
-            router.push("/dashboard");
-            router.refresh();
-            return;
-          }
-          setHasPassword(!!data.hasPassword);
-          setAuthMode(data.authMode || "password");
-          setOidcConfigured(data.oidcConfigured === true);
-          setOidcLoginLabel(data.oidcLoginLabel || "Masuk dengan OIDC");
-        } else {
-          if (mounted) setHasPassword(true);
-        }
-      } catch (err) {
-        clearTimeout(timeoutId);
-        if (mounted) setHasPassword(true);
-      }
-    }
-    checkAuth();
-    return () => {
-      mounted = false;
-      clearTimeout(timeoutId);
-      controller.abort();
+export default async function MasukPage() {
+  let initialAuth = { hasPassword: true, authMode: "password", oidcConfigured: false, oidcLoginLabel: "Masuk dengan OIDC", requireLogin: true };
+  try {
+    const settings = await getSettings();
+    const cookieStore = await cookies();
+    const session = await getDashboardAuthSession(cookieStore.get("auth_token")?.value);
+    const requireLogin = settings.requireLogin !== false;
+    initialAuth = {
+      requireLogin,
+      authMode: settings.authMode || "password",
+      oidcConfigured: isOidcConfigured(settings),
+      oidcLoginLabel: (settings.oidcLoginLabel || "Sign in with OIDC").trim() || "Sign in with OIDC",
+      hasPassword: !!settings.password,
+      isLoggedIn: !!session,
     };
-  }, [router]);
-
-  const handleLogin = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setError("");
-    setResetHint("");
-
-    try {
-      const res = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ password }),
-      });
-
-      if (res.ok) {
-        router.push("/dashboard");
-        router.refresh();
-      } else {
-        const data = await res.json();
-        setError(data.error || "Password salah");
-        if (data.resetHint) setResetHint(data.resetHint);
-        if (data.retryAfter) setRetryAfter(Number(data.retryAfter));
-      }
-    } catch (err) {
-      setError("Terjadi kesalahan. Silakan coba lagi.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleOidcLogin = () => {
-    window.location.href = "/api/auth/oidc/start";
-  };
-
-  const oidcAvailable = oidcConfigured && ["oidc", "both"].includes(authMode);
-  const passwordAvailable = authMode !== "oidc" || !oidcConfigured;
-
-  if (hasPassword === null) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-bg p-4">
-        <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-          <p className="text-text-muted mt-4">Loading...</p>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-bg p-4 relative overflow-hidden">
-      <div className="landing-grid absolute inset-0 pointer-events-none" aria-hidden="true" />
-      <div className="relative z-10 w-full max-w-md">
-        <div className="text-center mb-8">
-          <div className="flex justify-center mb-4">
-            <svg viewBox="0 0 32 32" className="w-12 h-12" fill="none">
-              <path d="M16 5L22 14L16 27L10 14L16 5Z" fill="#6366f1" opacity="0.9"/>
-              <path d="M10 14L16 27L10 20L6 14H10Z" fill="#6366f1" opacity="0.6"/>
-              <path d="M22 14L16 27L22 20L26 14H22Z" fill="#6366f1" opacity="0.6"/>
-              <circle cx="16" cy="9" r="2" fill="#6366f1"/>
-            </svg>
-          </div>
-          <h1 className="text-3xl font-bold text-primary mb-2">VansAI</h1>
-          <p className="text-text-muted">
-            {authMode === "oidc" && oidcConfigured
-              ? "Masuk dengan OIDC provider untuk mengakses dashboard"
-              : "Masukkan password untuk mengakses dashboard"}
-          </p>
-        </div>
-
-        <Card>
-          <div className="flex flex-col gap-4">
-            {oidcAvailable && (
-              <Button type="button" variant="primary" className="w-full" onClick={handleOidcLogin}>
-                {oidcLoginLabel}
-              </Button>
-            )}
-
-            {oidcAvailable && passwordAvailable && <div className="h-px bg-border/60" />}
-
-            {passwordAvailable ? (
-              <form onSubmit={handleLogin} className="flex flex-col gap-4">
-                {((authMode === "oidc" && !oidcConfigured) || (authMode === "both" && !oidcConfigured)) && (
-                  <p className="text-xs text-amber-600 dark:text-amber-400 text-center">
-                    OIDC login aktif, tapi issuer/client belum dikonfigurasi. Password login masih tersedia.
-                  </p>
-                )}
-
-                {authMode === "both" && oidcConfigured && (
-                  <p className="text-xs text-text-muted text-center">
-                    Password dan OIDC login keduanya aktif.
-                  </p>
-                )}
-
-                <div className="flex flex-col gap-2">
-                  <label className="text-sm font-medium">Password</label>
-                  <Input
-                    type="password"
-                    placeholder="Masukkan password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                    autoFocus={!oidcAvailable}
-                  />
-                  {error && <p className="text-xs text-red-500">{error}</p>}
-                  {retryAfter > 0 && (
-                    <p className="text-xs text-amber-600 dark:text-amber-400">
-                      Terkunci. Coba lagi dalam <span className="font-mono">{retryAfter}s</span>.
-                    </p>
-                  )}
-                  {resetHint && (
-                    <p className="text-xs text-text-muted">
-                      Lupa password? Buka <code className="bg-sidebar px-1 rounded">9router</code> CLI di host → <b>Settings</b> → <b>Reset Password to Default</b>.
-                    </p>
-                  )}
-                </div>
-
-                <Button
-                  type="submit"
-                  variant="primary"
-                  className="w-full"
-                  loading={loading}
-                  disabled={retryAfter > 0}
-                >
-                  {retryAfter > 0 ? `Tunggu ${retryAfter}s` : "Masuk"}
-                </Button>
-
-                <p className="text-xs text-center text-text-muted mt-2">
-                  Password default adalah <code className="bg-sidebar px-1 rounded">123456</code>
-                </p>
-                {hasPassword === false && (
-                  <p className="text-xs text-center text-text-muted">
-                    Custom password belum diset. Password default di atas akan berfungsi sampai diganti.
-                  </p>
-                )}
-              </form>
-            ) : (
-              error && <p className="text-xs text-red-500">{error}</p>
-            )}
-          </div>
-        </Card>
-      </div>
-    </div>
-  );
+  } catch {}
+  return <MasukClient initialAuth={initialAuth} />;
 }

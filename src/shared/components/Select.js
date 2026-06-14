@@ -2,9 +2,11 @@
 
 import { cn } from "@/shared/utils/cn";
 
+const EMPTY_OPTIONS = [];
+
 export default function Select({
   label,
-  options = [],
+  options = EMPTY_OPTIONS,
   value,
   onChange,
   placeholder = "Select an option",

@@ -5,7 +5,7 @@ import { AI_PROVIDERS } from "../shared/constants/providers.js";
  * @param {string} modelId
  * @returns {boolean}
  */
-export function isXaiModel(modelId) {
+function isXaiModel(modelId) {
   return typeof modelId === "string" && /^grok[-_]/i.test(modelId.trim());
 }
 

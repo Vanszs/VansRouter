@@ -174,4 +174,3 @@ export class VertexExecutor extends BaseExecutor {
   }
 }
 
-export default VertexExecutor;

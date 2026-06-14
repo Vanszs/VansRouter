@@ -136,15 +136,17 @@ function bgRefreshLoggedIn() {
 
 // Probe `status --json` over custom then system socket. Resolves parsed JSON or null. Never blocks event loop.
 async function probeStatusAsync(bin) {
-  for (const socketArgs of [SOCKET_FLAG, SYSTEM_SOCKET_FLAG]) {
-    try {
-      const { stdout } = await execAsync(`"${bin}" ${socketArgs.join(" ")} status --json`, {
-        windowsHide: true, env: { ...process.env, PATH: EXTENDED_PATH }, timeout: PROBE_TIMEOUT_MS,
-      });
-      return JSON.parse(stdout);
-    } catch { /* try next socket */ }
-  }
-  return null;
+  const results = await Promise.all(
+    [SOCKET_FLAG, SYSTEM_SOCKET_FLAG].map(async (socketArgs) => {
+      try {
+        const { stdout } = await execAsync(`"${bin}" ${socketArgs.join(" ")} status --json`, {
+          windowsHide: true, env: { ...process.env, PATH: EXTENDED_PATH }, timeout: PROBE_TIMEOUT_MS,
+        });
+        return JSON.parse(stdout);
+      } catch { return null; }
+    })
+  );
+  return results.find(Boolean) || null;
 }
 
 // Sync getter: never blocks; returns last known state, refreshes in background
@@ -256,7 +258,7 @@ function getActualFunnelUrl() {
 }
 
 /** Get funnel URL from tailscale status (cached, non-blocking) */
-export function getTailscaleFunnelUrl(port) {
+function getTailscaleFunnelUrl(port) {
   if (Date.now() - funnelUrlCache.fetchedAt > PROBE_TTL_MS || funnelUrlCache.port !== port) {
     bgRefreshFunnelUrl(port);
   }
@@ -418,7 +420,10 @@ async function installTailscaleLinux(sudoPassword, log) {
 }
 
 async function installTailscaleWindows(log) {
-  const msiUrl = "https://pkgs.tailscale.com/stable/tailscale-setup-latest-amd64.msi";
+  // Pin to known stable version to prevent supply-chain attacks via mutable "latest" URL
+  const TS_VERSION = "1.82.0";
+  // SECURITY: version-pinned download from official Tailscale distribution (pkgs.tailscale.com/stable)
+  const msiUrl = `https://pkgs.tailscale.com/stable/tailscale-setup-${TS_VERSION}-amd64.msi`;
   const msiPath = path.join(os.tmpdir(), "tailscale-setup.msi");
 
   // Download MSI via curl.exe (built-in on Win10+) — no PowerShell window, streams progress
@@ -460,16 +465,19 @@ async function installTailscaleWindows(log) {
 
   // Verify tailscale.exe exists after install
   log("Verifying installation...");
-  const maxWait = 10000;
-  const start = Date.now();
-  while (Date.now() - start < maxWait) {
+  const deadline = Date.now() + 10000;
+
+  async function verifyInstall() {
     if (fs.existsSync(WINDOWS_TAILSCALE_BIN)) {
       log("Installation complete.");
       return;
     }
+    if (Date.now() >= deadline) throw new Error("Installation finished but tailscale.exe not found");
     await new Promise((r) => setTimeout(r, 1000));
+    return verifyInstall();
   }
-  throw new Error("Installation finished but tailscale.exe not found");
+
+  await verifyInstall();
 }
 
 // Self-heal: if state dir/files were previously created by root (e.g. legacy sudo daemon),
@@ -540,18 +548,24 @@ export async function startDaemonWithPassword(sudoPassword) {
     catch { /* may need admin, or already running */ }
     if (!bin) return;
     // Poll up to ~10s for backend to leave NoState
-    for (let i = 0; i < 20; i++) {
+    async function pollBackend(attempt) {
+      if (attempt >= 20) {
+        console.log("[Tailscale] win: BackendState still NoState after poll");
+        return;
+      }
       try {
         const out = execSync(`"${bin}" status --json`, { encoding: "utf8", windowsHide: true, timeout: 2000 });
         const j = JSON.parse(out);
         if (j.BackendState && j.BackendState !== "NoState") {
-          console.log(`[Tailscale] win: BackendState=${j.BackendState} after ${i*500}ms`);
+          console.log(`[Tailscale] win: BackendState=${j.BackendState} after ${attempt*500}ms`);
           return;
         }
       } catch { /* daemon not ready */ }
       await new Promise((r) => setTimeout(r, 500));
+      return pollBackend(attempt + 1);
     }
-    console.log("[Tailscale] win: BackendState still NoState after poll");
+
+    await pollBackend(0);
     return;
   }
 
@@ -842,7 +856,7 @@ export function stopFunnel() {
 }
 
 /** Kill tailscaled daemon (runs as root, needs sudo) */
-export async function stopDaemon(sudoPassword) {
+async function stopDaemon(sudoPassword) {
   // Try non-sudo first
   try { execSync("pkill -x tailscaled", { stdio: "ignore", windowsHide: true, timeout: 3000 }); } catch { /* ignore */ }
 

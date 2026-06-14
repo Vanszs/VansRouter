@@ -8,15 +8,17 @@ const MODEL_LOCK_PREFIX = "modelLock_";
 
 function getActiveModelLocks(connection) {
   const now = Date.now();
-  return Object.entries(connection)
-    .filter(([key, value]) => key.startsWith(MODEL_LOCK_PREFIX) && value)
-    .map(([key, value]) => ({
-      key,
-      model: key.slice(MODEL_LOCK_PREFIX.length) || "__all",
-      until: value,
-      active: new Date(value).getTime() > now,
-    }))
-    .filter((lock) => lock.active);
+  return Object.entries(connection).reduce((acc, [key, value]) => {
+    if (key.startsWith(MODEL_LOCK_PREFIX) && value && new Date(value).getTime() > now) {
+      acc.push({
+        key,
+        model: key.slice(MODEL_LOCK_PREFIX.length) || "__all",
+        until: value,
+        active: true,
+      });
+    }
+    return acc;
+  }, []);
 }
 
 export async function GET() {
@@ -75,10 +77,9 @@ export async function POST(request) {
     const lockKey = `${MODEL_LOCK_PREFIX}${model}`;
 
     await Promise.all(
-      connections
-        .filter((connection) => connection[lockKey])
-        .map((connection) =>
-          updateProviderConnection(connection.id, {
+      connections.reduce((acc, connection) => {
+        if (connection[lockKey]) {
+          acc.push(updateProviderConnection(connection.id, {
             [lockKey]: null,
             ...(connection.testStatus === "unavailable"
               ? {
@@ -88,8 +89,10 @@ export async function POST(request) {
                   backoffLevel: 0,
                 }
               : {}),
-          }),
-        ),
+          }));
+        }
+        return acc;
+      }, []),
     );
 
     return NextResponse.json({ ok: true });

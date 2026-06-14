@@ -26,7 +26,7 @@ export function normalizeResponsesInput(input) {
  * Responses API uses: { input: [...], instructions: "..." }
  * Chat API uses: { messages: [...] }
  */
-export function convertResponsesApiFormat(body) {
+function convertResponsesApiFormat(body) {
   if (!body.input) return body;
 
   const result = { ...body };

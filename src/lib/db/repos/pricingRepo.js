@@ -19,8 +19,10 @@ export async function getPricing() {
   const now = Date.now();
   if (cache.value && cache.expiresAt > now) return cache.value;
 
-  const userPricing = await getUserPricing();
-  const { PROVIDER_PRICING } = await import("@/shared/constants/pricing.js");
+  const [userPricing, { PROVIDER_PRICING }] = await Promise.all([
+    getUserPricing(),
+    import("@/shared/constants/pricing.js"),
+  ]);
   const merged = {};
 
   for (const [provider, models] of Object.entries(PROVIDER_PRICING)) {

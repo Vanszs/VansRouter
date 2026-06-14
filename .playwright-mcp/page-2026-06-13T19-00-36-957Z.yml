@@ -1,0 +1,20 @@
+- generic [ref=e1]:
+  - generic [ref=e16]:
+    - generic [ref=e17]:
+      - img [ref=e19]
+      - heading "VansAI" [level=1] [ref=e24]
+      - paragraph [ref=e25]: Masukkan password untuk mengakses dashboard
+    - generic [ref=e28]:
+      - generic [ref=e29]:
+        - generic [ref=e30]: Password
+        - textbox "Password" [active] [ref=e33]:
+          - /placeholder: Masukkan password
+          - text: "123456"
+        - paragraph [ref=e37]: Invalid password. 4 attempt(s) left before lockout.
+      - button "Masuk" [ref=e34] [cursor=pointer]
+      - paragraph [ref=e35]:
+        - text: Password default adalah
+        - code [ref=e36]: "123456"
+  - button "Open Next.js Dev Tools" [ref=e11] [cursor=pointer]:
+    - img [ref=e12]
+  - alert [ref=e15]

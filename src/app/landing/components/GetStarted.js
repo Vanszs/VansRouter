@@ -59,16 +59,18 @@ export default function GetStarted() {
               
               {/* Terminal content */}
               <div className="p-6 font-mono text-sm leading-relaxed overflow-x-auto">
-                <div 
+                <button 
+                  type="button"
                   className="flex items-center gap-2 mb-4 group cursor-pointer"
                   onClick={() => handleCopy("npx 9router")}
+                  aria-label="Copy command: npx 9router"
                 >
                   <span className="text-green-400">$</span>
                   <span className="text-white">npx 9router</span>
                   <span className="ml-auto text-gray-500 text-xs opacity-0 group-hover:opacity-100">
                     {copied === "landing" ? "✓ Copied" : "Copy"}
                   </span>
-                </div>
+                </button>
                 
                 <div className="text-gray-400 mb-6">
                   <span className="text-[#6366f1]">&gt;</span> Starting VansAI...<br/>

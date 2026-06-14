@@ -2,6 +2,14 @@
 
 import { cn } from "@/shared/utils/cn";
 
+const CARD_PADDINGS = {
+  none: "",
+  xs: "p-3",
+  sm: "p-4",
+  md: "p-6",
+  lg: "p-8",
+};
+
 export default function Card({
   children,
   title,
@@ -14,13 +22,6 @@ export default function Card({
   className,
   ...props
 }) {
-  const paddings = {
-    none: "",
-    xs: "p-3",
-    sm: "p-4",
-    md: "p-6",
-    lg: "p-8",
-  };
 
   return (
     <div
@@ -28,7 +29,7 @@ export default function Card({
         "bg-surface border border-border-subtle",
         elev ? "rounded-[14px] shadow-[var(--shadow-elev)]" : "rounded-[14px] shadow-[var(--shadow-soft)]",
         hover && "hover:shadow-[var(--shadow-warm)] hover:border-brand-500/30 transition-all cursor-pointer",
-        paddings[padding],
+        CARD_PADDINGS[padding],
         className
       )}
       {...props}

@@ -39,7 +39,7 @@ export const THEME_CONFIG = {
 };
 
 // Subscription
-export const SUBSCRIPTION_CONFIG = {
+const SUBSCRIPTION_CONFIG = {
   price: 1.0,
   currency: "USD",
   interval: "month",
@@ -47,7 +47,7 @@ export const SUBSCRIPTION_CONFIG = {
 };
 
 // API endpoints
-export const API_ENDPOINTS = {
+const API_ENDPOINTS = {
   users: "/api/users",
   providers: "/api/providers",
   payments: "/api/payments",
@@ -60,7 +60,7 @@ export const CONSOLE_LOG_CONFIG = {
 };
 
 // Client-side store TTL: how long fetched data stays fresh before re-fetching
-export const CLIENT_STORE_TTL_MS = 60000;
+const CLIENT_STORE_TTL_MS = 60000;
 
 // Provider API endpoints (for display only)
 export const PROVIDER_ENDPOINTS = {

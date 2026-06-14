@@ -40,8 +40,9 @@ export default async function handler(req) {
 `;
 
 async function pollDeployment(deploymentId, token, maxMs = 120000) {
-  const start = Date.now();
-  while (Date.now() - start < maxMs) {
+  const deadline = Date.now() + maxMs;
+
+  async function poll() {
     const res = await fetch(`${VERCEL_API}/v13/deployments/${deploymentId}`, {
       headers: { Authorization: `Bearer ${token}` },
     });
@@ -50,9 +51,12 @@ async function pollDeployment(deploymentId, token, maxMs = 120000) {
     if (data.readyState === "ERROR" || data.readyState === "CANCELED") {
       throw new Error(`Deployment failed: ${data.readyState}`);
     }
+    if (Date.now() >= deadline) throw new Error("Deployment timed out");
     await new Promise((r) => setTimeout(r, 3000));
+    return poll();
   }
-  throw new Error("Deployment timed out");
+
+  return poll();
 }
 
 // POST /api/proxy-pools/vercel-deploy

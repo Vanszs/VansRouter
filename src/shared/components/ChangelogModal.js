@@ -4,43 +4,58 @@ import { useEffect, useState, useRef } from "react";
 import { createPortal } from "react-dom";
 import PropTypes from "prop-types";
 import { marked } from "marked";
+import DOMPurify from "isomorphic-dompurify";
 import { GITHUB_CONFIG } from "@/shared/constants/config";
 
 marked.setOptions({ gfm: true, breaks: true });
 
+function sanitizeHtml(html) {
+  return DOMPurify.sanitize(html, { FORBID_TAGS: ["script", "iframe", "object", "embed", "form"], FORBID_ATTR: ["onerror", "onload", "onclick"] });
+}
+
 export default function ChangelogModal({ isOpen, onClose }) {
-  const [html, setHtml] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+  const [fetchState, setFetchState] = useState({ html: "", loading: false, error: "" });
   const modalRef = useRef(null);
+  const hasFetched = useRef(false);
 
   useEffect(() => {
-    if (!isOpen || html) return;
-    setLoading(true);
-    setError("");
+    if (!isOpen || hasFetched.current) return;
+    hasFetched.current = true;
+    setFetchState(prev => ({ ...prev, loading: true, error: "" }));
     fetch(GITHUB_CONFIG.changelogUrl)
       .then((res) => {
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         return res.text();
       })
-      .then((md) => setHtml(marked.parse(md)))
-      .catch((err) => setError(err.message || "Failed to load"))
-      .finally(() => setLoading(false));
-  }, [isOpen, html]);
+      .then((md) => setFetchState(prev => ({ ...prev, html: sanitizeHtml(marked.parse(md)), loading: false })))
+      .catch((err) => setFetchState(prev => ({ ...prev, error: err.message || "Failed to load", loading: false })));
+  }, [isOpen]);
+
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
 
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (modalRef.current && !modalRef.current.contains(e.target)) {
-        onClose();
+        onCloseRef.current();
       }
     };
     if (isOpen) {
       document.addEventListener("mousedown", handleClickOutside);
       return () => document.removeEventListener("mousedown", handleClickOutside);
     }
-  }, [isOpen, onClose]);
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const onEsc = (e) => { if (e.key === "Escape") onCloseRef.current(); };
+    document.addEventListener("keydown", onEsc);
+    return () => document.removeEventListener("keydown", onEsc);
+  }, [isOpen]);
 
   if (!isOpen || typeof document === "undefined") return null;
+
+  const { html, loading, error } = fetchState;
 
   return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -48,6 +63,7 @@ export default function ChangelogModal({ isOpen, onClose }) {
       <div
         className="absolute inset-0 bg-black/30 backdrop-blur-sm"
         onClick={onClose}
+        aria-hidden="true"
       />
 
       {/* Modal content */}
@@ -58,7 +74,7 @@ export default function ChangelogModal({ isOpen, onClose }) {
         {/* Header */}
         <div className="flex items-center justify-between p-3 border-b border-black/5 dark:border-white/5">
           <h2 className="text-lg font-semibold text-text-main">Change Log</h2>
-          <button
+          <button type="button"
             onClick={onClose}
             className="p-1.5 rounded-lg text-text-muted hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
             aria-label="Close"
@@ -81,6 +97,7 @@ export default function ChangelogModal({ isOpen, onClose }) {
           {!loading && !error && html && (
             <div
               className="changelog-body text-text-main"
+              // SECURITY: html is sanitized via DOMPurify.sanitize() before reaching this element
               dangerouslySetInnerHTML={{ __html: html }}
             />
           )}

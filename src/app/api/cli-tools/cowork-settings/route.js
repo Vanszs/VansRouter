@@ -15,11 +15,9 @@ const CLI_TOKEN_HEADER = "x-9r-cli-token";
 const CLI_TOKEN_SALT = "9r-cli-auth";
 const LOCAL_MCP_PREFIX = `http://localhost:${APP_PORT}/api/mcp/`;
 
-let cachedCliToken = null;
-const getCliToken = async () => {
-  if (!cachedCliToken) cachedCliToken = await getConsistentMachineId(CLI_TOKEN_SALT);
-  return cachedCliToken;
-};
+// Immutable singleton Promise — computed once, same value every call.
+const cliTokenPromise = getConsistentMachineId(CLI_TOKEN_SALT);
+const getCliToken = () => cliTokenPromise;
 
 // Inject CLI token header into entries pointing at our local /api/mcp/ bridge.
 const injectAuthHeaders = async (entries) => {
@@ -90,13 +88,10 @@ const getAppInstallPaths = () => {
 
 const resolveAppRootForRead = async () => {
   const candidates = getCandidateRoots();
-  for (const dir of candidates) {
-    try {
-      await fs.access(path.join(dir, "configLibrary"));
-      return dir;
-    } catch { /* try next */ }
-  }
-  return candidates[0];
+  const results = await Promise.all(
+    candidates.map(dir => fs.access(path.join(dir, "configLibrary")).then(() => dir, () => null))
+  );
+  return results.find(Boolean) || candidates[0];
 };
 
 const getWriteRoot = () => getCandidateRoots()[0];
@@ -150,11 +145,12 @@ const cleanup1pLegacy = async () => {
 };
 
 // Build SSE bridge entries pointing at this app's inline /api/mcp/{name} endpoint.
+const LOCAL_STDIO_PLUGINS_MAP = new Map(LOCAL_STDIO_PLUGINS.map((p) => [p.name, p]));
 const buildLocalBridgeEntries = (localPluginNames) => {
   const names = Array.isArray(localPluginNames) ? localPluginNames : [];
   const out = [];
   for (const n of names) {
-    const def = LOCAL_STDIO_PLUGINS.find((p) => p.name === n);
+    const def = LOCAL_STDIO_PLUGINS_MAP.get(n);
     if (!def) continue;
     const entry = {
       name: def.name,
@@ -196,10 +192,9 @@ const buildCustomEntries = (customPlugins) => {
 };
 
 const checkInstalled = async () => {
-  for (const dir of [...getCandidateRoots(), ...getAppInstallPaths()]) {
-    try { await fs.access(dir); return true; } catch { /* try next */ }
-  }
-  return false;
+  const dirs = [...getCandidateRoots(), ...getAppInstallPaths()];
+  const results = await Promise.all(dirs.map(dir => fs.access(dir).then(() => true, () => false)));
+  return results.some(Boolean);
 };
 
 const readJson = async (filePath) => {
@@ -257,21 +252,25 @@ export async function GET() {
 
     const baseUrl = config?.inferenceGatewayBaseUrl || null;
     const models = Array.isArray(config?.inferenceModels)
-      ? config.inferenceModels.map((m) => (typeof m === "string" ? m : m?.name)).filter(Boolean)
+      ? config.inferenceModels.flatMap((m) => { const n = typeof m === "string" ? m : m?.name; return n ? [n] : []; })
       : [];
     const managedMcp = Array.isArray(config?.managedMcpServers) ? config.managedMcpServers : [];
     const has9Router = !!(config?.inferenceProvider === PROVIDER && baseUrl);
 
     // Active local plugins = managedMcp entries whose URL points at our inline bridge.
     const stdioNames = new Set(LOCAL_STDIO_PLUGINS.map((p) => p.name));
-    const activeLocalNames = managedMcp
-      .filter((m) => stdioNames.has(m.name) && typeof m.url === "string" && m.url.includes("/api/mcp/"))
-      .map((m) => m.name);
+    const activeLocalNames = managedMcp.reduce((acc, m) => {
+      if (stdioNames.has(m.name) && typeof m.url === "string" && m.url.includes("/api/mcp/")) acc.push(m.name);
+      return acc;
+    }, []);
 
     // Custom plugins = bridge entries not in preset LOCAL_STDIO_PLUGINS (custom:true or unknown name).
-    const activeCustomPlugins = managedMcp
-      .filter((m) => m.custom || (!stdioNames.has(m.name) && typeof m.url === "string" && m.url.includes("/api/mcp/")))
-      .map((m) => ({ name: m.name, url: m.url, transport: m.transport, custom: true }));
+    const activeCustomPlugins = managedMcp.reduce((acc, m) => {
+      if (m.custom || (!stdioNames.has(m.name) && typeof m.url === "string" && m.url.includes("/api/mcp/"))) {
+        acc.push({ name: m.name, url: m.url, transport: m.transport, custom: true });
+      }
+      return acc;
+    }, []);
 
     return NextResponse.json({
       installed: true,
@@ -283,7 +282,8 @@ export async function GET() {
         baseUrl,
         models,
         provider: config?.inferenceProvider || null,
-        plugins: managedMcp.filter((m) => !m.custom && !(stdioNames.has(m.name) && typeof m.url === "string" && m.url.includes("/api/mcp/"))).map((m) => {
+        plugins: managedMcp.reduce((acc, m) => {
+          if (m.custom || (stdioNames.has(m.name) && typeof m.url === "string" && m.url.includes("/api/mcp/"))) return acc;
           // Strip "{name}-" prefix and dedupe so re-applies don't multiply entries.
           const keys = m.toolPolicy ? Object.keys(m.toolPolicy) : [];
           const prefix = `${m.name}-`;
@@ -296,8 +296,9 @@ export async function GET() {
           // If plugin matches a default, prefer default toolNames (curated/correct).
           const def = DEFAULT_PLUGINS.find((d) => d.name === m.name);
           const toolNames = def && Array.isArray(def.toolNames) ? def.toolNames : Array.from(bare);
-          return { name: m.name, url: m.url, transport: m.transport, oauth: !!m.oauth, toolNames };
-        }),
+          acc.push({ name: m.name, url: m.url, transport: m.transport, oauth: !!m.oauth, toolNames });
+          return acc;
+        }, []),
         localPlugins: activeLocalNames,
         customPlugins: activeCustomPlugins,
       },
@@ -305,7 +306,6 @@ export async function GET() {
       localStdioPlugins: LOCAL_STDIO_PLUGINS,
     });
   } catch (error) {
-    console.log("Error reading cowork settings:", error);
     return NextResponse.json({ error: "Failed to read cowork settings" }, { status: 500 });
   }
 }
@@ -332,15 +332,18 @@ export async function POST(request) {
     // Register custom stdio plugins into bridge + persist for restart survival.
     if (customPluginsArray.length > 0) {
       const { registerCustomPlugin } = require("@/lib/mcp/stdioSseBridge");
-      const stdioCustoms = customPluginsArray
-        .filter((p) => p && typeof p.command === "string" && p.command.trim())
-        .filter((p) => ALLOWED_MCP_COMMANDS.has(path.basename(p.command)))
-        .map((p) => ({
-          name: String(p.name || "").replace(/[^a-zA-Z0-9_-]/g, "").slice(0, 64),
+      const stdioCustoms = customPluginsArray.reduce((acc, p) => {
+        if (!p || typeof p.command !== "string" || !p.command.trim()) return acc;
+        if (!ALLOWED_MCP_COMMANDS.has(path.basename(p.command))) return acc;
+        const name = String(p.name || "").replace(/[^a-zA-Z0-9_-]/g, "").slice(0, 64);
+        if (!name) return acc;
+        acc.push({
+          name,
           command: p.command,
           args: Array.isArray(p.args) ? p.args.map(String) : [],
-        }))
-        .filter((p) => p.name);
+        });
+        return acc;
+      }, []);
       for (const p of stdioCustoms) {
         try { registerCustomPlugin(p); } catch { /* skip invalid */ }
       }
@@ -388,7 +391,6 @@ export async function POST(request) {
       localMcp: localMcpResult,
     });
   } catch (error) {
-    console.log("Error applying cowork settings:", error);
     return NextResponse.json({ error: "Failed to apply cowork settings" }, { status: 500 });
   }
 }
@@ -406,7 +408,6 @@ export async function DELETE() {
     try { await cleanup1pLegacy(); } catch { /* ignore */ }
     return NextResponse.json({ success: true, message: "Cowork config reset" });
   } catch (error) {
-    console.log("Error resetting cowork settings:", error);
     return NextResponse.json({ error: "Failed to reset cowork settings" }, { status: 500 });
   }
 }

@@ -1,0 +1,379 @@
+- generic [ref=e1]:
+  - generic [ref=e2]:
+    - complementary [ref=e4]:
+      - link "VansAI v0.4.80" [ref=e10] [cursor=pointer]:
+        - /url: /dashboard
+        - img [ref=e12]
+        - generic [ref=e17]:
+          - heading "VansAI" [level=1] [ref=e18]
+          - generic [ref=e19]: v0.4.80
+      - navigation [ref=e20]:
+        - link "api Endpoint" [ref=e21] [cursor=pointer]:
+          - /url: /dashboard/endpoint
+          - generic [ref=e22]: api
+          - generic [ref=e23]: Endpoint
+        - link "dns Providers" [ref=e24] [cursor=pointer]:
+          - /url: /dashboard/providers
+          - generic [ref=e25]: dns
+          - generic [ref=e26]: Providers
+        - link "layers Combos" [ref=e27] [cursor=pointer]:
+          - /url: /dashboard/combos
+          - generic [ref=e28]: layers
+          - generic [ref=e29]: Combos
+        - link "bar_chart Usage" [ref=e30] [cursor=pointer]:
+          - /url: /dashboard/usage
+          - generic [ref=e31]: bar_chart
+          - generic [ref=e32]: Usage
+        - link "data_usage Quota Tracker" [ref=e33] [cursor=pointer]:
+          - /url: /dashboard/quota
+          - generic [ref=e34]: data_usage
+          - generic [ref=e35]: Quota Tracker
+        - link "security MITM" [ref=e36] [cursor=pointer]:
+          - /url: /dashboard/mitm
+          - generic [ref=e37]: security
+          - generic [ref=e38]: MITM
+        - link "terminal CLI Tools" [ref=e39] [cursor=pointer]:
+          - /url: /dashboard/cli-tools
+          - generic [ref=e40]: terminal
+          - generic [ref=e41]: CLI Tools
+        - generic [ref=e42]:
+          - paragraph [ref=e43]: System
+          - button "perm_media Media Providers expand_more" [ref=e44]:
+            - generic [ref=e45]: perm_media
+            - generic [ref=e46]: Media Providers
+            - generic [ref=e47]: expand_more
+          - link "lan Proxy Pools" [ref=e48] [cursor=pointer]:
+            - /url: /dashboard/proxy-pools
+            - generic [ref=e49]: lan
+            - generic [ref=e50]: Proxy Pools
+          - link "extension Skills" [ref=e51] [cursor=pointer]:
+            - /url: /dashboard/skills
+            - generic [ref=e52]: extension
+            - generic [ref=e53]: Skills
+          - link "terminal Console Log" [ref=e54] [cursor=pointer]:
+            - /url: /dashboard/console-log
+            - generic [ref=e55]: terminal
+            - generic [ref=e56]: Console Log
+          - button "computer Remote" [ref=e57]:
+            - generic [ref=e58]: computer
+            - generic [ref=e59]: Remote
+          - link "settings Settings" [ref=e60] [cursor=pointer]:
+            - /url: /dashboard/profile
+            - generic [ref=e61]: settings
+            - generic [ref=e62]: Settings
+    - main [ref=e63]:
+      - generic [ref=e64]:
+        - generic [ref=e66]:
+          - generic [ref=e67]:
+            - generic [ref=e68]: api
+            - heading "Endpoint" [level=1] [ref=e69]
+          - paragraph [ref=e70]: API endpoint configuration
+        - generic [ref=e71]:
+          - button "Donate" [ref=e72]:
+            - generic [ref=e73]: volunteer_activism
+            - generic [ref=e74]: Donate
+          - button "Switch to dark mode" [ref=e75]:
+            - generic [ref=e76]: dark_mode
+          - button "🇺🇸" [ref=e77]:
+            - generic [ref=e78]: 🇺🇸
+          - button "grid_view" [ref=e80]:
+            - generic [ref=e81]: grid_view
+      - generic [ref=e84]:
+        - generic [ref=e106]:
+          - heading "api API Endpoint" [level=2] [ref=e107]:
+            - generic [ref=e108]: api
+            - text: API Endpoint
+          - generic [ref=e109]:
+            - generic [ref=e110]:
+              - generic [ref=e111]: Local
+              - textbox [ref=e114]: http://localhost:9000/v1
+              - button "content_copy" [ref=e115]:
+                - generic [ref=e116]: content_copy
+            - generic [ref=e117]:
+              - generic [ref=e118]: Tunnel
+              - button "cloud_upload Enable" [ref=e119] [cursor=pointer]:
+                - generic [ref=e120]: cloud_upload
+                - text: Enable
+            - generic [ref=e121]:
+              - generic [ref=e122]: Tailscale
+              - button "vpn_lock Enable" [ref=e123] [cursor=pointer]:
+                - generic [ref=e124]: vpn_lock
+                - text: Enable
+        - generic [ref=e125]:
+          - heading "bolt Token Saver" [level=2] [ref=e127]:
+            - generic [ref=e128]: bolt
+            - text: Token Saver
+          - generic [ref=e129]:
+            - generic [ref=e130]:
+              - paragraph [ref=e131]:
+                - text: Compress tool output
+                - link "(RTK)" [ref=e132] [cursor=pointer]:
+                  - /url: https://github.com/rtk-ai/rtk
+              - paragraph [ref=e133]: git/grep/ls/tree/logs → 60-90% fewer input tokens
+            - switch "Toggle" [checked] [ref=e135] [cursor=pointer]
+          - generic [ref=e136]:
+            - generic [ref=e137]:
+              - paragraph [ref=e138]:
+                - text: Compress LLM output
+                - link "(Caveman)" [ref=e139] [cursor=pointer]:
+                  - /url: https://github.com/JuliusBrussee/caveman
+              - paragraph [ref=e140]: Terse-style system prompt → ~65% fewer output tokens (up to 87%)
+            - generic [ref=e141]:
+              - generic [ref=e142]:
+                - generic [ref=e143]:
+                  - button "Lite" [ref=e144]
+                  - button "Full" [ref=e145]
+                  - button "Ultra" [ref=e146]
+                - paragraph [ref=e147]: Telegraphic, max compression
+              - switch "Toggle" [checked] [ref=e149] [cursor=pointer]
+        - generic [ref=e150]:
+          - generic [ref=e151]:
+            - heading "vpn_key API Keys" [level=2] [ref=e152]:
+              - generic [ref=e153]: vpn_key
+              - text: API Keys
+            - button "add Create Key" [ref=e154] [cursor=pointer]:
+              - generic [ref=e155]: add
+              - text: Create Key
+          - generic [ref=e156]:
+            - generic [ref=e157]:
+              - paragraph [ref=e158]: Require API key
+              - paragraph [ref=e159]: Requests without a valid key will be rejected
+            - switch "Toggle" [ref=e161] [cursor=pointer]
+          - generic [ref=e162]:
+            - generic [ref=e163]:
+              - paragraph [ref=e164]: Allow remote access without API key
+              - paragraph [ref=e165]: When enabled, requests from outside loopback (LAN, tunnel, internet) are accepted with or without an API key. Use only on trusted networks.
+            - switch "Toggle" [checked] [ref=e167] [cursor=pointer]
+          - generic [ref=e169]:
+            - generic [ref=e170]: warning
+            - paragraph [ref=e171]: Remote access without an API key is enabled — anyone who can reach this endpoint can use your providers.
+          - generic [ref=e172]:
+            - generic [ref=e173]:
+              - generic [ref=e174]:
+                - paragraph [ref=e175]: claude-cli
+                - generic [ref=e176]:
+                  - code [ref=e177]: sk-3f684...
+                  - button "visibility" [ref=e178]:
+                    - generic [ref=e179]: visibility
+                  - button "content_copy" [ref=e180]:
+                    - generic [ref=e181]: content_copy
+                - paragraph [ref=e182]: Created 5/5/2026
+                - generic [ref=e183]:
+                  - generic [ref=e184]: All Providers
+                  - button "Done" [active] [ref=e319]
+                - generic [ref=e320]:
+                  - paragraph [ref=e321]: "Select allowed providers — null=all, none selected=block all:"
+                  - generic [ref=e322]:
+                    - button "Alibaba" [ref=e323]
+                    - button "Alibaba Intl" [ref=e324]
+                    - button "Anthropic" [ref=e325]
+                    - button "Antigravity" [ref=e326]
+                    - button "AssemblyAI" [ref=e327]
+                    - button "AWS Polly" [ref=e328]
+                    - button "Azure OpenAI" [ref=e329]
+                    - button "Black Forest Labs" [ref=e330]
+                    - button "Blackbox AI" [ref=e331]
+                    - button "Brave Search" [ref=e332]
+                    - button "BytePlus ModelArk" [ref=e333]
+                    - button "Cerebras" [ref=e334]
+                    - button "Chutes AI" [ref=e335]
+                    - button "Claude Code" [ref=e336]
+                    - button "Cline" [ref=e337]
+                    - button "Cloudflare" [ref=e338]
+                    - button "Cohere" [ref=e339]
+                    - button "ComfyUI" [ref=e340]
+                    - button "Command Code" [ref=e341]
+                    - button "Cursor IDE" [ref=e342]
+                    - button "Deepgram" [ref=e343]
+                    - button "DeepSeek" [ref=e344]
+                    - button "Edge TTS" [ref=e345]
+                    - button "ElevenLabs" [ref=e346]
+                    - button "Exa" [ref=e347]
+                    - button "Fal.ai" [ref=e348]
+                    - button "Firecrawl" [ref=e349]
+                    - button "Fireworks AI" [ref=e350]
+                    - button "Gemini" [ref=e351]
+                    - button "Gemini CLI" [ref=e352]
+                    - button "GitHub Copilot" [ref=e353]
+                    - button "GLM (China)" [ref=e354]
+                    - button "GLM Coding" [ref=e355]
+                    - button "Google PSE" [ref=e356]
+                    - button "Google TTS" [ref=e357]
+                    - button "Grok Web (Subscription)" [ref=e358]
+                    - button "Groq" [ref=e359]
+                    - button "HuggingFace" [ref=e360]
+                    - button "Hyperbolic" [ref=e361]
+                    - button "Inworld TTS" [ref=e362]
+                    - button "Jina AI" [ref=e363]
+                    - button "Kilo Code" [ref=e364]
+                    - button "Kimi" [ref=e365]
+                    - button "Kiro AI" [ref=e366]
+                    - button "Linkup" [ref=e367]
+                    - button "Local Device" [ref=e368]
+                    - button "MiMo Code Free" [ref=e369]
+                    - button "Minimax (China)" [ref=e370]
+                    - button "Minimax Coding" [ref=e371]
+                    - button "Mistral" [ref=e372]
+                    - button "NanoBanana API" [ref=e373]
+                    - button "Nebius AI" [ref=e374]
+                    - button "NVIDIA NIM" [ref=e375]
+                    - button "Ollama Cloud" [ref=e376]
+                    - button "Ollama Local" [ref=e377]
+                    - button "OpenAI" [ref=e378]
+                    - button "OpenAI Codex" [ref=e379]
+                    - button "OpenCode Free" [ref=e380]
+                    - button "OpenCode Go" [ref=e381]
+                    - button "OpenRouter" [ref=e382]
+                    - button "Perplexity" [ref=e383]
+                    - button "Perplexity Web (Pro/Max)" [ref=e384]
+                    - button "Qoder" [ref=e385]
+                    - button "Recraft" [ref=e386]
+                    - button "Runway ML" [ref=e387]
+                    - button "SD WebUI" [ref=e388]
+                    - button "SearchAPI" [ref=e389]
+                    - button "SearXNG" [ref=e390]
+                    - button "Serper" [ref=e391]
+                    - button "SiliconFlow" [ref=e392]
+                    - button "Stability AI" [ref=e393]
+                    - button "Tavily" [ref=e394]
+                    - button "Together AI" [ref=e395]
+                    - button "Topaz" [ref=e396]
+                    - button "Vercel AI Gateway" [ref=e397]
+                    - button "Vertex AI" [ref=e398]
+                    - button "Vertex Partner" [ref=e399]
+                    - button "Volcengine Ark" [ref=e400]
+                    - button "Voyage AI" [ref=e401]
+                    - button "xAI (Grok)" [ref=e402]
+                    - button "Xiaomi MiMo" [ref=e403]
+                    - button "Xiaomi MiMo (Token Plan)" [ref=e404]
+                    - button "You.com Search" [ref=e405]
+                  - button "Block all (NONE)" [ref=e407]
+                - generic [ref=e186]:
+                  - generic [ref=e187]: All Combos
+                  - button "Edit Combos" [ref=e188]
+                - generic [ref=e189]:
+                  - generic [ref=e190]: All Kinds
+                  - button "Edit Kinds" [ref=e191]
+              - generic [ref=e192]:
+                - switch "Pause key" [checked] [ref=e194] [cursor=pointer]
+                - button "delete" [ref=e195]:
+                  - generic [ref=e196]: delete
+            - generic [ref=e197]:
+              - generic [ref=e198]:
+                - paragraph [ref=e199]: aswin
+                - generic [ref=e200]:
+                  - code [ref=e201]: sk-3f684...
+                  - button "visibility" [ref=e202]:
+                    - generic [ref=e203]: visibility
+                  - button "content_copy" [ref=e204]:
+                    - generic [ref=e205]: content_copy
+                - paragraph [ref=e206]: Created 5/7/2026
+                - generic [ref=e207]:
+                  - generic [ref=e208]: OpenCode Free
+                  - button "Edit" [ref=e209]
+                - generic [ref=e210]:
+                  - generic [ref=e211]: kimi
+                  - button "Edit Combos" [ref=e212]
+                - generic [ref=e213]:
+                  - generic [ref=e214]: All Kinds
+                  - button "Edit Kinds" [ref=e215]
+              - generic [ref=e216]:
+                - switch "Pause key" [checked] [ref=e218] [cursor=pointer]
+                - button "delete" [ref=e219]:
+                  - generic [ref=e220]: delete
+            - generic [ref=e221]:
+              - generic [ref=e222]:
+                - paragraph [ref=e223]: bilal
+                - generic [ref=e224]:
+                  - code [ref=e225]: sk-3f684...
+                  - button "visibility" [ref=e226]:
+                    - generic [ref=e227]: visibility
+                  - button "content_copy" [ref=e228]:
+                    - generic [ref=e229]: content_copy
+                - paragraph [ref=e230]: Created 5/7/2026
+                - generic [ref=e231]:
+                  - generic [ref=e232]: OpenCode Free
+                  - button "Edit" [ref=e233]
+                - generic [ref=e234]:
+                  - generic [ref=e235]: No Combos
+                  - button "Edit Combos" [ref=e236]
+                - generic [ref=e237]:
+                  - generic [ref=e238]: All Kinds
+                  - button "Edit Kinds" [ref=e239]
+              - generic [ref=e240]:
+                - switch "Pause key" [checked] [ref=e242] [cursor=pointer]
+                - button "delete" [ref=e243]:
+                  - generic [ref=e244]: delete
+            - generic [ref=e245]:
+              - generic [ref=e246]:
+                - paragraph [ref=e247]: salsa
+                - generic [ref=e248]:
+                  - code [ref=e249]: sk-3f684...
+                  - button "visibility" [ref=e250]:
+                    - generic [ref=e251]: visibility
+                  - button "content_copy" [ref=e252]:
+                    - generic [ref=e253]: content_copy
+                - paragraph [ref=e254]: Created 5/8/2026
+                - generic [ref=e255]:
+                  - generic [ref=e256]: OpenCode Free
+                  - generic [ref=e257]: OpenRouter
+                  - button "Edit" [ref=e258]
+                - generic [ref=e259]:
+                  - generic [ref=e260]: Gemini-3.1-F
+                  - button "Edit Combos" [ref=e261]
+                - generic [ref=e262]:
+                  - generic [ref=e263]: All Kinds
+                  - button "Edit Kinds" [ref=e264]
+              - generic [ref=e265]:
+                - switch "Pause key" [checked] [ref=e267] [cursor=pointer]
+                - button "delete" [ref=e268]:
+                  - generic [ref=e269]: delete
+            - generic [ref=e270]:
+              - generic [ref=e271]:
+                - paragraph [ref=e272]: cline
+                - generic [ref=e273]:
+                  - code [ref=e274]: sk-3f684...
+                  - button "visibility" [ref=e275]:
+                    - generic [ref=e276]: visibility
+                  - button "content_copy" [ref=e277]:
+                    - generic [ref=e278]: content_copy
+                - paragraph [ref=e279]: Created 5/8/2026
+                - generic [ref=e280]:
+                  - generic [ref=e281]: All Providers
+                  - button "Edit" [ref=e282]
+                - generic [ref=e283]:
+                  - generic [ref=e284]: All Combos
+                  - button "Edit Combos" [ref=e285]
+                - generic [ref=e286]:
+                  - generic [ref=e287]: All Kinds
+                  - button "Edit Kinds" [ref=e288]
+              - generic [ref=e289]:
+                - switch "Pause key" [checked] [ref=e291] [cursor=pointer]
+                - button "delete" [ref=e292]:
+                  - generic [ref=e293]: delete
+            - generic [ref=e294]:
+              - generic [ref=e295]:
+                - paragraph [ref=e296]: el
+                - generic [ref=e297]:
+                  - code [ref=e298]: sk-3f684...
+                  - button "visibility" [ref=e299]:
+                    - generic [ref=e300]: visibility
+                  - button "content_copy" [ref=e301]:
+                    - generic [ref=e302]: content_copy
+                - paragraph [ref=e303]: Created 5/9/2026
+                - generic [ref=e304]:
+                  - generic [ref=e305]: OpenCode Free
+                  - button "Edit" [ref=e306]
+                - generic [ref=e307]:
+                  - generic [ref=e308]: No Combos
+                  - button "Edit Combos" [ref=e309]
+                - generic [ref=e310]:
+                  - generic [ref=e311]: All Kinds
+                  - button "Edit Kinds" [ref=e312]
+              - generic [ref=e313]:
+                - switch "Pause key" [checked] [ref=e315] [cursor=pointer]
+                - button "delete" [ref=e316]:
+                  - generic [ref=e317]: delete
+  - button "Open Next.js Dev Tools" [ref=e102] [cursor=pointer]:
+    - img [ref=e103]
+  - alert [ref=e318]

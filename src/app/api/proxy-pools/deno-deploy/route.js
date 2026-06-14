@@ -81,13 +81,13 @@ export async function POST(request) {
     });
 
     if (!createAppRes.ok) {
-      const text = await createAppRes.text().catch(() => "");
       if (createAppRes.status === 409) {
         return NextResponse.json(
           { error: `App "${projectName}" already exists. Choose a different name.` },
           { status: 409 }
         );
       }
+      const text = await createAppRes.text().catch(() => "");
       return NextResponse.json(
         { error: `Failed to create app (${createAppRes.status}): ${text}` },
         { status: createAppRes.status }
@@ -127,21 +127,22 @@ export async function POST(request) {
     const revisionId = revision.id;
 
     let status = revision.status;
-    let attempts = 0;
-    const maxAttempts = 30; // 30 * 2s = 60s max
-    while (status === "queued" || status === "building") {
-      if (attempts >= maxAttempts) {
-        throw new Error("Deploy timed out after 60 seconds");
-      }
+    const maxMs = 60000;
+    const deadline = Date.now() + maxMs;
+
+    async function pollStatus() {
+      if (Date.now() >= deadline) throw new Error("Deploy timed out after 60 seconds");
       await new Promise((resolve) => setTimeout(resolve, 2000));
       const statusRes = await fetch(`${DENO_V2_API}/revisions/${revisionId}`, {
         headers: { Authorization: `Bearer ${denoToken}` },
       });
-      if (!statusRes.ok) break;
+      if (!statusRes.ok) return;
       const statusData = await statusRes.json();
       status = statusData.status;
-      attempts++;
+      if (status === "queued" || status === "building") return pollStatus();
     }
+
+    if (status === "queued" || status === "building") await pollStatus();
 
     if (status !== "succeeded") {
       await fetch(`${DENO_V2_API}/apps/${app.id}`, {

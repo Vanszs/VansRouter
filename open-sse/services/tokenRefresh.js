@@ -781,16 +781,13 @@ export async function getAllAccessTokens(userInfo, log) {
   const results = {};
 
   if (userInfo.connections && Array.isArray(userInfo.connections)) {
-    for (const connection of userInfo.connections) {
-      if (connection.isActive && connection.provider) {
-        const token = await getAccessToken(connection.provider, {
-          refreshToken: connection.refreshToken
-        }, log);
-
-        if (token) {
-          results[connection.provider] = token;
-        }
-      }
+    const activeConns = userInfo.connections.filter(c => c.isActive && c.provider);
+    const tokens = await Promise.all(activeConns.map(connection =>
+      getAccessToken(connection.provider, { refreshToken: connection.refreshToken }, log)
+        .then(token => ({ provider: connection.provider, token }))
+    ));
+    for (const { provider, token } of tokens) {
+      if (token) results[provider] = token;
     }
   }
 
@@ -881,10 +878,10 @@ export async function refreshVertexToken(saJson, log) {
  * @returns {Promise<object|null>} Token result or null if all retries fail
  */
 export async function refreshWithRetry(refreshFn, maxRetries = 3, log = null) {
-  for (let attempt = 0; attempt < maxRetries; attempt++) {
-    if (attempt > 0) {
-      const delay = attempt * 1000;
-      log?.debug?.("TOKEN_REFRESH", `Retry ${attempt}/${maxRetries} after ${delay}ms`);
+  async function attempt(n) {
+    if (n > 0) {
+      const delay = n * 1000;
+      log?.debug?.("TOKEN_REFRESH", `Retry ${n}/${maxRetries} after ${delay}ms`);
       await new Promise(r => setTimeout(r, delay));
     }
 
@@ -892,10 +889,15 @@ export async function refreshWithRetry(refreshFn, maxRetries = 3, log = null) {
       const result = await refreshFn();
       if (result) return result;
     } catch (error) {
-      log?.warn?.("TOKEN_REFRESH", `Attempt ${attempt + 1}/${maxRetries} failed: ${error.message}`);
+      log?.warn?.("TOKEN_REFRESH", `Attempt ${n + 1}/${maxRetries} failed: ${error.message}`);
     }
+
+    if (n + 1 >= maxRetries) {
+      log?.error?.("TOKEN_REFRESH", `All ${maxRetries} retry attempts failed`);
+      return null;
+    }
+    return attempt(n + 1);
   }
 
-  log?.error?.("TOKEN_REFRESH", `All ${maxRetries} retry attempts failed`);
-  return null;
+  return attempt(0);
 }

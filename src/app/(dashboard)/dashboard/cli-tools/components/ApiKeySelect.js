@@ -3,8 +3,9 @@
 import { useState } from "react";
 
 const CUSTOM_VALUE = "__custom__";
+const EMPTY_API_KEYS = [];
 
-export default function ApiKeySelect({ value, onChange, apiKeys = [], cloudEnabled = false, className = "" }) {
+export default function ApiKeySelect({ value, onChange, apiKeys = EMPTY_API_KEYS, cloudEnabled = false, className = "" }) {
   const isCustom = !apiKeys.some((k) => k.key === value) && value !== "";
   const [mode, setMode] = useState(() => {
     if (!value) return apiKeys.length > 0 ? apiKeys[0].key : CUSTOM_VALUE;
@@ -58,6 +59,7 @@ export default function ApiKeySelect({ value, onChange, apiKeys = [], cloudEnabl
           value={customInput}
           onChange={handleCustomInput}
           placeholder="sk-..."
+          aria-label="Custom API key"
           className="w-full min-w-0 px-2 py-2 bg-surface rounded border border-border text-xs focus:outline-none focus:ring-1 focus:ring-primary/50 sm:py-1.5"
         />
       )}

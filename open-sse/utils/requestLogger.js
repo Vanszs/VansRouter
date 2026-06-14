@@ -35,8 +35,9 @@ function formatTimestamp(date = new Date()) {
 
 // Create log session folder: {sourceFormat}_{targetFormat}_{model}_{timestamp}
 async function createLogSession(sourceFormat, targetFormat, model) {
-  await ensureNodeModules();
-  if (!fs || !LOGS_DIR) return null;
+  if (!isNode || !LOGGING_ENABLED) return null;
+  const ready = await ensureNodeModules() || true;
+  if (!ready || !fs || !LOGS_DIR) return null;
   
   try {
     if (!fs.existsSync(LOGS_DIR)) {
@@ -228,9 +229,9 @@ export async function createRequestLogger(sourceFormat, targetFormat, model) {
   };
 }
 
-// Legacy functions for backward compatibility
-export function logRequest() {}
-export function logResponse() {}
+// Legacy stubs (kept for backward compatibility, not exported)
+function logRequest() {}
+function logResponse() {}
 export function logError(provider, { error, url, model, requestBody }) {
   if (!fs || !LOGS_DIR) return;
   

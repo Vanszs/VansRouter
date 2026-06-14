@@ -8,7 +8,7 @@ const LOCAL_PROVIDER_ALIASES = {
   "xiaomi-tokenplan": "xiaomi-tokenplan",
 };
 
-export function parseModel(modelStr) {
+function parseModel(modelStr) {
   const parsed = parseModelCore(modelStr);
   if (parsed?.providerAlias && LOCAL_PROVIDER_ALIASES[parsed.providerAlias]) {
     return { ...parsed, provider: LOCAL_PROVIDER_ALIASES[parsed.providerAlias] };
@@ -19,7 +19,7 @@ export function parseModel(modelStr) {
 /**
  * Resolve model alias from localDb
  */
-export async function resolveModelAlias(alias) {
+async function resolveModelAlias(alias) {
   const aliases = await getModelAliases();
   return resolveModelAliasFromMap(alias, aliases);
 }

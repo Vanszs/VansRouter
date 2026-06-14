@@ -22,6 +22,23 @@ const TUNNEL_BENEFITS = [
   { icon: "lock", title: "Encrypted", desc: "End-to-end TLS via Cloudflare" },
 ];
 
+function maskKey(fullKey) {
+  if (!fullKey) return "";
+  return fullKey.length > 8 ? fullKey.slice(0, 8) + "..." : fullKey;
+}
+
+async function patchSetting(patch) {
+  try {
+    await fetch("/api/settings", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(patch),
+    });
+  } catch (error) {
+    console.log("Error updating setting:", error);
+  }
+}
+
 const TUNNEL_PING_INTERVAL_MS = 2000;
 const TUNNEL_PING_MAX_MS = 300000;
 const STATUS_POLL_FAST_MS = 5000;
@@ -48,7 +65,7 @@ async function clientPingUrl(url) {
 
 // Race multiple URLs: resolve true as soon as any one passes ping.
 async function clientPingAny(...urls) {
-  const checks = urls.filter(Boolean).map(clientPingUrl);
+  const checks = urls.reduce((acc, u) => { if (u) acc.push(clientPingUrl(u)); return acc; }, []);
   if (!checks.length) return false;
   return new Promise((resolve) => {
     let pending = checks.length;
@@ -69,6 +86,7 @@ const CAVEMAN_LEVELS = [
 ];
 export default function APIPageClient({ machineId }) {
   const [keys, setKeys] = useState([]);
+  const [customProviders, setCustomProviders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
   const [newKeyName, setNewKeyName] = useState("");
@@ -83,7 +101,7 @@ export default function APIPageClient({ machineId }) {
   const [rtkEnabled, setRtkEnabledState] = useState(true);
   const [cavemanEnabled, setCavemanEnabled] = useState(false);
   const [cavemanLevel, setCavemanLevel] = useState("full");
-  const [locale, setLocale] = useState("en");
+  const [locale, setLocale] = useState(() => getCurrentLocale());
 
   // Cloudflare Tunnel state
   const [tunnelChecking, setTunnelChecking] = useState(true);
@@ -109,7 +127,8 @@ export default function APIPageClient({ machineId }) {
   const [tsInstalled, setTsInstalled] = useState(null); // null=checking, true/false
   const [tsInstalling, setTsInstalling] = useState(false);
   const [tsInstallLog, setTsInstallLog] = useState([]);
-  const [tsSudoPassword, setTsSudoPassword] = useState("");
+  const tsLogIdRef = useRef(0);
+  const tsSudoPasswordRef = useRef("");
   const [tsConnecting, setTsConnecting] = useState(false);
   const [showTsModal, setShowTsModal] = useState(false);
   const [showDisableTsModal, setShowDisableTsModal] = useState(false);
@@ -138,31 +157,35 @@ export default function APIPageClient({ machineId }) {
 
 
   // Client-side local/remote detection (UI hint only, not a security gate)
-  const [isRemoteHost, setIsRemoteHost] = useState(false);
-  useEffect(() => {
+  const [isRemoteHost, setIsRemoteHost] = useState(() => {
     if (typeof window !== "undefined")
-      setIsRemoteHost(!["localhost", "127.0.0.1", "::1"].includes(window.location.hostname));
-  }, []);
+      return !["localhost", "127.0.0.1", "::1"].includes(window.location.hostname);
+    return false;
+  });
 
   // Track app UI locale to gate wenyan caveman levels
   useEffect(() => {
-    setLocale(getCurrentLocale());
-    return onLocaleChange(() => setLocale(getCurrentLocale()));
+    return onLocaleChange(() => {
+      const newLocale = getCurrentLocale();
+      setLocale(newLocale);
+      // Reset wenyan level when leaving a Chinese locale
+      if (!WENYAN_LOCALES.includes(newLocale)) {
+        setCavemanLevel((prev) => {
+          const current = CAVEMAN_LEVELS.find((lvl) => lvl.id === prev);
+          if (current?.wenyan) {
+            patchSetting({ cavemanLevel: "ultra" });
+            return "ultra";
+          }
+          return prev;
+        });
+      }
+    });
   }, []);
 
   const isWenyanLocale = WENYAN_LOCALES.includes(locale);
   const visibleCavemanLevels = isWenyanLocale
     ? CAVEMAN_LEVELS
     : CAVEMAN_LEVELS.filter((lvl) => !lvl.wenyan);
-
-  // Reset wenyan level to "ultra" when leaving a Chinese locale
-  useEffect(() => {
-    const current = CAVEMAN_LEVELS.find((lvl) => lvl.id === cavemanLevel);
-    if (current?.wenyan && !isWenyanLocale) {
-      setCavemanLevel("ultra");
-      patchSetting({ cavemanLevel: "ultra" });
-    }
-  }, [isWenyanLocale, cavemanLevel]);
 
   const { copied, copy } = useCopyToClipboard();
 
@@ -180,7 +203,7 @@ export default function APIPageClient({ machineId }) {
   useEffect(() => {
     fetchData();
     loadSettings();
-  }, []);
+  }, [fetchData, loadSettings]);
 
   // Status poll: only while degraded (not yet reachable). Stop once healthy to avoid spam.
   // Visibility re-check: refresh once when tab becomes visible.
@@ -190,10 +213,10 @@ export default function APIPageClient({ machineId }) {
     const tunnelHealthy = !tunnelEnabled || tunnelReachable;
     const tsHealthy = !tsEnabled || tsReachable;
     const allHealthy = tunnelHealthy && tsHealthy;
-    const onVisible = () => { if (!document.hidden) syncTunnelStatus(); };
+    const onVisible = () => { if (!document.hidden) syncTunnelStatusRef.current(); };
     document.addEventListener("visibilitychange", onVisible);
     if (allHealthy) return () => document.removeEventListener("visibilitychange", onVisible);
-    const timer = setInterval(() => { if (!document.hidden) syncTunnelStatus(); }, STATUS_POLL_FAST_MS);
+    const timer = setInterval(() => { if (!document.hidden) syncTunnelStatusRef.current(); }, STATUS_POLL_FAST_MS);
     return () => {
       clearInterval(timer);
       document.removeEventListener("visibilitychange", onVisible);
@@ -251,7 +274,7 @@ export default function APIPageClient({ machineId }) {
   }, []);
 
   // Trust user intent (settingsEnabled): UI stays "enabled" while watchdog restarts process
-  const syncTunnelStatus = async () => {
+  const syncTunnelStatus = useCallback(async () => {
     try {
       const statusRes = await fetch("/api/tunnel/status", { cache: "no-store" });
       if (!statusRes.ok) return;
@@ -269,9 +292,11 @@ export default function APIPageClient({ machineId }) {
       setTsEnabled(tsEn);
       updateReachable(null, tsClientReachableRef, tsMissRef, setTsReachable, tsEverReachableRef, setTsEverReachable);
     } catch { /* ignore poll errors */ }
-  };
+  }, [updateReachable]);
+  const syncTunnelStatusRef = useRef(syncTunnelStatus);
+  syncTunnelStatusRef.current = syncTunnelStatus;
 
-  const loadSettings = async () => {
+  const loadSettings = useCallback(async () => {
     setTunnelChecking(true);
     try {
       const [settingsRes, statusRes] = await Promise.all([
@@ -309,7 +334,7 @@ export default function APIPageClient({ machineId }) {
     } finally {
       setTunnelChecking(false);
     }
-  };
+  }, [updateReachable]);
 
   const handleTunnelDashboardAccess = async (value) => {
     try {
@@ -363,17 +388,7 @@ export default function APIPageClient({ machineId }) {
     }
   };
 
-  const patchSetting = async (patch) => {
-    try {
-      await fetch("/api/settings", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(patch),
-      });
-    } catch (error) {
-      console.log("Error updating setting:", error);
-    }
-  };
+
 
   const handleCavemanEnabled = (value) => {
     setCavemanEnabled(value);
@@ -385,11 +400,12 @@ export default function APIPageClient({ machineId }) {
     patchSetting({ cavemanLevel: level });
   };
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     try {
-      const [keysRes, combosRes] = await Promise.all([
+      const [keysRes, combosRes, nodesRes] = await Promise.all([
         fetch("/api/keys"),
         fetch("/api/combos"),
+        fetch("/api/provider-nodes"),
       ]);
       const keysData = await keysRes.json();
       if (keysRes.ok) {
@@ -399,19 +415,32 @@ export default function APIPageClient({ machineId }) {
       if (combosRes.ok) {
         setAvailableCombos(combosData.combos || []);
       }
+      // Custom (openai/anthropic-compatible) providers are runtime DB nodes, not in
+      // the static AI_PROVIDERS catalog — merge them into the ACL picker so API keys
+      // can be scoped to them. The node `prefix` is the alias used in model IDs
+      // (`<prefix>/<model>`) and matched by isProviderAllowed() on the backend.
+      const nodesData = await nodesRes.json();
+      if (nodesRes.ok && Array.isArray(nodesData.nodes)) {
+        setCustomProviders(
+          nodesData.nodes.reduce((acc, n) => {
+            if (n.prefix) acc.push({ alias: n.prefix, name: n.name || n.prefix, color: "#6B7280" });
+            return acc;
+          }, [])
+        );
+      }
     } catch (error) {
       console.log("Error fetching data:", error);
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   // u2500u2500u2500 Cloudflare Tunnel handlers
   // Ping tunnel health until reachable. Race multiple URLs (shortlink + direct) — 1 OK is enough.
   const pingTunnelHealth = async (...urls) => {
     setTunnelLoading(true);
     setTunnelProgress("Waiting for tunnel ready...");
-    const targets = urls.filter(Boolean).map((u) => `${u}/api/health`);
+    const targets = urls.flatMap((u) => u ? [`${u}/api/health`] : []);
     const start = Date.now();
     while (Date.now() - start < TUNNEL_PING_MAX_MS) {
       await new Promise((r) => setTimeout(r, TUNNEL_PING_INTERVAL_MS));
@@ -545,9 +574,9 @@ export default function APIPageClient({ machineId }) {
       const res = await fetch("/api/tunnel/tailscale-install", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ sudoPassword: tsSudoPassword }),
+        body: JSON.stringify({ sudoPassword: tsSudoPasswordRef.current }),
       });
-      setTsSudoPassword("");
+      tsSudoPasswordRef.current = "";
 
       const reader = res.body.getReader();
       const decoder = new TextDecoder();
@@ -571,7 +600,7 @@ export default function APIPageClient({ machineId }) {
           }
           if (!data) continue;
           if (event === "progress") {
-            setTsInstallLog((prev) => [...prev.slice(-50), data.message]);
+            setTsInstallLog((prev) => [...prev.slice(-50), { id: ++tsLogIdRef.current, line: data.message }]);
           } else if (event === "done") {
             setTsInstalled(true);
             setTsInstalling(false);
@@ -852,11 +881,6 @@ export default function APIPageClient({ machineId }) {
   };
 
 
-  const maskKey = (fullKey) => {
-    if (!fullKey) return "";
-    return fullKey.length > 8 ? fullKey.slice(0, 8) + "..." : fullKey;
-  };
-
   const toggleKeyVisibility = (keyId) => {
     setVisibleKeys(prev => {
       const next = new Set(prev);
@@ -866,14 +890,10 @@ export default function APIPageClient({ machineId }) {
     });
   };
 
-  const [baseUrl, setBaseUrl] = useState("/v1");
-
-  // Hydration fix: Only access window on client side
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      setBaseUrl(`${window.location.origin}/v1`);
-    }
-  }, []);
+  const [baseUrl, setBaseUrl] = useState(() => {
+    if (typeof window !== "undefined") return `${window.location.origin}/v1`;
+    return "/v1";
+  });
 
   if (loading) {
     return (
@@ -913,13 +933,13 @@ export default function APIPageClient({ machineId }) {
             {tunnelEnabled && !tunnelLoading && tunnelReachable ? (
               <>
                 <Input value={`${tunnelPublicUrl || tunnelUrl}/v1`} readOnly className="flex-1 font-mono text-sm" />
-                <button
+                <button type="button"
                   onClick={() => copy(`${tunnelPublicUrl || tunnelUrl}/v1`, "tunnel_url")}
                   className="p-2 hover:bg-black/5 dark:hover:bg-white/5 rounded text-text-muted hover:text-primary transition-colors shrink-0"
                 >
                   <span className="material-symbols-outlined text-[18px]">{copied === "tunnel_url" ? "check" : "content_copy"}</span>
                 </button>
-                <button
+                <button type="button"
                   onClick={() => setShowDisableTunnelModal(true)}
                   className="p-2 hover:bg-red-500/10 rounded text-red-500 transition-colors shrink-0"
                   title="Disable Tunnel"
@@ -933,7 +953,7 @@ export default function APIPageClient({ machineId }) {
                   <span className="material-symbols-outlined animate-spin text-sm">progress_activity</span>
                   {tunnelEverReachable ? "Tunnel reconnecting..." : "Tunnel checking..."}
                 </div>
-                <button
+                <button type="button"
                   onClick={() => setShowDisableTunnelModal(true)}
                   className="p-2 hover:bg-red-500/10 rounded text-red-500 transition-colors shrink-0"
                   title="Disable Tunnel"
@@ -947,7 +967,7 @@ export default function APIPageClient({ machineId }) {
                   <span className="material-symbols-outlined animate-spin text-sm">progress_activity</span>
                   {tunnelProgress || "Creating tunnel..."}
                 </div>
-                <button
+                <button type="button"
                   onClick={() => { setTunnelLoading(false); setTunnelProgress(""); }}
                   className="p-2 hover:bg-red-500/10 rounded text-red-500 transition-colors shrink-0"
                   title="Stop"
@@ -969,7 +989,7 @@ export default function APIPageClient({ machineId }) {
                   <span className="material-symbols-outlined animate-spin text-sm">progress_activity</span>
                   Checking...
                 </div>
-                <button
+                <button type="button"
                   onClick={() => setTunnelChecking(false)}
                   className="p-2 hover:bg-red-500/10 rounded text-red-500 transition-colors shrink-0"
                   title="Stop"
@@ -1005,13 +1025,13 @@ export default function APIPageClient({ machineId }) {
             {tsEnabled && !tsLoading && tsReachable ? (
               <>
                 <Input value={`${tsUrl}/v1`} readOnly className="flex-1 font-mono text-sm" />
-                <button
+                <button type="button"
                   onClick={() => copy(`${tsUrl}/v1`, "ts_url")}
                   className="p-2 hover:bg-black/5 dark:hover:bg-white/5 rounded text-text-muted hover:text-primary transition-colors shrink-0"
                 >
                   <span className="material-symbols-outlined text-[18px]">{copied === "ts_url" ? "check" : "content_copy"}</span>
                 </button>
-                <button
+                <button type="button"
                   onClick={() => setShowDisableTsModal(true)}
                   className="p-2 hover:bg-red-500/10 rounded text-red-500 transition-colors shrink-0"
                   title="Disable Tailscale"
@@ -1025,7 +1045,7 @@ export default function APIPageClient({ machineId }) {
                   <span className="material-symbols-outlined animate-spin text-sm">progress_activity</span>
                   {tsEverReachable ? "Tailscale reconnecting..." : "Tailscale checking..."}
                 </div>
-                <button
+                <button type="button"
                   onClick={() => setShowDisableTsModal(true)}
                   className="p-2 hover:bg-red-500/10 rounded text-red-500 transition-colors shrink-0"
                   title="Disable Tailscale"
@@ -1048,7 +1068,7 @@ export default function APIPageClient({ machineId }) {
                     {tsAuthLabel || "Open"}
                   </Button>
                 )}
-                <button
+                <button type="button"
                   onClick={() => { setTsLoading(false); setTsConnecting(false); setTsProgress(""); clearUserAuth(); }}
                   className="p-2 hover:bg-red-500/10 rounded text-red-500 transition-colors shrink-0"
                   title="Stop"
@@ -1185,7 +1205,7 @@ export default function APIPageClient({ machineId }) {
               <div className="flex flex-col items-end gap-1">
                 <div className="flex items-center gap-1.5">
                   {visibleCavemanLevels.map((lvl) => (
-                    <button
+                    <button type="button"
                       key={lvl.id}
                       onClick={() => handleCavemanLevel(lvl.id)}
                       className={`px-3 py-1.5 rounded text-xs font-medium border transition-colors ${
@@ -1289,7 +1309,7 @@ export default function APIPageClient({ machineId }) {
                     <code className="text-xs text-text-muted font-mono">
                       {visibleKeys.has(key.id) ? key.key : maskKey(key.key)}
                     </code>
-                    <button
+                    <button type="button"
                       onClick={() => toggleKeyVisibility(key.id)}
                       className="p-1 hover:bg-black/5 dark:hover:bg-white/5 rounded text-text-muted hover:text-primary opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-all"
                       title={visibleKeys.has(key.id) ? "Hide key" : "Show key"}
@@ -1298,7 +1318,7 @@ export default function APIPageClient({ machineId }) {
                         {visibleKeys.has(key.id) ? "visibility_off" : "visibility"}
                       </span>
                     </button>
-                    <button
+                    <button type="button"
                       onClick={() => copy(key.key, key.id)}
                       className="p-1 hover:bg-black/5 dark:hover:bg-white/5 rounded text-text-muted hover:text-primary opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-all"
                     >
@@ -1320,7 +1340,7 @@ export default function APIPageClient({ machineId }) {
                       <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-red-500/10 text-red-500">No Providers</span>
                     ) : (
                       key.allowedProviders.map((alias) => {
-                        const p = PROVIDER_LIST.find(x => x.alias === alias);
+                        const p = PROVIDER_LIST.find(x => x.alias === alias) || customProviders.find(x => x.alias === alias);
                         return (
                           <span key={alias} className="text-[10px] px-1.5 py-0.5 rounded-full text-white" style={{ backgroundColor: p?.color || "#6B7280" }}>
                             {p?.name || alias}
@@ -1328,7 +1348,7 @@ export default function APIPageClient({ machineId }) {
                         );
                       })
                     )}
-                    <button
+                    <button type="button"
                       onClick={() => setEditingProviders(editingProviders === key.id ? null : key.id)}
                       className="text-[10px] px-1.5 py-0.5 rounded-full bg-black/5 dark:bg-white/10 text-text-muted hover:text-primary transition-colors"
                     >
@@ -1339,11 +1359,11 @@ export default function APIPageClient({ machineId }) {
                     <div className="mt-2 p-2 rounded-lg bg-black/[0.02] dark:bg-white/[0.03] border border-black/5 dark:border-white/5">
                       <p className="text-[10px] text-text-muted mb-1.5">Select allowed providers — <b>null</b>=all, <b>none selected</b>=block all:</p>
                       <div className="flex flex-wrap gap-1">
-                        {PROVIDER_LIST.map((p) => {
+                        {[...PROVIDER_LIST, ...customProviders.filter((c) => !PROVIDER_LIST.some((p) => p.alias === c.alias))].map((p) => {
                           const current = key.allowedProviders || [];
                           const isSelected = Array.isArray(key.allowedProviders) && current.includes(p.alias);
                           return (
-                            <button
+                            <button type="button"
                               key={p.alias}
                               onClick={() => {
                                 const base = Array.isArray(key.allowedProviders) ? key.allowedProviders : [];
@@ -1360,10 +1380,10 @@ export default function APIPageClient({ machineId }) {
                       </div>
                       <div className="flex gap-2 mt-2">
                         {key.allowedProviders !== null && (
-                          <button onClick={() => handleUpdateProviders(key.id, null)} className="text-[10px] text-primary hover:underline">Allow all</button>
+                          <button type="button" onClick={() => handleUpdateProviders(key.id, null)} className="text-[10px] text-primary hover:underline">Allow all</button>
                         )}
                         {(key.allowedProviders === null || (Array.isArray(key.allowedProviders) && key.allowedProviders.length > 0)) && (
-                          <button onClick={() => handleUpdateProviders(key.id, [])} className="text-[10px] text-red-500 hover:underline">Block all (NONE)</button>
+                          <button type="button" onClick={() => handleUpdateProviders(key.id, [])} className="text-[10px] text-red-500 hover:underline">Block all (NONE)</button>
                         )}
                       </div>
                     </div>
@@ -1379,7 +1399,7 @@ export default function APIPageClient({ machineId }) {
                         <span key={name} className="text-[10px] px-1.5 py-0.5 rounded-full bg-purple-500/20 text-purple-600 dark:text-purple-400">{name}</span>
                       ))
                     )}
-                    <button
+                    <button type="button"
                       onClick={() => setEditingCombos(editingCombos === key.id ? null : key.id)}
                       className="text-[10px] px-1.5 py-0.5 rounded-full bg-black/5 dark:bg-white/10 text-text-muted hover:text-primary transition-colors"
                     >
@@ -1394,7 +1414,7 @@ export default function APIPageClient({ machineId }) {
                           const current = Array.isArray(key.allowedCombos) ? key.allowedCombos : [];
                           const isSelected = Array.isArray(key.allowedCombos) && current.includes(combo.name);
                           return (
-                            <button
+                            <button type="button"
                               key={combo.name}
                               onClick={() => {
                                 const base = Array.isArray(key.allowedCombos) ? key.allowedCombos : [];
@@ -1411,10 +1431,10 @@ export default function APIPageClient({ machineId }) {
                       </div>
                       <div className="flex gap-2 mt-2">
                         {key.allowedCombos !== null && (
-                          <button onClick={() => handleUpdateCombos(key.id, null)} className="text-[10px] text-primary hover:underline">Allow all</button>
+                          <button type="button" onClick={() => handleUpdateCombos(key.id, null)} className="text-[10px] text-primary hover:underline">Allow all</button>
                         )}
                         {(key.allowedCombos === null || (Array.isArray(key.allowedCombos) && key.allowedCombos.length > 0)) && (
-                          <button onClick={() => handleUpdateCombos(key.id, [])} className="text-[10px] text-red-500 hover:underline">Block all (NONE)</button>
+                          <button type="button" onClick={() => handleUpdateCombos(key.id, [])} className="text-[10px] text-red-500 hover:underline">Block all (NONE)</button>
                         )}
                       </div>
                     </div>
@@ -1443,7 +1463,7 @@ export default function APIPageClient({ machineId }) {
                               return <span key={k} className="text-[10px] px-1.5 py-0.5 rounded-full bg-green-500/15 text-green-700 dark:text-green-300">{kd?.label || k}</span>;
                             })
                           )}
-                          <button
+                          <button type="button"
                             onClick={() => setEditingKinds(editingKinds === key.id ? null : key.id)}
                             className="text-[10px] px-1.5 py-0.5 rounded-full bg-black/5 dark:bg-white/10 text-text-muted hover:text-primary transition-colors"
                           >
@@ -1458,7 +1478,7 @@ export default function APIPageClient({ machineId }) {
                                 const current = Array.isArray(kinds) ? kinds : [];
                                 const isSelected = Array.isArray(kinds) && current.includes(kd.id);
                                 return (
-                                  <button
+                                  <button type="button"
                                     key={kd.id}
                                     onClick={() => {
                                       const base = Array.isArray(kinds) ? kinds : [];
@@ -1475,10 +1495,10 @@ export default function APIPageClient({ machineId }) {
                             </div>
                             <div className="flex gap-2 mt-2">
                               {kinds !== null && (
-                                <button onClick={() => handleUpdateKinds(key.id, null)} className="text-[10px] text-primary hover:underline">Allow all</button>
+                                <button type="button" onClick={() => handleUpdateKinds(key.id, null)} className="text-[10px] text-primary hover:underline">Allow all</button>
                               )}
                               {(kinds === null || (Array.isArray(kinds) && kinds.length > 0)) && (
-                                <button onClick={() => handleUpdateKinds(key.id, [])} className="text-[10px] text-red-500 hover:underline">Block all (NONE)</button>
+                                <button type="button" onClick={() => handleUpdateKinds(key.id, [])} className="text-[10px] text-red-500 hover:underline">Block all (NONE)</button>
                               )}
                             </div>
                           </div>
@@ -1507,7 +1527,7 @@ export default function APIPageClient({ machineId }) {
                     }}
                     title={key.isActive ? "Pause key" : "Resume key"}
                   />
-                  <button
+                  <button type="button"
                     onClick={() => handleDeleteKey(key.id)}
                     className="p-2 hover:bg-red-500/10 rounded text-red-500 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-all"
                   >
@@ -1654,7 +1674,7 @@ export default function APIPageClient({ machineId }) {
       <Modal
         isOpen={showTsModal}
         title="Tailscale Funnel"
-        onClose={() => { if (!tsInstalling) { setShowTsModal(false); setTsSudoPassword(""); setTsStatus(null); } }}
+        onClose={() => { if (!tsInstalling) { setShowTsModal(false); tsSudoPasswordRef.current = ""; setTsStatus(null); } }}
       >
         <div className="flex flex-col gap-4">
           {/* Checking state */}
@@ -1687,8 +1707,8 @@ export default function APIPageClient({ machineId }) {
               </div>
               {tsInstallLog.length > 0 && (
                 <div ref={tsLogRef} className="bg-black/5 dark:bg-white/5 rounded p-2 max-h-40 overflow-y-auto font-mono text-xs text-text-muted">
-                  {tsInstallLog.map((line, i) => (
-                    <div key={i}>{line}</div>
+                  {tsInstallLog.map((entry) => (
+                    <div key={entry.id}>{entry.line}</div>
                   ))}
                 </div>
               )}
@@ -1756,7 +1776,7 @@ function EndpointRow({ label, url, copyId, copied, onCopy, badge, actions }) {
           (badge === "CF" || badge === "TS") ? "bg-primary/10 text-primary" : "bg-surface-2 text-text-muted"
         }`}>{label}</span>
       <Input value={url} readOnly className="flex-1 font-mono text-sm" />
-      <button
+      <button type="button"
         onClick={() => onCopy(url, copyId)}
         className="p-2 hover:bg-black/5 dark:hover:bg-white/5 rounded text-text-muted hover:text-primary transition-colors shrink-0"
       >
@@ -1767,25 +1787,25 @@ function EndpointRow({ label, url, copyId, copied, onCopy, badge, actions }) {
   );
 }
 
+// Render URLs in message as clickable links
+function StatusMessage({ msg }) {
+  const parts = msg.split(/(https?:\/\/[^\s]+)/g);
+  return parts.map((part, i) =>
+    /^https?:\/\//.test(part)
+      ? <a key={`${i}-${part}`} href={part} target="_blank" rel="noreferrer" className="underline font-medium">{part}</a>
+      : part
+  );
+}
+
 /** Reusable status alert */
 function StatusAlert({ status, className = "" }) {
-  // Render URLs in message as clickable links
-  const renderMessage = (msg) => {
-    const parts = msg.split(/(https?:\/\/[^\s]+)/g);
-    return parts.map((part, i) =>
-      /^https?:\/\//.test(part)
-        ? <a key={i} href={part} target="_blank" rel="noreferrer" className="underline font-medium">{part}</a>
-        : part
-    );
-  };
-
   return (
     <div className={`p-2 rounded text-sm ${className} ${status.type === "success" ? "bg-green-500/10 text-green-600 dark:text-green-400" :
         status.type === "warning" ? "bg-yellow-500/10 text-yellow-600 dark:text-yellow-400" :
         status.type === "info" ? "bg-blue-500/10 text-blue-600 dark:text-blue-400" :
           "bg-red-500/10 text-red-600 dark:text-red-400"
       }`}>
-      {renderMessage(status.message)}
+      <StatusMessage msg={status.message} />
     </div>
   );
 }

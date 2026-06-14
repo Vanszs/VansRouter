@@ -69,8 +69,10 @@ export {
 
 // Export/import full DB
 export async function exportDb() {
-  const db = await getAdapter();
-  const { exportSettings } = await import("./repos/settingsRepo.js");
+  const [db, { exportSettings }] = await Promise.all([
+    getAdapter(),
+    import("./repos/settingsRepo.js"),
+  ]);
 
   const out = {
     settings: await exportSettings(),

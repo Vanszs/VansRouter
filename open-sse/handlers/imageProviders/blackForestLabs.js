@@ -25,15 +25,19 @@ export default {
     const pollingUrl = data.polling_url;
     if (!pollingUrl) throw new Error("BFL: no polling_url returned");
     const deadline = Date.now() + POLL_TIMEOUT_MS;
-    while (Date.now() < deadline) {
+
+    async function poll() {
       await sleep(POLL_INTERVAL_MS);
       const r = await fetch(pollingUrl, { headers: { "x-key": headers["x-key"], "Accept": "application/json" } });
       if (!r.ok) throw new Error(`BFL status ${r.status}`);
       const s = await r.json();
       if (s.status === "Ready") return s;
       if (s.status === "Error" || s.status === "Failed") throw new Error(s.error || "BFL generation failed");
+      if (Date.now() >= deadline) throw new Error("BFL polling timeout");
+      return poll();
     }
-    throw new Error("BFL polling timeout");
+
+    return poll();
   },
   normalize: (responseBody) => {
     const sample = responseBody.result?.sample;

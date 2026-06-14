@@ -89,5 +89,4 @@ async function handleResponse(response) {
 }
 
 const api = { get, post, put, del };
-export default api;
 

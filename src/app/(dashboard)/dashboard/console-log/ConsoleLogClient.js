@@ -19,32 +19,34 @@ function colorLine(line) {
   return <span className={color}>{line}</span>;
 }
 
+async function clearConsoleLogs() {
+  try {
+    await fetch("/api/translator/console-logs", { method: "DELETE" });
+  } catch (err) {
+    console.error("Failed to clear console logs:", err);
+  }
+}
+
 export default function ConsoleLogClient() {
   const [logs, setLogs] = useState([]);
-  const [connected, setConnected] = useState(false);
+  const connectedRef = useRef(false);
   const logRef = useRef(null);
+  const idRef = useRef(0);
 
-  const handleClear = async () => {
-    try {
-      await fetch("/api/translator/console-logs", { method: "DELETE" });
-      // UI cleared via SSE "clear" event
-    } catch (err) {
-      console.error("Failed to clear console logs:", err);
-    }
-  };
+  const handleClear = clearConsoleLogs;
 
   useEffect(() => {
     const es = new EventSource("/api/translator/console-logs/stream");
 
-    es.onopen = () => setConnected(true);
+    es.onopen = () => connectedRef.current = true;
 
     es.onmessage = (e) => {
       const msg = JSON.parse(e.data);
       if (msg.type === "init") {
-        setLogs(msg.logs.slice(-CONSOLE_LOG_CONFIG.maxLines));
+        setLogs(msg.logs.slice(-CONSOLE_LOG_CONFIG.maxLines).map(line => ({ id: ++idRef.current, line })));
       } else if (msg.type === "line") {
         setLogs((prev) => {
-          const next = [...prev, msg.line];
+          const next = [...prev, { id: ++idRef.current, line: msg.line }];
           return next.length > CONSOLE_LOG_CONFIG.maxLines ? next.slice(-CONSOLE_LOG_CONFIG.maxLines) : next;
         });
       } else if (msg.type === "clear") {
@@ -52,7 +54,7 @@ export default function ConsoleLogClient() {
       }
     };
 
-    es.onerror = () => setConnected(false);
+    es.onerror = () => connectedRef.current = false;
 
     return () => es.close();
   }, []);
@@ -79,8 +81,8 @@ export default function ConsoleLogClient() {
             <span className="text-text-muted">No console logs yet.</span>
           ) : (
             <div className="space-y-0.5">
-              {logs.map((line, i) => (
-                <div key={i}>{colorLine(line)}</div>
+              {logs.map((entry) => (
+                <div key={entry.id}>{colorLine(entry.line)}</div>
               ))}
             </div>
           )}

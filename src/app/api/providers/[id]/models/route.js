@@ -17,21 +17,18 @@ const parseOpenAIStyleModels = (data) => {
 const parseGeminiCliModels = (data) => {
   if (Array.isArray(data?.models)) {
     return data.models
-      .map((item) => {
+      .flatMap((item) => {
         const id = item?.id || item?.model || item?.name;
-        if (!id) return null;
-        return { id, name: item?.displayName || item?.name || id };
-      })
-      .filter(Boolean);
+        if (!id) return [];
+        return [{ id, name: item?.displayName || item?.name || id }];
+      });
   }
 
   if (data?.models && typeof data.models === "object") {
-    return Object.entries(data.models)
-      .filter(([, info]) => !info?.isInternal)
-      .map(([id, info]) => ({
-        id,
-        name: info?.displayName || info?.name || id,
-      }));
+    return Object.entries(data.models).reduce((acc, [id, info]) => {
+      if (!info?.isInternal) acc.push({ id, name: info?.displayName || info?.name || id });
+      return acc;
+    }, []);
   }
 
   return [];
@@ -177,16 +174,18 @@ const PROVIDER_MODELS_CONFIG = {
     parseResponse: (data) => {
       if (!data?.data) return [];
       // Filter out embeddings, non-chat models, and disabled models
-      return data.data
-        .filter(m => m.capabilities?.type === "chat")
-        .filter(m => m.policy?.state !== "disabled") // Only return explicitly enabled models
-        .map(m => ({
-          id: m.id,
-          name: m.name || m.id,
-          version: m.version,
-          capabilities: m.capabilities,
-          isDefault: m.model_picker_enabled === true
-        }));
+      return data.data.reduce((acc, m) => {
+        if (m.capabilities?.type === "chat" && m.policy?.state !== "disabled") {
+          acc.push({
+            id: m.id,
+            name: m.name || m.id,
+            version: m.version,
+            capabilities: m.capabilities,
+            isDefault: m.model_picker_enabled === true
+          });
+        }
+        return acc;
+      }, []);
     }
   },
   openai: createOpenAIModelsConfig("https://api.openai.com/v1/models"),

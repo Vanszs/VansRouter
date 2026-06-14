@@ -6,19 +6,18 @@
  * with partial schema mismatches. For stability, tool outputs are represented as
  * structured text blocks in user messages.
  */
-import { register } from "../index.js";
+import { register } from "../registry.js";
 import { FORMATS } from "../formats.js";
 
 function extractContent(content) {
   if (typeof content === "string") return content;
   if (Array.isArray(content)) {
-    return content
-      .filter(part => {
-        if (!part || typeof part !== "object") return false;
-        return part.type === "text" && typeof part.text === "string";
-      })
-      .map(part => part.text || "")
-      .join("");
+    return content.reduce((acc, part) => {
+      if (part && typeof part === "object" && part.type === "text" && typeof part.text === "string") {
+        acc += part.text || "";
+      }
+      return acc;
+    }, "");
   }
   return "";
 }
@@ -135,17 +134,19 @@ function convertMessages(messages) {
         });
         result.push(assistantMsg);
       } else if (msg.role === "assistant" && Array.isArray(msg.content)) {
-        const extractedToolCalls = msg.content
-          .filter(b => b?.type === "tool_use")
-          .map(b => ({
-            id: b.id || "",
-            type: "function",
-            function: {
-              name: b.name || "tool",
-              arguments: JSON.stringify(b.input || {})
-            }
-          }))
-          .filter(tc => tc.id);
+        const extractedToolCalls = msg.content.reduce((acc, b) => {
+          if (b?.type === "tool_use" && b.id) {
+            acc.push({
+              id: b.id,
+              type: "function",
+              function: {
+                name: b.name || "tool",
+                arguments: JSON.stringify(b.input || {})
+              }
+            });
+          }
+          return acc;
+        }, []);
 
         if (extractedToolCalls.length > 0) {
           result.push({

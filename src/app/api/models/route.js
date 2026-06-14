@@ -10,20 +10,18 @@ export async function GET() {
     const modelAliases = await getModelAliases();
     const disabled = await getDisabledModels();
 
-    const models = AI_MODELS
-      .filter((m) => {
+    const models = AI_MODELS.reduce((acc, m) => {
         const alias = getProviderAlias(m.provider) || m.provider;
         const list = disabled[alias] || disabled[m.provider] || [];
-        return !list.includes(m.model);
-      })
-      .map((m) => {
+        if (list.includes(m.model)) return acc;
         const fullModel = `${m.provider}/${m.model}`;
-        return {
+        acc.push({
           ...m,
           fullModel,
           alias: modelAliases[fullModel] || m.model,
-        };
-      });
+        });
+        return acc;
+      }, []);
 
     return NextResponse.json({ models });
   } catch (error) {

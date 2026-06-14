@@ -21,5 +21,3 @@ export async function ensureOutboundProxyInitialized() {
 setImmediate(() => {
   ensureOutboundProxyInitialized().catch(console.log);
 });
-
-export default ensureOutboundProxyInitialized;

@@ -337,7 +337,7 @@ export async function handleChatCore({ body, modelInfo, credentials, log, onCred
   return handleStreamingResponse({ ...sharedCtx, providerResponse, sourceFormat, targetFormat, userAgent, reqLogger, toolNameMap, streamController, onStreamComplete });
 }
 
-export function isTokenExpiringSoon(expiresAt, bufferMs = 5 * 60 * 1000) {
+function isTokenExpiringSoon(expiresAt, bufferMs = 5 * 60 * 1000) {
   if (!expiresAt) return false;
   return new Date(expiresAt).getTime() - Date.now() < bufferMs;
 }

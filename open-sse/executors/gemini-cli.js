@@ -86,4 +86,3 @@ export class GeminiCLIExecutor extends BaseExecutor {
   }
 }
 
-export default GeminiCLIExecutor;

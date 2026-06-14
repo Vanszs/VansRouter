@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useLayoutEffect } from "react";
+import { useState, useEffect, useLayoutEffect } from "react";
 import { createPortal } from "react-dom";
 import { useRouter, usePathname } from "next/navigation";
 import { Globe, X } from "lucide-react";
@@ -31,6 +31,13 @@ export default function LanguageSwitcher({ currentLang }) {
     }
   }, [open]);
 
+  useEffect(() => {
+    if (!open) return;
+    const onEsc = (e) => { if (e.key === "Escape") setOpen(false); };
+    document.addEventListener("keydown", onEsc);
+    return () => document.removeEventListener("keydown", onEsc);
+  }, [open]);
+
   const switchTo = (code) => {
     const { rest } = extractLangFromPath(pathname);
     const target = rest ? `/${code}/${rest}` : `/${code}`;
@@ -39,14 +46,14 @@ export default function LanguageSwitcher({ currentLang }) {
   };
 
   const modal = open && (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 p-4" onClick={() => setOpen(false)}>
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 p-4" onClick={() => setOpen(false)} aria-hidden="true">
       <div
         className="bg-white rounded-xl shadow-2xl max-w-md w-full max-h-[80vh] overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between p-4 border-b border-gray-200">
           <h2 className="font-bold text-lg text-gray-900">{t(currentLang, "selectLanguage")}</h2>
-          <button
+          <button type="button"
             onClick={() => setOpen(false)}
             className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors"
             aria-label="Close"
@@ -56,7 +63,7 @@ export default function LanguageSwitcher({ currentLang }) {
         </div>
         <div className="p-2 overflow-y-auto max-h-[60vh]">
           {LANGUAGES.map((lang) => (
-            <button
+            <button type="button"
               key={lang.code}
               onClick={() => switchTo(lang.code)}
               className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-colors ${
@@ -80,7 +87,7 @@ export default function LanguageSwitcher({ currentLang }) {
 
   return (
     <>
-      <button
+      <button type="button"
         onClick={() => setOpen(true)}
         className="flex items-center gap-1.5 px-2.5 py-1.5 text-sm text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
         aria-label="Switch language"

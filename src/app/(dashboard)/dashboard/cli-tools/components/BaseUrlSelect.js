@@ -67,33 +67,33 @@ export default function BaseUrlSelect({
   cloudUrl = "",
   withV1 = true,
 }) {
-  const [savedPresets, setSavedPresets] = useState([]);
-  const [mode, setMode] = useState("");
+  const [savedPresets, setSavedPresets] = useState(readSavedPresets);
   const [customInput, setCustomInput] = useState("");
   const initializedRef = useRef(false);
-
-  useEffect(() => {
-    setSavedPresets(readSavedPresets());
-  }, []);
 
   const options = useMemo(
     () => buildOptions({ requiresExternalUrl, tunnelEnabled, tunnelPublicUrl, tailscaleEnabled, tailscaleUrl, cloudEnabled, cloudUrl, savedPresets, withV1 }),
     [requiresExternalUrl, tunnelEnabled, tunnelPublicUrl, tailscaleEnabled, tailscaleUrl, cloudEnabled, cloudUrl, savedPresets, withV1]
   );
 
-  // Always default to first option (127.0.0.1) on mount, ignore persisted value
+  const [mode, setMode] = useState(() => {
+    const opts = buildOptions({ requiresExternalUrl, tunnelEnabled, tunnelPublicUrl, tailscaleEnabled, tailscaleUrl, cloudEnabled, cloudUrl, savedPresets: readSavedPresets(), withV1 });
+    const first = opts.find((o) => o.value !== CUSTOM_VALUE);
+    return first ? first.value : CUSTOM_VALUE;
+  });
+
+  // Fire onChange once on mount with the initial URL
+  const onChangeRef = useRef(onChange);
+  useEffect(() => { onChangeRef.current = onChange; });
   useEffect(() => {
     if (initializedRef.current) return;
     if (options.length === 0) return;
     initializedRef.current = true;
     const first = options.find((o) => o.value !== CUSTOM_VALUE);
     if (first) {
-      setMode(first.value);
-      onChange(first.url);
-    } else {
-      setMode(CUSTOM_VALUE);
+      onChangeRef.current(first.url);
     }
-  }, [options, onChange]);
+  }, [options]);
 
   const handleSelect = (e) => {
     const next = e.target.value;
@@ -166,6 +166,7 @@ export default function BaseUrlSelect({
           value={customInput}
           onChange={handleCustomInput}
           placeholder={withV1 ? "https://example.com/v1" : "https://example.com"}
+          aria-label="Custom base URL"
           className="w-full min-w-0 px-2 py-2 bg-surface rounded border border-border text-xs focus:outline-none focus:ring-1 focus:ring-primary/50 sm:py-1.5"
         />
       )}

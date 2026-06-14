@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback, useReducer } from "react";
 import { Card, Button, ModelSelectModal, ManualConfigModal } from "@/shared/components";
 import Image from "next/image";
 import BaseUrlSelect from "./BaseUrlSelect";
@@ -9,238 +9,8 @@ import { matchKnownEndpoint } from "./cliEndpointMatch";
 
 const CLOUD_URL = process.env.NEXT_PUBLIC_CLOUD_URL;
 
-export default function DroidToolCard({
-  tool,
-  isExpanded,
-  onToggle,
-  baseUrl,
-  hasActiveProviders,
-  apiKeys,
-  activeProviders,
-  cloudEnabled,
-  initialStatus,
-  tunnelEnabled,
-  tunnelPublicUrl,
-  tailscaleEnabled,
-  tailscaleUrl,
-}) {
-  const [droidStatus, setDroidStatus] = useState(initialStatus || null);
-  const [checkingDroid, setCheckingDroid] = useState(false);
-  const [applying, setApplying] = useState(false);
-  const [restoring, setRestoring] = useState(false);
-  const [message, setMessage] = useState(null);
-  const [selectedApiKey, setSelectedApiKey] = useState("");
-  const [modelList, setModelList] = useState([]);
-  const [modelInput, setModelInput] = useState("");
-  const [modalOpen, setModalOpen] = useState(false);
-  const [modelAliases, setModelAliases] = useState({});
-  const [showManualConfigModal, setShowManualConfigModal] = useState(false);
-  const [showInstallGuide, setShowInstallGuide] = useState(false);
-  const [customBaseUrl, setCustomBaseUrl] = useState("");
-  const hasInitializedModel = useRef(false);
-
-  const getConfigStatus = () => {
-    if (!droidStatus?.installed) return null;
-    // Check for any 9Router model entry (support multi-model: custom:9Router-0, custom:9Router-1, ...)
-    const currentConfig = droidStatus.settings?.customModels?.find(m => m.id?.startsWith("custom:9Router"));
-    if (!currentConfig) return "not_configured";
-    return matchKnownEndpoint(currentConfig.baseUrl, { tunnelPublicUrl, tailscaleUrl, cloudUrl: cloudEnabled ? CLOUD_URL : null }) ? "configured" : "other";
-  };
-
-  const configStatus = getConfigStatus();
-
-  useEffect(() => {
-    if (apiKeys?.length > 0 && !selectedApiKey) {
-      setSelectedApiKey(apiKeys[0].key);
-    }
-  }, [apiKeys, selectedApiKey]);
-
-  useEffect(() => {
-    if (initialStatus) setDroidStatus(initialStatus);
-  }, [initialStatus]);
-
-  useEffect(() => {
-    if (isExpanded && !droidStatus) {
-      checkDroidStatus();
-      fetchModelAliases();
-    }
-    if (isExpanded) fetchModelAliases();
-  }, [isExpanded]);
-
-  const fetchModelAliases = async () => {
-    try {
-      const res = await fetch("/api/models/alias");
-      const data = await res.json();
-      if (res.ok) setModelAliases(data.aliases || {});
-    } catch (error) {
-      console.log("Error fetching model aliases:", error);
-    }
-  };
-
-  // Pre-fill model list from existing config (supports multi-model)
-  useEffect(() => {
-    if (droidStatus?.installed && !hasInitializedModel.current) {
-      hasInitializedModel.current = true;
-      const existingModels = (droidStatus.settings?.customModels || [])
-        .filter(m => m.id?.startsWith("custom:9Router"))
-        .sort((a, b) => (a.index || 0) - (b.index || 0))
-        .map(m => m.model);
-      if (existingModels.length > 0) {
-        setModelList(existingModels);
-      } else {
-        // Legacy: single model stored as custom:9Router-0
-        const legacy = droidStatus.settings?.customModels?.find(m => m.id === "custom:9Router-0");
-        if (legacy?.model) {
-          setModelList([legacy.model]);
-        }
-      }
-    }
-  }, [droidStatus]);
-
-  const checkDroidStatus = async () => {
-    setCheckingDroid(true);
-    try {
-      const res = await fetch("/api/cli-tools/droid-settings");
-      const data = await res.json();
-      setDroidStatus(data);
-    } catch (error) {
-      setDroidStatus({ installed: false, error: error.message });
-    } finally {
-      setCheckingDroid(false);
-    }
-  };
-
-  const getEffectiveBaseUrl = () => {
-    const url = customBaseUrl || baseUrl;
-    return url.endsWith("/v1") ? url : `${url}/v1`;
-  };
-
-  const getDisplayUrl = () => {
-    const url = customBaseUrl || baseUrl;
-    return url.endsWith("/v1") ? url : `${url}/v1`;
-  };
-
-  const addModel = () => {
-    const val = modelInput.trim();
-    if (!val || modelList.includes(val)) return;
-    setModelList((prev) => [...prev, val]);
-    setModelInput("");
-  };
-
-  const removeModel = (id) => setModelList((prev) => prev.filter((m) => m !== id));
-
-  const handleModelSelect = (model) => {
-    if (!model.value || modelList.includes(model.value)) return;
-    setModelList((prev) => [...prev, model.value]);
-    setModalOpen(false);
-  };
-
-  const handleApplySettings = async () => {
-    setApplying(true);
-    setMessage(null);
-    try {
-      const keyToUse = selectedApiKey?.trim()
-        || (apiKeys?.length > 0 ? apiKeys[0].key : null)
-        || (!cloudEnabled ? "sk_9router" : null);
-
-      const res = await fetch("/api/cli-tools/droid-settings", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          baseUrl: getEffectiveBaseUrl(),
-          apiKey: keyToUse,
-          models: modelList,
-          activeModel: modelList[0] || "",
-        }),
-      });
-      const data = await res.json();
-      if (res.ok) {
-        setMessage({ type: "success", text: "Settings applied successfully!" });
-        checkDroidStatus();
-      } else {
-        setMessage({ type: "error", text: data.error || "Failed to apply settings" });
-      }
-    } catch (error) {
-      setMessage({ type: "error", text: error.message });
-    } finally {
-      setApplying(false);
-    }
-  };
-
-  const handleResetSettings = async () => {
-    setRestoring(true);
-    setMessage(null);
-    try {
-      const res = await fetch("/api/cli-tools/droid-settings", { method: "DELETE" });
-      const data = await res.json();
-      if (res.ok) {
-        setMessage({ type: "success", text: "Settings reset successfully!" });
-        setModelList([]);
-        checkDroidStatus();
-      } else {
-        setMessage({ type: "error", text: data.error || "Failed to reset settings" });
-      }
-    } catch (error) {
-      setMessage({ type: "error", text: error.message });
-    } finally {
-      setRestoring(false);
-    }
-  };
-
-  const getManualConfigs = () => {
-    const keyToUse = (selectedApiKey && selectedApiKey.trim())
-      ? selectedApiKey
-      : (!cloudEnabled ? "sk_9router" : "<API_KEY_FROM_DASHBOARD>");
-
-    const settingsContent = {
-      customModels: modelList.map((m, i) => ({
-        model: m,
-        id: `custom:9Router-${i}`,
-        index: i,
-        baseUrl: getEffectiveBaseUrl(),
-        apiKey: keyToUse,
-        displayName: m,
-        maxOutputTokens: 131072,
-        noImageSupport: false,
-        provider: "openai",
-      })),
-    };
-
-    const platform = typeof navigator !== "undefined" && navigator.platform;
-    const isWindows = platform?.toLowerCase().includes("win");
-    const settingsPath = isWindows
-      ? "%USERPROFILE%\\.factory\\settings.json"
-      : "~/.factory/settings.json";
-
-    return [
-      {
-        filename: settingsPath,
-        content: JSON.stringify(settingsContent, null, 2),
-      },
-    ];
-  };
-
+function DroidExpandedSection({ addModel, applying, checkingDroid, customBaseUrl, droidStatus, getDisplayUrl, handleApplySettings, handleResetSettings, message, modelInput, modelList, removeModel, restoring, selectedApiKey, setCustomBaseUrl, setModalOpen, setModelInput, setSelectedApiKey, setShowInstallGuide, setShowManualConfigModal, showInstallGuide }) {
   return (
-    <Card padding="xs" className="overflow-hidden">
-      <div className="flex items-start justify-between gap-3 hover:cursor-pointer sm:items-center" onClick={onToggle}>
-        <div className="flex min-w-0 items-center gap-3">
-          <div className="size-8 flex items-center justify-center shrink-0">
-            <Image src="/providers/droid.png" alt={tool.name} width={32} height={32} className="size-8 object-contain rounded-lg" sizes="32px" onError={(e) => { e.target.style.display = "none"; }} />
-          </div>
-          <div className="min-w-0">
-            <div className="flex min-w-0 flex-wrap items-center gap-2">
-              <h3 className="font-medium text-sm">{tool.name}</h3>
-              {configStatus === "configured" && <span className="px-1.5 py-0.5 text-[10px] font-medium bg-green-500/10 text-green-600 dark:text-green-400 rounded-full">Connected</span>}
-              {configStatus === "not_configured" && <span className="px-1.5 py-0.5 text-[10px] font-medium bg-yellow-500/10 text-yellow-600 dark:text-yellow-400 rounded-full">Not configured</span>}
-              {configStatus === "other" && <span className="px-1.5 py-0.5 text-[10px] font-medium bg-blue-500/10 text-blue-600 dark:text-blue-400 rounded-full">Other</span>}
-            </div>
-            <p className="text-xs text-text-muted truncate">{tool.description}</p>
-          </div>
-        </div>
-        <span className={`material-symbols-outlined text-text-muted text-[20px] transition-transform ${isExpanded ? "rotate-180" : ""}`}>expand_more</span>
-      </div>
-
-      {isExpanded && (
         <div className="mt-4 pt-4 border-t border-border flex flex-col gap-4">
           {checkingDroid && (
             <div className="flex items-center gap-2 text-text-muted">
@@ -334,7 +104,7 @@ export default function DroidToolCard({
                         {modelList.map((id) => (
                           <div key={id} className="flex items-center gap-1.5 px-2 py-1 bg-bg-secondary rounded border border-border">
                             <span className="flex-1 text-xs font-mono truncate">{id}</span>
-                            <button onClick={() => removeModel(id)} className="text-text-muted hover:text-red-500 transition-colors shrink-0" title="Remove">
+                            <button type="button" onClick={() => removeModel(id)} className="text-text-muted hover:text-red-500 transition-colors shrink-0" title="Remove">
                               <span className="material-symbols-outlined text-[12px]">close</span>
                             </button>
                           </div>
@@ -348,17 +118,17 @@ export default function DroidToolCard({
                         value={modelInput}
                         onChange={(e) => setModelInput(e.target.value)}
                         onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addModel(); } }}
-                        placeholder="provider/model-id"
+                        aria-label="Model ID" placeholder="provider/model-id"
                         className="w-full min-w-0 px-2 py-2 bg-surface rounded border border-border text-xs focus:outline-none focus:ring-1 focus:ring-primary/50 sm:py-1.5"
                       />
-                      <button
+                      <button type="button"
                         onClick={() => setModalOpen(true)}
                         disabled={!hasActiveProviders}
                         className={`px-2 py-1.5 rounded border text-xs shrink-0 ${hasActiveProviders ? "bg-surface border-border hover:border-primary cursor-pointer" : "opacity-50 cursor-not-allowed border-border"}`}
                       >
                         Select
                       </button>
-                      <button onClick={addModel} disabled={!modelInput.trim()} className="px-2 py-1.5 rounded border bg-surface border-border hover:border-primary text-xs shrink-0 disabled:opacity-50" title="Add model">
+                      <button type="button" onClick={addModel} disabled={!modelInput.trim()} className="px-2 py-1.5 rounded border bg-surface border-border hover:border-primary text-xs shrink-0 disabled:opacity-50" title="Add model">
                         <span className="material-symbols-outlined text-[14px]">add</span>
                       </button>
                     </div>
@@ -387,7 +157,239 @@ export default function DroidToolCard({
             </>
           )}
         </div>
-      )}
+  );
+}
+
+
+export default function DroidToolCard({
+  tool,
+  isExpanded,
+  onToggle,
+  baseUrl,
+  hasActiveProviders,
+  apiKeys,
+  activeProviders,
+  cloudEnabled,
+  initialStatus,
+  tunnelEnabled,
+  tunnelPublicUrl,
+  tailscaleEnabled,
+  tailscaleUrl,
+}) {
+  const [state, dispatch] = useReducer((s, a) => {
+    switch (a.type) {
+      case "CHECK_START": return { ...s, checking: true };
+      case "CHECK_DONE": return { ...s, status: a.data, checking: false };
+      case "APPLY_START": return { ...s, applying: true, message: null };
+      case "APPLY_DONE": return { ...s, applying: false, message: a.message };
+      case "RESTORE_START": return { ...s, restoring: true, message: null };
+      case "RESTORE_DONE": return { ...s, restoring: false, message: a.message };
+      default: return s;
+    }
+  }, { status: initialStatus || null, checking: false, applying: false, restoring: false, message: null });
+  const droidStatus = state.status;
+  const checkingDroid = state.checking;
+  const { applying, restoring, message } = state;
+  const [selectedApiKeyOverride, setSelectedApiKey] = useState(null);
+  const selectedApiKey = selectedApiKeyOverride ?? (apiKeys?.length > 0 ? apiKeys[0].key : "");
+  const [modelListOverride, setModelList] = useState(null);
+  const modelList = modelListOverride ?? (() => {
+    if (!droidStatus?.installed) return [];
+    const existingModels = (droidStatus.settings?.customModels || [])
+      .filter(m => m.id?.startsWith("custom:9Router"))
+      .sort((a, b) => (a.index || 0) - (b.index || 0))
+      .map(m => m.model);
+    if (existingModels.length > 0) return existingModels;
+    const legacy = droidStatus.settings?.customModels?.find(m => m.id === "custom:9Router-0");
+    return legacy?.model ? [legacy.model] : [];
+  })();
+  const [modelInput, setModelInput] = useState("");
+  const [modalOpen, setModalOpen] = useState(false);
+  const [modelAliases, setModelAliases] = useState({});
+  const [showManualConfigModal, setShowManualConfigModal] = useState(false);
+  const [showInstallGuide, setShowInstallGuide] = useState(false);
+  const [customBaseUrl, setCustomBaseUrl] = useState("");
+
+  const getConfigStatus = () => {
+    if (!droidStatus?.installed) return null;
+    // Check for any 9Router model entry (support multi-model: custom:9Router-0, custom:9Router-1, ...)
+    const currentConfig = droidStatus.settings?.customModels?.find(m => m.id?.startsWith("custom:9Router"));
+    if (!currentConfig) return "not_configured";
+    return matchKnownEndpoint(currentConfig.baseUrl, { tunnelPublicUrl, tailscaleUrl, cloudUrl: cloudEnabled ? CLOUD_URL : null }) ? "configured" : "other";
+  };
+
+  const configStatus = getConfigStatus();
+
+  const fetchModelAliases = useCallback(async () => {
+    try {
+      const res = await fetch("/api/models/alias");
+      const data = await res.json();
+      if (res.ok) setModelAliases(data.aliases || {});
+    } catch (error) {
+      console.log("Error fetching model aliases:", error);
+    }
+  }, []);
+
+
+
+  const checkDroidStatus = useCallback(async () => {
+    dispatch({ type: "CHECK_START" });
+    try {
+      const res = await fetch("/api/cli-tools/droid-settings");
+      const data = await res.json();
+      dispatch({ type: "CHECK_DONE", data });
+    } catch (error) {
+      dispatch({ type: "CHECK_DONE", data: { installed: false, error: error.message } });
+    }
+  }, []);
+
+
+
+  const statusFetchedRef = useRef(!!initialStatus);
+  const aliasesFetchedRef = useRef(false);
+
+  const initializeCard = useCallback(async () => {
+    if (!statusFetchedRef.current) {
+      statusFetchedRef.current = true;
+      await checkDroidStatus();
+    }
+    if (!aliasesFetchedRef.current) {
+      aliasesFetchedRef.current = true;
+      await fetchModelAliases();
+    }
+  }, [checkDroidStatus, fetchModelAliases]);
+
+  const handleToggle = useCallback(() => {
+    if (!isExpanded) initializeCard();
+    onToggle();
+  }, [isExpanded, initializeCard, onToggle]);
+
+  useEffect(() => { initializeCard(); }, [initializeCard]);
+  const getEffectiveBaseUrl = () => {
+    const url = customBaseUrl || baseUrl;
+    return url.endsWith("/v1") ? url : `${url}/v1`;
+  };
+
+  const getDisplayUrl = () => {
+    const url = customBaseUrl || baseUrl;
+    return url.endsWith("/v1") ? url : `${url}/v1`;
+  };
+
+  const addModel = () => {
+    const val = modelInput.trim();
+    if (!val || modelList.includes(val)) return;
+    setModelList((prev) => [...prev, val]);
+    setModelInput("");
+  };
+
+  const removeModel = (id) => setModelList((prev) => prev.filter((m) => m !== id));
+
+  const handleModelSelect = (model) => {
+    if (!model.value || modelList.includes(model.value)) return;
+    setModelList((prev) => [...prev, model.value]);
+    setModalOpen(false);
+  };
+
+  const handleApplySettings = async () => {
+    dispatch({ type: "APPLY_START" });
+    try {
+      const keyToUse = selectedApiKey?.trim()
+        || (apiKeys?.length > 0 ? apiKeys[0].key : null)
+        || (!cloudEnabled ? "sk_9router" : null);
+
+      const res = await fetch("/api/cli-tools/droid-settings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          baseUrl: getEffectiveBaseUrl(),
+          apiKey: keyToUse,
+          models: modelList,
+          activeModel: modelList[0] || "",
+        }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        dispatch({ type: "APPLY_DONE", message: { type: "success", text: "Settings applied successfully!" } });
+        checkDroidStatus();
+      } else {
+        dispatch({ type: "APPLY_DONE", message: { type: "error", text: data.error || "Failed to apply settings" } });
+      }
+    } catch (error) {
+      dispatch({ type: "APPLY_DONE", message: { type: "error", text: error.message } });
+    }
+  };
+
+  const handleResetSettings = async () => {
+    dispatch({ type: "RESTORE_START" });
+    try {
+      const res = await fetch("/api/cli-tools/droid-settings", { method: "DELETE" });
+      const data = await res.json();
+      if (res.ok) {
+        dispatch({ type: "RESTORE_DONE", message: { type: "success", text: "Settings reset successfully!" } });
+        setModelList([]);
+        checkDroidStatus();
+      } else {
+        dispatch({ type: "RESTORE_DONE", message: { type: "error", text: data.error || "Failed to reset settings" } });
+      }
+    } catch (error) {
+      dispatch({ type: "RESTORE_DONE", message: { type: "error", text: error.message } });
+    }
+  };
+
+  const getManualConfigs = () => {
+    const keyToUse = (selectedApiKey && selectedApiKey.trim())
+      ? selectedApiKey
+      : (!cloudEnabled ? "sk_9router" : "<API_KEY_FROM_DASHBOARD>");
+
+    const settingsContent = {
+      customModels: modelList.map((m, i) => ({
+        model: m,
+        id: `custom:9Router-${i}`,
+        index: i,
+        baseUrl: getEffectiveBaseUrl(),
+        apiKey: keyToUse,
+        displayName: m,
+        maxOutputTokens: 131072,
+        noImageSupport: false,
+        provider: "openai",
+      })),
+    };
+
+    const platform = typeof navigator !== "undefined" && navigator.platform;
+    const isWindows = platform?.toLowerCase().includes("win");
+    const settingsPath = isWindows
+      ? "%USERPROFILE%\\.factory\\settings.json"
+      : "~/.factory/settings.json";
+
+    return [
+      {
+        filename: settingsPath,
+        content: JSON.stringify(settingsContent, null, 2),
+      },
+    ];
+  };
+
+  return (
+    <Card padding="xs" className="overflow-hidden">
+      <button type="button" className="flex w-full items-start justify-between gap-3 hover:cursor-pointer sm:items-center text-left" onClick={handleToggle} aria-expanded={expanded} aria-label="Toggle section">
+        <div className="flex min-w-0 items-center gap-3">
+          <div className="size-8 flex items-center justify-center shrink-0">
+            <Image src="/providers/droid.png" alt={tool.name} width={32} height={32} className="size-8 object-contain rounded-lg" sizes="32px" onError={(e) => { e.target.style.display = "none"; }} />
+          </div>
+          <div className="min-w-0">
+            <div className="flex min-w-0 flex-wrap items-center gap-2">
+              <h3 className="font-medium text-sm">{tool.name}</h3>
+              {configStatus === "configured" && <span className="px-1.5 py-0.5 text-[10px] font-medium bg-green-500/10 text-green-600 dark:text-green-400 rounded-full">Connected</span>}
+              {configStatus === "not_configured" && <span className="px-1.5 py-0.5 text-[10px] font-medium bg-yellow-500/10 text-yellow-600 dark:text-yellow-400 rounded-full">Not configured</span>}
+              {configStatus === "other" && <span className="px-1.5 py-0.5 text-[10px] font-medium bg-blue-500/10 text-blue-600 dark:text-blue-400 rounded-full">Other</span>}
+            </div>
+            <p className="text-xs text-text-muted truncate">{tool.description}</p>
+          </div>
+        </div>
+        <span className={`material-symbols-outlined text-text-muted text-[20px] transition-transform ${isExpanded ? "rotate-180" : ""}`}>expand_more</span>
+      </button>
+
+      {isExpanded && <DroidExpandedSection addModel={addModel} applying={applying} checkingDroid={checkingDroid} customBaseUrl={customBaseUrl} droidStatus={droidStatus} getDisplayUrl={getDisplayUrl} handleApplySettings={handleApplySettings} handleResetSettings={handleResetSettings} message={message} modelInput={modelInput} modelList={modelList} removeModel={removeModel} restoring={restoring} selectedApiKey={selectedApiKey} setCustomBaseUrl={setCustomBaseUrl} setModalOpen={setModalOpen} setModelInput={setModelInput} setSelectedApiKey={setSelectedApiKey} setShowInstallGuide={setShowInstallGuide} setShowManualConfigModal={setShowManualConfigModal} showInstallGuide={showInstallGuide} />}
 
       <ModelSelectModal
         isOpen={modalOpen}

@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { CardSkeleton } from "@/shared/components";
 import { CLI_TOOLS, MITM_TOOLS } from "@/shared/constants/cliTools";
-import { MitmLinkCard } from "./components";
+import MitmLinkCard from "./components/MitmLinkCard";
 import ToolSummaryCard from "./components/ToolSummaryCard";
 
 const ALL_STATUSES_URL = "/api/cli-tools/all-statuses";
@@ -13,18 +13,18 @@ export default function CLIToolsPageClient({ machineId }) {
   const [toolStatuses, setToolStatuses] = useState({});
 
   useEffect(() => {
-    let mounted = true;
+    const controller = new AbortController();
     (async () => {
       try {
-        const res = await fetch(ALL_STATUSES_URL);
-        if (res.ok && mounted) setToolStatuses(await res.json());
+        const res = await fetch(ALL_STATUSES_URL, { signal: controller.signal });
+        if (res.ok && !controller.signal.aborted) setToolStatuses(await res.json());
       } catch (error) {
-        console.log("Error fetching tool statuses:", error);
+        if (!controller.signal.aborted) console.log("Error fetching tool statuses:", error);
       } finally {
-        if (mounted) setLoading(false);
+        if (!controller.signal.aborted) setLoading(false);
       }
     })();
-    return () => { mounted = false; };
+    return () => controller.abort();
   }, []);
 
   if (loading) {

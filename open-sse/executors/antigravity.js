@@ -501,4 +501,3 @@ const AG_DECOY_TOOLS = [
   }
 ];
 
-export default AntigravityExecutor;

@@ -155,7 +155,7 @@ function shouldBypassByNoProxy(targetUrl, noProxyValue) {
 
   let hostname;
   try { hostname = new URL(targetUrl).hostname.toLowerCase(); } catch { return false; }
-  const patterns = noProxy.split(",").map((p) => p.trim().toLowerCase()).filter(Boolean);
+  const patterns = noProxy.split(",").flatMap((p) => { const t = p.trim().toLowerCase(); return t ? [t] : []; });
 
   return patterns.some((pattern) => {
     if (pattern === "*") return true;
@@ -236,8 +236,7 @@ async function getDispatcher(proxyUrl) {
  * Create HTTPS request with manual socket connection (bypass DNS)
  */
 async function createBypassRequest(parsedUrl, realIP, options) {
-  const httpsModule = await import("https");
-  const netModule = await import("net");
+  const [httpsModule, netModule] = await Promise.all([import("https"), import("net")]);
   // CJS modules expose exports via .default in ESM dynamic import context
   const https = httpsModule.default ?? httpsModule;
   const net = netModule.default ?? netModule;

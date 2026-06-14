@@ -39,7 +39,8 @@ export default {
     if (!taskId) throw new Error("NanoBanana: no taskId returned");
     const pollUrl = `${POLL_BASE}?taskId=${encodeURIComponent(taskId)}`;
     const deadline = Date.now() + POLL_TIMEOUT_MS;
-    while (Date.now() < deadline) {
+
+    async function poll() {
       await sleep(POLL_INTERVAL_MS);
       const r = await fetch(pollUrl, { headers });
       if (!r.ok) throw new Error(`NanoBanana status ${r.status}`);
@@ -47,8 +48,11 @@ export default {
       const flag = s.data?.successFlag;
       if (flag === 1) return s.data;
       if (flag === 2 || flag === 3) throw new Error(s.data?.errorMessage || "NanoBanana generation failed");
+      if (Date.now() >= deadline) throw new Error("NanoBanana polling timeout");
+      return poll();
     }
-    throw new Error("NanoBanana polling timeout");
+
+    return poll();
   },
   normalize: (responseBody, prompt) => {
     const url = responseBody.response?.resultImageUrl || responseBody.response?.originImageUrl;

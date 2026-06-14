@@ -4,7 +4,7 @@
 const TOOL_ID_PATTERN = /^[a-zA-Z0-9_-]+$/;
 
 // Generate deterministic tool call ID from position + tool name (cache-friendly)
-export function generateToolCallId(msgIndex = 0, tcIndex = 0, toolName = "") {
+function generateToolCallId(msgIndex = 0, tcIndex = 0, toolName = "") {
   const name = toolName ? `_${toolName.replace(/[^a-zA-Z0-9_-]/g, "")}` : "";
   return `call_msg${msgIndex}_tc${tcIndex}${name}`;
 }
@@ -34,8 +34,9 @@ export function ensureToolCallIds(body) {
           tc.type = "function";
         }
         // Ensure arguments is JSON string, not object
-        if (tc.function?.arguments && typeof tc.function.arguments !== "string") {
-          tc.function.arguments = JSON.stringify(tc.function.arguments);
+        const tcFnArgs = tc.function?.arguments;
+        if (tcFnArgs && typeof tcFnArgs !== "string") {
+          tc.function.arguments = JSON.stringify(tcFnArgs);
         }
       }
     }
@@ -67,15 +68,15 @@ export function ensureToolCallIds(body) {
 }
 
 // Get tool_call ids from assistant message (OpenAI format: tool_calls, Claude format: tool_use in content)
-export function getToolCallIds(msg) {
-  if (msg.role !== "assistant") return [];
+function getToolCallIds(msg) {
+  if (msg.role !== "assistant") return new Set();
 
-  const ids = [];
+  const ids = new Set();
 
   // OpenAI format: tool_calls array
   if (msg.tool_calls && Array.isArray(msg.tool_calls)) {
     for (const tc of msg.tool_calls) {
-      if (tc.id) ids.push(tc.id);
+      if (tc.id) ids.add(tc.id);
     }
   }
 
@@ -83,7 +84,7 @@ export function getToolCallIds(msg) {
   if (Array.isArray(msg.content)) {
     for (const block of msg.content) {
       if (block.type === "tool_use" && block.id) {
-        ids.push(block.id);
+        ids.add(block.id);
       }
     }
   }
@@ -92,18 +93,18 @@ export function getToolCallIds(msg) {
 }
 
 // Check if user message has tool_result for given ids (OpenAI format: role=tool, Claude format: tool_result in content)
-export function hasToolResults(msg, toolCallIds) {
-  if (!msg || !toolCallIds.length) return false;
+function hasToolResults(msg, toolCallIds) {
+  if (!msg || !toolCallIds.size) return false;
 
   // OpenAI format: role = "tool" with tool_call_id
   if (msg.role === "tool" && msg.tool_call_id) {
-    return toolCallIds.includes(msg.tool_call_id);
+    return toolCallIds.has(msg.tool_call_id);
   }
 
   // Claude format: tool_result blocks in user message content
   if (msg.role === "user" && Array.isArray(msg.content)) {
     for (const block of msg.content) {
-      if (block.type === "tool_result" && toolCallIds.includes(block.tool_use_id)) {
+      if (block.type === "tool_result" && toolCallIds.has(block.tool_use_id)) {
         return true;
       }
     }
@@ -126,7 +127,7 @@ export function fixMissingToolResponses(body) {
 
     // Check if this is assistant with tool_calls/tool_use
     const toolCallIds = getToolCallIds(msg);
-    if (toolCallIds.length === 0) continue;
+    if (toolCallIds.size === 0) continue;
 
     // Check if next message has tool_result
     if (nextMsg && !hasToolResults(nextMsg, toolCallIds)) {

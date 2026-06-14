@@ -39,8 +39,12 @@
  */
 export function parseDomainFilter(domainFilter) {
   if (!domainFilter?.length) return { includes: [], excludes: [] };
-  const includes = domainFilter.filter((d) => !d.startsWith("-"));
-  const excludes = domainFilter.filter((d) => d.startsWith("-")).map((d) => d.slice(1));
+  const includes = [];
+  const excludes = [];
+  for (const d of domainFilter) {
+    if (d.startsWith("-")) excludes.push(d.slice(1));
+    else includes.push(d);
+  }
   return { includes, excludes };
 }
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useReducer } from "react";
 import PropTypes from "prop-types";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -12,8 +12,8 @@ import Button from "./Button";
 import { ConfirmModal } from "./Modal";
 import NineRemotePromoModal from "./NineRemotePromoModal";
 
-// const VISIBLE_MEDIA_KINDS = ["embedding", "image", "imageToText", "tts", "stt", "webSearch", "webFetch", "video", "music"];
-const VISIBLE_MEDIA_KINDS = ["embedding", "image", "tts", "stt"];
+// const VISIBLE_MEDIA_KINDS = new Set(["embedding", "image", "imageToText", "tts", "stt", "webSearch", "webFetch", "video", "music"]);
+const VISIBLE_MEDIA_KINDS = new Set(["embedding", "image", "tts", "stt"]);
 // Combined entry: webSearch + webFetch share one page at /dashboard/media-providers/web
 const COMBINED_WEB_ITEM = { id: "web", label: "Web Fetch & Search", icon: "travel_explore", href: "/dashboard/media-providers/web" };
 
@@ -38,15 +38,97 @@ const systemItems = [
   { href: "/dashboard/skills", label: "Skills", icon: "extension" },
 ];
 
+function SidebarMediaSection({ mediaOpen, setMediaOpen, pathname, mediaKinds }) {
+  return (
+    <>
+            {/* Media Providers accordion */}
+            <button type="button"
+              onClick={() => setMediaOpen((v) => !v)}
+              className={cn(
+                "w-full flex items-center gap-3 px-3 py-1 rounded-lg transition-all group",
+                pathname.startsWith("/dashboard/media-providers")
+                  ? "bg-primary/10 text-primary"
+                  : "text-text-muted hover:bg-surface-2 hover:text-text-main"
+              )}
+            >
+              <span className="material-symbols-outlined text-[18px]">perm_media</span>
+              <span className="text-[13px] font-medium flex-1 text-left">Media Providers</span>
+              <span className="material-symbols-outlined text-[14px] transition-transform" style={{ transform: mediaOpen ? "rotate(180deg)" : "rotate(0deg)" }}>
+                expand_more
+              </span>
+            </button>
+            {mediaOpen && (
+              <div className="pl-4">
+                {MEDIA_PROVIDER_KINDS.flatMap((kind) => !VISIBLE_MEDIA_KINDS.has(kind.id) ? [] : [(
+                  <Link
+                    key={kind.id}
+                    href={`/dashboard/media-providers/${kind.id}`}
+                    onClick={onClose}
+                    className={cn(
+                      "flex items-center gap-3 px-4 py-1 rounded-lg transition-all group",
+                      pathname.startsWith(`/dashboard/media-providers/${kind.id}`)
+                        ? "bg-primary/10 text-primary"
+                        : "text-text-muted hover:bg-surface-2 hover:text-text-main"
+                    )}
+                  >
+                    <span className="material-symbols-outlined text-[16px]">{kind.icon}</span>
+                    <span className="text-sm">{kind.label}</span>
+                  </Link>
+                )])}
+                <Link
+                  key={COMBINED_WEB_ITEM.id}
+                  href={COMBINED_WEB_ITEM.href}
+                  onClick={onClose}
+                  className={cn(
+                    "flex items-center gap-3 px-4 py-1 rounded-lg transition-all group",
+                    pathname.startsWith(COMBINED_WEB_ITEM.href)
+                      ? "bg-primary/10 text-primary"
+                      : "text-text-muted hover:bg-surface-2 hover:text-text-main"
+                  )}
+                >
+                  <span className="material-symbols-outlined text-[16px]">{COMBINED_WEB_ITEM.icon}</span>
+                  <span className="text-sm">{COMBINED_WEB_ITEM.label}</span>
+                </Link>
+              </div>
+            )}
+
+            {systemItems.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                onClick={onClose}
+                className={cn(
+                  "flex items-center gap-3 px-3 py-1 rounded-lg transition-all group",
+                  isActive(item.href)
+                    ? "bg-primary/10 text-primary"
+                    : "text-text-muted hover:bg-surface-2 hover:text-text-main"
+                )}
+              >
+                <span
+                  className={cn(
+                    "material-symbols-outlined text-[18px]",
+                    isActive(item.href) ? "fill-1" : "group-hover:text-primary transition-colors"
+                  )}
+                >
+                  {item.icon}
+                </span>
+                <span className="text-[13px] font-medium">{item.label}</span>
+              </Link>
+            ))}
+
+    </>
+  );
+}
+
+
 export default function Sidebar({ onClose }) {
   const pathname = usePathname();
   const [mediaOpen, setMediaOpen] = useState(false);
   const [showRemoteModal, setShowRemoteModal] = useState(false);
-  const [isDisconnected, setIsDisconnected] = useState(false);
-  const [updateInfo, setUpdateInfo] = useState(null);
-  const [showUpdateModal, setShowUpdateModal] = useState(false);
-  const [isUpdating, setIsUpdating] = useState(false);
-  const [updateStatus, setUpdateStatus] = useState(null);
+  const [update, dispatchUpdate] = useReducer(
+    (state, action) => ({ ...state, ...action }),
+    { info: null, showModal: false, updating: false, status: null, disconnected: false }
+  );
   const [enableTranslator, setEnableTranslator] = useState(false);
   const { copied, copy } = useCopyToClipboard(2000);
 
@@ -54,18 +136,22 @@ export default function Sidebar({ onClose }) {
   const STATUS_URL = `http://127.0.0.1:${UPDATER_CONFIG.statusPort}/update/status`;
 
   useEffect(() => {
-    fetch("/api/settings")
+    const controller = new AbortController();
+    fetch("/api/settings", { signal: controller.signal })
       .then(res => res.json())
-      .then(data => { if (data.enableTranslator) setEnableTranslator(true); })
+      .then(data => { if (!controller.signal.aborted && data.enableTranslator) setEnableTranslator(true); })
       .catch(() => {});
+    return () => controller.abort();
   }, []);
 
   // Lazy check for new npm version on mount
   useEffect(() => {
-    fetch("/api/version")
+    const controller = new AbortController();
+    fetch("/api/version", { signal: controller.signal })
       .then(res => res.json())
-      .then(data => { if (data.hasUpdate) setUpdateInfo(data); })
+      .then(data => { if (!controller.signal.aborted && data.hasUpdate) dispatchUpdate({ info: data }); })
       .catch(() => {});
+    return () => controller.abort();
   }, []);
 
   const isActive = (href) => {
@@ -76,39 +162,39 @@ export default function Sidebar({ onClose }) {
   };
 
   const handleUpdate = async () => {
-    setIsUpdating(true);
-    setShowUpdateModal(false);
+    dispatchUpdate({ updating: true });
+    dispatchUpdate({ showModal: false });
     try {
       const res = await fetch("/api/version/update", { method: "POST" });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
         alert(data.message || "Update failed. Please run the install command manually.");
-        setIsUpdating(false);
+        dispatchUpdate({ updating: false });
         return;
       }
-      setIsDisconnected(true);
+      dispatchUpdate({ disconnected: true });
     } catch (e) {
-      setIsDisconnected(true);
+      dispatchUpdate({ disconnected: true });
     }
   };
 
   // Poll updater status server while updating (Next server is dead, updater.js is alive)
   useEffect(() => {
-    if (!isUpdating || !isDisconnected) return;
-    let stopped = false;
+    if (!update.updating || !update.disconnected) return;
+    const controller = new AbortController();
     const tick = async () => {
       try {
-        const res = await fetch(STATUS_URL, { cache: "no-store" });
+        const res = await fetch(STATUS_URL, { cache: "no-store", signal: controller.signal });
         if (res.ok) {
           const data = await res.json();
-          if (!stopped) setUpdateStatus(data);
+          if (!controller.signal.aborted) dispatchUpdate({ status: data });
         }
       } catch { /* updater not ready yet or finished */ }
     };
     tick();
     const id = setInterval(tick, UPDATER_CONFIG.statusPollIntervalMs);
-    return () => { stopped = true; clearInterval(id); };
-  }, [isUpdating, isDisconnected, STATUS_URL]);
+    return () => { controller.abort(); clearInterval(id); };
+  }, [update.updating, update.disconnected, STATUS_URL]);
 
   return (
     <>
@@ -138,19 +224,19 @@ export default function Sidebar({ onClose }) {
               <span className="text-xs text-text-muted">v{APP_CONFIG.version}</span>
             </div>
           </Link>
-          {updateInfo && (
+          {update.info && (
             <div className="flex flex-col gap-1.5 rounded p-1 -m-1">
               <span className="text-xs font-semibold text-green-600 dark:text-amber-500">
-                ↑ New version available: v{updateInfo.latestVersion}
+                ↑ New version available: v{update.info?.latestVersion}
               </span>
               <div className="flex items-center gap-2">
-                <button
-                  onClick={() => setShowUpdateModal(true)}
+                <button type="button"
+                  onClick={() => dispatchUpdate({ showModal: true })}
                   className="px-2 py-1 rounded bg-green-600 hover:bg-green-700 dark:bg-amber-500 dark:hover:bg-amber-600 text-white text-[11px] font-semibold transition-colors cursor-pointer"
                 >
                   Update now
                 </button>
-                <button
+                <button type="button"
                   onClick={() => copy(INSTALL_CMD)}
                   title="Copy install command"
                   className="flex-1 text-left hover:opacity-80 transition-opacity cursor-pointer min-w-0"
@@ -196,81 +282,7 @@ export default function Sidebar({ onClose }) {
               System
             </p>
 
-            {/* Media Providers accordion */}
-            <button
-              onClick={() => setMediaOpen((v) => !v)}
-              className={cn(
-                "w-full flex items-center gap-3 px-3 py-1 rounded-lg transition-all group",
-                pathname.startsWith("/dashboard/media-providers")
-                  ? "bg-primary/10 text-primary"
-                  : "text-text-muted hover:bg-surface-2 hover:text-text-main"
-              )}
-            >
-              <span className="material-symbols-outlined text-[18px]">perm_media</span>
-              <span className="text-[13px] font-medium flex-1 text-left">Media Providers</span>
-              <span className="material-symbols-outlined text-[14px] transition-transform" style={{ transform: mediaOpen ? "rotate(180deg)" : "rotate(0deg)" }}>
-                expand_more
-              </span>
-            </button>
-            {mediaOpen && (
-              <div className="pl-4">
-                {MEDIA_PROVIDER_KINDS.filter((k) => VISIBLE_MEDIA_KINDS.includes(k.id)).map((kind) => (
-                  <Link
-                    key={kind.id}
-                    href={`/dashboard/media-providers/${kind.id}`}
-                    onClick={onClose}
-                    className={cn(
-                      "flex items-center gap-3 px-4 py-1 rounded-lg transition-all group",
-                      pathname.startsWith(`/dashboard/media-providers/${kind.id}`)
-                        ? "bg-primary/10 text-primary"
-                        : "text-text-muted hover:bg-surface-2 hover:text-text-main"
-                    )}
-                  >
-                    <span className="material-symbols-outlined text-[16px]">{kind.icon}</span>
-                    <span className="text-sm">{kind.label}</span>
-                  </Link>
-                ))}
-                <Link
-                  key={COMBINED_WEB_ITEM.id}
-                  href={COMBINED_WEB_ITEM.href}
-                  onClick={onClose}
-                  className={cn(
-                    "flex items-center gap-3 px-4 py-1 rounded-lg transition-all group",
-                    pathname.startsWith(COMBINED_WEB_ITEM.href)
-                      ? "bg-primary/10 text-primary"
-                      : "text-text-muted hover:bg-surface-2 hover:text-text-main"
-                  )}
-                >
-                  <span className="material-symbols-outlined text-[16px]">{COMBINED_WEB_ITEM.icon}</span>
-                  <span className="text-sm">{COMBINED_WEB_ITEM.label}</span>
-                </Link>
-              </div>
-            )}
-
-            {systemItems.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                onClick={onClose}
-                className={cn(
-                  "flex items-center gap-3 px-3 py-1 rounded-lg transition-all group",
-                  isActive(item.href)
-                    ? "bg-primary/10 text-primary"
-                    : "text-text-muted hover:bg-surface-2 hover:text-text-main"
-                )}
-              >
-                <span
-                  className={cn(
-                    "material-symbols-outlined text-[18px]",
-                    isActive(item.href) ? "fill-1" : "group-hover:text-primary transition-colors"
-                  )}
-                >
-                  {item.icon}
-                </span>
-                <span className="text-[13px] font-medium">{item.label}</span>
-              </Link>
-            ))}
-
+            <SidebarMediaSection mediaOpen={mediaOpen} setMediaOpen={setMediaOpen} pathname={pathname} mediaKinds={mediaKinds} />
             {/* Debug items (inside System section, before Settings) */}
             {debugItems.map((item) => {
               const show = item.href !== "/dashboard/translator" || enableTranslator;
@@ -300,7 +312,7 @@ export default function Sidebar({ onClose }) {
             })}
 
             {/* Remote */}
-            <button
+            <button type="button"
               onClick={() => setShowRemoteModal(true)}
               className={cn(
                 "flex items-center gap-3 px-3 py-1 rounded-lg transition-all group w-full",
@@ -344,24 +356,24 @@ export default function Sidebar({ onClose }) {
 
       {/* Update Confirmation Modal */}
       <ConfirmModal
-        isOpen={showUpdateModal}
-        onClose={() => setShowUpdateModal(false)}
+        isOpen={update.showModal}
+        onClose={() => dispatchUpdate({ showModal: false })}
         onConfirm={handleUpdate}
         title="Update VansAI"
-        message={`This will close VansAI and install v${updateInfo?.latestVersion || ""} in a separate window. Continue?`}
+        message={`This will close VansAI and install v${update.info?.latestVersion || ""} in a separate window. Continue?`}
         confirmText="Update"
         cancelText="Cancel"
         variant="primary"
-        loading={isUpdating}
+        loading={update.updating}
       />
 
       {/* Disconnected Overlay */}
-      {isDisconnected && (
+      {update.disconnected && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-6">
-          {isUpdating ? (
+          {update.updating ? (
             <UpdateProgress
-              status={updateStatus}
-              latestVersion={updateInfo?.latestVersion}
+              status={update.status}
+              latestVersion={update.info?.latestVersion}
               installCmd={INSTALL_CMD}
               copied={copied}
               onCopy={() => copy(INSTALL_CMD)}
@@ -496,7 +508,7 @@ function UpdateProgress({ status, latestVersion, installCmd, copied, onCopy }) {
       ) : done && !success ? (
         <div className="space-y-2">
           <p className="text-sm text-white/80">Run the install command manually:</p>
-          <button
+          <button type="button"
             onClick={onCopy}
             className="w-full text-left px-3 py-2 rounded bg-white/5 hover:bg-white/10 transition-colors"
           >

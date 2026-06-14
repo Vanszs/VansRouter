@@ -18,7 +18,7 @@ export async function GET(request) {
   }
 
   try {
-    const res = await fetch(url);
+    const res = await fetch(url, { redirect: "manual" });
     if (!res.ok) {
       return NextResponse.json({ data: [] });
     }

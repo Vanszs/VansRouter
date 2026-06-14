@@ -1,4 +1,4 @@
-import { register } from "../index.js";
+import { register } from "../registry.js";
 import { FORMATS } from "../formats.js";
 
 /**
@@ -104,9 +104,10 @@ function normalizeMessages(messages) {
         function: {
           index: tc.index || 0,
           name: tc.function?.name || "",
-          arguments: typeof tc.function?.arguments === "string" 
-            ? JSON.parse(tc.function.arguments || "{}")
-            : tc.function?.arguments || {}
+          arguments: (() => {
+            const args = tc.function?.arguments;
+            return typeof args === "string" ? JSON.parse(args || "{}") : args || {};
+          })()
         }
       }));
 
@@ -152,11 +153,12 @@ function normalizeContent(content) {
 
   if (Array.isArray(content)) {
     // Extract text from content array
-    const textParts = content
-      .filter(block => block && block.type === "text" && block.text)
-      .map(block => block.text);
-
-    return textParts.join("\n") || "";
+    return content.reduce((acc, block) => {
+      if (block && block.type === "text" && block.text) {
+        return acc + (acc ? "\n" : "") + block.text;
+      }
+      return acc;
+    }, "");
   }
 
   return "";

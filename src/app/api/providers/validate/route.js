@@ -3,6 +3,12 @@ import { getProviderNodeById } from "@/models";
 import { isOpenAICompatibleProvider, isAnthropicCompatibleProvider, isCustomEmbeddingProvider, AI_PROVIDERS } from "@/shared/constants/providers";
 import { getDefaultModel } from "open-sse/config/providerModels.js";
 import { resolveOllamaLocalHost, resolveXiaomiTokenplanBaseUrl, PROVIDERS } from "open-sse/config/providers.js";
+
+function randomHex(n) {
+  const a = new Uint8Array(n);
+  crypto.getRandomValues(a);
+  return Array.from(a, (b) => b.toString(16).padStart(2, "0")).join("");
+}
 import { openaiToCommandCode } from "open-sse/translator/request/openai-to-commandcode.js";
 import { PROVIDER_ENDPOINTS } from "@/shared/constants/config";
 import { normalizeProviderId } from "@/lib/providerNormalization";
@@ -494,11 +500,6 @@ export async function POST(request) {
         case "grok-web": {
           const token = apiKey.startsWith("sso=") ? apiKey.slice(4) : apiKey;
           // Cloudflare-bypass: send POST with same browser fingerprint headers as GrokWebExecutor
-          const randomHex = (n) => {
-            const a = new Uint8Array(n);
-            crypto.getRandomValues(a);
-            return Array.from(a, (b) => b.toString(16).padStart(2, "0")).join("");
-          };
           const statsigId = Buffer.from("e:TypeError: Cannot read properties of null (reading 'children')").toString("base64");
           const traceId = randomHex(16);
           const spanId = randomHex(8);

@@ -39,12 +39,12 @@ function providerMatchesKinds(providerId, kindFilter) {
   const kinds = Array.isArray(provider?.serviceKinds) && provider.serviceKinds.length > 0
     ? provider.serviceKinds
     : [LLM_KIND];
-  return kindFilter.some((k) => kinds.includes(k));
+  return kinds.some((k) => kindFilter.has(k));
 }
 
 function comboMatchesKinds(combo, kindFilter) {
   const kind = combo?.kind || LLM_KIND;
-  return kindFilter.includes(kind);
+  return kindFilter.has(kind);
 }
 
 let _modelsFetcherCache = {};
@@ -77,13 +77,17 @@ export async function fetchModelsFetcherIds(providerId, providerInfo) {
 
     let ids;
     if (fetcher.type === "opencode-free") {
-      ids = rawModels
-        .map((m) => m?.id || m?.name || m?.model)
-        .filter((id) => typeof id === "string" && id.trim() !== "" && id.endsWith("-free"));
+      ids = rawModels.reduce((acc, m) => {
+        const id = m?.id || m?.name || m?.model;
+        if (typeof id === "string" && id.trim() !== "" && id.endsWith("-free")) acc.push(id);
+        return acc;
+      }, []);
     } else {
-      ids = rawModels
-        .map((m) => m?.id || m?.name || m?.model)
-        .filter((id) => typeof id === "string" && id.trim() !== "");
+      ids = rawModels.reduce((acc, m) => {
+        const id = m?.id || m?.name || m?.model;
+        if (typeof id === "string" && id.trim() !== "") acc.push(id);
+        return acc;
+      }, []);
     }
 
     const result = Array.from(new Set(ids));
@@ -137,9 +141,11 @@ async function fetchCompatibleModelIds(connection) {
     const rawModels = Array.isArray(data) ? data : (data?.data || data?.models || data?.results || []);
     return Array.from(
       new Set(
-        rawModels
-          .map((model) => model?.id || model?.name || model?.model)
-          .filter((modelId) => typeof modelId === "string" && modelId.trim() !== "")
+        rawModels.reduce((acc, model) => {
+          const modelId = model?.id || model?.name || model?.model;
+          if (typeof modelId === "string" && modelId.trim() !== "") acc.push(modelId);
+          return acc;
+        }, [])
       )
     );
   } catch {
@@ -194,6 +200,8 @@ async function buildModelEntries(kindFilter, customModels, modelAliases, isDisab
 // Core model-building logic shared by buildModelsList and getAllowedModelIds.
 // Returns { id, kind? }[] — kind is set for webSearch/webFetch only.
 async function buildAllModelEntries(kindFilter, combos, customModels, modelAliases, isDisabled, activeConnectionByProvider, dbAvailable) {
+  // Convert to Set for O(1) lookups
+  kindFilter = new Set(kindFilter);
   const entries = [];
 
   for (const combo of combos) {
@@ -213,14 +221,14 @@ async function buildAllModelEntries(kindFilter, combos, customModels, modelAlias
       const providerId = aliasToProviderId[alias] || alias;
       if (!providerMatchesKinds(providerId, kindFilter)) continue;
       for (const model of providerModels) {
-        if (!kindFilter.includes(modelKind(model))) continue;
+        if (!kindFilter.has(modelKind(model))) continue;
         if (isDisabled(alias, model.id)) continue;
         entries.push({ id: `${alias}/${model.id}` });
       }
     }
     for (const customModel of customModels) {
       if (!customModel?.id || (customModel.type && customModel.type !== "llm")) continue;
-      if (!kindFilter.includes(LLM_KIND)) continue;
+      if (!kindFilter.has(LLM_KIND)) continue;
       const providerAlias = customModel.providerAlias;
       if (!providerAlias) continue;
       const modelId = String(customModel.id).trim();
@@ -228,21 +236,25 @@ async function buildAllModelEntries(kindFilter, combos, customModels, modelAlias
       entries.push({ id: `${providerAlias}/${modelId}` });
     }
   } else {
-    for (const [providerId, conn] of activeConnectionByProvider.entries()) {
-      if (!providerMatchesKinds(providerId, kindFilter)) continue;
-      const ids = await buildConnectedProviderIds(providerId, conn, kindFilter, customModels, modelAliases, isDisabled);
-      entries.push(...ids);
-    }
+    const connResults = await Promise.all(
+      [...activeConnectionByProvider.entries()].reduce((acc, [providerId, conn]) => {
+        if (providerMatchesKinds(providerId, kindFilter)) acc.push(buildConnectedProviderIds(providerId, conn, kindFilter, customModels, modelAliases, isDisabled));
+        return acc;
+      }, [])
+    );
+    for (const ids of connResults) entries.push(...ids);
   }
 
   // noAuth providers always included — they work without user connections
-  for (const [providerId, providerInfo] of Object.entries(AI_PROVIDERS)) {
-    if (activeConnectionByProvider.has(providerId)) continue;
-    if (!providerInfo.noAuth) continue;
-    if (!providerMatchesKinds(providerId, kindFilter)) continue;
-    const ids = await buildFreeProviderIds(providerId, providerInfo, kindFilter, customModels, modelAliases, isDisabled);
-    entries.push(...ids);
-  }
+  const noAuthResults = await Promise.all(
+    Object.entries(AI_PROVIDERS).reduce((acc, [providerId, providerInfo]) => {
+      if (!activeConnectionByProvider.has(providerId) && providerInfo.noAuth && providerMatchesKinds(providerId, kindFilter)) {
+        acc.push(buildFreeProviderIds(providerId, providerInfo, kindFilter, customModels, modelAliases, isDisabled));
+      }
+      return acc;
+    }, [])
+  );
+  for (const ids of noAuthResults) entries.push(...ids);
 
   return entries;
 }
@@ -278,63 +290,61 @@ async function buildConnectedProviderIds(providerId, conn, kindFilter, customMod
     rawModelIds = Array.from(new Set([...rawModelIds, ...fetcherIds]));
   }
 
-  const modelIds = rawModelIds
-    .map((modelId) => {
-      if (modelId.startsWith(`${outputAlias}/`)) return modelId.slice(outputAlias.length + 1);
-      if (modelId.startsWith(`${staticAlias}/`)) return modelId.slice(staticAlias.length + 1);
-      if (modelId.startsWith(`${providerId}/`)) return modelId.slice(providerId.length + 1);
-      return modelId;
-    })
-    .filter((id) => typeof id === "string" && id.trim() !== "");
+  const modelIds = rawModelIds.reduce((acc, modelId) => {
+    let id = modelId;
+    if (id.startsWith(`${outputAlias}/`)) id = id.slice(outputAlias.length + 1);
+    else if (id.startsWith(`${staticAlias}/`)) id = id.slice(staticAlias.length + 1);
+    else if (id.startsWith(`${providerId}/`)) id = id.slice(providerId.length + 1);
+    if (typeof id === "string" && id.trim() !== "") acc.push(id);
+    return acc;
+  }, []);
 
-  const customModelIds = customModels
-    .filter((m) => {
-      if (!m?.id || (m.type && m.type !== "llm")) return false;
-      const alias = m.providerAlias;
-      return alias === staticAlias || alias === outputAlias || alias === providerId;
-    })
-    .map((m) => String(m.id).trim())
-    .filter((id) => id !== "");
+  const customModelIds = customModels.reduce((acc, m) => {
+    if (!m?.id || (m.type && m.type !== "llm")) return acc;
+    const alias = m.providerAlias;
+    if (alias !== staticAlias && alias !== outputAlias && alias !== providerId) return acc;
+    const id = String(m.id).trim();
+    if (id !== "") acc.push(id);
+    return acc;
+  }, []);
 
-  const aliasModelIds = Object.values(modelAliases || {})
-    .filter((fullModel) => {
-      if (typeof fullModel !== "string" || !fullModel.includes("/")) return false;
-      return fullModel.startsWith(`${outputAlias}/`) || fullModel.startsWith(`${staticAlias}/`) || fullModel.startsWith(`${providerId}/`);
-    })
-    .map((fullModel) => {
-      if (fullModel.startsWith(`${outputAlias}/`)) return fullModel.slice(outputAlias.length + 1);
-      if (fullModel.startsWith(`${staticAlias}/`)) return fullModel.slice(staticAlias.length + 1);
-      if (fullModel.startsWith(`${providerId}/`)) return fullModel.slice(providerId.length + 1);
-      return fullModel;
-    })
-    .filter((id) => typeof id === "string" && id.trim() !== "");
+  const aliasModelIds = Object.values(modelAliases || {}).reduce((acc, fullModel) => {
+    if (typeof fullModel !== "string" || !fullModel.includes("/")) return acc;
+    if (!fullModel.startsWith(`${outputAlias}/`) && !fullModel.startsWith(`${staticAlias}/`) && !fullModel.startsWith(`${providerId}/`)) return acc;
+    let id;
+    if (fullModel.startsWith(`${outputAlias}/`)) id = fullModel.slice(outputAlias.length + 1);
+    else if (fullModel.startsWith(`${staticAlias}/`)) id = fullModel.slice(staticAlias.length + 1);
+    else id = fullModel.slice(providerId.length + 1);
+    if (typeof id === "string" && id.trim() !== "") acc.push(id);
+    return acc;
+  }, []);
 
   const mergedModelIds = Array.from(new Set([...modelIds, ...customModelIds, ...aliasModelIds]));
   for (const modelId of mergedModelIds) {
     const kind = staticModelKindById.get(modelId) || inferKindFromUnknownModelId(modelId);
-    if (!kindFilter.includes(kind)) continue;
+    if (!kindFilter.has(kind)) continue;
     if (isDisabled(outputAlias, modelId) || isDisabled(staticAlias, modelId)) continue;
     entries.push({ id: `${outputAlias}/${modelId}` });
   }
 
-  if (kindFilter.includes("tts") && Array.isArray(providerInfo?.ttsConfig?.models)) {
+  if (kindFilter.has("tts") && Array.isArray(providerInfo?.ttsConfig?.models)) {
     for (const m of providerInfo.ttsConfig.models) {
       if (m?.id && !isDisabled(outputAlias, m.id) && !isDisabled(staticAlias, m.id)) {
         entries.push({ id: `${outputAlias}/${m.id}` });
       }
     }
   }
-  if (kindFilter.includes("embedding") && Array.isArray(providerInfo?.embeddingConfig?.models)) {
+  if (kindFilter.has("embedding") && Array.isArray(providerInfo?.embeddingConfig?.models)) {
     for (const m of providerInfo.embeddingConfig.models) {
       if (m?.id && !isDisabled(outputAlias, m.id) && !isDisabled(staticAlias, m.id)) {
         entries.push({ id: `${outputAlias}/${m.id}` });
       }
     }
   }
-  if (kindFilter.includes("webSearch") && providerInfo?.searchConfig) {
+  if (kindFilter.has("webSearch") && providerInfo?.searchConfig) {
     entries.push({ id: `${outputAlias}/search`, kind: "webSearch" });
   }
-  if (kindFilter.includes("webFetch") && providerInfo?.fetchConfig) {
+  if (kindFilter.has("webFetch") && providerInfo?.fetchConfig) {
     entries.push({ id: `${outputAlias}/fetch`, kind: "webFetch" });
   }
 
@@ -355,52 +365,50 @@ async function buildFreeProviderIds(providerId, providerInfo, kindFilter, custom
     fetcherModelIds = await fetchModelsFetcherIds(providerId, providerInfo);
   }
 
-  const customModelIds = customModels
-    .filter((m) => {
-      if (!m?.id || (m.type && m.type !== "llm")) return false;
-      const alias = m.providerAlias;
-      return alias === outputAlias || alias === providerId;
-    })
-    .map((m) => String(m.id).trim())
-    .filter((id) => id !== "");
-  const aliasModelIds = Object.values(modelAliases || {})
-    .filter((fullModel) => {
-      if (typeof fullModel !== "string" || !fullModel.includes("/")) return false;
-      return fullModel.startsWith(`${outputAlias}/`) || fullModel.startsWith(`${providerId}/`);
-    })
-    .map((fullModel) => {
-      if (fullModel.startsWith(`${outputAlias}/`)) return fullModel.slice(outputAlias.length + 1);
-      if (fullModel.startsWith(`${providerId}/`)) return fullModel.slice(providerId.length + 1);
-      return fullModel;
-    })
-    .filter((id) => typeof id === "string" && id.trim() !== "");
+  const customModelIds = customModels.reduce((acc, m) => {
+    if (!m?.id || (m.type && m.type !== "llm")) return acc;
+    const alias = m.providerAlias;
+    if (alias !== outputAlias && alias !== providerId) return acc;
+    const id = String(m.id).trim();
+    if (id !== "") acc.push(id);
+    return acc;
+  }, []);
+  const aliasModelIds = Object.values(modelAliases || {}).reduce((acc, fullModel) => {
+    if (typeof fullModel !== "string" || !fullModel.includes("/")) return acc;
+    if (!fullModel.startsWith(`${outputAlias}/`) && !fullModel.startsWith(`${providerId}/`)) return acc;
+    let id;
+    if (fullModel.startsWith(`${outputAlias}/`)) id = fullModel.slice(outputAlias.length + 1);
+    else id = fullModel.slice(providerId.length + 1);
+    if (typeof id === "string" && id.trim() !== "") acc.push(id);
+    return acc;
+  }, []);
 
   const mergedModelIds = Array.from(new Set([...modelIds, ...fetcherModelIds, ...customModelIds, ...aliasModelIds]));
   for (const modelId of mergedModelIds) {
     const kind = staticModelKindById.get(modelId) || inferKindFromUnknownModelId(modelId);
-    if (!kindFilter.includes(kind)) continue;
+    if (!kindFilter.has(kind)) continue;
     if (isDisabled(outputAlias, modelId)) continue;
     entries.push({ id: `${outputAlias}/${modelId}` });
   }
 
-  if (kindFilter.includes("tts") && Array.isArray(providerInfo?.ttsConfig?.models)) {
+  if (kindFilter.has("tts") && Array.isArray(providerInfo?.ttsConfig?.models)) {
     for (const m of providerInfo.ttsConfig.models) {
       if (m?.id && !isDisabled(outputAlias, m.id)) {
         entries.push({ id: `${outputAlias}/${m.id}` });
       }
     }
   }
-  if (kindFilter.includes("embedding") && Array.isArray(providerInfo?.embeddingConfig?.models)) {
+  if (kindFilter.has("embedding") && Array.isArray(providerInfo?.embeddingConfig?.models)) {
     for (const m of providerInfo.embeddingConfig.models) {
       if (m?.id && !isDisabled(outputAlias, m.id)) {
         entries.push({ id: `${outputAlias}/${m.id}` });
       }
     }
   }
-  if (kindFilter.includes("webSearch") && providerInfo?.searchConfig) {
+  if (kindFilter.has("webSearch") && providerInfo?.searchConfig) {
     entries.push({ id: `${outputAlias}/search`, kind: "webSearch" });
   }
-  if (kindFilter.includes("webFetch") && providerInfo?.fetchConfig) {
+  if (kindFilter.has("webFetch") && providerInfo?.fetchConfig) {
     entries.push({ id: `${outputAlias}/fetch`, kind: "webFetch" });
   }
 
@@ -427,7 +435,7 @@ let _allowedCache = null;
 let _allowedCacheExpiry = 0;
 const ALLOWED_CACHE_TTL_MS = 30000;
 
-export async function getAllowedModelIds() {
+async function getAllowedModelIds() {
   const now = Date.now();
   if (_allowedCache && now < _allowedCacheExpiry) return _allowedCache;
 
@@ -444,7 +452,7 @@ export async function getAllowedModelIds() {
   return allIds;
 }
 
-export function invalidateAllowedModelsCache() {
+function invalidateAllowedModelsCache() {
   _allowedCache = null;
   _allowedCacheExpiry = 0;
 }

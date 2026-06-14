@@ -1,7 +1,15 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { cn } from "@/shared/utils/cn";
+
+const DRAWER_WIDTHS = {
+  sm: "w-[400px]",
+  md: "w-[500px]",
+  lg: "w-[600px]",
+  xl: "w-[800px]",
+  full: "w-full",
+};
 
 export default function Drawer({
   isOpen,
@@ -11,13 +19,9 @@ export default function Drawer({
   width = "md",
   className
 }) {
-  const widths = {
-    sm: "w-[400px]",
-    md: "w-[500px]",
-    lg: "w-[600px]",
-    xl: "w-[800px]",
-    full: "w-full",
-  };
+  const widths = DRAWER_WIDTHS;
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
 
   useEffect(() => {
     if (isOpen) {
@@ -30,11 +34,11 @@ export default function Drawer({
 
   useEffect(() => {
     const handleEscape = (e) => {
-      if (e.key === "Escape" && isOpen) onClose();
+      if (e.key === "Escape" && isOpen) onCloseRef.current();
     };
     document.addEventListener("keydown", handleEscape);
     return () => document.removeEventListener("keydown", handleEscape);
-  }, [isOpen, onClose]);
+  }, [isOpen]);
 
   if (!isOpen) return null;
 

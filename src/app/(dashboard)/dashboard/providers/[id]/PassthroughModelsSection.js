@@ -4,6 +4,11 @@ import { useState } from "react";
 import PropTypes from "prop-types";
 import { Button } from "@/shared/components";
 
+function generateDefaultAlias(modelId) {
+  const parts = modelId.split("/");
+  return parts[parts.length - 1];
+}
+
 function PassthroughModelRow({ modelId, fullModel, copied, onCopy, onDeleteAlias, onTest, testStatus, isTesting }) {
   const borderColor = testStatus === "ok"
     ? "border-green-500/40"
@@ -32,7 +37,7 @@ function PassthroughModelRow({ modelId, fullModel, copied, onCopy, onDeleteAlias
         <div className="flex items-center gap-1 mt-1">
         <code className="text-xs text-text-muted font-mono bg-sidebar px-1.5 py-0.5 rounded">{fullModel}</code>
           <div className="relative group/btn">
-            <button
+            <button type="button"
               onClick={() => onCopy(fullModel, `model-${modelId}`)}
               className="p-0.5 hover:bg-sidebar rounded text-text-muted hover:text-primary"
             >
@@ -46,7 +51,7 @@ function PassthroughModelRow({ modelId, fullModel, copied, onCopy, onDeleteAlias
           </div>
           {onTest && (
             <div className="relative group/btn">
-              <button
+              <button type="button"
                 onClick={onTest}
                 disabled={isTesting}
                 className="p-0.5 hover:bg-sidebar rounded text-text-muted hover:text-primary transition-colors"
@@ -64,7 +69,7 @@ function PassthroughModelRow({ modelId, fullModel, copied, onCopy, onDeleteAlias
       </div>
 
       {/* Delete button */}
-      <button
+      <button type="button"
         onClick={onDeleteAlias}
         className="p-1 hover:bg-red-50 rounded text-red-500"
         title="Remove model"
@@ -100,12 +105,6 @@ export default function PassthroughModelsSection({ providerAlias, modelAliases, 
     fullModel,
     alias,
   }));
-
-  // Generate default alias from modelId (last part after /)
-  const generateDefaultAlias = (modelId) => {
-    const parts = modelId.split("/");
-    return parts[parts.length - 1];
-  };
 
   const handleAdd = async () => {
     if (!newModel.trim() || adding) return;

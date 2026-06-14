@@ -19,11 +19,15 @@ export async function probeUrlAlive(url) {
 }
 
 export async function waitForHealth(url, cancelToken = { cancelled: false }) {
-  const start = Date.now();
-  while (Date.now() - start < HEALTH_CHECK.timeoutMs) {
+  const deadline = Date.now() + HEALTH_CHECK.timeoutMs;
+
+  async function poll() {
     if (cancelToken.cancelled) throw new Error("cancelled");
     if (await probeUrlAlive(url)) return true;
+    if (Date.now() >= deadline) throw new Error(`Health check timeout after ${HEALTH_CHECK.timeoutMs}ms`);
     await new Promise((r) => setTimeout(r, HEALTH_CHECK.intervalMs));
+    return poll();
   }
-  throw new Error(`Health check timeout after ${HEALTH_CHECK.timeoutMs}ms`);
+
+  return poll();
 }

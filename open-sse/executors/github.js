@@ -66,7 +66,10 @@ export class GithubExecutor extends BaseExecutor {
         }
         
         // Also prepend to the last user message as a reminder
-        const lastUserIdx = body.messages.map((m, i) => m.role === 'user' ? i : -1).filter(i => i >= 0).pop();
+        let lastUserIdx = -1;
+        for (let i = body.messages.length - 1; i >= 0; i--) {
+          if (body.messages[i].role === 'user') { lastUserIdx = i; break; }
+        }
         if (lastUserIdx >= 0) {
           const userMsg = body.messages[lastUserIdx];
           const userContent = typeof userMsg.content === 'string' ? userMsg.content : JSON.stringify(userMsg.content);
@@ -83,15 +86,17 @@ export class GithubExecutor extends BaseExecutor {
 
       // Array content: filter/convert unsupported part types
       if (Array.isArray(msg.content)) {
-        const cleanContent = msg.content
-          .map(part => {
-            if (part.type === "text") return part;
-            if (part.type === "image_url") return part;
-            // Serialize tool_use, tool_result, thinking, etc. as text
-            const text = part.text || part.content || JSON.stringify(part);
-            return { type: "text", text: typeof text === "string" ? text : JSON.stringify(text) };
-          })
-          .filter(part => part.text !== ""); // remove empty text parts
+        const cleanContent = msg.content.reduce((acc, part) => {
+            let p;
+            if (part.type === "text") p = part;
+            else if (part.type === "image_url") p = part;
+            else {
+              const text = part.text || part.content || JSON.stringify(part);
+              p = { type: "text", text: typeof text === "string" ? text : JSON.stringify(text) };
+            }
+            if (p.text !== "") acc.push(p);
+            return acc;
+          }, []);
 
         // If all content was stripped (e.g. only tool_result with no text), drop content
         return { ...msg, content: cleanContent.length > 0 ? cleanContent : null };
@@ -376,4 +381,3 @@ export class GithubExecutor extends BaseExecutor {
   }
 }
 
-export default GithubExecutor;

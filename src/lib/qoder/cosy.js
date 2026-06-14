@@ -95,7 +95,7 @@ function computeSigPath(requestUrl) {
  * Generate a fresh machine UUID. Persisted on the connection record so
  * every request from the same auth carries the same machineId.
  */
-export function generateMachineId() {
+function generateMachineId() {
   return uuidv4();
 }
 

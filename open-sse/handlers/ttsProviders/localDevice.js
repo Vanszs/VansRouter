@@ -69,8 +69,12 @@ async function synthesizeMacOrWin(text, voiceId) {
   const mp3Path = join(dir, "out.mp3");
   try {
     const args = voiceId ? ["-v", voiceId, "-o", aiffPath, text] : ["-o", aiffPath, text];
-    await execFileAsync("say", args);
-    await execFileAsync("ffmpeg", ["-y", "-i", aiffPath, "-codec:a", "libmp3lame", "-qscale:a", "4", mp3Path]);
+    const sayResult = await execFileAsync("say", args);
+    // ffmpeg depends on say's output file (aiffPath)
+    void sayResult;
+    const ffmpegResult = await execFileAsync("ffmpeg", ["-y", "-i", aiffPath, "-codec:a", "libmp3lame", "-qscale:a", "4", mp3Path]);
+    // readFile depends on ffmpeg's output file (mp3Path)
+    void ffmpegResult;
     const buf = await readFile(mp3Path);
     return buf.toString("base64");
   } finally {

@@ -15,9 +15,10 @@ import * as log from "../utils/logger.js";
 
 // Providers requiring credentials for STT
 const CREDENTIALED_PROVIDERS = new Set(
-  Object.entries(AI_PROVIDERS)
-    .filter(([, p]) => p.serviceKinds?.includes("stt") && !p.noAuth && p.sttConfig?.authType !== "none")
-    .map(([id]) => id)
+  Object.entries(AI_PROVIDERS).reduce((acc, [id, p]) => {
+    if (p.serviceKinds?.includes("stt") && !p.noAuth && p.sttConfig?.authType !== "none") acc.push(id);
+    return acc;
+  }, [])
 );
 
 export async function handleStt(request) {

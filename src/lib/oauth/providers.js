@@ -1481,9 +1481,9 @@ export async function backfillCodexEmails() {
       const hasAccountInfo = !!c.providerSpecificData?.chatgptAccountId;
       return !hasEmail || !hasAccountInfo;
     });
-    for (const conn of targets) {
+    await Promise.all(targets.map(async (conn) => {
       const info = extractCodexAccountInfo(conn.idToken);
-      if (!info.email && !info.chatgptAccountId) continue;
+      if (!info.email && !info.chatgptAccountId) return;
       const patch = {};
       if (!conn.email && info.email) patch.email = info.email;
       if (info.chatgptAccountId || info.chatgptPlanType) {
@@ -1496,7 +1496,7 @@ export async function backfillCodexEmails() {
       if (Object.keys(patch).length) {
         await updateProviderConnection(conn.id, patch);
       }
-    }
+    }));
   } catch (err) {
     codexBackfillDone = false;
     console.log("backfillCodexEmails failed:", err?.message || err);

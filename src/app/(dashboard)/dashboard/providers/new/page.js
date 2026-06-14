@@ -127,9 +127,9 @@ export default function NewProviderPage() {
 
           {/* Auth Method */}
           <div className="flex flex-col gap-3">
-            <label className="text-sm font-medium">
+            <span className="text-sm font-medium">
               Authentication Method <span className="text-red-500">*</span>
-            </label>
+            </span>
             <div className="flex gap-3">
               {authMethodOptions.map((method) => (
                 <button

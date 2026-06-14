@@ -2,7 +2,7 @@ export const LOCALES = ["en", "vi", "zh-CN", "zh-TW", "ja", "pt-BR", "pt-PT", "k
 export const DEFAULT_LOCALE = "en";
 export const LOCALE_COOKIE = "locale";
 
-export const LOCALE_NAMES = {
+const LOCALE_NAMES = {
   "en": "English",
   "vi": "Tiếng Việt",
   "zh-CN": "简体中文",

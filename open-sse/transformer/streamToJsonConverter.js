@@ -51,7 +51,6 @@ export async function convertResponsesStreamToJson(stream) {
     return { id: `resp_${Date.now()}`, object: "response", created_at: Math.floor(Date.now() / 1000), status: "failed", output: [], usage: { ...EMPTY_RESPONSE } };
   }
 
-  const reader = stream.getReader();
   const decoder = new TextDecoder();
   let buffer = "";
 
@@ -63,26 +62,19 @@ export async function convertResponsesStreamToJson(stream) {
     items: new Map()
   };
 
-  try {
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
+  for await (const value of stream) {
+    buffer += decoder.decode(value, { stream: true });
+    const messages = buffer.split("\n\n");
+    buffer = messages.pop() || "";
 
-      buffer += decoder.decode(value, { stream: true });
-      const messages = buffer.split("\n\n");
-      buffer = messages.pop() || "";
-
-      for (const msg of messages) {
-        processSSEMessage(msg, state);
-      }
+    for (const msg of messages) {
+      processSSEMessage(msg, state);
     }
+  }
 
-    // Flush remaining buffer (last event may not end with \n\n)
-    if (buffer.trim()) {
-      processSSEMessage(buffer, state);
-    }
-  } finally {
-    reader.releaseLock();
+  // Flush remaining buffer (last event may not end with \n\n)
+  if (buffer.trim()) {
+    processSSEMessage(buffer, state);
   }
 
   // Build output array from accumulated items (ordered by index)

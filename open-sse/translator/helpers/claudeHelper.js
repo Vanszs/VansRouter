@@ -5,7 +5,7 @@ import { applyCloaking } from "../../utils/claudeCloaking.js";
 import { deriveSessionId } from "../../utils/sessionManager.js";
 
 // Check if message has valid non-empty content
-export function hasValidContent(msg) {
+function hasValidContent(msg) {
   if (typeof msg.content === "string" && msg.content.trim()) return true;
   if (Array.isArray(msg.content)) {
     return msg.content.some(block =>
@@ -20,7 +20,7 @@ export function hasValidContent(msg) {
 // Fix tool_use/tool_result ordering for Claude API
 // 1. Assistant message with tool_use: remove text AFTER tool_use (Claude doesn't allow)
 // 2. Merge consecutive same-role messages
-export function fixToolUseOrdering(messages) {
+function fixToolUseOrdering(messages) {
   if (messages.length <= 1) return messages;
 
   // Pass 1: Fix assistant messages with tool_use - remove text after tool_use

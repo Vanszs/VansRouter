@@ -248,14 +248,14 @@ async function loadDnsToolState() {
 async function restoreToolDNS(sudoPassword) {
   const state = await loadDnsToolState();
   const password = sudoPassword || getCachedPassword() || await loadEncryptedPassword();
-  for (const [tool, enabled] of Object.entries(state)) {
-    if (!enabled || !TOOL_HOSTS[tool]) continue;
+  await Promise.all(Object.entries(state).map(async ([tool, enabled]) => {
+    if (!enabled || !TOOL_HOSTS[tool]) return;
     try {
       await addDNSEntry(tool, password);
     } catch (e) {
       err(`DNS ${tool}: restore failed — ${e.message}`);
     }
-  }
+  }));
 }
 
 /**
@@ -278,6 +278,7 @@ function checkPort443Free() {
       else resolve("no-permission");
     });
     tester.once("listening", () => { tester.close(() => resolve("free")); });
+    // SECURITY: intentionally bound to 127.0.0.1 only — probes local port availability
     tester.listen(MITM_PORT, "127.0.0.1");
   });
 }

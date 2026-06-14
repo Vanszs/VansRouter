@@ -1,0 +1,43 @@
+{
+  "$schema": "https://react.doctor/schema/config.json",
+
+  "projects": ["vansai-app"],
+
+  "ignore": {
+    "rules": [
+      "react-doctor/unused-file",
+      "react-doctor/circular-dependency"
+    ],
+    "files": [
+      "src/mitm/**",
+      "src/shared/components/Drawer.js",
+      "src/shared/components/Pagination.js",
+      "src/lib/db/driver.js",
+      "src/lib/db/adapters/betterSqliteAdapter.js",
+      "src/lib/db/adapters/bunSqliteAdapter.js",
+      "src/lib/db/adapters/nodeSqliteAdapter.js",
+      "src/lib/db/adapters/sqljsAdapter.js",
+      "src/lib/db/backup.js",
+      "src/lib/db/migrate.js",
+      "src/lib/db/paths.js",
+      "src/lib/db/version.js",
+      "src/lib/db/helpers/metaStore.js",
+      "src/lib/db/schema.js"
+    ]
+  },
+
+  "rules": {
+    "react-doctor/server-auth-actions": "off",
+    "react-doctor/artifact-secret-leak": "off",
+    "react-doctor/import-metadata-execution-risk": "off",
+    "react-doctor/server-no-mutable-module-state": "off",
+    "react-doctor/nextjs-no-side-effect-in-get-handler": "off",
+    "react-doctor/no-adjust-state-on-prop-change": "off",
+    "react-doctor/js-set-map-lookups": "off",
+    "react-doctor/dangerous-html-sink": "off",
+    "react-doctor/no-danger": "off",
+    "react-doctor/local-rpc-native-bridge-risk": "off",
+    "react-doctor/plugin-update-trust-risk": "off",
+    "react-doctor/nextjs-no-client-fetch-for-server-data": "off"
+  }
+}

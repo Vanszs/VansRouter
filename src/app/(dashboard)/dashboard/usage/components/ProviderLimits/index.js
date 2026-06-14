@@ -32,7 +32,7 @@ function sortVisibleConnections(
   quotaSortMode,
 ) {
   if (providerFilter === "codex" && quotaSortMode !== "default") {
-    return [...connections].sort((a, b) => {
+    return connections.toSorted((a, b) => {
       const remainingA = getConnectionQuotaRemaining(a, quotaData);
       const remainingB = getConnectionQuotaRemaining(b, quotaData);
       const remainingDiff =
@@ -50,19 +50,17 @@ function sortVisibleConnections(
   if (!expiringFirst) return connections;
 
   const getEarliestResetTime = (connection) => {
-    const resetTimes = (quotaData[connection.id]?.quotas || [])
-      .map((quota) =>
-        quota.resetAt
-          ? new Date(quota.resetAt).getTime()
-          : Number.POSITIVE_INFINITY,
-      )
-      .filter((time) => Number.isFinite(time));
-    return resetTimes.length > 0
-      ? Math.min(...resetTimes)
-      : Number.POSITIVE_INFINITY;
+    let min = Number.POSITIVE_INFINITY;
+    for (const quota of (quotaData[connection.id]?.quotas || [])) {
+      if (quota.resetAt) {
+        const t = new Date(quota.resetAt).getTime();
+        if (Number.isFinite(t) && t < min) min = t;
+      }
+    }
+    return min;
   };
 
-  return [...connections].sort((a, b) => {
+  return connections.toSorted((a, b) => {
     const expiryDiff = getEarliestResetTime(a) - getEarliestResetTime(b);
     if (expiryDiff !== 0) return expiryDiff;
     return (
@@ -225,9 +223,12 @@ export default function ProviderLimits() {
   const [quotaData, setQuotaData] = useState({});
   const [loading, setLoading] = useState({});
   const [errors, setErrors] = useState({});
-  const [autoRefresh, setAutoRefresh] = useState(true);
-  const [lastUpdated, setLastUpdated] = useState(null);
-  const [hasHydratedAutoRefresh, setHasHydratedAutoRefresh] = useState(false);
+  const [autoRefresh, setAutoRefresh] = useState(() => {
+    if (typeof window === "undefined") return true;
+    const stored = window.localStorage.getItem(AUTO_REFRESH_STORAGE_KEY);
+    return stored === null ? true : stored === "true";
+  });
+  const [hasHydratedAutoRefresh] = useState(() => typeof window !== "undefined");
   const [refreshingAll, setRefreshingAll] = useState(false);
   const [countdown, setCountdown] = useState(60);
   const [connectionsLoading, setConnectionsLoading] = useState(true);
@@ -261,6 +262,7 @@ export default function ProviderLimits() {
 
   const intervalRef = useRef(null);
   const countdownRef = useRef(null);
+  const refreshAllRef = useRef(null);
 
   const fetchConnections = useCallback(
     async (targetPage = page) => {
@@ -269,7 +271,7 @@ export default function ProviderLimits() {
           page: String(targetPage),
           pageSize: String(pageSize),
           accountStatus: accountFilter,
-          sort: "priority",
+          sort: sortRequestFromExpiringFirst(expiringFirst),
         });
 
         if (providerFilter !== "all") {
@@ -316,9 +318,6 @@ export default function ProviderLimits() {
       const response = await fetch(`/api/usage/${connectionId}`);
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        const errorMsg = errorData.error || response.statusText;
-
         // Handle different error types gracefully
         if (response.status === 404) {
           // Connection not found - skip silently
@@ -327,6 +326,9 @@ export default function ProviderLimits() {
           );
           return;
         }
+
+        const errorData = await response.json().catch(() => ({}));
+        const errorMsg = errorData.error || response.statusText;
 
         if (response.status === 401) {
           // Auth error - show message instead of throwing
@@ -385,7 +387,6 @@ export default function ProviderLimits() {
   const refreshProvider = useCallback(
     async (connectionId, provider) => {
       await fetchQuota(connectionId, provider);
-      setLastUpdated(new Date());
     },
     [fetchQuota],
   );
@@ -491,18 +492,16 @@ export default function ProviderLimits() {
   );
 
   useEffect(() => {
-    let cancelled = false;
-    fetch("/api/proxy-pools?isActive=true", { cache: "no-store" })
+    const controller = new AbortController();
+    fetch("/api/proxy-pools?isActive=true", { cache: "no-store", signal: controller.signal })
       .then((res) => res.json())
       .then((data) => {
-        if (!cancelled && data?.proxyPools) {
+        if (!controller.signal.aborted && data?.proxyPools) {
           setProxyPools(data.proxyPools);
         }
       })
       .catch(() => {});
-    return () => {
-      cancelled = true;
-    };
+    return () => controller.abort();
   }, []);
 
   const refreshAll = useCallback(async () => {
@@ -526,13 +525,13 @@ export default function ProviderLimits() {
         visibleConnections.map((conn) => fetchQuota(conn.id, conn.provider)),
       );
 
-      setLastUpdated(new Date());
     } catch (error) {
       console.error("Error refreshing all providers:", error);
     } finally {
       setRefreshingAll(false);
     }
   }, [refreshingAll, fetchConnections, fetchQuota, page]);
+  refreshAllRef.current = refreshAll;
 
   useEffect(() => {
     const initializeData = async () => {
@@ -552,18 +551,10 @@ export default function ProviderLimits() {
       await Promise.all(
         visibleConnections.map((conn) => fetchQuota(conn.id, conn.provider)),
       );
-      setLastUpdated(new Date());
     };
 
     initializeData();
   }, [fetchConnections, fetchQuota, page]);
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const stored = window.localStorage.getItem(AUTO_REFRESH_STORAGE_KEY);
-    setAutoRefresh(stored === null ? true : stored === "true");
-    setHasHydratedAutoRefresh(true);
-  }, []);
 
   // Persist auto-refresh preference
   useEffect(() => {
@@ -587,7 +578,7 @@ export default function ProviderLimits() {
 
     // Main refresh interval
     intervalRef.current = setInterval(() => {
-      refreshAll();
+      refreshAllRef.current();
     }, REFRESH_INTERVAL_MS);
 
     // Countdown interval
@@ -602,7 +593,7 @@ export default function ProviderLimits() {
       if (intervalRef.current) clearInterval(intervalRef.current);
       if (countdownRef.current) clearInterval(countdownRef.current);
     };
-  }, [autoRefresh, refreshAll, hasHydratedAutoRefresh]);
+  }, [autoRefresh, hasHydratedAutoRefresh]);
 
   // Pause auto-refresh when tab is hidden (Page Visibility API)
   useEffect(() => {
@@ -618,7 +609,7 @@ export default function ProviderLimits() {
         }
       } else if (autoRefresh && hasHydratedAutoRefresh) {
         // Resume auto-refresh when tab becomes visible
-        intervalRef.current = setInterval(refreshAll, REFRESH_INTERVAL_MS);
+        intervalRef.current = setInterval(refreshAllRef.current, REFRESH_INTERVAL_MS);
         countdownRef.current = setInterval(() => {
           setCountdown((prev) => (prev <= 1 ? 60 : prev - 1));
         }, 1000);
@@ -629,7 +620,7 @@ export default function ProviderLimits() {
     return () => {
       document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
-  }, [autoRefresh, refreshAll, hasHydratedAutoRefresh]);
+  }, [autoRefresh, hasHydratedAutoRefresh]);
 
   const sortedConnections = useMemo(
     () =>
@@ -678,16 +669,18 @@ export default function ProviderLimits() {
   );
 
   const handleDisableDepleted = () => {
-    const ids = sortedConnections
-      .filter((c) => (c.isActive ?? true) && isConnectionDepleted(c))
-      .map((c) => c.id);
+    const ids = sortedConnections.reduce((acc, c) => {
+      if ((c.isActive ?? true) && isConnectionDepleted(c)) acc.push(c.id);
+      return acc;
+    }, []);
     bulkSetActive(ids, false);
   };
 
   const handleEnableAvailable = () => {
-    const ids = sortedConnections
-      .filter((c) => !(c.isActive ?? true) && !isConnectionDepleted(c))
-      .map((c) => c.id);
+    const ids = sortedConnections.reduce((acc, c) => {
+      if (!(c.isActive ?? true) && !isConnectionDepleted(c)) acc.push(c.id);
+      return acc;
+    }, []);
     bulkSetActive(ids, true);
   };
 
@@ -919,7 +912,7 @@ export default function ProviderLimits() {
           </button>
 
           {/* Auto-refresh toggle */}
-          <button
+          <button type="button"
             onClick={() => setAutoRefresh((prev) => !prev)}
             className="flex h-8 shrink-0 items-center gap-1 rounded-lg border border-black/10 px-2 text-xs transition-colors hover:bg-black/5 dark:border-white/10 dark:hover:bg-white/5"
             title={autoRefresh ? "Disable auto-refresh" : "Enable auto-refresh"}

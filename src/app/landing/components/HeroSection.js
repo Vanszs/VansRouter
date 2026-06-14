@@ -26,7 +26,7 @@ export default function HeroSection() {
 
         {/* CTA Buttons */}
         <div className="flex flex-wrap items-center justify-center gap-4 w-full">
-          <button className="h-12 px-8 rounded-lg bg-[#6366f1] hover:bg-[#4f46e5] text-white text-base font-bold transition-all shadow-[0_0_15px_rgba(99,102,241,0.4)] flex items-center gap-2">
+          <button type="button" className="h-12 px-8 rounded-lg bg-[#6366f1] hover:bg-[#4f46e5] text-white text-base font-bold transition-all shadow-[0_0_15px_rgba(99,102,241,0.4)] flex items-center gap-2">
             <span className="material-symbols-outlined">rocket_launch</span>
             Get Started
           </button>
