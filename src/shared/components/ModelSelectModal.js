@@ -4,6 +4,7 @@ import { useState, useMemo, useEffect, useCallback, useReducer } from "react";
 import PropTypes from "prop-types";
 import Modal from "./Modal";
 import ProviderIcon from "./ProviderIcon";
+import { OAUTH_PROVIDERS, APIKEY_PROVIDERS, FREE_PROVIDERS, FREE_TIER_PROVIDERS, AI_PROVIDERS } from "@/shared/constants/providers";
 import { computeGroupedModels } from "./modelSelectUtils";
 
 const EMPTY_ACTIVE_PROVIDERS = [];
