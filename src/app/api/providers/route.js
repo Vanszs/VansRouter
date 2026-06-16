@@ -122,52 +122,19 @@ export async function POST(request) {
 
     let providerSpecificData = normalizeProviderSpecificData(provider, body, body.providerSpecificData);
 
-    // Compatible/embedding nodes allow exactly one connection each. These guards were
-    // dropped accidentally during the bun:sqlite refactor (v0.4.28); restored to honor
-    // the contract locked in by tests/unit/compatible-provider-connections.test.js (#925).
-    if (isOpenAICompatibleProvider(provider)) {
+    // Compatible/embedding nodes may have multiple connections (each with its own
+    // API key) so round-robin/sticky strategies can rotate across accounts.
+    // providerSpecificData is enriched below so each connection inherits the
+    // node's prefix/baseUrl/apiType/nodeName.
+    if (isOpenAICompatibleProvider(provider) || isAnthropicCompatibleProvider(provider) || isCustomEmbeddingProvider(provider)) {
       const node = await getProviderNodeById(provider);
       if (!node) {
-        return NextResponse.json({ error: "OpenAI Compatible node not found" }, { status: 404 });
+        return NextResponse.json({ error: `${isOpenAICompatibleProvider(provider) ? "OpenAI" : isAnthropicCompatibleProvider(provider) ? "Anthropic" : "Custom Embedding"} Compatible node not found` }, { status: 404 });
       }
-      const existingConnections = await getProviderConnections({ provider });
-      if (existingConnections.length > 0) {
-        return NextResponse.json({ error: "Only one connection is allowed for this OpenAI Compatible node" }, { status: 400 });
-      }
-      providerSpecificData = {
-        prefix: node.prefix,
-        apiType: node.apiType,
-        baseUrl: node.baseUrl,
-        nodeName: node.name,
-      };
-    } else if (isAnthropicCompatibleProvider(provider)) {
-      const node = await getProviderNodeById(provider);
-      if (!node) {
-        return NextResponse.json({ error: "Anthropic Compatible node not found" }, { status: 404 });
-      }
-      const existingConnections = await getProviderConnections({ provider });
-      if (existingConnections.length > 0) {
-        return NextResponse.json({ error: "Only one connection is allowed for this Anthropic Compatible node" }, { status: 400 });
-      }
-      providerSpecificData = {
-        prefix: node.prefix,
-        baseUrl: node.baseUrl,
-        nodeName: node.name,
-      };
-    } else if (isCustomEmbeddingProvider(provider)) {
-      const node = await getProviderNodeById(provider);
-      if (!node) {
-        return NextResponse.json({ error: "Custom Embedding node not found" }, { status: 404 });
-      }
-      const existingConnections = await getProviderConnections({ provider });
-      if (existingConnections.length > 0) {
-        return NextResponse.json({ error: "Only one connection is allowed for this Custom Embedding node" }, { status: 400 });
-      }
-      providerSpecificData = {
-        prefix: node.prefix,
-        baseUrl: node.baseUrl,
-        nodeName: node.name,
-      };
+      const nodeSpecific = isOpenAICompatibleProvider(provider)
+        ? { prefix: node.prefix, apiType: node.apiType, baseUrl: node.baseUrl, nodeName: node.name }
+        : { prefix: node.prefix, baseUrl: node.baseUrl, nodeName: node.name };
+      providerSpecificData = { ...(providerSpecificData || {}), ...nodeSpecific };
     }
 
     const mergedProviderSpecificData = {
