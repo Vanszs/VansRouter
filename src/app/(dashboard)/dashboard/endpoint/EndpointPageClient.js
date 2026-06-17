@@ -5,6 +5,10 @@ import PropTypes from "prop-types";
 import { Card, Button, Input, Modal, CardSkeleton, Toggle, ConfirmModal } from "@/shared/components";
 import { useCopyToClipboard } from "@/shared/hooks/useCopyToClipboard";
 import { getCurrentLocale, onLocaleChange } from "@/i18n/runtime";
+import { getAclProviderList } from "@/shared/constants/providers";
+
+// Canonical, always-complete provider list for API-key ACL pickers.
+const PROVIDER_LIST = getAclProviderList();
 import {
   WENYAN_LOCALES,
   TUNNEL_BENEFITS,
@@ -14,6 +18,7 @@ import {
   REACHABLE_MISS_THRESHOLD,
   CLIENT_PING_FAST_MS,
   CAVEMAN_LEVELS,
+  PONYTAIL_LEVELS,
 } from "./endpointConstants";
 import { clientPingUrl, clientPingAny } from "./endpointPing";
 import EndpointRow from "./components/EndpointRow";
@@ -35,6 +40,8 @@ export default function APIPageClient({ machineId }) {
   const [rtkEnabled, setRtkEnabledState] = useState(true);
   const [cavemanEnabled, setCavemanEnabled] = useState(false);
   const [cavemanLevel, setCavemanLevel] = useState("full");
+  const [ponytailEnabled, setPonytailEnabled] = useState(false);
+  const [ponytailLevel, setPonytailLevel] = useState("full");
   const [locale, setLocale] = useState("en");
 
   // Cloudflare Tunnel state
@@ -83,6 +90,11 @@ export default function APIPageClient({ machineId }) {
 
   // API key visibility toggle state
   const [visibleKeys, setVisibleKeys] = useState(new Set());
+  const [editingProviders, setEditingProviders] = useState(null);
+  const [editingCombos, setEditingCombos] = useState(null);
+  const [editingKinds, setEditingKinds] = useState(null);
+  const [availableCombos, setAvailableCombos] = useState([]);
+  const [customProviders, setCustomProviders] = useState([]);
 
   // Client-side local/remote detection (UI hint only, not a security gate)
   const [isRemoteHost, setIsRemoteHost] = useState(false);
@@ -234,6 +246,8 @@ export default function APIPageClient({ machineId }) {
         setRtkEnabledState(data.rtkEnabled !== false);
         setCavemanEnabled(!!data.cavemanEnabled);
         setCavemanLevel(data.cavemanLevel || "full");
+        setPonytailEnabled(!!data.ponytailEnabled);
+        setPonytailLevel(data.ponytailLevel || "full");
       }
       if (statusRes.ok) {
         const data = await statusRes.json();
@@ -318,12 +332,79 @@ export default function APIPageClient({ machineId }) {
     patchSetting({ cavemanLevel: level });
   };
 
+  const handlePonytailEnabled = (value) => {
+    setPonytailEnabled(value);
+    patchSetting({ ponytailEnabled: value });
+  };
+
+  const handlePonytailLevel = (level) => {
+    setPonytailLevel(level);
+    patchSetting({ ponytailLevel: level });
+  };
+
+  const handleUpdateProviders = async (id, allowedProviders) => {
+    try {
+      const res = await fetch(`/api/keys/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ allowedProviders }),
+      });
+      if (res.ok) {
+        setKeys(prev => prev.map(k => k.id === id ? { ...k, allowedProviders } : k));
+      }
+    } catch (error) {
+      console.log("Error updating providers:", error);
+    }
+  };
+
+  const handleUpdateCombos = async (id, allowedCombos) => {
+    try {
+      const res = await fetch(`/api/keys/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ allowedCombos }),
+      });
+      if (res.ok) {
+        setKeys(prev => prev.map(k => k.id === id ? { ...k, allowedCombos } : k));
+      }
+    } catch (error) {
+      console.log("Error updating combos:", error);
+    }
+  };
+
+  const handleUpdateKinds = async (id, allowedKinds) => {
+    try {
+      const res = await fetch(`/api/keys/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ allowedKinds }),
+      });
+      if (res.ok) {
+        setKeys(prev => prev.map(k => k.id === id ? { ...k, allowedKinds } : k));
+      }
+    } catch (error) {
+      console.log("Error updating kinds:", error);
+    }
+  };
+
   const fetchData = async () => {
     try {
-      const keysRes = await fetch("/api/keys");
+      const [keysRes, combosRes, customProvidersRes] = await Promise.all([
+        fetch("/api/keys"),
+        fetch("/api/combos"),
+        fetch("/api/provider-nodes"),
+      ]);
       const keysData = await keysRes.json();
       if (keysRes.ok) {
         setKeys(keysData.keys || []);
+      }
+      if (combosRes.ok) {
+        const combosData = await combosRes.json();
+        setAvailableCombos(combosData.combos || []);
+      }
+      if (customProvidersRes.ok) {
+        const nodesData = await customProvidersRes.json();
+        setCustomProviders((nodesData.nodes || []).map(n => ({ alias: n.prefix, name: n.name, color: n.color || "#6B7280" })));
       }
     } catch (error) {
       console.log("Error fetching data:", error);
@@ -1013,7 +1094,7 @@ export default function APIPageClient({ machineId }) {
         )}
       </Card>
 
-      {/* Token Saver (RTK + Caveman) */}
+      {/* Token Saver (RTK + Caveman + Ponytail) */}
       <Card id="rtk">
         <div className="flex items-center justify-between mb-2">
           <h2 className="text-lg font-semibold flex items-center gap-2">
@@ -1087,6 +1168,54 @@ export default function APIPageClient({ machineId }) {
             <Toggle
               checked={cavemanEnabled}
               onChange={() => handleCavemanEnabled(!cavemanEnabled)}
+            />
+          </div>
+        </div>
+        <div className="flex items-center justify-between pt-4 border-t border-border gap-4 flex-wrap">
+          <div className="min-w-0 flex-1">
+            <p className="font-medium">
+              Reduce code output{" "}
+              <a
+                href="https://github.com/DietrichGebert/ponytail"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-xs font-normal text-primary underline hover:opacity-80"
+              >
+                (Ponytail)
+              </a>
+            </p>
+            <p className="text-sm text-text-muted">
+              YAGNI system prompt → 80-94% less code written
+            </p>
+          </div>
+          <div className="flex items-center gap-3 shrink-0">
+            {ponytailEnabled && (
+              <div className="flex flex-col items-end gap-1">
+                <div className="flex items-center gap-1.5">
+                  {PONYTAIL_LEVELS.map((lvl) => (
+                    <button
+                      key={lvl.id}
+                      type="button"
+                      onClick={() => handlePonytailLevel(lvl.id)}
+                      className={`px-3 py-1.5 rounded text-xs font-medium border transition-colors ${
+                        ponytailLevel === lvl.id
+                          ? "bg-primary text-white border-primary"
+                          : "bg-transparent border-border text-text-muted hover:bg-surface-2"
+                      }`}
+                      title={lvl.desc}
+                    >
+                      {lvl.label}
+                    </button>
+                  ))}
+                </div>
+                <p className="text-xs text-primary">
+                  {PONYTAIL_LEVELS.find((lvl) => lvl.id === ponytailLevel)?.desc}
+                </p>
+              </div>
+            )}
+            <Toggle
+              checked={ponytailEnabled}
+              onChange={() => handlePonytailEnabled(!ponytailEnabled)}
             />
           </div>
         </div>
@@ -1171,6 +1300,180 @@ export default function APIPageClient({ machineId }) {
                   {key.isActive === false && (
                     <p className="text-xs text-orange-500 mt-1">Paused</p>
                   )}
+                  {/* Allowed Providers */}
+                  <div className="flex flex-wrap gap-1 mt-1.5">
+                    {key.allowedProviders === null || key.allowedProviders === undefined ? (
+                      <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-primary/10 text-primary">All Providers</span>
+                    ) : key.allowedProviders.length === 0 ? (
+                      <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-red-500/10 text-red-500">No Providers</span>
+                    ) : (
+                      key.allowedProviders.map((alias) => {
+                        const p = PROVIDER_LIST.find(x => x.alias === alias) || customProviders.find(x => x.alias === alias);
+                        return (
+                          <span key={alias} className="text-[10px] px-1.5 py-0.5 rounded-full text-white" style={{ backgroundColor: p?.color || "#6B7280" }}>
+                            {p?.name || alias}
+                          </span>
+                        );
+                      })
+                    )}
+                    <button type="button"
+                      onClick={() => setEditingProviders(editingProviders === key.id ? null : key.id)}
+                      className="text-[10px] px-1.5 py-0.5 rounded-full bg-black/5 dark:bg-white/10 text-text-muted hover:text-primary transition-colors"
+                    >
+                      {editingProviders === key.id ? "Done" : "Edit"}
+                    </button>
+                  </div>
+                  {editingProviders === key.id && (
+                    <div className="mt-2 p-2 rounded-lg bg-black/[0.02] dark:bg-white/[0.03] border border-black/5 dark:border-white/5">
+                      <p className="text-[10px] text-text-muted mb-1.5">Select allowed providers — <b>null</b>=all, <b>none selected</b>=block all:</p>
+                      <div className="flex flex-wrap gap-1">
+                        {[...PROVIDER_LIST, ...customProviders.filter((c) => !PROVIDER_LIST.some((p) => p.alias === c.alias))].map((p) => {
+                          const current = key.allowedProviders || [];
+                          const isSelected = Array.isArray(key.allowedProviders) && current.includes(p.alias);
+                          return (
+                            <button type="button"
+                              key={p.alias}
+                              onClick={() => {
+                                const base = Array.isArray(key.allowedProviders) ? key.allowedProviders : [];
+                                const next = isSelected ? base.filter(a => a !== p.alias) : [...base, p.alias];
+                                handleUpdateProviders(key.id, next);
+                              }}
+                              className={`text-[10px] px-2 py-1 rounded-full border transition-all ${isSelected ? "text-white border-transparent" : "bg-transparent border-black/10 dark:border-white/10 text-text-muted hover:border-primary hover:text-primary"}`}
+                              style={isSelected ? { backgroundColor: p.color } : {}}
+                            >
+                              {p.name}
+                            </button>
+                          );
+                        })}
+                      </div>
+                      <div className="flex gap-2 mt-2">
+                        {key.allowedProviders !== null && (
+                          <button type="button" onClick={() => handleUpdateProviders(key.id, null)} className="text-[10px] text-primary hover:underline">Allow all</button>
+                        )}
+                        {(key.allowedProviders === null || (Array.isArray(key.allowedProviders) && key.allowedProviders.length > 0)) && (
+                          <button type="button" onClick={() => handleUpdateProviders(key.id, [])} className="text-[10px] text-red-500 hover:underline">Block all (NONE)</button>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                  {/* Allowed Combos */}
+                  <div className="flex flex-wrap gap-1 mt-1.5">
+                    {key.allowedCombos === null || key.allowedCombos === undefined ? (
+                      <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-purple-500/10 text-purple-500">All Combos</span>
+                    ) : key.allowedCombos.length === 0 ? (
+                      <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-red-500/10 text-red-500">No Combos</span>
+                    ) : (
+                      key.allowedCombos.map((name) => (
+                        <span key={name} className="text-[10px] px-1.5 py-0.5 rounded-full bg-purple-500/20 text-purple-600 dark:text-purple-400">{name}</span>
+                      ))
+                    )}
+                    <button type="button"
+                      onClick={() => setEditingCombos(editingCombos === key.id ? null : key.id)}
+                      className="text-[10px] px-1.5 py-0.5 rounded-full bg-black/5 dark:bg-white/10 text-text-muted hover:text-primary transition-colors"
+                    >
+                      {editingCombos === key.id ? "Done" : "Edit Combos"}
+                    </button>
+                  </div>
+                  {editingCombos === key.id && (
+                    <div className="mt-2 p-2 rounded-lg bg-black/[0.02] dark:bg-white/[0.03] border border-black/5 dark:border-white/5">
+                      <p className="text-[10px] text-text-muted mb-1.5">Select allowed combos — <b>null</b>=all, <b>none selected</b>=block all:</p>
+                      <div className="flex flex-wrap gap-1">
+                        {availableCombos.map((combo) => {
+                          const current = Array.isArray(key.allowedCombos) ? key.allowedCombos : [];
+                          const isSelected = Array.isArray(key.allowedCombos) && current.includes(combo.name);
+                          return (
+                            <button type="button"
+                              key={combo.name}
+                              onClick={() => {
+                                const base = Array.isArray(key.allowedCombos) ? key.allowedCombos : [];
+                                const next = isSelected ? base.filter(n => n !== combo.name) : [...base, combo.name];
+                                handleUpdateCombos(key.id, next);
+                              }}
+                              className={`text-[10px] px-2 py-1 rounded-full border transition-all ${isSelected ? "bg-purple-500 text-white border-transparent" : "bg-transparent border-black/10 dark:border-white/10 text-text-muted hover:border-purple-500 hover:text-purple-500"}`}
+                            >
+                              {combo.name}
+                            </button>
+                          );
+                        })}
+                        {availableCombos.length === 0 && <p className="text-[10px] text-text-muted">No combos created yet.</p>}
+                      </div>
+                      <div className="flex gap-2 mt-2">
+                        {key.allowedCombos !== null && (
+                          <button type="button" onClick={() => handleUpdateCombos(key.id, null)} className="text-[10px] text-primary hover:underline">Allow all</button>
+                        )}
+                        {(key.allowedCombos === null || (Array.isArray(key.allowedCombos) && key.allowedCombos.length > 0)) && (
+                          <button type="button" onClick={() => handleUpdateCombos(key.id, [])} className="text-[10px] text-red-500 hover:underline">Block all (NONE)</button>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                  {/* Allowed Kinds */}
+                  {(() => {
+                    const KINDS = [
+                      { id: "llm", label: "LLM Chat", icon: "chat" },
+                      { id: "embedding", label: "Embedding", icon: "data_array" },
+                      { id: "image", label: "Text to Image", icon: "brush" },
+                      { id: "tts", label: "Text to Speech", icon: "record_voice_over" },
+                      { id: "stt", label: "Speech to Text", icon: "mic" },
+                      { id: "web", label: "Web Fetch & Search", icon: "travel_explore" },
+                    ];
+                    const kinds = key.allowedKinds;
+                    return (
+                      <>
+                        <div className="flex flex-wrap gap-1 mt-1.5">
+                          {kinds === null || kinds === undefined ? (
+                            <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-green-500/10 text-green-600 dark:text-green-400">All Kinds</span>
+                          ) : kinds.length === 0 ? (
+                            <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-red-500/10 text-red-500">No Kinds</span>
+                          ) : (
+                            kinds.map((k) => {
+                              const kd = KINDS.find(x => x.id === k);
+                              return <span key={k} className="text-[10px] px-1.5 py-0.5 rounded-full bg-green-500/15 text-green-700 dark:text-green-300">{kd?.label || k}</span>;
+                            })
+                          )}
+                          <button type="button"
+                            onClick={() => setEditingKinds(editingKinds === key.id ? null : key.id)}
+                            className="text-[10px] px-1.5 py-0.5 rounded-full bg-black/5 dark:bg-white/10 text-text-muted hover:text-primary transition-colors"
+                          >
+                            {editingKinds === key.id ? "Done" : "Edit Kinds"}
+                          </button>
+                        </div>
+                        {editingKinds === key.id && (
+                          <div className="mt-2 p-2 rounded-lg bg-black/[0.02] dark:bg-white/[0.03] border border-black/5 dark:border-white/5">
+                            <p className="text-[10px] text-text-muted mb-1.5">Select allowed request types — <b>null</b>=all, <b>none selected</b>=block all:</p>
+                            <div className="flex flex-wrap gap-1">
+                              {KINDS.map((kd) => {
+                                const current = Array.isArray(kinds) ? kinds : [];
+                                const isSelected = Array.isArray(kinds) && current.includes(kd.id);
+                                return (
+                                  <button type="button"
+                                    key={kd.id}
+                                    onClick={() => {
+                                      const base = Array.isArray(kinds) ? kinds : [];
+                                      const next = isSelected ? base.filter(x => x !== kd.id) : [...base, kd.id];
+                                      handleUpdateKinds(key.id, next);
+                                    }}
+                                    className={`text-[10px] px-2 py-1 rounded-full border transition-all flex items-center gap-1 ${isSelected ? "bg-green-600 text-white border-transparent" : "bg-transparent border-black/10 dark:border-white/10 text-text-muted hover:border-green-600 hover:text-green-600"}`}
+                                  >
+                                    <span className="material-symbols-outlined text-[11px]">{kd.icon}</span>
+                                    {kd.label}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                            <div className="flex gap-2 mt-2">
+                              {kinds !== null && (
+                                <button type="button" onClick={() => handleUpdateKinds(key.id, null)} className="text-[10px] text-primary hover:underline">Allow all</button>
+                              )}
+                              {(kinds === null || (Array.isArray(kinds) && kinds.length > 0)) && (
+                                <button type="button" onClick={() => handleUpdateKinds(key.id, [])} className="text-[10px] text-red-500 hover:underline">Block all (NONE)</button>
+                              )}
+                            </div>
+                          </div>
+                        )}
+                      </>
+                    );
+                  })()}
                 </div>
                 <div className="flex items-center gap-2">
                   <Toggle

@@ -93,7 +93,7 @@ function maskKey(fullKey) {
   return fullKey.length > 8 ? `${fullKey.slice(0, 8)}...` : fullKey;
 }
 
-function RequestFilters({ filterProvider, setFilterProvider, filterStart, setFilterStart, filterEnd, setFilterEnd, providers, cn, handleClear }) {
+function RequestFilters({ filterProvider, setFilterProvider, filterStart, setFilterStart, filterEnd, setFilterEnd, providers, cn, handleApplyFilters, handleClearFilters }) {
   return (
       <Card padding="md">
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -297,7 +297,7 @@ export default function RequestDetailsTab() {
 
   return (
     <div className="flex min-w-0 flex-col gap-6">
-      <RequestFilters filterProvider={filterProvider} setFilterProvider={setFilterProvider} filterStart={filterStart} setFilterStart={setFilterStart} filterEnd={filterEnd} setFilterEnd={setFilterEnd} providers={providers} cn={cn} handleClear={handleClearFilters} />
+      <RequestFilters filterProvider={filterProvider} setFilterProvider={setFilterProvider} filterStart={filterStart} setFilterStart={setFilterStart} filterEnd={filterEnd} setFilterEnd={setFilterEnd} providers={providers} cn={cn} handleApplyFilters={handleApplyFilters} handleClearFilters={handleClearFilters} />
 
       <Card padding="none">
         <div className="overflow-x-auto">

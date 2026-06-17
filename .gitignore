@@ -22,6 +22,7 @@ product
 # production
 /build
 .idea/
+chrome
 
 # misc
 .DS_Store

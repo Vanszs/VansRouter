@@ -163,3 +163,16 @@ export const USAGE_SUPPORTED_PROVIDERS = REGISTRY
 export const USAGE_APIKEY_PROVIDERS = REGISTRY
   .filter(r => r.features?.usageApikey)
   .map(r => r.id);
+
+// Canonical, always-complete provider list for API-key ACL pickers.
+// Derived from AI_PROVIDERS — excludes hidden (media-only) providers.
+export function getAclProviderList() {
+  const byAlias = new Map();
+  for (const p of Object.values(AI_PROVIDERS)) {
+    if (!p?.alias || p.hidden) continue;
+    if (!byAlias.has(p.alias)) {
+      byAlias.set(p.alias, { alias: p.alias, name: p.name || p.alias, color: p.color || "#6B7280" });
+    }
+  }
+  return Array.from(byAlias.values()).sort((a, b) => a.name.localeCompare(b.name));
+}
