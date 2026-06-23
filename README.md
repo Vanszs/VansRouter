@@ -7,11 +7,9 @@
   
   **Connect All AI Code Tools (Claude Code, Cursor, Antigravity, Copilot, Codex, Gemini, OpenCode, Cline, OpenClaw...) to 40+ AI Providers & 100+ Models.**
   
-  [![npm](https://img.shields.io/npm/v/9router.svg)](https://www.npmjs.com/package/9router)
-  [![Downloads](https://img.shields.io/npm/dm/9router.svg)](https://www.npmjs.com/package/9router)
   [![Docker Pulls](https://img.shields.io/docker/pulls/decolua/9router.svg?logo=docker&label=Docker%20pulls)](https://hub.docker.com/r/decolua/9router)
   [![GHCR](https://img.shields.io/badge/GHCR-decolua%2F9router-blue?logo=github)](https://github.com/decolua/9router/pkgs/container/9router)
-  [![License](https://img.shields.io/npm/l/9router.svg)](https://github.com/decolua/9router/blob/main/LICENSE)
+  [![License](https://img.shields.io/github/license/Vanszs/VansRouter.svg)](https://github.com/Vanszs/VansRouter/blob/main/LICENSE)
 
   <a href="https://trendshift.io/repositories/22628" target="_blank"><img src="https://trendshift.io/api/badge/repositories/22628" alt="decolua%2F9router | Trendshift" style="width: 250px; height: 55px;" width="250" height="55"/></a>
   
@@ -378,20 +376,24 @@ pm2 restart 9router
 
 ## ⚡ Quick Start
 
-**1. Install globally:**
+**Clone and run (this repo):**
 
 ```bash
-npm install -g 9router
-9router
+git clone https://github.com/Vanszs/VansRouter.git
+cd VansRouter
+cp .env.example .env
+pnpm install
+pnpm run build
+PORT=20128 HOSTNAME=0.0.0.0 node .next/standalone/server.js
 ```
 
 🎉 Dashboard opens at `http://localhost:20128`
 
-**2. Connect a FREE provider (no signup needed):**
+**Connect a FREE provider (no signup needed):**
 
 Dashboard → Providers → Connect **Kiro AI** (free Claude unlimited) or **OpenCode Free** (no auth) → Done!
 
-**3. Use in your CLI tool:**
+**Use in your CLI tool:**
 
 ```
 Claude Code/Codex/OpenClaw/Cursor/Cline Settings:
@@ -402,28 +404,16 @@ Claude Code/Codex/OpenClaw/Cursor/Cline Settings:
 
 **That's it!** Start coding with FREE AI models.
 
-**Alternative: run from source (this repository):**
-
-This repository package is private (`9router-app`), so source/Docker execution is the expected local development path.
+**Dev mode:**
 
 ```bash
 cp .env.example .env
-npm install
-PORT=20128 NEXT_PUBLIC_BASE_URL=http://localhost:20128 npm run dev
+pnpm install
+PORT=20128 NEXT_PUBLIC_BASE_URL=http://localhost:20128 pnpm run dev
 ```
 
-Production mode:
-
-```bash
-# build + auto-copy static assets into .next/standalone
-npm run build
-
-# run the standalone server (works on Windows & Linux)
-PORT=20128 HOSTNAME=0.0.0.0 NEXT_PUBLIC_BASE_URL=http://localhost:20128 npm start
-```
-
-> `npm run build` now bundles **and** copies `public/` + `.next/static` into `.next/standalone` automatically.
-> `npm start` runs `node .next/standalone/server.js` (the standalone output) — no more `next start` warning. If you run `npm start` before building, it prints a clear hint to run `npm run build` first.
+> `pnpm run build` bundles **and** copies `public/` + `.next/static` into `.next/standalone` automatically.
+> Production: `PORT=20128 HOSTNAME=0.0.0.0 node .next/standalone/server.js` — if not built yet, it prints a clear hint to run `pnpm run build` first.
 
 Default URLs:
 - Dashboard: `http://localhost:20128/dashboard`
@@ -502,7 +492,7 @@ Default URLs:
 
 </div>
 
-> 🎬 **Made a video about 9Router?** Submit a [Pull Request](https://github.com/decolua/9router/pulls) adding your video to this section — we'll merge it!
+  > 🎬 **Made a video about VansRoute?** Submit a [Pull Request](https://github.com/Vanszs/VansRouter/pulls) adding your video to this section — we'll merge it!
 
 ---
 
@@ -1395,10 +1385,10 @@ Model: cc/claude-opus-4-7
 
 ```bash
 # Clone and install
-git clone https://github.com/decolua/9router.git
-cd 9router
-npm install
-npm run build
+git clone https://github.com/Vanszs/VansRouter.git
+cd VansRouter
+pnpm install
+pnpm run build
 
 # Configure
 export JWT_SECRET="your-secure-secret-change-this"
@@ -1413,9 +1403,9 @@ export API_KEY_SECRET="endpoint-proxy-api-key-secret"
 export MACHINE_ID_SALT="endpoint-proxy-salt"
 
 # Start (runs .next/standalone/server.js)
-npm start
+node .next/standalone/server.js
 
-# Or use PM2 (point it at the standalone server)
+# Or use PM2
 npm install -g pm2
 pm2 start .next/standalone/server.js --name 9router
 pm2 save
@@ -1444,8 +1434,8 @@ docker run -d \
 **Build from source (dev):**
 
 ```bash
-git clone https://github.com/decolua/9router.git
-cd 9router/app
+git clone https://github.com/Vanszs/VansRouter.git
+cd VansRouter
 docker build -t 9router .
 docker run -d --name 9router -p 20128:20128 \
   -v "$HOME/.9router:/app/data" -e DATA_DIR=/app/data 9router
@@ -1645,8 +1635,8 @@ Authorization: Bearer your-api-key
 ## 📧 Support
 
 - **Website**: [9router.com](https://9router.com)
-- **GitHub**: [github.com/decolua/9router](https://github.com/decolua/9router)
-- **Issues**: [github.com/decolua/9router/issues](https://github.com/decolua/9router/issues)
+- **GitHub**: [github.com/Vanszs/VansRouter](https://github.com/Vanszs/VansRouter)
+- **Issues**: [github.com/Vanszs/VansRouter/issues](https://github.com/Vanszs/VansRouter/issues)
 
 ---
 
@@ -1654,13 +1644,13 @@ Authorization: Bearer your-api-key
 
 Thanks to all contributors who helped make 9Router better!
 
-[![Contributors](https://contrib.rocks/image?repo=decolua/9router&max=150&columns=15&anon=1&v=20260309)](https://github.com/decolua/9router/graphs/contributors)
+[![Contributors](https://contrib.rocks/image?repo=Vanszs/VansRouter&max=150&columns=15&anon=1&v=20260309)](https://github.com/Vanszs/VansRouter/graphs/contributors)
 
 ---
 
 ## 📊 Star Chart
 
-[![Star Chart](https://starchart.cc/decolua/9router.svg?variant=adaptive)](https://starchart.cc/decolua/9router)
+[![Star Chart](https://starchart.cc/Vanszs/VansRouter.svg?variant=adaptive)](https://starchart.cc/Vanszs/VansRouter)
 
 
 
