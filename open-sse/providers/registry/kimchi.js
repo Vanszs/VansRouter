@@ -48,7 +48,12 @@ export default {
   },
   models: [
     { id: "kimi-k2.7", name: "Kimi K2.7" },
+    { id: "kimi-k2.7(low)", name: "Kimi K2.7 (Low Thinking)", upstreamModelId: "kimi-k2.7" },
     { id: "kimi-k2.6", name: "Kimi K2.6" },
+    { id: "kimi-k2.6(none)", name: "Kimi K2.6 (No/Minimal Thinking)", upstreamModelId: "kimi-k2.6" },
+    { id: "kimi-k2.6(low)", name: "Kimi K2.6 (Low Thinking)", upstreamModelId: "kimi-k2.6" },
+    { id: "kimi-k2.6(medium)", name: "Kimi K2.6 (Medium Thinking)", upstreamModelId: "kimi-k2.6" },
+    { id: "kimi-k2.6(high)", name: "Kimi K2.6 (High Thinking)", upstreamModelId: "kimi-k2.6" },
     { id: "kimi-k2.5", name: "Kimi K2.5" },
     { id: "minimax-m3", name: "MiniMax M3" },
     { id: "minimax-m2.7", name: "MiniMax M2.7" },
