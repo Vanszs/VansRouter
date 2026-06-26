@@ -1,4 +1,11 @@
 import { ERROR_RULES, BACKOFF_CONFIG, TRANSIENT_COOLDOWN_MS } from "../config/errorConfig.js";
+import {
+  getCircuitBreaker,
+  getAllCircuitBreakerStatuses,
+  resetCircuitBreaker,
+  resetAllCircuitBreakers,
+  PROVIDER_FAILURE_ERROR_CODES,
+} from "../utils/circuitBreaker.js";
 
 /**
  * Calculate exponential backoff cooldown for rate limits (429)
@@ -100,6 +107,91 @@ export function formatRetryAfter(rateLimitedUntil) {
   if (m > 0) parts.push(`${m}m`);
   if (s > 0 || parts.length === 0) parts.push(`${s}s`);
   return `reset after ${parts.join(" ")}`;
+}
+
+/**
+ * Patterns that indicate the Kimchi provider has exhausted its credits.
+ * Specific enough to avoid matching transient errors like "exhausted all retries".
+ * Matches: "exhausted its credits", "quota exhausted", "no remaining credits",
+ * "insufficient credits", "payment required".
+ */
+const KIMCHI_QUOTA_EXHAUSTED_PATTERNS = [
+  /credits?.{0,20}exhausted/i,
+  /quota.{0,20}exhausted/i,
+  /no remaining credits/i,
+  /insufficient[ _-]?credits/i,
+  /payment.{0,10}required/i,
+  /has exhausted its credits/i,
+];
+
+/**
+ * Detect whether an error body / message indicates Kimchi quota exhaustion.
+ * Pure check — provider name passed in so this can be reused for other providers.
+ * @param {string} provider - provider id (e.g. "kimchi")
+ * @param {string|object} errorText - raw error body or message
+ * @returns {boolean}
+ */
+export function isKimchiQuotaExhausted(provider, errorText) {
+  if (!errorText || provider !== "kimchi") return false;
+  const text = typeof errorText === "string"
+    ? errorText
+    : (() => { try { return JSON.stringify(errorText); } catch { return String(errorText); } })();
+  return KIMCHI_QUOTA_EXHAUSTED_PATTERNS.some(p => p.test(text));
+}
+
+/**
+ * Compute the next-month reset timestamp (00:00 UTC on the 1st of next month).
+ * If today is already the 1st of the current month (at or after 00:00 UTC),
+ * returns today's 00:00 UTC so accounts deactivated on the 1st don't sit idle
+ * for an entire extra month.
+ * Otherwise returns the 1st of next month at 00:00 UTC.
+ * @param {Date} [now=new Date()]
+ * @returns {Date}
+ */
+export function getNextMonthReset(now = new Date()) {
+  const d = new Date(now.getTime());
+  // If today is the 1st, the next reset is today (the month already started)
+  if (d.getUTCDate() === 1) {
+    return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), 1, 0, 0, 0, 0));
+  }
+  // Otherwise the next reset is the 1st of the following month
+  return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + 1, 1, 0, 0, 0, 0));
+}
+
+/**
+ * Build update payload that deactivates a Kimchi account due to quota exhaustion.
+ * Sets testStatus="quota_exhausted" (distinguishable from manual deactivation)
+ * and rateLimitedUntil to next-month reset, so the existing cooldown filters
+ * skip it until then. Auto-reactivation runs on startup / periodically.
+ * @param {Date} [now]
+ * @returns {{ isActive: boolean, rateLimitedUntil: string, testStatus: string, lastErrorType: string, errorCode: number, quotaExhaustedAt: string }}
+ */
+export function buildKimchiQuotaExhaustedUpdate(now = new Date()) {
+  const reset = getNextMonthReset(now);
+  return {
+    isActive: false,
+    rateLimitedUntil: reset.toISOString(),
+    testStatus: "quota_exhausted",
+    lastErrorType: "quota_exhausted",
+    errorCode: 402,
+    quotaExhaustedAt: now.toISOString(),
+    quotaResetsAt: reset.toISOString(),
+  };
+}
+
+/**
+ * Build update payload to reactivate a quota-exhausted Kimchi account whose
+ * rateLimitedUntil has passed (start of new month).
+ * @returns {{ isActive: boolean, rateLimitedUntil: null, testStatus: string }}
+ */
+export function buildKimchiQuotaReactivatedUpdate() {
+  return {
+    isActive: true,
+    rateLimitedUntil: null,
+    testStatus: "active",
+    quotaExhaustedAt: null,
+    quotaResetsAt: null,
+  };
 }
 
 /** Prefix for model lock flat fields on connection record */
@@ -212,4 +304,131 @@ export function applyErrorState(account, status, errorText) {
     lastError: { status, message: errorText, timestamp: new Date().toISOString() },
     status: "error"
   };
+}
+
+// ── Provider-level circuit breaker ──────────────────────────────────
+
+/**
+ * Check if a provider is currently blocked by the circuit breaker.
+ * Proxy-aware: each proxy bucket has its own breaker so one dead proxy
+ * doesn't block accounts on a different proxy.
+ */
+export function isProviderInCooldown(provider, proxyHash = "direct") {
+  if (!provider) return false;
+  const breaker = getCircuitBreaker(`${provider}:${proxyHash}`);
+  return breaker ? !breaker.canExecute() : false;
+}
+
+/**
+ * Get remaining retry-after time for a provider breaker (ms).
+ * Proxy-aware.
+ */
+export function getProviderCooldownRemainingMs(provider, proxyHash = "direct") {
+  if (!provider) return null;
+  const breaker = getCircuitBreaker(`${provider}:${proxyHash}`);
+  if (!breaker || breaker.canExecute()) return null;
+  const remaining = breaker.getRetryAfterMs();
+  return remaining > 0 ? remaining : null;
+}
+
+/**
+ * Get the circuit breaker state for a provider.
+ * Proxy-aware.
+ */
+export function getProviderBreakerState(provider, proxyHash = "direct") {
+  if (!provider) return null;
+  const breaker = getCircuitBreaker(`${provider}:${proxyHash}`);
+  return breaker?.getStatus?.() ?? null;
+}
+
+/**
+ * Record a provider failure against the shared circuit breaker.
+ * Deduplicates rapid-fire failures from the same connection within 5s.
+ * Proxy-aware: failures are attributed to the specific proxy bucket.
+ */
+const _lastProviderFailure = new Map();
+const _dedupMs = 5_000;
+const _dedupMaxSize = 10_000; // cap to prevent unbounded growth
+
+export function recordProviderFailure(provider, statusCode, errorText, log, connectionId, proxyHash = "direct") {
+  if (!provider) return;
+
+  // Deduplicate
+  if (connectionId) {
+    const dedupKey = `${provider}:${proxyHash}:${connectionId}`;
+    const now = Date.now();
+    const last = _lastProviderFailure.get(dedupKey);
+    if (last && now - last < _dedupMs) return;
+    _lastProviderFailure.set(dedupKey, now);
+    // Evict oldest entries when over the cap to prevent unbounded memory growth
+    if (_lastProviderFailure.size > _dedupMaxSize) {
+      const evictCount = Math.floor(_dedupMaxSize / 10);
+      const keysToEvict = Array.from(_lastProviderFailure.keys()).slice(0, evictCount);
+      for (const key of keysToEvict) _lastProviderFailure.delete(key);
+    }
+  }
+
+  // Only count failure-eligible status codes
+  if (statusCode && !PROVIDER_FAILURE_ERROR_CODES.has(statusCode)) return;
+
+  const breakerKey = `${provider}:${proxyHash}`;
+  const breaker = getCircuitBreaker(breakerKey, {
+    failureThreshold: 5,
+    resetTimeout: 30_000,
+  });
+  if (!breaker) return;
+  if (!breaker.canExecute()) return; // already OPEN, skip
+
+  breaker._onFailure({ statusCode, message: errorText });
+
+  if (!breaker.canExecute()) {
+    log?.warn?.(`[ProviderFailure] ${breakerKey}: circuit breaker opened after ${breaker.failureCount} failures`);
+  }
+}
+
+/**
+ * Reset the shared provider breaker for a proxy bucket.
+ * Proxy-aware.
+ */
+export function clearProviderFailure(provider, proxyHash = "direct") {
+  if (!provider) return;
+  resetCircuitBreaker(`${provider}:${proxyHash}`);
+}
+
+/**
+ * Check if a status code should count toward provider failure threshold.
+ */
+export function isProviderFailureCode(status) {
+  return PROVIDER_FAILURE_ERROR_CODES.has(status);
+}
+
+/**
+ * Get all providers currently blocked by the circuit breaker.
+ */
+export function getProvidersInCooldown() {
+  return getAllCircuitBreakerStatuses()
+    .filter((s) => {
+      const breaker = getCircuitBreaker(s.name);
+      return Boolean(breaker && !breaker.canExecute());
+    })
+    .map((s) => ({
+      provider: s.name,
+      failureCount: s.failureCount,
+      cooldownRemainingMs: s.retryAfterMs || null,
+      lastFailureAt: s.lastFailureTime,
+    }));
+}
+
+/**
+ * Returns true when an error signals that the entire provider quota
+ * is exhausted (not just one account) so the combo router can skip
+ * remaining targets from the same provider.
+ */
+export function isProviderExhaustedReason(result) {
+  if (!result) return false;
+  const reason = typeof result === "string" ? result : (result.reason || result.error || "");
+  const text = typeof reason === "string" ? reason : JSON.stringify(reason);
+  // Specific patterns only — avoid false positives on transient errors that
+  // happen to contain the word "exhausted" (e.g. "exhausted all retries").
+  return /credits?.{0,20}exhausted|quota.{0,20}exhausted|no remaining credits|insufficient.{0,20}credits|payment.{0,10}required|quota.{0,20}exceeded|rate.?limit.{0,20}reached/i.test(text);
 }

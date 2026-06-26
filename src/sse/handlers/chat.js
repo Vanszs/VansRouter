@@ -11,6 +11,21 @@ import {
   isKindAllowed,
   isTrustedInternalRequest,
 } from "../services/auth.js";
+import {
+  isKimchiQuotaExhausted,
+  buildKimchiQuotaExhaustedUpdate,
+  isProviderInCooldown,
+  recordProviderFailure,
+  clearProviderFailure,
+} from "open-sse/services/accountFallback.js";
+import {
+  acquire as acquireAccountSemaphore,
+  resolveAccountSemaphoreKey,
+  resolveAccountSemaphoreMaxConcurrency,
+  isSemaphoreCapacityError,
+} from "open-sse/services/accountSemaphore.js";
+import { getProxyHash } from "@/lib/network/connectionProxy";
+import { updateProviderConnection, getProviderConnections } from "@/lib/localDb";
 import { isModelAllowed } from "../services/allowedModels.js";
 import { cacheClaudeHeaders } from "open-sse/utils/claudeHeaderCache.js";
 import { getSettings } from "@/lib/localDb";
@@ -258,6 +273,17 @@ async function handleSingleModelChat(body, modelStr, clientRawRequest = null, re
       return errorResponse(lastStatus || HTTP_STATUS.SERVICE_UNAVAILABLE, lastError || "All accounts unavailable");
     }
 
+    // Compute proxy bucket key for this account — groups accounts by shared proxy
+    const proxyHash = getProxyHash(refreshedCredentials?.providerSpecificData || credentials.providerSpecificData);
+
+    // Proxy-aware circuit breaker: skip THIS account if its proxy bucket is OPEN.
+    // Accounts on other proxies are still tried.
+    if (isProviderInCooldown(provider, proxyHash)) {
+      log.warn("AUTH", `${provider} proxy bucket ${proxyHash} circuit breaker OPEN — skipping account ${credentials.connectionName}`);
+      excludeConnectionIds.add(credentials.connectionId);
+      continue;
+    }
+
     // Log account selection
     log.info("AUTH", `\x1b[32mUsing ${provider} account: ${credentials.connectionName}\x1b[0m`);
 
@@ -273,10 +299,29 @@ async function handleSingleModelChat(body, modelStr, clientRawRequest = null, re
       }
     }
 
-    // Use shared chatCore
+    // Acquire account semaphore (concurrency limiter per provider:account:proxy)
+    const semaphoreKey = resolveAccountSemaphoreKey({ provider, model, connectionId: credentials.connectionId, credentials: refreshedCredentials, proxyHash });
+    const semaphoreMax = resolveAccountSemaphoreMaxConcurrency(refreshedCredentials);
+    let semaphoreRelease = () => {};
+    if (semaphoreKey && semaphoreMax != null) {
+      try {
+        semaphoreRelease = await acquireAccountSemaphore(semaphoreKey, { maxConcurrency: semaphoreMax, timeoutMs: 30_000 });
+      } catch (e) {
+        if (isSemaphoreCapacityError(e)) {
+          log.warn("AUTH", `Account ${credentials.connectionName} at capacity, trying fallback`);
+          excludeConnectionIds.add(credentials.connectionId);
+          continue;
+        }
+        throw e;
+      }
+    }
+
+    // Use shared chatCore — wrap in try/finally so semaphoreRelease() always runs
+    let result;
     const chatSettings = await getSettings();
     const providerThinking = (chatSettings.providerThinking || {})[provider] || null;
-    const result = await handleChatCore({
+    try {
+      result = await handleChatCore({
       body: { ...body, model: `${provider}/${model}` },
       modelInfo: { provider, model },
       credentials: refreshedCredentials,
@@ -306,13 +351,39 @@ async function handleSingleModelChat(body, modelStr, clientRawRequest = null, re
       },
       onRequestSuccess: async () => {
         await clearAccountError(credentials.connectionId, credentials, model);
+        clearProviderFailure(provider, proxyHash);
       }
     });
+    } finally {
+      // Always release the semaphore slot, even if handleChatCore throws
+      semaphoreRelease();
+    }
 
     if (result.success) return result.response;
 
+    // Kimchi quota exhausted: deactivate the account until the 1st of next month.
+    // Will be auto-reactivated by reactivateExpiredKimchiAccounts() on startup
+    // and via the periodic timer in startup.
+    if (isKimchiQuotaExhausted(provider, result.error)) {
+      try {
+        const update = buildKimchiQuotaExhaustedUpdate();
+        await updateProviderConnection(credentials.connectionId, update);
+        log.warn("AUTH", `Kimchi quota exhausted: deactivated ${credentials.connectionName || credentials.connectionId} until ${update.rateLimitedUntil}`);
+      } catch (e) {
+        log.error("AUTH", `Failed to deactivate Kimchi account on quota exhausted: ${e.message}`);
+      }
+      // Fall through to fallback behavior — the next account or provider will be tried.
+    }
+
     // Mark account unavailable (auto-calculates cooldown with exponential backoff, or precise resetsAtMs)
     const { shouldFallback } = await markAccountUnavailable(credentials.connectionId, result.status, result.error, provider, model, result.resetsAtMs);
+
+    // Record provider-level failure for circuit breaker — skip if it's a known
+    // Kimchi quota-exhaustion (not a provider-wide outage). Proxy-aware: failure
+    // is attributed to the specific proxy bucket.
+    if (!isKimchiQuotaExhausted(provider, result.error)) {
+      recordProviderFailure(provider, result.status, result.error, log, credentials.connectionId, proxyHash);
+    }
 
     if (shouldFallback) {
       log.warn("AUTH", `Account ${credentials.connectionName} unavailable (${result.status}), trying fallback`);

@@ -158,3 +158,31 @@ export async function resolveConnectionProxyConfig(
     };
   }
 }
+
+/**
+ * Stable djb2 hash for short string fingerprints (non-cryptographic).
+ */
+function djb2(str) {
+  let hash = 5381;
+  for (let i = 0; i < str.length; i++) {
+    hash = ((hash << 5) + hash) + str.charCodeAt(i);
+    hash = hash & hash;
+  }
+  return Math.abs(hash).toString(36);
+}
+
+/**
+ * Compute a stable proxy bucket key for an account.
+ * Groups accounts by the proxy they share so the semaphore and circuit
+ * breaker can isolate failures per proxy.
+ * @param {object} providerSpecificData
+ * @returns {string} "direct" if no proxy, "proxy-<hash>" if explicit proxy, "pool-<hash>" if proxy pool
+ */
+export function getProxyHash(providerSpecificData = {}) {
+  const enabled = providerSpecificData?.connectionProxyEnabled === true;
+  const url = enabled ? normalizeString(providerSpecificData?.connectionProxyUrl) : "";
+  if (url) return `proxy-${djb2(url)}`;
+  const poolId = normalizeString(providerSpecificData?.proxyPoolId);
+  if (poolId) return `pool-${djb2(poolId)}`;
+  return "direct";
+}
