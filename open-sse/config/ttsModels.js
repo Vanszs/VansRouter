@@ -34,7 +34,7 @@ const GEMINI_VOICES = [
 ].map((id) => ({ id, name: id, type: "tts" }));
 
 // ── TTS Config (config-driven, single source of truth) ─────────────────────
-const TTS_MODELS_CONFIG = {
+export const TTS_MODELS_CONFIG = {
   openai: {
     models: [
       { id: "gpt-4o-mini-tts", name: "GPT-4o Mini TTS", type: "tts" },
@@ -76,8 +76,6 @@ const TTS_MODELS_CONFIG = {
       { id: "en-US-AriaNeural",    name: "Aria (en-US)",    type: "tts" },
       { id: "en-US-GuyNeural",     name: "Guy (en-US)",     type: "tts" },
       { id: "en-GB-SoniaNeural",   name: "Sonia (en-GB)",   type: "tts" },
-      { id: "id-ID-ArdiNeural",    name: "Ardi (id-ID)",    type: "tts" },
-      { id: "id-ID-GadisNeural",   name: "Gadis (id-ID)",   type: "tts" },
       { id: "vi-VN-HoaiMyNeural",  name: "Hoai My (vi-VN)", type: "tts" },
       { id: "vi-VN-NamMinhNeural", name: "Nam Minh (vi-VN)", type: "tts" },
       { id: "zh-CN-XiaoxiaoNeural", name: "Xiaoxiao (zh-CN)", type: "tts" },
@@ -86,9 +84,6 @@ const TTS_MODELS_CONFIG = {
       { id: "de-DE-KatjaNeural",   name: "Katja (de-DE)",   type: "tts" },
       { id: "ja-JP-NanamiNeural",  name: "Nanami (ja-JP)",  type: "tts" },
       { id: "ko-KR-SunHiNeural",   name: "SunHi (ko-KR)",   type: "tts" },
-      { id: "th-TH-PremwadeeNeural", name: "Premwadee (th-TH)", type: "tts" },
-      { id: "ms-MY-YasminNeural",  name: "Yasmin (ms-MY)",  type: "tts" },
-      { id: "tl-PH-BlessicaNeural", name: "Blessica (tl-PH)", type: "tts" },
     ],
   },
   "local-device": {
@@ -101,10 +96,12 @@ const TTS_MODELS_CONFIG = {
   },
   gemini: {
     models: [
+      { id: "gemini-3.1-flash-tts-preview", name: "Gemini 3.1 Flash TTS", type: "tts" },
       { id: "gemini-2.5-flash-preview-tts", name: "Gemini 2.5 Flash TTS", type: "tts" },
       { id: "gemini-2.5-pro-preview-tts",   name: "Gemini 2.5 Pro TTS",   type: "tts" },
     ],
     voices: {
+      "gemini-3.1-flash-tts-preview": GEMINI_VOICES,
       "gemini-2.5-flash-preview-tts": GEMINI_VOICES,
       "gemini-2.5-pro-preview-tts":   GEMINI_VOICES,
     },
