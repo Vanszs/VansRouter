@@ -101,7 +101,14 @@ export const PROVIDER_CAPABILITIES = {
     "kimi-k2.6":              { vision: true, videoInput: true, reasoning: true, thinkingFormat: "kimi", thinkingCanDisable: true, contextWindow: 262144, maxOutput: 262144, structuredOutput: true, supportsTemperature: true },
     "minimax-m3":             { vision: true, reasoning: true, thinkingFormat: "minimax", contextWindow: 1048576, maxOutput: 512000 },
     "nemotron-3-ultra-fp4":   { reasoning: false, contextWindow: 128000, maxOutput: 8192 },
-    "glm-5.2-fp8":            { reasoning: true, thinkingFormat: "openai", thinkingCanDisable: false, contextWindow: 128000, maxOutput: 128000 },
+    "glm-5.2-fp8":            { reasoning: true, thinkingFormat: "openai", thinkingCanDisable: true, contextWindow: 128000, maxOutput: 128000 },
+  },
+  // AgentRouter — multi-model gateway (Claude format).
+  agentrouter: {
+    "claude-opus-4-6":         { vision: true, reasoning: true, thinkingFormat: "claude-adaptive", contextWindow: 1000000, maxOutput: 128000, search: true },
+    "claude-haiku-4-5-20251001": { vision: true, reasoning: true, thinkingFormat: "claude-adaptive", contextWindow: 200000, maxOutput: 64000 },
+    "glm-5.1":                 { reasoning: true, thinkingFormat: "openai", thinkingCanDisable: true, contextWindow: 128000, maxOutput: 128000 },
+    "deepseek-v3.2":           { reasoning: true, thinkingFormat: "deepseek", contextWindow: 128000, maxOutput: 64000 },
   },
   // CodeBuddy.cn — authoritative per-model metadata from the gateway's model
   // config (contextWindow=maxInputTokens, maxOutput=maxOutputTokens, vision=
