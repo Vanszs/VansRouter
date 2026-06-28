@@ -2,7 +2,6 @@
  * Token Usage Tracking - Extract, normalize, estimate and log token usage
  */
 
-import { saveRequestUsage, appendRequestLog } from "@/lib/usageDb.js";
 import { FORMATS } from "../translator/formats.js";
 
 // ANSI color codes
@@ -112,7 +111,7 @@ export function filterUsageForFormat(usage, targetFormat) {
 /**
  * Normalize usage object - ensure all values are valid numbers
  */
-function normalizeUsage(usage) {
+export function normalizeUsage(usage) {
   if (!usage || typeof usage !== "object" || Array.isArray(usage)) return null;
 
   const normalized = {};
@@ -237,7 +236,7 @@ export function extractUsage(chunk) {
  * Estimate input tokens from request body
  * Calculate total body size for more accurate estimation
  */
-function estimateInputTokens(body) {
+export function estimateInputTokens(body) {
   if (!body || typeof body !== "object") return 0;
 
   try {
@@ -256,7 +255,7 @@ function estimateInputTokens(body) {
 /**
  * Estimate output tokens from content length
  */
-function estimateOutputTokens(contentLength) {
+export function estimateOutputTokens(contentLength) {
   if (!contentLength || contentLength <= 0) return 0;
   return Math.max(1, Math.floor(contentLength / 4));
 }
@@ -267,7 +266,7 @@ function estimateOutputTokens(contentLength) {
  * @param {number} outputTokens - Output/completion tokens
  * @param {string} targetFormat - Target format from FORMATS
  */
-function formatUsage(inputTokens, outputTokens, targetFormat) {
+export function formatUsage(inputTokens, outputTokens, targetFormat) {
   // Claude format uses input_tokens/output_tokens
   if (targetFormat === FORMATS.CLAUDE) {
     return addBufferToUsage({ 
@@ -333,15 +332,4 @@ export function logUsage(provider, usage, model = null, connectionId = null, api
   if (reasoning) msg += ` | reasoning=${reasoning}`;
 
   console.log(msg);
-
-  // Save to usage DB
-  const tokens = {
-    prompt_tokens: inTokens,
-    completion_tokens: outTokens,
-    cache_read_input_tokens: cacheRead || 0,
-    cache_creation_input_tokens: cacheCreation || 0,
-    reasoning_tokens: reasoning || 0
-  };
-  saveRequestUsage({ model, provider, connectionId, tokens, apiKey: apiKey || undefined }).catch(() => { });
-  appendRequestLog({ model, provider, connectionId, tokens, status: "200 OK" }).catch(() => { });
 }
