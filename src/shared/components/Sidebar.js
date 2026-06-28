@@ -133,6 +133,14 @@ export default function Sidebar({ onClose }) {
               <span className="text-xs font-semibold text-green-600 dark:text-amber-500">
                 ↑ New version available: v{updateInfo.latestVersion}
               </span>
+              {updateInfo.githubStatus && (
+                <span className="text-[10px] text-text-muted">
+                  {updateInfo.githubStatus === "github_ahead" && "GitHub already has this version — pull to update"}
+                  {updateInfo.githubStatus === "github_behind_npm" && "GitHub repo hasn't been updated to this version yet"}
+                  {updateInfo.githubStatus === "local_ahead" && "Your local build is ahead of GitHub"}
+                  {updateInfo.githubStatus === "current" && "Your version matches GitHub"}
+                </span>
+              )}
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => setShowUpdateModal(true)}
