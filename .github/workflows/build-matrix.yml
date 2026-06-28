@@ -46,6 +46,9 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Run no-undef lint (catch undefined before build)
+        run: pnpm lint:undef
+
       - name: Build application
         run: pnpm run build
 

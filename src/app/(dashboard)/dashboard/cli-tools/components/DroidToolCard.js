@@ -9,7 +9,7 @@ import { matchKnownEndpoint } from "./cliEndpointMatch";
 
 const CLOUD_URL = process.env.NEXT_PUBLIC_CLOUD_URL;
 
-function DroidExpandedSection({ addModel, applying, checkingDroid, customBaseUrl, droidStatus, getDisplayUrl, handleApplySettings, handleResetSettings, message, modelInput, modelList, removeModel, restoring, selectedApiKey, setCustomBaseUrl, setModalOpen, setModelInput, setSelectedApiKey, setShowInstallGuide, setShowManualConfigModal, showInstallGuide }) {
+function DroidExpandedSection({ addModel, apiKeys, applying, checkingDroid, cloudEnabled, customBaseUrl, droidStatus, getDisplayUrl, handleApplySettings, handleResetSettings, hasActiveProviders, message, modelInput, modelList, removeModel, restoring, selectedApiKey, setCustomBaseUrl, setModalOpen, setModelInput, setSelectedApiKey, setShowInstallGuide, setShowManualConfigModal, showInstallGuide, tailscaleEnabled, tailscaleUrl, tool, tunnelEnabled, tunnelPublicUrl }) {
   return (
         <div className="mt-4 pt-4 border-t border-border flex flex-col gap-4">
           {checkingDroid && (
@@ -389,7 +389,7 @@ export default function DroidToolCard({
         <span className={`material-symbols-outlined text-text-muted text-[20px] transition-transform ${isExpanded ? "rotate-180" : ""}`}>expand_more</span>
       </button>
 
-      {isExpanded && <DroidExpandedSection addModel={addModel} applying={applying} checkingDroid={checkingDroid} customBaseUrl={customBaseUrl} droidStatus={droidStatus} getDisplayUrl={getDisplayUrl} handleApplySettings={handleApplySettings} handleResetSettings={handleResetSettings} message={message} modelInput={modelInput} modelList={modelList} removeModel={removeModel} restoring={restoring} selectedApiKey={selectedApiKey} setCustomBaseUrl={setCustomBaseUrl} setModalOpen={setModalOpen} setModelInput={setModelInput} setSelectedApiKey={setSelectedApiKey} setShowInstallGuide={setShowInstallGuide} setShowManualConfigModal={setShowManualConfigModal} showInstallGuide={showInstallGuide} />}
+      {isExpanded && <DroidExpandedSection addModel={addModel} apiKeys={apiKeys} applying={applying} checkingDroid={checkingDroid} cloudEnabled={cloudEnabled} customBaseUrl={customBaseUrl} droidStatus={droidStatus} getDisplayUrl={getDisplayUrl} handleApplySettings={handleApplySettings} handleResetSettings={handleResetSettings} hasActiveProviders={hasActiveProviders} message={message} modelInput={modelInput} modelList={modelList} removeModel={removeModel} restoring={restoring} selectedApiKey={selectedApiKey} setCustomBaseUrl={setCustomBaseUrl} setModalOpen={setModalOpen} setModelInput={setModelInput} setSelectedApiKey={setSelectedApiKey} setShowInstallGuide={setShowInstallGuide} setShowManualConfigModal={setShowManualConfigModal} showInstallGuide={showInstallGuide} tailscaleEnabled={tailscaleEnabled} tailscaleUrl={tailscaleUrl} tool={tool} tunnelEnabled={tunnelEnabled} tunnelPublicUrl={tunnelPublicUrl} />}
 
       <ModelSelectModal
         isOpen={modalOpen}

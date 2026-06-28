@@ -14,9 +14,42 @@ const eslintConfig = defineConfig([
       "open-sse/**/*.js",
       "src/lib/**/*.js",
       "src/sse/**/*.js",
+      "cli/**/*.js",
     ],
+    languageOptions: {
+      globals: {
+        console: "readonly",
+        process: "readonly",
+        Buffer: "readonly",
+        setTimeout: "readonly",
+        clearTimeout: "readonly",
+        setInterval: "readonly",
+        clearInterval: "readonly",
+        setImmediate: "readonly",
+        clearImmediate: "readonly",
+      },
+    },
     rules: {
       "no-undef": "error",
+    },
+  },
+  // Dashboard client components: also enable no-undef to catch runtime crashes
+  // like `onClick={handleBatchDelete}` where the handler was renamed/deleted but
+  // a JSX call site was missed (GitHub Issue #1) and CLI tool cards passing
+  // undefined props to inner section components.
+  {
+    files: ["src/app/(dashboard)/**/*.js"],
+    rules: {
+      "no-undef": "error",
+    },
+  },
+  // Service Worker script uses the `clients` global.
+  {
+    files: ["cli/app/public/sw.js"],
+    languageOptions: {
+      globals: {
+        clients: "readonly",
+      },
     },
   },
   // Override default ignores of eslint-config-next.
@@ -26,6 +59,11 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // CLI shipped/bundled artifacts and dependencies (lint the source, not output):
+    "cli/node_modules/**",
+    "cli/app/.next/**",
+    "cli/app/.next-cli-build/**",
+    "cli/app/src/mitm/server.js",
   ]),
 ]);
 

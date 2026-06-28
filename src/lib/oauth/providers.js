@@ -1351,9 +1351,10 @@ const PROVIDERS = {
       let businessToken = "";
       if (ZAI_CONFIG.businessLoginUrl) {
         for (let attempt = 0; attempt < 2 && !businessToken; attempt++) {
+          let timeout;
           try {
             const controller = new AbortController();
-            const timeout = setTimeout(() => controller.abort(), 15000);
+            timeout = setTimeout(() => controller.abort(), 15000);
             const res = await fetch(ZAI_CONFIG.businessLoginUrl, {
               method: "POST",
               headers: { "Content-Type": "application/json" },

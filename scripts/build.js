@@ -20,6 +20,14 @@ const { execFileSync } = require("child_process");
 const appDir = path.resolve(__dirname, "..");
 const fakeHome = path.join(appDir, ".fakehome");
 
+// Run focused no-undef lint before building so "X is not defined" runtime
+// crashes are caught early (e.g., GitHub Issue #1, OpenCode CLI setup).
+console.log("▶ running no-undef lint");
+execFileSync(process.execPath, [path.join(appDir, "scripts", "lint-undef.cjs")], {
+  stdio: "inherit",
+  cwd: appDir,
+});
+
 // Empty, junction-free HOME for the build.
 fs.mkdirSync(path.join(fakeHome, "AppData", "Roaming"), { recursive: true });
 fs.mkdirSync(path.join(fakeHome, "AppData", "Local"), { recursive: true });

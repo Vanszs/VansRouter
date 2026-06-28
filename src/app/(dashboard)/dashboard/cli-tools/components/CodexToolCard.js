@@ -7,7 +7,7 @@ import BaseUrlSelect from "./BaseUrlSelect";
 import ApiKeySelect from "./ApiKeySelect";
 import { matchKnownEndpoint } from "./cliEndpointMatch";
 
-function CodexExpandedSection({ activeProviders, apiKeys, applying, checkingCodex, cloudEnabled, codexStatus, customBaseUrl, getDisplayUrl, handleApplySettings, handleResetSettings, message, parsed, restoring, selectedApiKey, selectedModel, setCustomBaseUrl, setModalOpen, setSelectedApiKey, setSelectedModel, setShowInstallGuide, setShowManualConfigModal, setSubagentModalOpen, setSubagentModel, showInstallGuide, subagentModel, tailscaleEnabled, tailscaleUrl, tool, tunnelEnabled, tunnelPublicUrl }) {
+function CodexExpandedSection({ activeProviders, apiKeys, applying, checkingCodex, cloudEnabled, codexStatus, customBaseUrl, getDisplayUrl, handleApplySettings, handleResetSettings, message, restoring, selectedApiKey, selectedModel, setCustomBaseUrl, setModalOpen, setSelectedApiKey, setSelectedModel, setShowInstallGuide, setShowManualConfigModal, setSubagentModalOpen, setSubagentModel, showInstallGuide, subagentModel, tailscaleEnabled, tailscaleUrl, tool, tunnelEnabled, tunnelPublicUrl }) {
   return (
         <div className="mt-4 pt-4 border-t border-border flex flex-col gap-4">
           {checkingCodex && (
@@ -385,7 +385,7 @@ model = "${effectiveSubagentModel}"
         <span className={`material-symbols-outlined text-text-muted text-[20px] transition-transform ${isExpanded ? "rotate-180" : ""}`}>expand_more</span>
       </button>
 
-      {isExpanded && <CodexExpandedSection activeProviders={activeProviders} apiKeys={apiKeys} applying={applying} checkingCodex={checkingCodex} cloudEnabled={cloudEnabled} codexStatus={codexStatus} customBaseUrl={customBaseUrl} getDisplayUrl={getDisplayUrl} handleApplySettings={handleApplySettings} handleResetSettings={handleResetSettings} message={message} parsed={parsed} restoring={restoring} selectedApiKey={selectedApiKey} selectedModel={selectedModel} setCustomBaseUrl={setCustomBaseUrl} setModalOpen={setModalOpen} setSelectedApiKey={setSelectedApiKey} setSelectedModel={setSelectedModel} setShowInstallGuide={setShowInstallGuide} setShowManualConfigModal={setShowManualConfigModal} setSubagentModalOpen={setSubagentModalOpen} setSubagentModel={setSubagentModel} showInstallGuide={showInstallGuide} subagentModel={subagentModel} tailscaleEnabled={tailscaleEnabled} tailscaleUrl={tailscaleUrl} tool={tool} tunnelEnabled={tunnelEnabled} tunnelPublicUrl={tunnelPublicUrl} />}
+      {isExpanded && <CodexExpandedSection activeProviders={activeProviders} apiKeys={apiKeys} applying={applying} checkingCodex={checkingCodex} cloudEnabled={cloudEnabled} codexStatus={codexStatus} customBaseUrl={customBaseUrl} getDisplayUrl={getDisplayUrl} handleApplySettings={handleApplySettings} handleResetSettings={handleResetSettings} message={message} restoring={restoring} selectedApiKey={selectedApiKey} selectedModel={selectedModel} setCustomBaseUrl={setCustomBaseUrl} setModalOpen={setModalOpen} setSelectedApiKey={setSelectedApiKey} setSelectedModel={setSelectedModel} setShowInstallGuide={setShowInstallGuide} setShowManualConfigModal={setShowManualConfigModal} setSubagentModalOpen={setSubagentModalOpen} setSubagentModel={setSubagentModel} showInstallGuide={showInstallGuide} subagentModel={subagentModel} tailscaleEnabled={tailscaleEnabled} tailscaleUrl={tailscaleUrl} tool={tool} tunnelEnabled={tunnelEnabled} tunnelPublicUrl={tunnelPublicUrl} />}
 
       <ModelSelectModal
         isOpen={modalOpen}

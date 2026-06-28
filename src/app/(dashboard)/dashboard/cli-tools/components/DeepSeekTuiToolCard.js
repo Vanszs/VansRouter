@@ -17,7 +17,7 @@ function getLocalBaseUrl() {
   return "http://127.0.0.1:20128";
 }
 
-function DeepSeekTuiExpandedSection({ applying, checking, customBaseUrl, deepseekStatus, getEffectiveBaseUrl, handleApply, handleReset, message, restoring, selectedApiKey, selectedModel, setCustomBaseUrl, setModalOpen, setSelectedApiKey, setSelectedModel, setShowManualConfigModal }) {
+function DeepSeekTuiExpandedSection({ apiKeys, applying, checking, cloudEnabled, customBaseUrl, deepseekStatus, getEffectiveBaseUrl, handleApply, handleReset, hasActiveProviders, message, restoring, selectedApiKey, selectedModel, setCustomBaseUrl, setModalOpen, setSelectedApiKey, setSelectedModel, setShowManualConfigModal, tailscaleEnabled, tailscaleUrl, tool, tunnelEnabled, tunnelPublicUrl }) {
   return (
         <div className="mt-4 pt-4 border-t border-border flex flex-col gap-4">
           {checking && (
@@ -319,7 +319,7 @@ model = "${selectedModel || "provider/model-id"}"
         <span className={`material-symbols-outlined text-text-muted text-[20px] transition-transform ${isExpanded ? "rotate-180" : ""}`}>expand_more</span>
       </button>
 
-      {isExpanded && <DeepSeekTuiExpandedSection applying={applying} checking={checking} customBaseUrl={customBaseUrl} deepseekStatus={deepseekStatus} getEffectiveBaseUrl={getEffectiveBaseUrl} handleApply={handleApply} handleReset={handleReset} message={message} restoring={restoring} selectedApiKey={selectedApiKey} selectedModel={selectedModel} setCustomBaseUrl={setCustomBaseUrl} setModalOpen={setModalOpen} setSelectedApiKey={setSelectedApiKey} setSelectedModel={setSelectedModel} setShowManualConfigModal={setShowManualConfigModal} />}
+      {isExpanded && <DeepSeekTuiExpandedSection apiKeys={apiKeys} applying={applying} checking={checking} cloudEnabled={cloudEnabled} customBaseUrl={customBaseUrl} deepseekStatus={deepseekStatus} getEffectiveBaseUrl={getEffectiveBaseUrl} handleApply={handleApply} handleReset={handleReset} hasActiveProviders={hasActiveProviders} message={message} restoring={restoring} selectedApiKey={selectedApiKey} selectedModel={selectedModel} setCustomBaseUrl={setCustomBaseUrl} setModalOpen={setModalOpen} setSelectedApiKey={setSelectedApiKey} setSelectedModel={setSelectedModel} setShowManualConfigModal={setShowManualConfigModal} tailscaleEnabled={tailscaleEnabled} tailscaleUrl={tailscaleUrl} tool={tool} tunnelEnabled={tunnelEnabled} tunnelPublicUrl={tunnelPublicUrl} />}
 
       <ModelSelectModal
         isOpen={modalOpen}

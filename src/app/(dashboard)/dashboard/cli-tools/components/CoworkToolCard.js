@@ -15,7 +15,7 @@ const ensureV1 = (url) => {
   return /\/v1$/.test(trimmed) ? trimmed : `${trimmed}/v1`;
 };
 
-function CoworkExpandedSection({ applying, checking, customPlugins, getEffectiveBaseUrl, handleApply, handleRemoveModel, handleReset, localPlugins, message, plugins, removePlugin, restoring, selectedApiKey, selectedModels, setAddMcpForm, setAddMcpOpen, setComboModalOpen, setCustomBaseUrl, setCustomPlugins, setLocalPlugins, setMarketplaceOpen, setPlugins, setSelectedApiKey, setShowManualConfigModal, status, url, value }) {
+function CoworkExpandedSection({ apiKeys, applying, checking, cloudEnabled, cloudUrl, customPlugins, getEffectiveBaseUrl, handleApply, handleRemoveModel, handleReset, hasActiveProviders, localPlugins, message, plugins, removePlugin, restoring, selectedApiKey, selectedModels, setAddMcpForm, setAddMcpOpen, setComboModalOpen, setCustomBaseUrl, setCustomPlugins, setLocalPlugins, setMarketplaceOpen, setPlugins, setSelectedApiKey, setShowManualConfigModal, status, tailscaleEnabled, tailscaleUrl, tunnelEnabled, tunnelPublicUrl }) {
   return (
         <div className="mt-4 pt-4 border-t border-border flex flex-col gap-4">
           {checking && (
@@ -582,7 +582,7 @@ export default function CoworkToolCard({
         <span className={`material-symbols-outlined text-text-muted text-[20px] transition-transform ${isExpanded ? "rotate-180" : ""}`}>expand_more</span>
       </button>
 
-      {isExpanded && <CoworkExpandedSection applying={applying} checking={checking} customPlugins={customPlugins} getEffectiveBaseUrl={getEffectiveBaseUrl} handleApply={handleApply} handleRemoveModel={handleRemoveModel} handleReset={handleReset} localPlugins={localPlugins} message={message} plugins={plugins} removePlugin={removePlugin} restoring={restoring} selectedApiKey={selectedApiKey} selectedModels={selectedModels} setAddMcpForm={setAddMcpForm} setAddMcpOpen={setAddMcpOpen} setComboModalOpen={setComboModalOpen} setCustomBaseUrl={setCustomBaseUrl} setCustomPlugins={setCustomPlugins} setLocalPlugins={setLocalPlugins} setMarketplaceOpen={setMarketplaceOpen} setPlugins={setPlugins} setSelectedApiKey={setSelectedApiKey} setShowManualConfigModal={setShowManualConfigModal} status={status} url={url} value={value} />}
+      {isExpanded && <CoworkExpandedSection apiKeys={apiKeys} applying={applying} checking={checking} cloudEnabled={cloudEnabled} cloudUrl={cloudUrl} customPlugins={customPlugins} getEffectiveBaseUrl={getEffectiveBaseUrl} handleApply={handleApply} handleRemoveModel={handleRemoveModel} handleReset={handleReset} hasActiveProviders={hasActiveProviders} localPlugins={localPlugins} message={message} plugins={plugins} removePlugin={removePlugin} restoring={restoring} selectedApiKey={selectedApiKey} selectedModels={selectedModels} setAddMcpForm={setAddMcpForm} setAddMcpOpen={setAddMcpOpen} setComboModalOpen={setComboModalOpen} setCustomBaseUrl={setCustomBaseUrl} setCustomPlugins={setCustomPlugins} setLocalPlugins={setLocalPlugins} setMarketplaceOpen={setMarketplaceOpen} setPlugins={setPlugins} setSelectedApiKey={setSelectedApiKey} setShowManualConfigModal={setShowManualConfigModal} status={status} tailscaleEnabled={tailscaleEnabled} tailscaleUrl={tailscaleUrl} tunnelEnabled={tunnelEnabled} tunnelPublicUrl={tunnelPublicUrl} />}
 
       <ManualConfigModal
         isOpen={showManualConfigModal}

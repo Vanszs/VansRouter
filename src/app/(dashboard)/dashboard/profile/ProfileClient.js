@@ -23,7 +23,7 @@ function getLocaleFromCookie() {
 export default function ProfileClient({ initialSettings }) {
   const router = useRouter();
   const { theme, setTheme, isDark } = useTheme();
-  const locale = getLocaleFromCookie();
+  const [locale, setLocale] = useState(getLocaleFromCookie());
   const [langOpen, setLangOpen] = useState(false);
   const [shutdownOpen, setShutdownOpen] = useState(false);
   const [isShuttingDown, setIsShuttingDown] = useState(false);
