@@ -40,7 +40,8 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node }}
-          cache: pnpm
+        # Note: setup-node's pnpm cache requires a workspace "packages" field,
+        # which this repo does not use. pnpm/action-setup handles installation.
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
