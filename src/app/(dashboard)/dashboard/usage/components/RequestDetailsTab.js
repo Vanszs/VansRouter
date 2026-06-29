@@ -380,13 +380,13 @@ export default function RequestDetailsTab() {
               <div>
                 <span className="text-text-muted">API Key Name:</span>{" "}
                 <span className="text-text-main">
-                  {selectedDetail.apiKey ? (selectedDetail.apiKeyName || "-") : "-"}
+                  {selectedDetail.apiKeyName || "-"}
                 </span>
               </div>
               <div>
                 <span className="text-text-muted">API Key:</span>{" "}
                 <span className="text-text-main font-mono">
-                  {selectedDetail.apiKey ? maskKey(selectedDetail.apiKey) : "-"}
+                  {selectedDetail.apiKeyName && selectedDetail.apiKey ? maskKey(selectedDetail.apiKey) : "-"}
                 </span>
               </div>
               <div>
