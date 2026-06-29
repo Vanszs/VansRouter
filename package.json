@@ -6,7 +6,10 @@
   "scripts": {
     "dev": "next dev --webpack --port 20127",
     "build": "node scripts/build.js",
+    "lint": "eslint . --no-warn-ignored",
+    "lint:fix": "eslint . --fix --no-warn-ignored",
     "lint:undef": "node scripts/lint-undef.cjs",
+    "lint:reacthooks": "node scripts/lint-reacthooks.cjs",
     "start": "node server.js",
     "test": "vitest run --config tests/vitest.config.js",
     "dev:bun": "bun --bun next dev --webpack --port 20127",
