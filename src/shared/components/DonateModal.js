@@ -12,6 +12,11 @@ export default function DonateModal({ isOpen, onClose }) {
 
   useEffect(() => {
     if (!isOpen || hasFetched.current) return;
+    if (!GITHUB_CONFIG.donateUrl) {
+      hasFetched.current = true;
+      setFetchState({ data: null, loading: false, error: "Donate is not configured." });
+      return;
+    }
     hasFetched.current = true;
     setFetchState(prev => ({ ...prev, loading: true, error: "" }));
     fetch(GITHUB_CONFIG.donateUrl, { cache: "no-store" })

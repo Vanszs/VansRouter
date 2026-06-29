@@ -108,3 +108,12 @@ next-env.d.ts
 # =============================================================================
 .vercel
 .fakehome/
+
+# =============================================================================
+# Tooling-generated artifacts (kimchi / understand-anything)
+# =============================================================================
+# .kimchi/ contains generated audit and lighthouse reports; .understand-anything/
+# contains generated knowledge-graph data. These are produced by the project
+# tooling and regenerated on demand — do not commit fresh generations.
+/.kimchi/
+/.understand-anything/

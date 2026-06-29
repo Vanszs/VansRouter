@@ -155,14 +155,27 @@ PORT=3003 pm2 start server.js --name vansroute
 pm2 save
 ```
 
+### NPM (global, recommended for desktop)
+
+If you just want to run VansRouter as a CLI on your machine:
+
+```bash
+npm install -g vansrouter
+vansrouter
+# or run directly
+npx vansrouter
+```
+
+This pulls the published package from https://www.npmjs.com/package/vansrouter and launches the dashboard at `http://localhost:20128`.
+
 ### Docker
 
 ```bash
 docker run -d \
   -p 3003:3003 \
-  -v vansroute-data:/home/node/.vansroute \
-  --name vansroute \
-  ghcr.io/vanszs/vansroute:latest
+  -v vansrouter-data:/home/node/.vansrouter \
+  --name vansrouter \
+  ghcr.io/vanszs/vansrouter:latest
 ```
 
 ---
@@ -278,9 +291,9 @@ pm2 save
 ```bash
 docker run -d \
   -p 3003:3003 \
-  -v vansroute-data:/home/node/.vansroute \
-  --name vansroute \
-  ghcr.io/vanszs/vansroute:latest
+  -v vansrouter-data:/home/node/.vansrouter \
+  --name vansrouter \
+  ghcr.io/vanszs/vansrouter:latest
 ```
 
 Or with docker-compose:
