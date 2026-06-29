@@ -1,0 +1,29 @@
+/* Subset of Material Symbols Outlined — only icons actually used in the app.
+ *
+ * The font itself is loaded via a <link> in src/app/layout.js (Next.js webpack
+ * strips @import external URLs at build time, so we cannot use @import here).
+ *
+ * If you add a new icon name in JSX, append it to the icon_names list in
+ * layout.js and re-sort it alphabetically — Google Fonts returns 400 otherwise.
+ */
+
+.material-symbols-outlined {
+  font-family: 'Material Symbols Outlined', sans-serif;
+  font-weight: normal;
+  font-style: normal;
+  font-size: 24px;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  display: inline-block;
+  white-space: nowrap;
+  word-wrap: normal;
+  direction: ltr;
+  font-variation-settings:
+    'FILL' 0,
+    'wght' 400,
+    'GRAD' 0,
+    'opsz' 24;
+  -webkit-font-feature-settings: 'liga';
+  -webkit-font-smoothing: antialiased;
+}

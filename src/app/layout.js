@@ -1,7 +1,8 @@
 import { Inter } from "next/font/google";
 import { GoogleAnalytics } from "@next/third-parties/google";
-import "material-symbols/outlined.css";
+import "./material-symbols-subset.css";
 import "./globals.css";
+import MaterialSymbolsLink from "@/shared/components/MaterialSymbolsLink";
 import { ThemeProvider } from "@/shared/components/ThemeProvider";
 import "@/lib/network/initOutboundProxy"; // Auto-initialize outbound proxy env
 import "@/shared/services/bootstrap"; // Auto-run initializeApp (watchdog, auto-resume tunnel)
@@ -39,6 +40,7 @@ export default function RootLayout({ children }) {
         />
       </head>
       <body className={`${inter.variable} font-sans antialiased`}>
+        <MaterialSymbolsLink />
         <ThemeProvider>
           <RuntimeI18nProvider>
             {children}

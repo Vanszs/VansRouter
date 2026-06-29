@@ -21,6 +21,7 @@ import Link from "next/link";
 import { getErrorCode, getRelativeTime } from "@/shared/utils";
 import { useNotificationStore } from "@/store/notificationStore";
 import { useHeaderSearchStore } from "@/store/headerSearchStore";
+import { fetchCached } from "@/shared/utils/fetchCache";
 import ModelAvailabilityBadge from "./components/ModelAvailabilityBadge";
 import AddCompatibleModal from "./components/AddCompatibleModal";
 
@@ -147,8 +148,8 @@ export default function ProvidersPage() {
     const fetchData = async () => {
       try {
         const [connectionsRes, nodesRes] = await Promise.all([
-          fetch("/api/providers"),
-          fetch("/api/provider-nodes"),
+          fetchCached("/api/providers"),
+          fetchCached("/api/provider-nodes"),
         ]);
         const connectionsData = await connectionsRes.json();
         const nodesData = await nodesRes.json();
@@ -710,6 +711,8 @@ function ProviderCard({ providerId, provider, stats, authType, onToggle }) {
   );
 }
 
+
+
 function ApiKeyProviderCard({
   providerId,
   provider,
@@ -830,6 +833,8 @@ function ApiKeyProviderCard({
   );
 }
 
+
+
 function ProviderTestResultsView({ results }) {
   if (results.error && !results.results) {
     return (
@@ -913,4 +918,5 @@ function ProviderTestResultsView({ results }) {
     </div>
   );
 }
+
 

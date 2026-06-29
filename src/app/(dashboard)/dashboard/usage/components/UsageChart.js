@@ -73,7 +73,7 @@ const RechartsChart = dynamic(() => import("recharts").then(mod => {
   }
   Chart.displayName = "RechartsChart";
   return { default: Chart };
-}), { ssr: false, loading: () => <div className="h-48 flex items-center justify-center text-text-muted text-sm">Loading chart...</div> });
+}), { ssr: false, loading: () => <div className="h-[220px] w-full rounded-lg border border-border bg-bg-subtle/30" aria-label="Loading chart" /> });
 
 const fmtTokens = (n) => {
   if (n >= 1000000) return `${(n / 1000000).toFixed(1)}M`;
@@ -139,4 +139,5 @@ export default function UsageChart({ period = "7d" }) {
     </Card>
   );
 }
+
 

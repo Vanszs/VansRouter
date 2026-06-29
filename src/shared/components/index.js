@@ -1,3 +1,7 @@
+"use client";
+
+import dynamic from "next/dynamic";
+
 // Shared Components - Export all
 export { default as Button } from "./Button";
 export { default as Input } from "./Input";
@@ -13,29 +17,35 @@ export { ThemeProvider } from "./ThemeProvider";
 export { default as Sidebar } from "./Sidebar";
 export { default as Header } from "./Header";
 export { default as Footer } from "./Footer";
-export { default as OAuthModal } from "./OAuthModal";
-export { default as ModelSelectModal } from "./ModelSelectModal";
-export { default as ManualConfigModal } from "./ManualConfigModal";
-export { default as ComboFormModal } from "./ComboFormModal";
-export { default as McpMarketplaceModal } from "./McpMarketplaceModal";
+
+// Heavy modals are lazy-loaded because they are not visible on initial render.
+// This reduces the initial JS bundle on every dashboard route.
+const lazyModal = (factory) => dynamic(factory, { ssr: false, loading: () => null });
+
+export const OAuthModal = lazyModal(() => import("./OAuthModal"));
+export const ModelSelectModal = lazyModal(() => import("./ModelSelectModal"));
+export const ManualConfigModal = lazyModal(() => import("./ManualConfigModal"));
+export const ComboFormModal = lazyModal(() => import("./ComboFormModal"));
+export const McpMarketplaceModal = lazyModal(() => import("./McpMarketplaceModal"));
+export const KiroAuthModal = lazyModal(() => import("./KiroAuthModal"));
+export const KiroOAuthWrapper = lazyModal(() => import("./KiroOAuthWrapper"));
+export const KiroSocialOAuthModal = lazyModal(() => import("./KiroSocialOAuthModal"));
+export const CursorAuthModal = lazyModal(() => import("./CursorAuthModal"));
+export const IFlowCookieModal = lazyModal(() => import("./IFlowCookieModal"));
+export const GitLabAuthModal = lazyModal(() => import("./GitLabAuthModal"));
+export const EditConnectionModal = lazyModal(() => import("./EditConnectionModal"));
+export const AddCustomEmbeddingModal = lazyModal(() => import("./AddCustomEmbeddingModal"));
+export const NoAuthProxyCard = lazyModal(() => import("./NoAuthProxyCard"));
+export const ChangelogModal = lazyModal(() => import("./ChangelogModal"));
+export const ProviderInfoCard = lazyModal(() => import("./ProviderInfoCard"));
+
 export { default as UsageStats } from "./UsageStats";
 export { default as LanguageSwitcher } from "./LanguageSwitcher";
 export { default as NineRemoteButton } from "./NineRemoteButton";
 export { default as HeaderMenu } from "./HeaderMenu";
-export { default as ChangelogModal } from "./ChangelogModal";
 export { default as RequestLogger } from "./RequestLogger";
-export { default as KiroAuthModal } from "./KiroAuthModal";
-export { default as KiroOAuthWrapper } from "./KiroOAuthWrapper";
-export { default as KiroSocialOAuthModal } from "./KiroSocialOAuthModal";
-export { default as CursorAuthModal } from "./CursorAuthModal";
-export { default as IFlowCookieModal } from "./IFlowCookieModal";
-export { default as GitLabAuthModal } from "./GitLabAuthModal";
-export { default as EditConnectionModal } from "./EditConnectionModal";
-export { default as AddCustomEmbeddingModal } from "./AddCustomEmbeddingModal";
-export { default as NoAuthProxyCard } from "./NoAuthProxyCard";
 export { default as SegmentedControl } from "./SegmentedControl";
 export { default as Tooltip } from "./Tooltip";
-export { default as ProviderInfoCard } from "./ProviderInfoCard";
 export { default as CapacityBadges } from "./CapacityBadges";
 
 // Layouts

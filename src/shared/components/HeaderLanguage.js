@@ -32,10 +32,7 @@ export default function HeaderLanguage() {
       <LanguageSwitcher
         hideTrigger
         isOpen={open}
-        onClose={(next) => {
-          setOpen(false);
-          setLocale(next);
-        }}
+        onClose={() => setOpen(false)}
       />
     </>
   );
