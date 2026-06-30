@@ -7,42 +7,46 @@ export { VALID_OPENAI_CONTENT_TYPES, VALID_OPENAI_MESSAGE_TYPES };
 
 // Filter messages to OpenAI standard format
 // Remove: thinking, redacted_thinking, signature, and other non-OpenAI blocks
-export function filterToOpenAIFormat(body) {
+// opts.preserveCacheControl: keep cache_control on content blocks (e.g. for DashScope/alicode)
+export function filterToOpenAIFormat(body, opts = {}) {
   if (!body.messages || !Array.isArray(body.messages)) return body;
-  
+  const keepCache = !!opts.preserveCacheControl;
+
+  function stripBlock(block) {
+    const { signature, cache_control, ...rest } = block;
+    return keepCache && cache_control ? { ...rest, cache_control } : rest;
+  }
+
   body.messages = body.messages.map(msg => {
     // Normalize developer role to system (many providers don't support developer)
     if (msg.role === ROLE.DEVELOPER) msg = { ...msg, role: ROLE.SYSTEM };
-    
+
     // Keep tool messages as-is (OpenAI format)
     if (msg.role === ROLE.TOOL) return msg;
-    
+
     // Keep assistant messages with tool_calls as-is
     if (msg.role === ROLE.ASSISTANT && msg.tool_calls) return msg;
-    
+
     // Handle string content
     if (typeof msg.content === "string") return msg;
-    
+
     // Handle array content
     if (Array.isArray(msg.content)) {
       const filteredContent = [];
-      
+
       for (const block of msg.content) {
         // Skip thinking blocks
         if (block.type === CLAUDE_BLOCK.THINKING || block.type === CLAUDE_BLOCK.REDACTED_THINKING) continue;
-        
+
         // Only keep valid OpenAI content types
         if (VALID_OPENAI_CONTENT_TYPES.includes(block.type)) {
-          // Remove signature field if exists
-          const { signature, cache_control, ...cleanBlock } = block;
-          filteredContent.push(cleanBlock);
+          filteredContent.push(stripBlock(block));
         } else if (block.type === CLAUDE_BLOCK.TOOL_USE) {
           // Convert tool_use to tool_calls format (handled separately)
           continue;
         } else if (block.type === CLAUDE_BLOCK.TOOL_RESULT) {
           // Keep tool_result but clean it
-          const { signature, cache_control, ...cleanBlock } = block;
-          filteredContent.push(cleanBlock);
+          filteredContent.push(stripBlock(block));
         }
       }
       
@@ -50,8 +54,15 @@ export function filterToOpenAIFormat(body) {
       if (filteredContent.length === 0) {
         filteredContent.push({ type: OPENAI_BLOCK.TEXT, text: "" });
       }
-      
-      return { ...msg, content: collapseTextParts(filteredContent) };
+
+      // When preserving cache_control, do not collapse text parts into a plain
+      // string — strings cannot carry cache_control metadata (DashScope/alicode).
+      const hasCacheControl = filteredContent.some(b => b.cache_control);
+      const content = keepCache && hasCacheControl
+        ? filteredContent
+        : collapseTextParts(filteredContent);
+
+      return { ...msg, content };
     }
     
     return msg;

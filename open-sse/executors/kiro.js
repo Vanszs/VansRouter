@@ -122,7 +122,8 @@ export class KiroExecutor extends BaseExecutor {
       hasReasoningContent: false,
       reasoningChunkCount: 0,
       toolCallIndex: 0,
-      seenToolIds: new Map()
+      seenToolIds: new Map(),
+      inThinking: false
     };
 
     const transformStream = new TransformStream({
@@ -158,9 +159,37 @@ export class KiroExecutor extends BaseExecutor {
           if (!state.contextUsagePercentage) state.contextUsagePercentage = 0;
 
           // Handle assistantResponseEvent
-          const payload = event.payload;
-          if (eventType === "assistantResponseEvent" && payload?.content) {
-            const content = payload.content;
+          if (eventType === "assistantResponseEvent" && event.payload?.content) {
+            let content = event.payload.content;
+
+            // Kiro Claude models can leak <thinking> blocks into the content stream.
+            // We strip these literal tags to prevent duplication, as the reasoning 
+            // is already routed correctly via reasoningContentEvent.
+            if (state.inThinking) {
+              if (content.includes("</thinking>")) {
+                state.inThinking = false;
+                const after = content.split("</thinking>").slice(1).join("</thinking>");
+                content = after.startsWith("\n") ? after.substring(1) : after;
+              } else {
+                content = ""; // Drop entirely while inside thinking block
+              }
+            } else if (content.includes("<thinking>")) {
+              state.inThinking = true;
+              if (content.includes("</thinking>")) {
+                state.inThinking = false;
+                const before = content.split("<thinking>")[0];
+                const after = content.split("</thinking>").slice(1).join("</thinking>");
+                content = before + (after.startsWith("\n") ? after.substring(1) : after);
+              } else {
+                content = content.split("<thinking>")[0];
+              }
+            }
+
+            if (!content && state.hasReasoningContent) {
+              // If we stripped everything, skip emitting an empty content chunk
+              continue;
+            }
+
             state.totalContentLength += content.length;
 
             const chunk = {
@@ -217,7 +246,6 @@ export class KiroExecutor extends BaseExecutor {
 
           // Handle codeEvent
           if (eventType === "codeEvent" && event.payload?.content) {
-            const codeContent = event.payload.content;
             const chunk = {
               id: responseId,
               object: "chat.completion.chunk",
@@ -225,7 +253,7 @@ export class KiroExecutor extends BaseExecutor {
               model,
               choices: [{
                 index: 0,
-                delta: { content: codeContent },
+                delta: { content: event.payload.content },
                 finish_reason: null
               }]
             };
@@ -537,3 +565,4 @@ function parseEventFrame(data) {
   }
 }
 
+export default KiroExecutor;

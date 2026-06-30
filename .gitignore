@@ -117,3 +117,7 @@ next-env.d.ts
 # tooling and regenerated on demand — do not commit fresh generations.
 /.kimchi/
 /.understand-anything/
+
+# Refactor backup reference / graphify output (do not bundle/lint)
+.graphifyignore
+graphify-out/*
