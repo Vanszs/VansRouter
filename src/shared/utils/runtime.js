@@ -1,7 +1,5 @@
 import { readFileSync, existsSync } from "node:fs";
 
-import { readFileSync, existsSync } from "node:fs";
-
 /**
  * Detect the runtime environment that manages this Node.js process.
  *
