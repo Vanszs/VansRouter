@@ -106,10 +106,14 @@ VansRoute is a Next.js 16 + Node 20 universal AI gateway built around a single O
 
 ### 3.5 Provider registry / models / capabilities
 
+**Status (Phase 1, Step 2):** The provider registry is now JSON-backed. Run `node scripts/export-registry.js` to regenerate `backend/data/providers.json` from the Node.js registry. The Go backend should load this file at runtime rather than importing JavaScript modules.
+
 | File | Role | Complexity |
 |------|------|------------|
 | `open-sse/providers/registry/*.js` (~115 files) | Per-provider transport + models + OAuth/media configs. | Medium (data-heavy; code-generate or load as config). |
 | `open-sse/providers/index.js` | Builds `PROVIDERS`, `PROVIDER_MODELS`, `PROVIDER_OAUTH`, `PROVIDER_MEDIA` from registry. | Medium |
+| `scripts/export-registry.js` | Exports the registry to `backend/data/providers.json`. | Done |
+| `backend/data/providers.json` | Static JSON snapshot consumed by the Go backend. | Done |
 | `open-sse/providers/capabilities.js`, `open-sse/providers/models/*.js`, `open-sse/providers/pricing.js`, `open-sse/providers/schema.js`, `open-sse/providers/shared.js` | Capabilities, model normalization, pricing. | Medium |
 | `open-sse/config/providerModels.js` | Model metadata: target format, strip lists, upstream IDs. | Medium |
 | `open-sse/config/providers.js`, `open-sse/config/runtimeConfig.js`, `open-sse/config/appConstants.js`, `open-sse/config/errorConfig.js` | Provider wiring and runtime constants. | Medium |
