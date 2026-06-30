@@ -1,3 +1,20 @@
+# v0.7.6 (2026-06-30)
+
+Hotfix release. v0.7.5 was published as a tag (a03d07d0 → fae6fa1c → 68e53b4e) but the auto-generated release workflow run (run 28419859527) failed at the webpack/parse stage of `next build` because `src/shared/utils/runtime.js` accidentally declared the same `import { readFileSync, existsSync } from "node:fs"` twice on lines 1 and 3. As a result neither the Docker image nor the npm package was published. This release removes the duplicate import and republishes with version 0.7.6.
+
+## Fixed
+- Remove the duplicate `import { readFileSync, existsSync } from "node:fs"` at the top of `src/shared/utils/runtime.js`. Without the fix, Next.js webpack rejects the module with `Module parse failed: Identifier 'readFileSync' has already been declared` and the entire release pipeline (GHCR image build + npm publish) fails.
+
+## Verified
+- `pnpm test tests/unit/runtime-detect.test.js` → 24/24 pass.
+- `pnpm run build` → build complete (no-undef lint: clean included).
+- `pnpm lint:undef` → clean.
+
+## Install
+```bash
+npm install -g vansrouter
+```
+
 # v0.7.5 (2026-06-29)
 
 Auto-update flow now detects the runtime (PM2, systemd, screen, tmux, Docker, or plain foreground) and offers a one-click Update & Restart button when a process manager is present. Running under PM2/systemd/screen/tmux, the npm install + restart happens in a detached child process spawned before exit, so the user no longer has to manually copy the command and re-run the binary.
