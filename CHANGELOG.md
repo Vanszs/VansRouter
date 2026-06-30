@@ -1,3 +1,46 @@
+# v0.7.7 (2026-06-30)
+
+Sync of upstream `decolua/9router` bug-fix batch onto the VansRouter fork, plus two repo-maintenance chores. No source-code regressions vs. v0.7.6.
+
+## Fixed
+- **translator**: preserve `cache_control` when `collapseTextParts` would otherwise drop it (`c0bd3e0d`).
+- **translator**: map mid-conversation `system` message to `user` in the Claude response stream (`5f6f0b95`).
+- **translator / responses**: handle `response.done` terminal events correctly (`b970c143`).
+- **kiro**: replace missing `uuid` dep with `node:crypto.randomUUID()` (`89cb9763`).
+- **kiro**: strip leaked `<thinking>` tags from the content stream (`e985f1e0`, #2158).
+- **headroom**: translate `openai-responses` input through OpenAI before compression so non-OpenAI providers don't see Responses-only fields (`96411bb4`).
+- **headroom**: skip unsafe Responses tool history (`e0512cf1`, #2132).
+- **antigravity**: strip `deprecated`/`readOnly`/`writeOnly` from tool schemas before sending to Gemini (`26fd991b`, `4a80c16e`).
+- **alicode**: preserve `cache_control` for DashScope providers (`199e3f67`, #2069).
+- **kilocode**: expose full gateway catalog in the combo model picker (`30a69fa7`).
+- **gemini**: backfill `thoughtSignature` and suppress `stream done sent` errors (`2d9294c2`).
+- **gemini**: normalize `contents` to prevent `400 invalid_argument` from upstream (`bdaf57f1`, #2192).
+- **OpenCode Go**: fix GLM routing (`a6a7bdbe`).
+- **tray**: make Windows context menu DPI-aware so the icon renders crisp on high-DPI displays (`71329cc0`).
+- **token-saver**: switch to full-width card layout (`31321e57`).
+- **capabilities**: refine Qwen vision/video and thinking model patterns (`04c3e4a6`).
+
+## Tests
+- Update `tests/translator/__snapshots__/golden-url-header.test.js.snap` to the v0.7.6 snapshot (`8c3258ec`).
+- New regression tests: `tests/unit/alicode-cache-control-2069.test.js`, `tests/unit/kiro-thinking-strip.test.js`, plus updates to `tests/unit/openai-responses-terminal-event.test.js`.
+
+## Docs
+- `AGENTS.md`: add a new **"Release Pipeline Rules (MANDATORY)"** section with three rules learned from the v0.7.5 → v0.7.6 cycle: (1) push merge to `origin/main` before pushing a release tag, otherwise `check-branch` sets `is-main=false` and the publish jobs are silently SKIPPED; (2) verify `npm`/`GHCR` artifacts immediately after pushing a tag — never trust the workflow's overall `success` conclusion alone; (3) never edit a source file with duplicate declarations of the same import (`runtime.js` once had `import { readFileSync, existsSync } from "node:fs"` twice and Next.js webpack rejected it).
+
+## Chore
+- Untrack `.kimchi/docs/lighthouse-reports/` (20 generated HTML/JSON files) from git. These are one-time lighthouse audit artifacts that were inflating the repo's HTML language percentage to 52.5%; now that `.kimchi/` and `.understand-anything/` are in `.gitignore`, the local copies remain on disk for reference but won't be re-committed.
+
+## Verified
+- `pnpm test tests/unit/runtime-detect.test.js` → 24/24 pass.
+- `pnpm test` (full) → 1847 pass + 14 pre-existing `tests/unit/all-endpoints-robust.test.js` 401-Invalid-API-key failures (confirmed pre-existing on `main` before this release; not a regression).
+- `pnpm run build` → build complete (no-undef lint: clean included).
+- `pnpm lint:undef` → clean.
+
+## Install
+```bash
+npm install -g vansrouter
+```
+
 # v0.7.6 (2026-06-30)
 
 Hotfix release. v0.7.5 was published as a tag (a03d07d0 → fae6fa1c → 68e53b4e) but the auto-generated release workflow run (run 28419859527) failed at the webpack/parse stage of `next build` because `src/shared/utils/runtime.js` accidentally declared the same `import { readFileSync, existsSync } from "node:fs"` twice on lines 1 and 3. As a result neither the Docker image nor the npm package was published. This release removes the duplicate import and republishes with version 0.7.6.
