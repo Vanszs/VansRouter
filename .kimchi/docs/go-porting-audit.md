@@ -2,7 +2,7 @@
 
 **Project:** VansRoute / 9router  
 **Repository:** `/media/DiskE/Code/9router-new`  
-**Branch:** `dev`  
+**Branch:** `go-port`  
 **Audit date:** 2026-06-29  
 **Output:** `.kimchi/docs/go-porting-audit.md`
 
@@ -177,6 +177,13 @@ VansRoute is a Next.js 16 + Node 20 universal AI gateway built around a single O
 
 ### 3.10 Database layer
 
+**Status (Phase 1, Step 4):** SQLite schema and repositories ported to Go under `backend/internal/db/`:
+
+- Migrations are embedded in the binary via `//go:embed migrations/*.sql` in `backend/internal/db/migrations.go`. Two migrations mirror the JS schema: `001_initial.sql` and `002_fix_empty_allowed_lists.sql`.
+- `backend/internal/db/db.go` opens `modernc.org/sqlite` with WAL, foreign keys, and busy timeout. It supports the same data directory layout as the JS backend.
+- Repositories live in `backend/internal/db/repos/`: `keys.go`, `accounts.go`, `usage.go`, and `repos.go` composition. A generic TTL cache in `backend/internal/db/repos/cache.go` backs read-heavy lookups.
+- Tests cover migrations, DB open/close, key/account/usage CRUD, and TTL cache behavior. `cd backend && go test ./internal/db/...` passes for `internal/db` and `internal/db/repos`.
+
 | File | Role | Complexity |
 |------|------|------------|
 | `src/lib/db/driver.js` | Adapter selection: bun:sqlite → better-sqlite3 → node:sqlite → sql.js. | Medium |
@@ -191,6 +198,15 @@ VansRoute is a Next.js 16 + Node 20 universal AI gateway built around a single O
 | `src/lib/db/repos/requestDetailsRepo.js` | Request-detail persistence. | Low |
 | `src/lib/localDb.js` | Barrel export of DB functions (used widely). | Low |
 | `src/lib/db/paths.js`, `src/lib/dataDir.js` | Data directory resolution. | Low |
+
+**Status (Phase 1, Step 5):** Runtime environment config and resilience primitives ported to Go:
+
+- `backend/internal/config/config.go` defines a `Config` struct parsed with `github.com/caarlos0/env/v11` tags and fills defaults matching the JS backend (`PORT`, `DATA_DIR`, `DATABASE_FILE`, `JWT_SECRET`, `LOG_LEVEL`, etc.).
+- `backend/internal/config/paths.go` resolves the data directory, defaulting to `~/.vansroute` (or `DATA_DIR` override), matching `src/lib/dataDir.js` and `src/lib/db/paths.js`.
+- `backend/internal/resilience/profiles.go` provides provider-specific circuit-breaker profiles (`DefaultProfile()` and `ProfileForProvider`).
+- `backend/internal/resilience/breaker.go` ports the JS circuit breaker (CLOSED/DEGRADED/OPEN/HALF_OPEN) with cumulative-count and sliding-window `failureWindowMs` modes.
+- `backend/internal/resilience/semaphore.go` implements a per-account concurrency gate with immediate release on completion.
+- Tests pass: `cd backend && go test ./internal/config/... ./internal/resilience/...` (29 tests) and `... -run TestProfiles`.
 
 ### 3.11 Usage / observability / request logging
 
