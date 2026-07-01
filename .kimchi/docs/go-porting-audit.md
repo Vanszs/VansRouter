@@ -893,4 +893,34 @@ TestRegistry was also updated to use isolated keys (`test-from:test-to`) so it d
 
 ---
 
+## 15. Phase 4 Step 5 — Provider Format Detection + Transport Resolution
+
+Files created:
+- `backend/internal/providers/format.go`
+- `backend/internal/providers/format_test.go`
+
+### Ported behavior
+- **Compatibility prefixes**: `IsOpenAICompatible`, `IsAnthropicCompatible`, `GetOpenAICompatibleType` (`chat` vs `responses`).
+- **`DetectFormat(body)`**: mirrors `open-sse/services/provider.js#detectFormat` with the same priority order — openai-responses (`body.input` without `body.messages`) → antigravity (`body.request.contents` + `userAgent`) → gemini (`body.contents`) → openai (OpenAI-specific fields like `response_format`, `logprobs`, `n`, `presence_penalty`, `frequency_penalty`, `logit_bias`, `user`, `stream_options`, `top_logprobs`) → claude (`body.system` / `anthropic_version`, Claude content blocks with `source.type=base64`, `tool_use`, `tool_result`) → openai (default).
+- **`GetTargetFormat(provider, registry)`**: derives format from openai-compatible / anthropic-compatible prefixes, or reads the `format` field from the registry's `PROVIDERS` map.
+- **`ResolveTransport(provider, sourceFormat, registry)`**: picks the transport entry from `provider.transports[]` whose `format` matches the client source format; returns nil for no match.
+- **Thinking helpers**: `IsLastMessageFromUser`, `HasThinkingConfig`, `NormalizeThinkingConfig` (strips `body.thinking` when last message is not from the user).
+
+### Tests added (21 total in format_test.go)
+- `TestProviderResolution` with subtests: IsOpenAICompatible, IsAnthropicCompatible, GetOpenAICompatibleType, DetectFormat_OpenAIResponses, DetectFormat_Antigravity, DetectFormat_Gemini, DetectFormat_OpenAI_Indicators (stream_options, response_format, logprobs, top_logprobs, n, presence_penalty, frequency_penalty, logit_bias, user), DetectFormat_Claude (system field, anthropic_version, image source.base64, tool_use, tool_result), DetectFormat_OpenAI_ImageURL, DetectFormat_Default, DetectFormat_NilBody.
+- `TestGetTargetFormat`: openai-compatible, anthropic-compatible, named providers, unknown fallback.
+- `TestResolveTransport`: match by format, first match, no-match fallback, no-transports-array, unknown provider, single transport.
+- `TestThinkingConfigHelpers`: HasThinkingConfig variants, IsLastMessageFromUser, NormalizeThinkingConfig strip/keep behavior.
+
+### Deferred (`// ponytail:` comments)
+- Antigravity and Gemini full request/response translator pairs (Step 6+).
+- Streaming-aware transport selection with fallback chains.
+- `providerSpecificData` merging into transport config.
+
+### Verification
+- `cd /media/DiskE/Code/9router-new/backend && go test ./internal/providers/... -run TestProviderResolution -v` → 21 PASS.
+- `cd /media/DiskE/Code/9router-new/backend && go test ./... -count=1` → 469 PASS in 19 packages (was 428 before Step 5; added 41 new assertions across format_test.go).
+
+---
+
 *End of audit.*
