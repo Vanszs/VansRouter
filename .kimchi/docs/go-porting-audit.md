@@ -320,6 +320,14 @@ Net: packages are lean for a first port; deferrals are tracked via `ponytail:` c
 - Updated `backend/cmd/server/main.go` to create repos, load registry, and set `auth.DataDirSource`.
 - Verification: `cd backend && go test ./internal/auth/...` passes (48 tests); `go test ./...` passes (87 tests in 9 packages).
 
+### 3.23 Phase 2 — Step 5: GET /v1/models
+
+- Added `backend/internal/models/sql_source.go` — `SQLSource` implements `Source` over SQLite (combos table + providerConnections `data` JSON + three `kv` scopes: `modelAliases`, `customModels`, `disabledModels`). Mirrors JS conventions in `src/lib/db/repos/{aliasRepo,disabledModelsRepo}.js`.
+- Added `backend/internal/api/v1/models.go` — `ModelsHandler` produces the OpenAI list response (`object=list`, `data=[...]`). Supports `?kind=llm,embedding` filter; `parseKindFilter` helper. Error path returns OpenAI-shaped JSON.
+- Updated `backend/internal/api/routes.go` — builds a SQL-backed `models.Builder` from `repos.DB`, mounts `/v1/models` under `auth.APIKeyMiddleware`, and keeps `/api/v1/models` for the dashboard path.
+- Tests (`backend/internal/api/v1/models_test.go`, 6 cases): OpenAI list shape, kind filter, disabled model omission, dedup, empty registry, parseKindFilter edge cases.
+- Verification: `cd backend && go test ./internal/api/v1/... -run TestModelsEndpoint` → 6 PASS; `go test ./...` → 151 PASS in 12 packages; `go build ./...` → clean.
+
 ### 3.22 Phase 2 — Step 4: Auth, CORS, real-IP, logging middleware
 
 - Added `backend/internal/api/middleware/{realip,cors,logger}.go` and `middleware_test.go`. Mirrors the request-handling bits Next.js used to provide implicitly (recovery, access logs) and fills the gaps JS handled per-response (`Access-Control-Allow-Origin: *` in `corsHeadersFrom`).

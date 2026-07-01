@@ -6,8 +6,10 @@ import (
 	"net/http"
 
 	"github.com/9router/9router/backend/internal/api/middleware"
+	"github.com/9router/9router/backend/internal/api/v1"
 	"github.com/9router/9router/backend/internal/auth"
 	"github.com/9router/9router/backend/internal/db/repos"
+	"github.com/9router/9router/backend/internal/models"
 	"github.com/9router/9router/backend/internal/providers"
 	"github.com/go-chi/chi/v5"
 )
@@ -15,6 +17,8 @@ import (
 // Routes builds the chi router with logging, recovery, CORS, real-IP,
 // auth, and v1 handlers.
 func Routes(logger *slog.Logger, r *repos.Repos, registry *providers.Registry) http.Handler {
+	builder := models.NewBuilder(registry, models.NewSQLSource(r.DB))
+
 	router := chi.NewRouter()
 
 	router.Use(middleware.RealIP)
@@ -27,18 +31,18 @@ func Routes(logger *slog.Logger, r *repos.Repos, registry *providers.Registry) h
 	router.Get("/version", versionHandler)
 
 	// Public OpenAI-compatible surface.
-	router.Mount("/v1", v1Router(r, registry))
+	router.Mount("/v1", v1Router(r, builder))
 
 	// Legacy dashboard path kept for compatibility during the port.
-	router.With(auth.APIKeyMiddleware(r.Keys)).Get("/api/v1/models", modelsHandler(registry))
+	router.With(auth.APIKeyMiddleware(r.Keys)).Get("/api/v1/models", v1.ModelsHandler(builder))
 
 	return router
 }
 
-func v1Router(r *repos.Repos, registry *providers.Registry) http.Handler {
+func v1Router(r *repos.Repos, builder *models.Builder) http.Handler {
 	router := chi.NewRouter()
 	router.Use(auth.APIKeyMiddleware(r.Keys))
-	router.Get("/models", modelsHandler(registry))
+	router.Get("/models", v1.ModelsHandler(builder))
 	return router
 }
 
@@ -64,16 +68,6 @@ func versionHandler(w http.ResponseWriter, r *http.Request) {
 		"canAutoRestart": false,
 		"installCommand": nil,
 	})
-}
-
-func modelsHandler(registry *providers.Registry) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		_ = registry
-		writeJSON(w, http.StatusOK, map[string]any{
-			"object": "list",
-			"data":   []any{},
-		})
-	}
 }
 
 func writeJSON(w http.ResponseWriter, status int, payload any) {
