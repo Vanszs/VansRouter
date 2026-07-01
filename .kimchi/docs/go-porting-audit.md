@@ -699,4 +699,42 @@ Files reviewed:
 
 ---
 
+## 11. Phase 4 Step 1 — Base/Default Executor
+
+Files created:
+- `backend/internal/providers/executors/types.go`
+- `backend/internal/providers/executors/proxy.go`
+- `backend/internal/providers/executors/base.go`
+- `backend/internal/providers/executors/default.go`
+- `backend/internal/providers/executors/executor.go`
+- `backend/internal/providers/executors/executor_test.go`
+
+### Ported behavior
+- URL building with runtime transport override, openai-compatible/anthropic-compatible defaults, gemini format, `{accountId}` placeholder, URL suffix.
+- Header construction with Bearer/x-api-key auth, anthropic-version, Accept: text/event-stream.
+- Retry/fallback loop using `http.Client{Transport: ProxyTransport()}` with `http.ProxyFromEnvironment`.
+- Context cancellation propagation via `context.WithTimeout(parent, timeout)` and standard `http.NewRequestWithContext`.
+- Account-count retry cap (>=5 → 1, >=3 → 2).
+
+### Tests added (7)
+- `TestExecutorDefault_SimpleOK`
+- `TestExecutorDefault_PropagatesCancel`
+- `TestExecutorDefault_Retry429ThenFallback`
+- `TestExecutorDefault_ConnectTimeout`
+- `TestExecutorDefault_AuthBearer`
+- `TestExecutorDefault_AnthropicCompatibleXApiKey`
+- `TestExecutorDefault_RuntimeTransportOverride`
+
+### Deferred (`// ponytail:` comments)
+- OAuth refresh helpers
+- Provider-specific header hooks (kimi, cline, claudeOverlay, etc.)
+- Transient body error retries (`_peekTransientBodyError`)
+- json_schema fallback, client_metadata drop, nvidia max_tokens clamp
+
+### Verification
+- `go test ./internal/providers/... -run TestExecutor -v` → 7 PASS.
+- `go test ./... -count=1` → 411 PASS in 13 packages (was 404 before Step 1).
+
+---
+
 *End of audit.*
