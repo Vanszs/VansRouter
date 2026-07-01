@@ -98,6 +98,25 @@ const nextConfig = {
         destination: "/api/v1"
       }
     ];
+  },
+  async headers() {
+    return [
+      {
+        // Provider icons (webp), favicons, logos — immutable, hash-stable files.
+        // Browser caches for 1 year; revalidation via Last-Modified/ETag.
+        source: "/providers/:path*",
+        headers: [
+          { key: "Cache-Control", value: "public, max-age=31536000, immutable" },
+        ],
+      },
+      {
+        // Next.js hashed static assets (JS/CSS chunks) — content-addressed, safe to cache forever.
+        source: "/_next/static/:path*",
+        headers: [
+          { key: "Cache-Control", value: "public, max-age=31536000, immutable" },
+        ],
+      },
+    ];
   }
 };
 
