@@ -9,6 +9,24 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// TestCircuitBreaker is the meta-test the step verification command
+// targets. It re-executes the per-scenario tests below so that
+// `go test -run TestCircuitBreaker` is a single entry point.
+func TestCircuitBreaker(t *testing.T) {
+	t.Run("Defaults", TestBreakerDefaults)
+	t.Run("ClosesAfterSuccesses", TestBreakerClosesAfterSuccesses)
+	t.Run("OpensAfterFailures", TestBreakerOpensAfterFailures)
+	t.Run("HalfOpenThenClose", TestBreakerHalfOpenThenClose)
+	t.Run("HalfOpenThenReopen", TestBreakerHalfOpenThenReopen)
+	t.Run("SlidingWindow", TestBreakerSlidingWindow)
+	t.Run("SlidingWindowKeepsRecentFailures", TestBreakerSlidingWindowKeepsRecentFailures)
+	t.Run("ExponentialBackoff", TestBreakerExponentialBackoff)
+	t.Run("IsFailureFilter", TestBreakerIsFailureFilter)
+	t.Run("KindThresholdImmediateOpen", TestBreakerKindThresholdImmediateOpen)
+	t.Run("Reset", TestBreakerReset)
+	t.Run("Status", TestBreakerStatus)
+}
+
 func TestBreakerDefaults(t *testing.T) {
 	b := NewBreaker("test", Options{})
 	assert.Equal(t, StateClosed, b.State())
