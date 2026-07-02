@@ -18,6 +18,7 @@ export default {
   hasOAuth: true,
   transport: {
     baseUrl: "https://api.cline.bot/api/v1/chat/completions",
+    thinkingFormat: "openai",
     headers: {
       "HTTP-Referer": "https://cline.bot",
       "X-Title": "Cline",
@@ -27,7 +28,7 @@ export default {
       header: "Authorization",
       scheme: "bearer",
       hooks: [
-        "clineHeaders",
+        "clinepassHeaders",
       ],
     },
   },
