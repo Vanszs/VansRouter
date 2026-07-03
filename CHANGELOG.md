@@ -1,3 +1,36 @@
+# v0.8.4 (2026-07-03)
+
+Hotfix for Antigravity streaming failures. Ports two upstream `decolua/9router` fixes that caused `API Error: Content block not found` / `API returned an empty or malformed response (HTTP 200)` on Antigravity models.
+
+## Fixed
+- **Antigravity/Gemini → Claude tool-call stream state collision** (`open-sse/translator/response/gemini-to-openai.js`):
+  - `geminiToOpenAIResponse()` was pre-populating the shared `state.toolCalls` map, which the downstream `OpenAI → Claude` translator also uses for Claude `content_block_start` metadata.
+  - When a response contained a `functionCall`, Claude deltas were emitted without a matching `content_block_start`, causing clients to crash with `Content block not found` over an HTTP 200 stream.
+  - Fix: keep Gemini bookkeeping in a separate `state.geminiToolCallCount` counter.
+  - Upstream reference: `decolua/9router` [#2225](https://github.com/decolua/9router/issues/2225), [#2248](https://github.com/decolua/9router/pull/2248).
+- **Antigravity executor drops empty `parts` after thought filtering** (`open-sse/executors/antigravity.js`):
+  - After stripping `thought`-only / `thoughtSignature`-only parts, a content entry could be left with `parts: []`.
+  - Google `v1internal` rejects empty `parts` arrays with `400 INVALID_ARGUMENT`; the Antigravity client surfaces this as a malformed response.
+  - Fix: filter out any content entry whose `parts` array becomes empty after transformation.
+  - Upstream reference: `decolua/9router` [#2191](https://github.com/decolua/9router/issues/2191).
+
+## Tests
+- Added regression test: `Antigravity → Claude` tool-call streaming asserts that `input_json_delta` carries a valid Anthropic block index.
+- Added regression test: Antigravity executor strips content entries that end up with empty `parts`.
+- Updated `tests/translator/claude-kiro-direct.test.js` to assert `jsonDelta.index` is defined.
+
+## Verified
+- `pnpm test --run tests/translator/` → 324 passed / 18 expected fail / 28 skipped.
+- `pnpm test --run tests/unit/` → 1657 passed / 49 skipped.
+- `pnpm run build` → build complete.
+
+## Install
+```bash
+npm install -g vansrouter
+# or pull the image
+docker pull ghcr.io/vanszs/vansrouter:0.8.4
+```
+
 # v0.8.0 (2026-07-01)
 
 Major provider expansion + resilience improvements. This release syncs AgentRouter and Kimchi catalogs with OmniRoute, ports 22 additional OpenAI-compatible API-key providers, hardens combo/account-fallback abort handling, and adds per-provider resilience profiles.

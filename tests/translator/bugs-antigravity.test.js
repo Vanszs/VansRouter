@@ -2,7 +2,7 @@
 import { describe, it, expect } from "vitest";
 import "./registerAll.js";
 import { getRequestTranslator } from "../../open-sse/translator/registry.js";
-import { translateRequest } from "../../open-sse/translator/index.js";
+import { translateRequest, translateResponse, initState } from "../../open-sse/translator/index.js";
 import { FORMATS } from "../../open-sse/translator/formats.js";
 import { AntigravityExecutor } from "../../open-sse/executors/antigravity.js";
 
@@ -52,6 +52,35 @@ describe("Antigravity → OpenAI", () => {
       ? content.some((c) => c.type === "text" && c.text === "")
       : content === "";
     expect(hasEmpty, "empty text part emitted").toBe(false);
+  });
+});
+
+describe("Antigravity → Claude", () => {
+  // Upstream 9router #2225: shared state.toolCalls map between Gemini→OpenAI and
+  // OpenAI→Claude translators caused missing content_block_start for tool_use,
+  // leading to "API Error: Content block not found" in Claude Code.
+  it("tool call input_json_delta includes Anthropic index", () => {
+    const state = initState(FORMATS.CLAUDE);
+    const events = translateResponse(FORMATS.ANTIGRAVITY, FORMATS.CLAUDE, {
+      response: {
+        responseId: "resp-1",
+        modelVersion: "gemini-pro-agent",
+        candidates: [{
+          content: {
+            role: "model",
+            parts: [{ functionCall: { name: "bash", args: { command: "git status" } } }],
+          },
+          finishReason: "STOP",
+          index: 0,
+        }],
+      },
+    }, state);
+
+    const jsonDelta = events.find(
+      (event) => event.type === "content_block_delta" && event.delta?.type === "input_json_delta"
+    );
+    expect(jsonDelta).toMatchObject({ index: expect.any(Number) });
+    expect(JSON.parse(jsonDelta.delta.partial_json)).toEqual({ command: "git status" });
   });
 });
 
@@ -156,5 +185,21 @@ describe("Antigravity executor", () => {
     expect(out.request.systemInstruction).toEqual({ role: "user", parts: [{ text: "You are helpful" }] });
     expect(out.request.generationConfig.maxOutputTokens).toBe(32);
     expect(out.request.sessionId).toBe("sess-123");
+  });
+
+  // Issue #6: v1internal rejects content entries with empty parts[] (400 on all models)
+  it("strips content entries that end up with empty parts after filtering", () => {
+    const out = new AntigravityExecutor().transformRequest("gemini-3.5-flash-low", {
+      request: {
+        contents: [
+          { role: "user", parts: [{ text: "prompt" }] },
+          { role: "model", parts: [{ thought: true, text: "thinking..." }] },
+          { role: "model", parts: [{ thoughtSignature: "sig" }] },
+        ],
+      },
+    }, true, { projectId: "p", connectionId: "c" });
+
+    expect(out.request.contents).toEqual([{ role: "user", parts: [{ text: "prompt" }] }]);
+    expect(out.request.contents.every(c => c.parts.length > 0)).toBe(true);
   });
 });
