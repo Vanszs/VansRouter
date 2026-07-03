@@ -90,6 +90,19 @@ function ensureModuleInBundle(pkg, options = {}) {
     path.join(rootDir, "node_modules", pkg),
   ];
 
+  // pnpm virtual-store layout: dependencies of `next` live as siblings in
+  // node_modules/.pnpm/next@.../node_modules/. Resolve the real `next` dir
+  // and look for the target package next to it.
+  for (const base of [appDir, rootDir]) {
+    const nextLink = path.join(base, "node_modules", "next");
+    if (fs.existsSync(nextLink)) {
+      try {
+        const nextReal = fs.realpathSync(nextLink);
+        candidates.push(path.join(path.dirname(nextReal), pkg));
+      } catch {}
+    }
+  }
+
   let src = candidates.find((p) => fs.existsSync(p));
   // pnpm workspaces store dependencies in a virtual-store layout that plain
   // node_modules walking misses; resolve the realpath via Node's resolver.
@@ -218,6 +231,7 @@ if (require.main === module) {
   console.log("3️⃣ b Configuring SQLite drivers...");
   ensureModuleInBundle("sql.js", { cliAppDir, appDir, rootDir, copyRecursive });
   ensureModuleInBundle("@swc/helpers", { cliAppDir, appDir, rootDir, copyRecursive });
+  ensureModuleInBundle("@next/env", { cliAppDir, appDir, rootDir, copyRecursive });
   const betterDir = path.join(cliAppDir, "node_modules", "better-sqlite3");
   if (fs.existsSync(betterDir)) {
     fs.rmSync(betterDir, { recursive: true, force: true });

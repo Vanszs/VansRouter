@@ -1,6 +1,6 @@
 {
   "name": "vansrouter",
-  "version": "0.8.4",
+  "version": "0.8.5-beta.1",
   "description": "VansRouter CLI - Start and manage VansRouter server",
   "bin": {
     "vansrouter": "./cli.js"

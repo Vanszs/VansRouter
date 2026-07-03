@@ -1,39 +1,16 @@
-name: Release
+name: Release Beta
 
 on:
   push:
     tags:
-      - "v*"
+      - "v*-beta*"
   workflow_dispatch:
 
 env:
   GHCR_IMAGE: ghcr.io/vanszs/vansrouter
 
 jobs:
-  check-branch:
-    runs-on: ubuntu-latest
-    outputs:
-      is-main: ${{ steps.check.outputs.is-main }}
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Verify tag/commit is on main
-        id: check
-        run: |
-          git fetch origin main
-          if git merge-base --is-ancestor HEAD origin/main; then
-            echo "is-main=true" >> "$GITHUB_OUTPUT"
-            echo "✅ Release target is on main"
-          else
-            echo "is-main=false" >> "$GITHUB_OUTPUT"
-            echo "⛔ Release skipped: tag is not on main"
-          fi
-
-  build-and-push-ghcr:
-    needs: check-branch
-    if: needs.check-branch.outputs.is-main == 'true' && !contains(github.ref_name, '-beta')
+  build-and-push-ghcr-beta:
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -58,7 +35,7 @@ jobs:
           images: ${{ env.GHCR_IMAGE }}
           tags: |
             type=semver,pattern={{version}}
-            type=raw,value=latest,enable={{is_default_branch}}
+            type=raw,value=beta
 
       - name: Build and push
         uses: docker/build-push-action@v6
@@ -73,9 +50,7 @@ jobs:
           provenance: false
           sbom: false
 
-  publish-npm:
-    needs: check-branch
-    if: needs.check-branch.outputs.is-main == 'true' && !contains(github.ref_name, '-beta')
+  publish-npm-beta:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -106,7 +81,7 @@ jobs:
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
 
-      - name: Build and publish CLI package
-        run: npm publish ./cli
+      - name: Build and publish CLI package (beta tag)
+        run: npm publish ./cli --tag beta
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

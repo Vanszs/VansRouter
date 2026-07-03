@@ -1,3 +1,23 @@
+# v0.8.5-beta.1 (2026-07-03)
+
+Beta release that fixes the CLI startup crash `Cannot find module '@next/env'` reported in issue #7.
+
+## Fixed
+- **CLI package missing `@next/env`** (`cli/scripts/build-cli.js`):
+  - Next.js standalone output did not include `@next/env`, and `ensureModuleInBundle()` only checked flat `node_modules` paths.
+  - In pnpm-managed workspaces, transitive deps like `@next/env` live inside `node_modules/.pnpm/next@.../node_modules/`.
+  - Fix: resolve the real `next` directory and search for the target package as a sibling in the pnpm virtual store.
+  - Verified: `vansrouter@0.8.5-beta.1` installs globally and `next/dist/server/config.js` loads without `MODULE_NOT_FOUND`.
+
+## Install (beta)
+```bash
+# npm (beta tag — will not trigger stable auto-update)
+npm install -g vansrouter@0.8.5-beta.1
+
+# GHCR (beta tag)
+docker pull ghcr.io/vanszs/vansrouter:0.8.5-beta.1
+```
+
 # v0.8.4 (2026-07-03)
 
 Hotfix for Antigravity streaming failures. Ports two upstream `decolua/9router` fixes that caused `API Error: Content block not found` / `API returned an empty or malformed response (HTTP 200)` on Antigravity models.
