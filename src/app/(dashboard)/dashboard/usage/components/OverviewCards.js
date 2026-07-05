@@ -1,6 +1,5 @@
 "use client";
 
-import PropTypes from "prop-types";
 import Card from "@/shared/components/Card";
 
 const fmt = (n) => new Intl.NumberFormat().format(n || 0);
@@ -34,6 +33,4 @@ export default function OverviewCards({ stats }) {
   );
 }
 
-OverviewCards.propTypes = {
-  stats: PropTypes.object.isRequired,
-};
+
