@@ -100,10 +100,10 @@ func (h *CombosHandlers) GetCombo(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, combo)
 }
 
-// UpdateCombo handles PUT /api/combos/{id}.
+// UpdateCombo handles PATCH /api/combos/{id}.
 func (h *CombosHandlers) UpdateCombo(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPut {
-		writeError(w, http.StatusMethodNotAllowed, "method_not_allowed", "PUT required")
+	if r.Method != http.MethodPatch && r.Method != http.MethodPut {
+		writeError(w, http.StatusMethodNotAllowed, "method_not_allowed", "PATCH or PUT required")
 		return
 	}
 	id := idFromPath(r)
@@ -185,7 +185,7 @@ type combo struct {
 }
 
 func listCombos(db *sql.DB) ([]combo, error) {
-	rows, err := db.Query(`SELECT id, name, kind, models, createdAt, updatedAt FROM combos ORDER BY name`)
+	rows, err := db.Query(`SELECT id, name, COALESCE(kind, '') AS kind, models, createdAt, updatedAt FROM combos ORDER BY name`)
 	if err != nil {
 		return nil, err
 	}
@@ -204,7 +204,7 @@ func listCombos(db *sql.DB) ([]combo, error) {
 }
 
 func getComboByID(db *sql.DB, id string) (*combo, error) {
-	row := db.QueryRow(`SELECT id, name, kind, models, createdAt, updatedAt FROM combos WHERE id = ?`, id)
+	row := db.QueryRow(`SELECT id, name, COALESCE(kind, '') AS kind, models, createdAt, updatedAt FROM combos WHERE id = ?`, id)
 	var c combo
 	var modelsJSON string
 	err := row.Scan(&c.ID, &c.Name, &c.Kind, &modelsJSON, &c.CreatedAt, &c.UpdatedAt)
@@ -219,7 +219,7 @@ func getComboByID(db *sql.DB, id string) (*combo, error) {
 }
 
 func getComboByName(db *sql.DB, name string) (*combo, error) {
-	row := db.QueryRow(`SELECT id, name, kind, models, createdAt, updatedAt FROM combos WHERE name = ?`, name)
+	row := db.QueryRow(`SELECT id, name, COALESCE(kind, '') AS kind, models, createdAt, updatedAt FROM combos WHERE name = ?`, name)
 	var c combo
 	var modelsJSON string
 	err := row.Scan(&c.ID, &c.Name, &c.Kind, &modelsJSON, &c.CreatedAt, &c.UpdatedAt)

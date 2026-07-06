@@ -13,15 +13,15 @@ import (
 // DB NULL means "all allowed"; "[]" means "none allowed".
 // ponytail: JSON-encoded allow-lists are simple, but the JS schema stores them as comma-joined strings; align storage format later.
 type APIKey struct {
-	ID               string
-	Key              string
-	Name             string
-	MachineID        string
-	IsActive         bool
-	CreatedAt        string
-	AllowedProviders []string
-	AllowedCombos    []string
-	AllowedKinds     []string
+	ID               string   `json:"id"`
+	Key              string   `json:"key"`
+	Name             string   `json:"name"`
+	MachineID        string   `json:"machineId"`
+	IsActive         bool     `json:"isActive"`
+	CreatedAt        string   `json:"createdAt"`
+	AllowedProviders []string `json:"allowedProviders"`
+	AllowedCombos    []string `json:"allowedCombos"`
+	AllowedKinds     []string `json:"allowedKinds"`
 }
 
 // KeysRepo provides CRUD and validation for API keys with a short TTL cache.

@@ -92,6 +92,8 @@ func dashboardRouter(r *repos.Repos, registry *providers.Registry, builder *mode
 
 	stubs := dashboard.NewStubsHandlers()
 
+	router.With(dashboard.RequireSession).Post("/providers/{id}/test", stubs.ProviderTest)
+
 	providerNodesHandlers := dashboard.NewProviderNodesHandlers()
 	router.With(dashboard.RequireSession).Get("/provider-nodes", providerNodesHandlers.List)
 	router.With(dashboard.RequireSession).Post("/provider-nodes/validate", stubs.ProviderNodesValidate)
@@ -204,6 +206,70 @@ func dashboardRouter(r *repos.Repos, registry *providers.Registry, builder *mode
 	router.With(dashboard.RequireSession).Get("/cli-tools/opencode-settings", stubs.CliToolsOpencodeSettings)
 	router.With(dashboard.RequireSession).Post("/cli-tools/opencode-settings", stubs.CliToolsOpencodeSettings)
 	router.With(dashboard.RequireSession).Delete("/cli-tools/opencode-settings", stubs.CliToolsOpencodeSettings)
+
+	// App-level stubs.
+	router.Get("/init", stubs.Init)
+	router.Post("/locale", stubs.Locale)
+	router.Get("/tags", stubs.Tags)
+
+	// MCP stubs (per-plugin).
+	router.Post("/mcp/{plugin}/message", stubs.MCPMessage)
+	router.Get("/mcp/{plugin}/sse", stubs.MCPSSE)
+
+	// Media provider stubs.
+	router.Get("/media-providers/tts/voices", stubs.TTSVoices)
+	router.Get("/media-providers/tts/deepgram/voices", stubs.TTSProviderVoices)
+	router.Get("/media-providers/tts/elevenlabs/voices", stubs.TTSProviderVoices)
+	router.Get("/media-providers/tts/inworld/voices", stubs.TTSProviderVoices)
+	router.Get("/media-providers/tts/minimax/voices", stubs.TTSProviderVoices)
+
+	// OIDC stubs (start/callback).
+	router.Get("/auth/oidc/start", stubs.OIDCStart)
+	router.Get("/auth/oidc/callback", stubs.OIDCCallback)
+
+	// Settings additional stubs.
+	router.Get("/settings/require-login", stubs.SettingsRequireLogin)
+
+	// Version action stubs.
+	router.Post("/version/shutdown", stubs.VersionShutdown)
+	router.Post("/version/update", stubs.VersionUpdate)
+
+	// Usage additional stub.
+	router.With(dashboard.RequireSession).Get("/usage/request-logs", stubs.UsageRequestLogs)
+
+	// Provider node stubs.
+	router.With(dashboard.RequireSession).Put("/provider-nodes/{id}", stubs.ProviderNodeUpdate)
+	router.With(dashboard.RequireSession).Delete("/provider-nodes/{id}", stubs.ProviderNodeDelete)
+
+	// Provider connection stubs.
+	router.With(dashboard.RequireSession).Get("/providers/{id}", stubs.ProviderConnectionGet)
+	router.With(dashboard.RequireSession).Put("/providers/{id}", stubs.ProviderConnectionUpdate)
+	router.With(dashboard.RequireSession).Delete("/providers/{id}", stubs.ProviderConnectionDelete)
+	router.With(dashboard.RequireSession).Get("/providers/{id}/models", stubs.ProviderModels)
+	router.With(dashboard.RequireSession).Post("/providers/{id}/test-models", stubs.ProviderTestModels)
+	router.With(dashboard.RequireSession).Get("/providers/suggested-models", stubs.ProviderSuggestedModels)
+
+	// Proxy pool stubs.
+	router.With(dashboard.RequireSession).Get("/proxy-pools/{id}", stubs.ProxyPoolGet)
+	router.With(dashboard.RequireSession).Put("/proxy-pools/{id}", stubs.ProxyPoolUpdate)
+	router.With(dashboard.RequireSession).Delete("/proxy-pools/{id}", stubs.ProxyPoolDelete)
+	router.With(dashboard.RequireSession).Post("/proxy-pools/{id}/test", stubs.ProxyPoolTest)
+
+	// OAuth stubs.
+	router.With(dashboard.RequireSession).Post("/oauth/codex/import-token", stubs.OAuthCodexImportToken)
+	router.With(dashboard.RequireSession).Get("/oauth/cursor/auto-import", stubs.OAuthCursorAutoImport)
+	router.With(dashboard.RequireSession).Get("/oauth/cursor/import", stubs.OAuthCursorImport)
+	router.With(dashboard.RequireSession).Post("/oauth/cursor/import", stubs.OAuthCursorImport)
+	router.With(dashboard.RequireSession).Post("/oauth/gitlab/pat", stubs.OAuthGitlabPAT)
+	router.With(dashboard.RequireSession).Post("/oauth/iflow/cookie", stubs.OAuthIflowCookie)
+	router.With(dashboard.RequireSession).Post("/oauth/kiro/api-key", stubs.OAuthKiroApiKey)
+	router.With(dashboard.RequireSession).Get("/oauth/kiro/auto-import", stubs.OAuthKiroAutoImport)
+	router.With(dashboard.RequireSession).Post("/oauth/kiro/import-cli-proxy", stubs.OAuthKiroImportCliProxy)
+	router.With(dashboard.RequireSession).Post("/oauth/kiro/import", stubs.OAuthKiroImport)
+	router.With(dashboard.RequireSession).Get("/oauth/kiro/social-authorize", stubs.OAuthKiroSocialAuthorize)
+	router.With(dashboard.RequireSession).Post("/oauth/kiro/social-exchange", stubs.OAuthKiroSocialExchange)
+	router.With(dashboard.RequireSession).Get("/oauth/{provider}/{action}", stubs.OAuthProviderAction)
+	router.With(dashboard.RequireSession).Post("/oauth/{provider}/{action}", stubs.OAuthProviderAction)
 
 	return router
 }

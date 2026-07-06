@@ -96,6 +96,11 @@ func (h *StubsHandlers) ProvidersValidate(w http.ResponseWriter, r *http.Request
 	writeJSON(w, http.StatusOK, map[string]any{"valid": true})
 }
 
+// ProviderTest handles POST /api/providers/{id}/test.
+func (h *StubsHandlers) ProviderTest(w http.ResponseWriter, r *http.Request) {
+	writeJSON(w, http.StatusOK, map[string]any{"valid": false, "error": "not implemented in go port", "refreshed": false})
+}
+
 // ProviderNodesValidate handles POST /api/provider-nodes/validate.
 func (h *StubsHandlers) ProviderNodesValidate(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]any{"valid": true})
@@ -356,5 +361,281 @@ func (h *StubsHandlers) V1Embeddings(w http.ResponseWriter, r *http.Request) {
 		"data":   []any{},
 		"model":  "",
 		"usage":  map[string]int{"prompt_tokens": 0, "total_tokens": 0},
+	})
+}
+
+// Init handles GET /api/init. Returns a plain-text ack to match the FE.
+func (h *StubsHandlers) Init(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "text/plain")
+	w.WriteHeader(http.StatusOK)
+	_, _ = w.Write([]byte("Initialized"))
+}
+
+// Locale handles POST /api/locale.
+func (h *StubsHandlers) Locale(w http.ResponseWriter, r *http.Request) {
+	var body struct {
+		Locale string `json:"locale"`
+	}
+	_ = json.NewDecoder(r.Body).Decode(&body)
+	if body.Locale == "" {
+		body.Locale = "en"
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"success": true, "locale": body.Locale})
+}
+
+// Tags handles GET /api/tags.
+func (h *StubsHandlers) Tags(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	writeJSON(w, http.StatusOK, []any{})
+}
+
+// MCPMessage handles POST /api/mcp/{plugin}/message.
+func (h *StubsHandlers) MCPMessage(w http.ResponseWriter, r *http.Request) {
+	writeJSON(w, http.StatusOK, map[string]any{"ok": true})
+}
+
+// MCPSSE handles GET /api/mcp/{plugin}/sse.
+func (h *StubsHandlers) MCPSSE(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "text/event-stream")
+	w.Header().Set("Cache-Control", "no-cache")
+	w.Header().Set("Connection", "keep-alive")
+	w.WriteHeader(http.StatusOK)
+	_, _ = w.Write([]byte(":ok\n\n"))
+}
+
+// TTSVoices handles GET /api/media-providers/tts/voices.
+func (h *StubsHandlers) TTSVoices(w http.ResponseWriter, r *http.Request) {
+	writeJSON(w, http.StatusOK, map[string]any{"voices": []any{}})
+}
+
+// TTSProviderVoices handles GET /api/media-providers/tts/{provider}/voices.
+func (h *StubsHandlers) TTSProviderVoices(w http.ResponseWriter, r *http.Request) {
+	writeJSON(w, http.StatusOK, map[string]any{"voices": []any{}})
+}
+
+// OIDCStart handles GET /api/auth/oidc/start.
+func (h *StubsHandlers) OIDCStart(w http.ResponseWriter, r *http.Request) {
+	writeJSON(w, http.StatusNotImplemented, map[string]any{
+		"error": "oidc_not_configured",
+		"message": "OIDC is not implemented in the go port yet",
+	})
+}
+
+// OIDCCallback handles GET /api/auth/oidc/callback.
+func (h *StubsHandlers) OIDCCallback(w http.ResponseWriter, r *http.Request) {
+	writeJSON(w, http.StatusNotImplemented, map[string]any{
+		"error": "oidc_not_implemented",
+	})
+}
+
+// SettingsRequireLogin handles GET /api/settings/require-login.
+func (h *StubsHandlers) SettingsRequireLogin(w http.ResponseWriter, r *http.Request) {
+	writeJSON(w, http.StatusOK, map[string]any{
+		"requireLogin":          true,
+		"tunnelDashboardAccess": true,
+		"tunnelUrl":             "",
+		"tailscaleUrl":          "",
+	})
+}
+
+// VersionShutdown handles POST /api/version/shutdown.
+func (h *StubsHandlers) VersionShutdown(w http.ResponseWriter, r *http.Request) {
+	writeJSON(w, http.StatusOK, map[string]any{
+		"success":     true,
+		"runtime":     "go",
+		"mode":        "manual",
+		"autoRestart": false,
+		"message":     "Update scheduled. Shutdown is not implemented in the go port yet.",
+	})
+}
+
+// VersionUpdate handles POST /api/version/update.
+func (h *StubsHandlers) VersionUpdate(w http.ResponseWriter, r *http.Request) {
+	writeJSON(w, http.StatusOK, map[string]any{
+		"success": true,
+		"message": "Updater is not implemented in the go port yet.",
+	})
+}
+
+// UsageRequestLogs handles GET /api/usage/request-logs.
+func (h *StubsHandlers) UsageRequestLogs(w http.ResponseWriter, r *http.Request) {
+	writeJSON(w, http.StatusOK, map[string]any{"logs": []any{}})
+}
+
+// ProviderNodeGet handles GET /api/provider-nodes/{id}.
+func (h *StubsHandlers) ProviderNodeGet(w http.ResponseWriter, r *http.Request) {
+	writeJSON(w, http.StatusNotFound, map[string]any{"error": "Provider node not found"})
+}
+
+// ProviderNodeUpdate handles PUT /api/provider-nodes/{id}.
+func (h *StubsHandlers) ProviderNodeUpdate(w http.ResponseWriter, r *http.Request) {
+	writeJSON(w, http.StatusOK, map[string]any{"node": map[string]any{}})
+}
+
+// ProviderNodeDelete handles DELETE /api/provider-nodes/{id}.
+func (h *StubsHandlers) ProviderNodeDelete(w http.ResponseWriter, r *http.Request) {
+	writeJSON(w, http.StatusOK, map[string]any{"success": true})
+}
+
+// ProviderConnectionGet handles GET /api/providers/{id}.
+func (h *StubsHandlers) ProviderConnectionGet(w http.ResponseWriter, r *http.Request) {
+	writeJSON(w, http.StatusNotFound, map[string]any{"error": "Connection not found"})
+}
+
+// ProviderConnectionUpdate handles PUT /api/providers/{id}.
+func (h *StubsHandlers) ProviderConnectionUpdate(w http.ResponseWriter, r *http.Request) {
+	writeJSON(w, http.StatusOK, map[string]any{"connection": map[string]any{}})
+}
+
+// ProviderConnectionDelete handles DELETE /api/providers/{id}.
+func (h *StubsHandlers) ProviderConnectionDelete(w http.ResponseWriter, r *http.Request) {
+	writeJSON(w, http.StatusOK, map[string]any{"message": "Connection deleted successfully"})
+}
+
+// ProviderModels handles GET /api/providers/{id}/models.
+func (h *StubsHandlers) ProviderModels(w http.ResponseWriter, r *http.Request) {
+	writeJSON(w, http.StatusOK, map[string]any{
+		"provider":     "",
+		"connectionId": "",
+		"models":       []any{},
+	})
+}
+
+// ProviderTestModels handles POST /api/providers/{id}/test-models.
+func (h *StubsHandlers) ProviderTestModels(w http.ResponseWriter, r *http.Request) {
+	writeJSON(w, http.StatusOK, map[string]any{
+		"provider":     "",
+		"connectionId": "",
+		"results":      []any{},
+	})
+}
+
+// ProviderSuggestedModels handles GET /api/providers/suggested-models.
+func (h *StubsHandlers) ProviderSuggestedModels(w http.ResponseWriter, r *http.Request) {
+	writeJSON(w, http.StatusOK, map[string]any{"data": []any{}})
+}
+
+// ProxyPoolGet handles GET /api/proxy-pools/{id}.
+func (h *StubsHandlers) ProxyPoolGet(w http.ResponseWriter, r *http.Request) {
+	writeJSON(w, http.StatusNotFound, map[string]any{"error": "Proxy pool not found"})
+}
+
+// ProxyPoolUpdate handles PUT /api/proxy-pools/{id}.
+func (h *StubsHandlers) ProxyPoolUpdate(w http.ResponseWriter, r *http.Request) {
+	writeJSON(w, http.StatusOK, map[string]any{"proxyPool": map[string]any{}})
+}
+
+// ProxyPoolDelete handles DELETE /api/proxy-pools/{id}.
+func (h *StubsHandlers) ProxyPoolDelete(w http.ResponseWriter, r *http.Request) {
+	writeJSON(w, http.StatusOK, map[string]any{"success": true})
+}
+
+// ProxyPoolTest handles POST /api/proxy-pools/{id}/test.
+func (h *StubsHandlers) ProxyPoolTest(w http.ResponseWriter, r *http.Request) {
+	writeJSON(w, http.StatusOK, map[string]any{
+		"ok":        false,
+		"status":    0,
+		"error":     "not implemented in go port",
+		"elapsedMs": 0,
+		"testedAt":  "",
+	})
+}
+
+// OAuthCodexImportToken handles POST /api/oauth/codex/import-token.
+func (h *StubsHandlers) OAuthCodexImportToken(w http.ResponseWriter, r *http.Request) {
+	writeJSON(w, http.StatusOK, map[string]any{
+		"success":    true,
+		"connection": map[string]any{},
+	})
+}
+
+// OAuthCursorAutoImport handles GET /api/oauth/cursor/auto-import.
+func (h *StubsHandlers) OAuthCursorAutoImport(w http.ResponseWriter, r *http.Request) {
+	writeJSON(w, http.StatusOK, map[string]any{
+		"found": false,
+		"error": "not implemented in go port",
+	})
+}
+
+// OAuthCursorImport handles GET/POST /api/oauth/cursor/import.
+func (h *StubsHandlers) OAuthCursorImport(w http.ResponseWriter, r *http.Request) {
+	if r.Method == http.MethodGet {
+		writeJSON(w, http.StatusOK, map[string]any{
+			"provider":       "cursor",
+			"method":         "import_token",
+			"instructions":   "",
+			"requiredFields": []any{},
+		})
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{
+		"success":    true,
+		"connection": map[string]any{},
+	})
+}
+
+// OAuthGitlabPAT handles POST /api/oauth/gitlab/pat.
+func (h *StubsHandlers) OAuthGitlabPAT(w http.ResponseWriter, r *http.Request) {
+	writeJSON(w, http.StatusOK, map[string]any{"success": true})
+}
+
+// OAuthIflowCookie handles POST /api/oauth/iflow/cookie.
+func (h *StubsHandlers) OAuthIflowCookie(w http.ResponseWriter, r *http.Request) {
+	writeJSON(w, http.StatusOK, map[string]any{
+		"success":    true,
+		"connection": map[string]any{},
+	})
+}
+
+// OAuthKiroApiKey handles POST /api/oauth/kiro/api-key.
+func (h *StubsHandlers) OAuthKiroApiKey(w http.ResponseWriter, r *http.Request) {
+	writeJSON(w, http.StatusOK, map[string]any{
+		"success":    true,
+		"connection": map[string]any{},
+	})
+}
+
+// OAuthKiroAutoImport handles GET /api/oauth/kiro/auto-import.
+func (h *StubsHandlers) OAuthKiroAutoImport(w http.ResponseWriter, r *http.Request) {
+	writeJSON(w, http.StatusOK, map[string]any{
+		"found": false,
+		"error": "not implemented in go port",
+	})
+}
+
+// OAuthKiroImportCliProxy handles POST /api/oauth/kiro/import-cli-proxy.
+func (h *StubsHandlers) OAuthKiroImportCliProxy(w http.ResponseWriter, r *http.Request) {
+	writeJSON(w, http.StatusOK, map[string]any{
+		"success":    true,
+		"connection": map[string]any{},
+	})
+}
+
+// OAuthKiroImport handles POST /api/oauth/kiro/import.
+func (h *StubsHandlers) OAuthKiroImport(w http.ResponseWriter, r *http.Request) {
+	writeJSON(w, http.StatusOK, map[string]any{
+		"success":    true,
+		"connection": map[string]any{},
+	})
+}
+
+// OAuthKiroSocialAuthorize handles GET /api/oauth/kiro/social-authorize.
+func (h *StubsHandlers) OAuthKiroSocialAuthorize(w http.ResponseWriter, r *http.Request) {
+	writeJSON(w, http.StatusOK, map[string]any{"url": ""})
+}
+
+// OAuthKiroSocialExchange handles POST /api/oauth/kiro/social-exchange.
+func (h *StubsHandlers) OAuthKiroSocialExchange(w http.ResponseWriter, r *http.Request) {
+	writeJSON(w, http.StatusOK, map[string]any{
+		"success":    true,
+		"connection": map[string]any{},
+	})
+}
+
+// OAuthProviderAction handles GET/POST /api/oauth/{provider}/{action}.
+func (h *StubsHandlers) OAuthProviderAction(w http.ResponseWriter, r *http.Request) {
+	writeJSON(w, http.StatusOK, map[string]any{
+		"success":    true,
+		"connection": map[string]any{},
 	})
 }

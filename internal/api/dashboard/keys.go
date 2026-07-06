@@ -97,10 +97,10 @@ func (h *KeysHandlers) GetKey(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]any{"key": key})
 }
 
-// UpdateKey handles PUT /api/keys/{id}.
+// UpdateKey handles PATCH /api/keys/{id}.
 func (h *KeysHandlers) UpdateKey(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPut {
-		writeError(w, http.StatusMethodNotAllowed, "method_not_allowed", "PUT required")
+	if r.Method != http.MethodPatch && r.Method != http.MethodPut {
+		writeError(w, http.StatusMethodNotAllowed, "method_not_allowed", "PATCH or PUT required")
 		return
 	}
 	id := idFromPath(r)
