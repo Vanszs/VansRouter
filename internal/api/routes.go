@@ -102,7 +102,7 @@ func dashboardRouter(r *repos.Repos, registry *providers.Registry, builder *mode
 	router.With(dashboard.RequireSession).Get("/tunnel/status", tunnelHandlers.Status)
 	router.With(dashboard.RequireSession).Post("/tunnel/enable", stubs.TunnelEnable)
 	router.With(dashboard.RequireSession).Post("/tunnel/disable", stubs.TunnelDisable)
-	router.With(dashboard.RequireSession).Post("/tunnel/tailscale-check", stubs.TunnelTailscaleCheck)
+	router.With(dashboard.RequireSession).Get("/tunnel/tailscale-check", stubs.TunnelTailscaleCheck)
 	router.With(dashboard.RequireSession).Post("/tunnel/tailscale-install", stubs.TunnelTailscaleInstall)
 	router.With(dashboard.RequireSession).Post("/tunnel/tailscale-enable", stubs.TunnelTailscaleEnable)
 	router.With(dashboard.RequireSession).Post("/tunnel/tailscale-disable", stubs.TunnelTailscaleDisable)
@@ -117,7 +117,7 @@ func dashboardRouter(r *repos.Repos, registry *providers.Registry, builder *mode
 
 	// Stubs for routes not fully ported yet. These return empty but shape-valid
 	// JSON so the frontend never sees a 404 while the Go port is in progress.
-	router.With(dashboard.RequireSession).Get("/auth/oidc/test", stubs.OIDCTest)
+	router.With(dashboard.RequireSession).Post("/auth/oidc/test", stubs.OIDCTest)
 
 	router.With(dashboard.RequireSession).Get("/models", stubs.ModelsList)
 	router.With(dashboard.RequireSession).Get("/models/alias", stubs.ModelAliases)
@@ -140,7 +140,7 @@ func dashboardRouter(r *repos.Repos, registry *providers.Registry, builder *mode
 	router.With(dashboard.RequireSession).Post("/proxy-pools/cloudflare-deploy", stubs.ProxyPoolsCloudflareDeploy)
 	router.With(dashboard.RequireSession).Post("/proxy-pools/deno-deploy", stubs.ProxyPoolsDenoDeploy)
 
-	router.With(dashboard.RequireSession).Get("/settings/proxy-test", stubs.SettingsProxyTest)
+	router.With(dashboard.RequireSession).Post("/settings/proxy-test", stubs.SettingsProxyTest)
 	router.With(dashboard.RequireSession).Get("/settings/database", stubs.SettingsDatabase)
 	router.With(dashboard.RequireSession).Post("/settings/database", stubs.SettingsDatabase)
 
@@ -185,7 +185,7 @@ func dashboardRouter(r *repos.Repos, registry *providers.Registry, builder *mode
 	router.With(dashboard.RequireSession).Post("/cli-tools/cowork-settings", stubs.CliToolsCoworkSettings)
 	router.With(dashboard.RequireSession).Delete("/cli-tools/cowork-settings", stubs.CliToolsCoworkSettings)
 	router.With(dashboard.RequireSession).Get("/cli-tools/cowork-mcp-registry", stubs.CliToolsCoworkMcpRegistry)
-	router.With(dashboard.RequireSession).Get("/cli-tools/cowork-mcp-tools", stubs.CliToolsCoworkMcpTools)
+	router.With(dashboard.RequireSession).Post("/cli-tools/cowork-mcp-tools", stubs.CliToolsCoworkMcpTools)
 	router.With(dashboard.RequireSession).Get("/cli-tools/deepseek-tui-settings", stubs.CliToolsDeepseekTuiSettings)
 	router.With(dashboard.RequireSession).Post("/cli-tools/deepseek-tui-settings", stubs.CliToolsDeepseekTuiSettings)
 	router.With(dashboard.RequireSession).Delete("/cli-tools/deepseek-tui-settings", stubs.CliToolsDeepseekTuiSettings)

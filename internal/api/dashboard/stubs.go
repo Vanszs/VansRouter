@@ -23,11 +23,60 @@ func (h *StubsHandlers) ok(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]any{"success": true})
 }
 
+// cliToolSettingsResponse returns the shape frontend cli-tools/*-settings
+// routes read on GET. POST/DELETE return { success, message }.
+func cliToolSettingsResponse(tool string) map[string]any {
+	return map[string]any{
+		"installed":    false,
+		"settings":     nil,
+		"has9Router":   false,
+		"settingsPath": "",
+		"message":      tool + " CLI is not installed",
+	}
+}
+
+// cliToolSaveResponse matches the shape returned by POST/DELETE on
+// cli-tools/*-settings routes.
+func cliToolSaveResponse(tool string) map[string]any {
+	return map[string]any{
+		"success": true,
+		"message": tool + " settings updated successfully",
+	}
+}
+
+// oauthConnectionResponse returns the trimmed connection payload the FE
+// expects after a successful OAuth import.
+func oauthConnectionResponse() map[string]any {
+	return map[string]any{
+		"id":           "",
+		"provider":     "",
+		"email":        nil,
+		"displayName":  nil,
+		"name":         nil,
+		"workspace":    nil,
+		"plan":         nil,
+	}
+}
+
 // Auth stubs
 
-// OIDCTest handles GET /api/auth/oidc/test.
+// OIDCTest handles POST /api/auth/oidc/test. Mirrors the JS test handler
+// that probes OIDC discovery + client secret.
 func (h *StubsHandlers) OIDCTest(w http.ResponseWriter, r *http.Request) {
-	writeJSON(w, http.StatusOK, map[string]any{"configured": false})
+	writeJSON(w, http.StatusOK, map[string]any{
+		"ok":                 false,
+		"discoveryOk":        false,
+		"clientSecretTested": false,
+		"clientSecretValid":  false,
+		"issuerUrl":          "",
+		"clientId":           "",
+		"scopes":             "openid profile email",
+		"redirectUri":        "",
+		"authorizationEndpoint": "",
+		"tokenEndpoint":      "",
+		"jwksUri":            "",
+		"message":            "OIDC test is not implemented in the go port yet",
+	})
 }
 
 // Model stubs
@@ -39,24 +88,24 @@ func (h *StubsHandlers) ModelsList(w http.ResponseWriter, r *http.Request) {
 
 // ModelAliases handles GET /api/models/alias.
 func (h *StubsHandlers) ModelAliases(w http.ResponseWriter, r *http.Request) {
-	if r.Method == http.MethodGet {
+	switch r.Method {
+	case http.MethodGet:
 		writeJSON(w, http.StatusOK, map[string]any{"aliases": map[string]string{}})
-		return
-	}
-	if r.Method == http.MethodPut {
+	case http.MethodPut:
+		writeJSON(w, http.StatusOK, map[string]any{"success": true, "model": "", "alias": ""})
+	case http.MethodDelete:
 		writeJSON(w, http.StatusOK, map[string]any{"success": true})
-		return
+	default:
+		writeError(w, http.StatusMethodNotAllowed, "method_not_allowed", "Method not allowed")
 	}
-	if r.Method == http.MethodDelete {
-		writeJSON(w, http.StatusOK, map[string]any{"success": true})
-		return
-	}
-	writeError(w, http.StatusMethodNotAllowed, "method_not_allowed", "Method not allowed")
 }
 
 // ModelAvailability handles GET /api/models/availability.
 func (h *StubsHandlers) ModelAvailability(w http.ResponseWriter, r *http.Request) {
-	writeJSON(w, http.StatusOK, map[string]any{"models": []any{}})
+	writeJSON(w, http.StatusOK, map[string]any{
+		"models":           []any{},
+		"unavailableCount": 0,
+	})
 }
 
 // ModelCustom handles GET /api/models/custom.
@@ -66,13 +115,23 @@ func (h *StubsHandlers) ModelCustom(w http.ResponseWriter, r *http.Request) {
 
 // ModelDisabled handles GET /api/models/disabled.
 func (h *StubsHandlers) ModelDisabled(w http.ResponseWriter, r *http.Request) {
-	writeJSON(w, http.StatusOK, map[string]any{"disabled": []any{}})
+	if r.URL.Query().Get("providerAlias") != "" {
+		writeJSON(w, http.StatusOK, map[string]any{"ids": []any{}})
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"disabled": map[string]any{}})
 }
 
-// ModelTest handles GET/POST /api/models/test.
+// ModelTest handles GET/POST /api/models/test. JS handler only exports POST
+// and forwards to pingModelByKind; stub returns the keys FE code reads.
 func (h *StubsHandlers) ModelTest(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodPost {
-		writeJSON(w, http.StatusOK, map[string]any{"ok": true, "error": nil, "latency": 0})
+		writeJSON(w, http.StatusOK, map[string]any{
+			"ok":      false,
+			"error":   "model ping is not implemented in the go port yet",
+			"latency": 0,
+			"model":   "",
+		})
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"result": map[string]any{}})
@@ -80,34 +139,64 @@ func (h *StubsHandlers) ModelTest(w http.ResponseWriter, r *http.Request) {
 
 // Provider stubs
 
-// ProvidersClient handles GET /api/providers/client.
+// ProvidersClient handles GET /api/providers/client. Matches the JS shape
+// (connections list + pagination + totals).
 func (h *StubsHandlers) ProvidersClient(w http.ResponseWriter, r *http.Request) {
-	writeJSON(w, http.StatusOK, map[string]any{"providers": []any{}})
+	writeJSON(w, http.StatusOK, map[string]any{
+		"connections":   []any{},
+		"providerOptions": []any{},
+		"pagination": map[string]any{
+			"page":      1,
+			"pageSize":  20,
+			"total":     0,
+			"totalPages": 1,
+		},
+		"totals": map[string]any{
+			"eligibleConnections":         0,
+			"providerFilteredConnections": 0,
+		},
+	})
 }
 
 // ProvidersKiloFreeModels handles GET /api/providers/kilo/free-models.
 func (h *StubsHandlers) ProvidersKiloFreeModels(w http.ResponseWriter, r *http.Request) {
-	writeJSON(w, http.StatusOK, map[string]any{"models": []any{}})
+	writeJSON(w, http.StatusOK, map[string]any{"models": []any{}, "cached": false})
 }
 
 // ProvidersTestBatch handles POST /api/providers/test-batch.
 func (h *StubsHandlers) ProvidersTestBatch(w http.ResponseWriter, r *http.Request) {
-	writeJSON(w, http.StatusOK, map[string]any{"results": []any{}})
+	writeJSON(w, http.StatusOK, map[string]any{
+		"mode":       "",
+		"providerId": nil,
+		"results":    []any{},
+		"testedAt":   "",
+		"summary":    map[string]int{"total": 0, "passed": 0, "failed": 0},
+	})
 }
 
 // ProvidersValidate handles POST /api/providers/validate.
 func (h *StubsHandlers) ProvidersValidate(w http.ResponseWriter, r *http.Request) {
-	writeJSON(w, http.StatusOK, map[string]any{"valid": true})
+	writeJSON(w, http.StatusOK, map[string]any{
+		"valid": false,
+		"error": "validation is not implemented in the go port yet",
+	})
 }
 
 // ProviderTest handles POST /api/providers/{id}/test.
 func (h *StubsHandlers) ProviderTest(w http.ResponseWriter, r *http.Request) {
-	writeJSON(w, http.StatusOK, map[string]any{"valid": true, "error": nil, "refreshed": false})
+	writeJSON(w, http.StatusOK, map[string]any{
+		"valid":     false,
+		"error":     "test is not implemented in the go port yet",
+		"refreshed": false,
+	})
 }
 
 // ProviderNodesValidate handles POST /api/provider-nodes/validate.
 func (h *StubsHandlers) ProviderNodesValidate(w http.ResponseWriter, r *http.Request) {
-	writeJSON(w, http.StatusOK, map[string]any{"valid": true})
+	writeJSON(w, http.StatusOK, map[string]any{
+		"valid": false,
+		"error": "node validation is not implemented in the go port yet",
+	})
 }
 
 // Proxy pool stubs
@@ -124,106 +213,179 @@ func (h *StubsHandlers) ProxyPoolsCreate(w http.ResponseWriter, r *http.Request)
 
 // ProxyPoolsVercelDeploy handles POST /api/proxy-pools/vercel-deploy.
 func (h *StubsHandlers) ProxyPoolsVercelDeploy(w http.ResponseWriter, r *http.Request) {
-	writeJSON(w, http.StatusOK, map[string]any{"success": true, "url": ""})
+	writeJSON(w, http.StatusOK, map[string]any{
+		"error": "vercel deploy is not implemented in the go port yet",
+	})
 }
 
 // ProxyPoolsCloudflareDeploy handles POST /api/proxy-pools/cloudflare-deploy.
 func (h *StubsHandlers) ProxyPoolsCloudflareDeploy(w http.ResponseWriter, r *http.Request) {
-	writeJSON(w, http.StatusOK, map[string]any{"success": true, "url": ""})
+	writeJSON(w, http.StatusOK, map[string]any{
+		"error": "cloudflare deploy is not implemented in the go port yet",
+	})
 }
 
 // ProxyPoolsDenoDeploy handles POST /api/proxy-pools/deno-deploy.
 func (h *StubsHandlers) ProxyPoolsDenoDeploy(w http.ResponseWriter, r *http.Request) {
-	writeJSON(w, http.StatusOK, map[string]any{"success": true, "url": ""})
+	writeJSON(w, http.StatusOK, map[string]any{
+		"error": "deno deploy is not implemented in the go port yet",
+	})
 }
 
 // Settings stubs
 
-// SettingsProxyTest handles GET /api/settings/proxy-test.
+// SettingsProxyTest handles POST /api/settings/proxy-test (JS exports POST).
 func (h *StubsHandlers) SettingsProxyTest(w http.ResponseWriter, r *http.Request) {
-	writeJSON(w, http.StatusOK, map[string]any{"success": true})
+	writeJSON(w, http.StatusOK, map[string]any{
+		"ok":    false,
+		"error": "proxy test is not implemented in the go port yet",
+	})
 }
 
-// SettingsDatabase handles GET/POST /api/settings/database.
+// SettingsDatabase handles GET/POST /api/settings/database. JS exports
+// exportDb payload on GET (a full DB dump object) and { success: true }
+// on POST import.
 func (h *StubsHandlers) SettingsDatabase(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodPost {
 		writeJSON(w, http.StatusOK, map[string]any{"success": true})
 		return
 	}
-	writeJSON(w, http.StatusOK, map[string]any{"size": 0, "tables": []any{}})
+	// GET: exportDb returns the full settings/connections/etc shape. Stub
+	// returns a minimal valid object so the FE doesn't choke.
+	writeJSON(w, http.StatusOK, map[string]any{
+		"settings":  map[string]any{},
+		"keys":      []any{},
+		"combos":    []any{},
+		"providers": []any{},
+		"proxyPools": []any{},
+	})
 }
 
-// Headroom start/stop
+// Headroom start/stop. JS handler returns `{success, ...result}` for start
+// and `{stopped, pid, ...}` with 200/409 for stop.
 
 // HeadroomStart handles POST /api/headroom/start.
 func (h *StubsHandlers) HeadroomStart(w http.ResponseWriter, r *http.Request) {
-	writeJSON(w, http.StatusOK, map[string]any{"success": true})
+	writeJSON(w, http.StatusOK, map[string]any{
+		"success": true,
+		"pid":     nil,
+		"port":    nil,
+	})
 }
 
 // HeadroomStop handles POST /api/headroom/stop.
 func (h *StubsHandlers) HeadroomStop(w http.ResponseWriter, r *http.Request) {
-	writeJSON(w, http.StatusOK, map[string]any{"success": true})
+	writeJSON(w, http.StatusOK, map[string]any{
+		"stopped": false,
+		"error":   "headroom stop is not implemented in the go port yet",
+		"code":    nil,
+	})
 }
 
 // Tunnel action stubs
 
-// TunnelEnable handles POST /api/tunnel/enable.
+// TunnelEnable handles POST /api/tunnel/enable. JS handler returns the
+// enableTunnel() result which is `{ success, url, ... }`.
 func (h *StubsHandlers) TunnelEnable(w http.ResponseWriter, r *http.Request) {
-	writeJSON(w, http.StatusOK, map[string]any{"success": true})
+	writeJSON(w, http.StatusOK, map[string]any{
+		"success": false,
+		"error":   "tunnel enable is not implemented in the go port yet",
+	})
 }
 
 // TunnelDisable handles POST /api/tunnel/disable.
 func (h *StubsHandlers) TunnelDisable(w http.ResponseWriter, r *http.Request) {
-	writeJSON(w, http.StatusOK, map[string]any{"success": true})
+	writeJSON(w, http.StatusOK, map[string]any{
+		"success": false,
+		"error":   "tunnel disable is not implemented in the go port yet",
+	})
 }
 
-// TunnelTailscaleCheck handles POST /api/tunnel/tailscale-check.
+// TunnelTailscaleCheck handles GET /api/tunnel/tailscale-check.
 func (h *StubsHandlers) TunnelTailscaleCheck(w http.ResponseWriter, r *http.Request) {
-	writeJSON(w, http.StatusOK, map[string]any{"installed": false, "running": false})
+	writeJSON(w, http.StatusOK, map[string]any{
+		"installed":           false,
+		"loggedIn":            false,
+		"platform":            "",
+		"brewAvailable":       false,
+		"daemonRunning":       false,
+		"customDaemonRunning": false,
+		"systemDaemonRunning": false,
+		"hasCachedPassword":   false,
+	})
 }
 
 // TunnelTailscaleInstall handles POST /api/tunnel/tailscale-install.
+// JS handler streams progress as SSE; stub emits one immediate error event.
 func (h *StubsHandlers) TunnelTailscaleInstall(w http.ResponseWriter, r *http.Request) {
-	writeJSON(w, http.StatusOK, map[string]any{"success": true})
+	w.Header().Set("Content-Type", "text/event-stream")
+	w.Header().Set("Cache-Control", "no-cache")
+	w.Header().Set("Connection", "keep-alive")
+	w.WriteHeader(http.StatusOK)
+	_, _ = w.Write([]byte("event: error\ndata: {\"error\":\"tailscale install is not implemented in the go port yet\"}\n\n"))
 }
 
 // TunnelTailscaleEnable handles POST /api/tunnel/tailscale-enable.
 func (h *StubsHandlers) TunnelTailscaleEnable(w http.ResponseWriter, r *http.Request) {
-	writeJSON(w, http.StatusOK, map[string]any{"success": true})
+	writeJSON(w, http.StatusOK, map[string]any{
+		"success": false,
+		"error":   "tailscale enable is not implemented in the go port yet",
+	})
 }
 
 // TunnelTailscaleDisable handles POST /api/tunnel/tailscale-disable.
 func (h *StubsHandlers) TunnelTailscaleDisable(w http.ResponseWriter, r *http.Request) {
-	writeJSON(w, http.StatusOK, map[string]any{"success": true})
+	writeJSON(w, http.StatusOK, map[string]any{
+		"success": false,
+		"error":   "tailscale disable is not implemented in the go port yet",
+	})
 }
 
 // Pricing stubs
 
-// Pricing handles GET/PATCH/DELETE /api/pricing.
+// Pricing handles GET/PATCH/DELETE /api/pricing. JS GET returns the pricing
+// object (provider -> model -> {input, output, ...}) directly.
 func (h *StubsHandlers) Pricing(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]any{})
 }
 
 // Translator stubs
 
-// TranslatorLoad handles GET /api/translator/load.
+// TranslatorLoad handles GET /api/translator/load. JS returns
+// { success, content } on success, { success: false, error } on miss.
 func (h *StubsHandlers) TranslatorLoad(w http.ResponseWriter, r *http.Request) {
-	writeJSON(w, http.StatusOK, map[string]any{"data": nil})
+	if r.URL.Query().Get("file") == "" {
+		writeJSON(w, http.StatusBadRequest, map[string]any{
+			"success": false,
+			"error":   "File parameter required",
+		})
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"success": true, "content": ""})
 }
 
 // TranslatorSave handles POST /api/translator/save.
 func (h *StubsHandlers) TranslatorSave(w http.ResponseWriter, r *http.Request) {
-	writeJSON(w, http.StatusOK, map[string]any{"success": true})
+	writeJSON(w, http.StatusOK, map[string]any{
+		"success": true,
+	})
 }
 
-// TranslatorSend handles POST /api/translator/send.
+// TranslatorSend handles POST /api/translator/send. JS handler streams the
+// executor response as SSE; stub returns a JSON ack.
 func (h *StubsHandlers) TranslatorSend(w http.ResponseWriter, r *http.Request) {
-	writeJSON(w, http.StatusOK, map[string]any{"success": true})
+	writeJSON(w, http.StatusOK, map[string]any{
+		"success": false,
+		"error":   "translator send is not implemented in the go port yet",
+	})
 }
 
 // TranslatorTranslate handles POST /api/translator/translate.
 func (h *StubsHandlers) TranslatorTranslate(w http.ResponseWriter, r *http.Request) {
-	writeJSON(w, http.StatusOK, map[string]any{"success": true, "result": map[string]any{}})
+	writeJSON(w, http.StatusOK, map[string]any{
+		"success": true,
+		"result":  map[string]any{},
+	})
 }
 
 // TranslatorConsoleLogs handles GET/DELETE /api/translator/console-logs.
@@ -232,138 +394,285 @@ func (h *StubsHandlers) TranslatorConsoleLogs(w http.ResponseWriter, r *http.Req
 		writeJSON(w, http.StatusOK, map[string]any{"success": true})
 		return
 	}
-	writeJSON(w, http.StatusOK, map[string]any{"logs": []any{}})
+	writeJSON(w, http.StatusOK, map[string]any{"success": true, "logs": []any{}})
 }
 
 // TranslatorConsoleLogsStream handles GET /api/translator/console-logs/stream.
+// JS streams `data: {type, line/logs/clear}\n\n` SSE events; stub writes one
+// empty init event so clients that expect SSE parsing don't error out.
 func (h *StubsHandlers) TranslatorConsoleLogsStream(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/event-stream")
 	w.Header().Set("Cache-Control", "no-cache")
 	w.Header().Set("Connection", "keep-alive")
 	w.WriteHeader(http.StatusOK)
-	_, _ = w.Write([]byte(":ok\n\n"))
+	_, _ = w.Write([]byte("data: {\"type\":\"init\",\"logs\":[]}\n\n"))
 }
 
 // OAuth stubs
 
-// OAuthCodexBulkImport handles GET /api/oauth/codex/bulk-import.
+// OAuthCodexBulkImport handles POST /api/oauth/codex/bulk-import.
 func (h *StubsHandlers) OAuthCodexBulkImport(w http.ResponseWriter, r *http.Request) {
-	writeJSON(w, http.StatusOK, map[string]any{"success": true, "imported": 0})
+	writeJSON(w, http.StatusOK, map[string]any{
+		"success": 0,
+		"failed":  0,
+		"results": []any{},
+	})
 }
 
 // CLI tool stubs
 
-func cliToolSettingsResponse(tool string) map[string]any {
-	return map[string]any{
-		"installed":    false,
-		"settings":     nil,
-		"has9Router":   false,
-		"settingsPath": "",
-	}
-}
-
-// CliToolsAntigravityMitm handles GET/POST /api/cli-tools/antigravity-mitm.
+// CliToolsAntigravityMitm handles GET/POST/DELETE/PATCH
+// /api/cli-tools/antigravity-mitm. JS GET returns the full status object.
 func (h *StubsHandlers) CliToolsAntigravityMitm(w http.ResponseWriter, r *http.Request) {
-	writeJSON(w, http.StatusOK, map[string]any{"installed": false, "settings": nil, "has9Router": false})
+	switch r.Method {
+	case http.MethodGet:
+		writeJSON(w, http.StatusOK, map[string]any{
+			"running":            false,
+			"pid":                nil,
+			"certExists":         false,
+			"certTrusted":        false,
+			"dnsStatus":          map[string]any{},
+			"hasCachedPassword":  false,
+			"isWin":              false,
+			"needsSudoPassword":  false,
+			"isAdmin":            false,
+			"mitmRouterBaseUrl":  "http://localhost:20128",
+		})
+	case http.MethodPost:
+		writeJSON(w, http.StatusOK, map[string]any{
+			"success": false,
+			"running": false,
+			"pid":     nil,
+			"error":   "antigravity-mitm is not implemented in the go port yet",
+		})
+	case http.MethodDelete:
+		writeJSON(w, http.StatusOK, map[string]any{
+			"success": true,
+			"running": false,
+		})
+	case http.MethodPatch:
+		writeJSON(w, http.StatusOK, map[string]any{
+			"success":    true,
+			"dnsStatus":  map[string]any{},
+		})
+	default:
+		writeError(w, http.StatusMethodNotAllowed, "method_not_allowed", "Method not allowed")
+	}
 }
 
 // CliToolsAntigravityMitmAlias handles GET /api/cli-tools/antigravity-mitm/alias.
 func (h *StubsHandlers) CliToolsAntigravityMitmAlias(w http.ResponseWriter, r *http.Request) {
+	if r.Method == http.MethodPut {
+		writeJSON(w, http.StatusOK, map[string]any{
+			"success": true,
+			"aliases": map[string]any{},
+		})
+		return
+	}
 	writeJSON(w, http.StatusOK, map[string]any{"aliases": []any{}})
 }
 
 // CliToolsClaudeSettings handles GET/POST/DELETE /api/cli-tools/claude-settings.
 func (h *StubsHandlers) CliToolsClaudeSettings(w http.ResponseWriter, r *http.Request) {
-	writeJSON(w, http.StatusOK, cliToolSettingsResponse("claude"))
+	switch r.Method {
+	case http.MethodGet:
+		writeJSON(w, http.StatusOK, cliToolSettingsResponse("Claude"))
+	case http.MethodPost, http.MethodDelete:
+		writeJSON(w, http.StatusOK, cliToolSaveResponse("Claude"))
+	default:
+		writeError(w, http.StatusMethodNotAllowed, "method_not_allowed", "Method not allowed")
+	}
 }
 
 // CliToolsClineSettings handles GET/POST/DELETE /api/cli-tools/cline-settings.
 func (h *StubsHandlers) CliToolsClineSettings(w http.ResponseWriter, r *http.Request) {
-	writeJSON(w, http.StatusOK, cliToolSettingsResponse("cline"))
+	switch r.Method {
+	case http.MethodGet:
+		writeJSON(w, http.StatusOK, cliToolSettingsResponse("Cline"))
+	case http.MethodPost, http.MethodDelete:
+		writeJSON(w, http.StatusOK, cliToolSaveResponse("Cline"))
+	default:
+		writeError(w, http.StatusMethodNotAllowed, "method_not_allowed", "Method not allowed")
+	}
 }
 
 // CliToolsCodexSettings handles GET/POST/DELETE /api/cli-tools/codex-settings.
 func (h *StubsHandlers) CliToolsCodexSettings(w http.ResponseWriter, r *http.Request) {
-	writeJSON(w, http.StatusOK, cliToolSettingsResponse("codex"))
+	switch r.Method {
+	case http.MethodGet:
+		writeJSON(w, http.StatusOK, cliToolSettingsResponse("Codex"))
+	case http.MethodPost, http.MethodDelete:
+		writeJSON(w, http.StatusOK, cliToolSaveResponse("Codex"))
+	default:
+		writeError(w, http.StatusMethodNotAllowed, "method_not_allowed", "Method not allowed")
+	}
 }
 
 // CliToolsCopilotSettings handles GET/POST/DELETE /api/cli-tools/copilot-settings.
 func (h *StubsHandlers) CliToolsCopilotSettings(w http.ResponseWriter, r *http.Request) {
-	writeJSON(w, http.StatusOK, cliToolSettingsResponse("copilot"))
+	switch r.Method {
+	case http.MethodGet:
+		writeJSON(w, http.StatusOK, cliToolSettingsResponse("Copilot"))
+	case http.MethodPost, http.MethodDelete:
+		writeJSON(w, http.StatusOK, cliToolSaveResponse("Copilot"))
+	default:
+		writeError(w, http.StatusMethodNotAllowed, "method_not_allowed", "Method not allowed")
+	}
 }
 
 // CliToolsCoworkSettings handles GET/POST/DELETE /api/cli-tools/cowork-settings.
 func (h *StubsHandlers) CliToolsCoworkSettings(w http.ResponseWriter, r *http.Request) {
-	writeJSON(w, http.StatusOK, cliToolSettingsResponse("cowork"))
+	switch r.Method {
+	case http.MethodGet:
+		writeJSON(w, http.StatusOK, cliToolSettingsResponse("Cowork"))
+	case http.MethodPost, http.MethodDelete:
+		writeJSON(w, http.StatusOK, cliToolSaveResponse("Cowork"))
+	default:
+		writeError(w, http.StatusMethodNotAllowed, "method_not_allowed", "Method not allowed")
+	}
 }
 
 // CliToolsCoworkMcpRegistry handles GET /api/cli-tools/cowork-mcp-registry.
 func (h *StubsHandlers) CliToolsCoworkMcpRegistry(w http.ResponseWriter, r *http.Request) {
-	writeJSON(w, http.StatusOK, map[string]any{"entries": []any{}})
+	writeJSON(w, http.StatusOK, map[string]any{
+		"servers": []any{},
+		"total":   0,
+		"cached":  false,
+	})
 }
 
-// CliToolsCoworkMcpTools handles GET /api/cli-tools/cowork-mcp-tools.
+// CliToolsCoworkMcpTools handles POST /api/cli-tools/cowork-mcp-tools.
 func (h *StubsHandlers) CliToolsCoworkMcpTools(w http.ResponseWriter, r *http.Request) {
-	writeJSON(w, http.StatusOK, map[string]any{"tools": []any{}})
+	writeJSON(w, http.StatusOK, map[string]any{
+		"tools":         []any{},
+		"requiresAuth":  false,
+	})
 }
 
-// CliToolsAllStatuses handles GET /api/cli-tools/all-statuses.
+// CliToolsAllStatuses handles GET /api/cli-tools/all-statuses. Returns a
+// dict keyed by tool id.
 func (h *StubsHandlers) CliToolsAllStatuses(w http.ResponseWriter, r *http.Request) {
-	writeJSON(w, http.StatusOK, map[string]any{"statuses": map[string]any{}})
+	empty := map[string]any{}
+	statuses := map[string]any{
+		"claude":      empty,
+		"codex":       empty,
+		"opencode":    empty,
+		"droid":       empty,
+		"openclaw":    empty,
+		"hermes":      empty,
+		"cowork":      empty,
+		"copilot":     empty,
+		"cline":       empty,
+		"kilo":        empty,
+		"deepseek-tui": empty,
+		"jcode":       empty,
+	}
+	writeJSON(w, http.StatusOK, statuses)
 }
 
 // CliToolsDeepseekTuiSettings handles GET/POST/DELETE /api/cli-tools/deepseek-tui-settings.
 func (h *StubsHandlers) CliToolsDeepseekTuiSettings(w http.ResponseWriter, r *http.Request) {
-	writeJSON(w, http.StatusOK, cliToolSettingsResponse("deepseek-tui"))
+	switch r.Method {
+	case http.MethodGet:
+		writeJSON(w, http.StatusOK, cliToolSettingsResponse("Deepseek TUI"))
+	case http.MethodPost, http.MethodDelete:
+		writeJSON(w, http.StatusOK, cliToolSaveResponse("Deepseek TUI"))
+	default:
+		writeError(w, http.StatusMethodNotAllowed, "method_not_allowed", "Method not allowed")
+	}
 }
 
 // CliToolsDroidSettings handles GET/POST/DELETE /api/cli-tools/droid-settings.
 func (h *StubsHandlers) CliToolsDroidSettings(w http.ResponseWriter, r *http.Request) {
-	writeJSON(w, http.StatusOK, cliToolSettingsResponse("droid"))
+	switch r.Method {
+	case http.MethodGet:
+		writeJSON(w, http.StatusOK, cliToolSettingsResponse("Droid"))
+	case http.MethodPost, http.MethodDelete:
+		writeJSON(w, http.StatusOK, cliToolSaveResponse("Droid"))
+	default:
+		writeError(w, http.StatusMethodNotAllowed, "method_not_allowed", "Method not allowed")
+	}
 }
 
 // CliToolsHermesSettings handles GET/POST/DELETE /api/cli-tools/hermes-settings.
 func (h *StubsHandlers) CliToolsHermesSettings(w http.ResponseWriter, r *http.Request) {
-	writeJSON(w, http.StatusOK, cliToolSettingsResponse("hermes"))
+	switch r.Method {
+	case http.MethodGet:
+		writeJSON(w, http.StatusOK, cliToolSettingsResponse("Hermes"))
+	case http.MethodPost, http.MethodDelete:
+		writeJSON(w, http.StatusOK, cliToolSaveResponse("Hermes"))
+	default:
+		writeError(w, http.StatusMethodNotAllowed, "method_not_allowed", "Method not allowed")
+	}
 }
 
 // CliToolsJcodeSettings handles GET/POST/DELETE /api/cli-tools/jcode-settings.
 func (h *StubsHandlers) CliToolsJcodeSettings(w http.ResponseWriter, r *http.Request) {
-	writeJSON(w, http.StatusOK, cliToolSettingsResponse("jcode"))
+	switch r.Method {
+	case http.MethodGet:
+		writeJSON(w, http.StatusOK, cliToolSettingsResponse("Jcode"))
+	case http.MethodPost, http.MethodDelete:
+		writeJSON(w, http.StatusOK, cliToolSaveResponse("Jcode"))
+	default:
+		writeError(w, http.StatusMethodNotAllowed, "method_not_allowed", "Method not allowed")
+	}
 }
 
 // CliToolsKiloSettings handles GET/POST/DELETE /api/cli-tools/kilo-settings.
 func (h *StubsHandlers) CliToolsKiloSettings(w http.ResponseWriter, r *http.Request) {
-	writeJSON(w, http.StatusOK, cliToolSettingsResponse("kilo"))
+	switch r.Method {
+	case http.MethodGet:
+		writeJSON(w, http.StatusOK, cliToolSettingsResponse("Kilo"))
+	case http.MethodPost, http.MethodDelete:
+		writeJSON(w, http.StatusOK, cliToolSaveResponse("Kilo"))
+	default:
+		writeError(w, http.StatusMethodNotAllowed, "method_not_allowed", "Method not allowed")
+	}
 }
 
 // CliToolsOpenclawSettings handles GET/POST/DELETE /api/cli-tools/openclaw-settings.
 func (h *StubsHandlers) CliToolsOpenclawSettings(w http.ResponseWriter, r *http.Request) {
-	writeJSON(w, http.StatusOK, cliToolSettingsResponse("openclaw"))
+	switch r.Method {
+	case http.MethodGet:
+		writeJSON(w, http.StatusOK, cliToolSettingsResponse("OpenClaw"))
+	case http.MethodPost, http.MethodDelete:
+		writeJSON(w, http.StatusOK, cliToolSaveResponse("OpenClaw"))
+	default:
+		writeError(w, http.StatusMethodNotAllowed, "method_not_allowed", "Method not allowed")
+	}
 }
 
 // CliToolsOpencodeSettings handles GET/POST/DELETE /api/cli-tools/opencode-settings.
 func (h *StubsHandlers) CliToolsOpencodeSettings(w http.ResponseWriter, r *http.Request) {
-	writeJSON(w, http.StatusOK, cliToolSettingsResponse("opencode"))
+	switch r.Method {
+	case http.MethodGet:
+		writeJSON(w, http.StatusOK, cliToolSettingsResponse("OpenCode"))
+	case http.MethodPost, http.MethodDelete:
+		writeJSON(w, http.StatusOK, cliToolSaveResponse("OpenCode"))
+	default:
+		writeError(w, http.StatusMethodNotAllowed, "method_not_allowed", "Method not allowed")
+	}
 }
 
 // V1 media stubs
 
 // V1AudioTranscriptions handles POST /api/v1/audio/transcriptions.
+// OpenAI Whisper-compatible shape.
 func (h *StubsHandlers) V1AudioTranscriptions(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]string{"text": ""})
 }
 
-// V1Embeddings handles POST /api/v1/embeddings.
+// V1Embeddings handles POST /api/v1/embeddings. OpenAI-compatible shape.
 func (h *StubsHandlers) V1Embeddings(w http.ResponseWriter, r *http.Request) {
 	var body struct {
-		Input any `json:"input"`
+		Input any    `json:"input"`
+		Model string `json:"model"`
 	}
 	_ = json.NewDecoder(r.Body).Decode(&body)
 	writeJSON(w, http.StatusOK, map[string]any{
 		"object": "list",
 		"data":   []any{},
-		"model":  "",
+		"model":  body.Model,
 		"usage":  map[string]int{"prompt_tokens": 0, "total_tokens": 0},
 	})
 }
@@ -387,49 +696,59 @@ func (h *StubsHandlers) Locale(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]any{"success": true, "locale": body.Locale})
 }
 
-// Tags handles GET /api/tags.
+// Tags handles GET /api/tags. Returns Ollama-compatible model list.
 func (h *StubsHandlers) Tags(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "*")
-	writeJSON(w, http.StatusOK, []any{})
+	w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
+	w.Header().Set("Access-Control-Allow-Headers", "*")
+	writeJSON(w, http.StatusOK, map[string]any{"models": []any{}})
 }
 
-// MCPMessage handles POST /api/mcp/{plugin}/message.
+// MCPMessage handles POST /api/mcp/{plugin}/message. JS handler returns 403
+// because cowork/MCP stdio bridge is disabled (RCE risk).
 func (h *StubsHandlers) MCPMessage(w http.ResponseWriter, r *http.Request) {
-	writeJSON(w, http.StatusOK, map[string]any{"ok": true})
+	writeJSON(w, http.StatusForbidden, map[string]any{
+		"error": "Cowork is disabled",
+	})
 }
 
-// MCPSSE handles GET /api/mcp/{plugin}/sse.
+// MCPSSE handles GET /api/mcp/{plugin}/sse. JS handler returns 403 text.
 func (h *StubsHandlers) MCPSSE(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "text/event-stream")
-	w.Header().Set("Cache-Control", "no-cache")
-	w.Header().Set("Connection", "keep-alive")
-	w.WriteHeader(http.StatusOK)
-	_, _ = w.Write([]byte(":ok\n\n"))
+	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+	w.WriteHeader(http.StatusForbidden)
+	_, _ = w.Write([]byte("Cowork is disabled"))
 }
 
 // TTSVoices handles GET /api/media-providers/tts/voices.
 func (h *StubsHandlers) TTSVoices(w http.ResponseWriter, r *http.Request) {
-	writeJSON(w, http.StatusOK, map[string]any{"voices": []any{}})
+	writeJSON(w, http.StatusOK, map[string]any{
+		"voices":    []any{},
+		"languages": []any{},
+		"byLang":    map[string]any{},
+	})
 }
 
 // TTSProviderVoices handles GET /api/media-providers/tts/{provider}/voices.
+// Provider-specific endpoints (deepgram, elevenlabs, inworld, etc.) share
+// the same `{ voices | languages, byLang }` shape.
 func (h *StubsHandlers) TTSProviderVoices(w http.ResponseWriter, r *http.Request) {
-	writeJSON(w, http.StatusOK, map[string]any{"voices": []any{}})
+	writeJSON(w, http.StatusOK, map[string]any{
+		"voices":    []any{},
+		"languages": []any{},
+		"byLang":    map[string]any{},
+	})
 }
 
-// OIDCStart handles GET /api/auth/oidc/start.
+// OIDCStart handles GET /api/auth/oidc/start. JS handler redirects to
+// /login?error=oidc_not_configured when no OIDC config exists.
 func (h *StubsHandlers) OIDCStart(w http.ResponseWriter, r *http.Request) {
-	writeJSON(w, http.StatusNotImplemented, map[string]any{
-		"error": "oidc_not_configured",
-		"message": "OIDC is not implemented in the go port yet",
-	})
+	http.Redirect(w, r, "/login?error=oidc_not_configured", http.StatusFound)
 }
 
-// OIDCCallback handles GET /api/auth/oidc/callback.
+// OIDCCallback handles GET /api/auth/oidc/callback. Same redirect-on-error
+// behavior as JS.
 func (h *StubsHandlers) OIDCCallback(w http.ResponseWriter, r *http.Request) {
-	writeJSON(w, http.StatusNotImplemented, map[string]any{
-		"error": "oidc_not_implemented",
-	})
+	http.Redirect(w, r, "/login?error=oidc_not_implemented", http.StatusFound)
 }
 
 // SettingsRequireLogin handles GET /api/settings/require-login.
@@ -442,31 +761,34 @@ func (h *StubsHandlers) SettingsRequireLogin(w http.ResponseWriter, r *http.Requ
 	})
 }
 
-// VersionShutdown handles POST /api/version/shutdown.
+// VersionShutdown handles POST /api/version/shutdown. Mirrors the JS shape
+// so the FE can render the same fields.
 func (h *StubsHandlers) VersionShutdown(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]any{
 		"success":     true,
 		"runtime":     "go",
 		"mode":        "manual",
 		"autoRestart": false,
-		"message":     "Update scheduled. Shutdown is not implemented in the go port yet.",
+		"message":     "Shutdown is not implemented in the go port yet.",
 	})
 }
 
 // VersionUpdate handles POST /api/version/update.
 func (h *StubsHandlers) VersionUpdate(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]any{
-		"success": true,
+		"success": false,
 		"message": "Updater is not implemented in the go port yet.",
 	})
 }
 
-// UsageRequestLogs handles GET /api/usage/request-logs.
+// UsageRequestLogs handles GET /api/usage/request-logs. JS handler returns
+// the raw logs object returned by getRecentLogs.
 func (h *StubsHandlers) UsageRequestLogs(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]any{"logs": []any{}})
 }
 
-// ProviderNodeGet handles GET /api/provider-nodes/{id}.
+// ProviderNodeGet handles GET /api/provider-nodes/{id}. JS handler returns
+// 404 + { error } when not found (stub always 404 since no DB here).
 func (h *StubsHandlers) ProviderNodeGet(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusNotFound, map[string]any{"error": "Provider node not found"})
 }
@@ -537,11 +859,12 @@ func (h *StubsHandlers) ProxyPoolDelete(w http.ResponseWriter, r *http.Request) 
 // ProxyPoolTest handles POST /api/proxy-pools/{id}/test.
 func (h *StubsHandlers) ProxyPoolTest(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]any{
-		"ok":        false,
-		"status":    0,
-		"error":     "not implemented in go port",
-		"elapsedMs": 0,
-		"testedAt":  "",
+		"ok":         false,
+		"status":     0,
+		"statusText": nil,
+		"error":      "proxy pool test is not implemented in the go port yet",
+		"elapsedMs":  0,
+		"testedAt":   "",
 	})
 }
 
@@ -549,7 +872,7 @@ func (h *StubsHandlers) ProxyPoolTest(w http.ResponseWriter, r *http.Request) {
 func (h *StubsHandlers) OAuthCodexImportToken(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]any{
 		"success":    true,
-		"connection": map[string]any{},
+		"connection": oauthConnectionResponse(),
 	})
 }
 
@@ -557,7 +880,7 @@ func (h *StubsHandlers) OAuthCodexImportToken(w http.ResponseWriter, r *http.Req
 func (h *StubsHandlers) OAuthCursorAutoImport(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]any{
 		"found": false,
-		"error": "not implemented in go port",
+		"error": "cursor auto-import is not implemented in the go port yet",
 	})
 }
 
@@ -574,7 +897,7 @@ func (h *StubsHandlers) OAuthCursorImport(w http.ResponseWriter, r *http.Request
 	}
 	writeJSON(w, http.StatusOK, map[string]any{
 		"success":    true,
-		"connection": map[string]any{},
+		"connection": oauthConnectionResponse(),
 	})
 }
 
@@ -587,7 +910,7 @@ func (h *StubsHandlers) OAuthGitlabPAT(w http.ResponseWriter, r *http.Request) {
 func (h *StubsHandlers) OAuthIflowCookie(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]any{
 		"success":    true,
-		"connection": map[string]any{},
+		"connection": oauthConnectionResponse(),
 	})
 }
 
@@ -595,7 +918,7 @@ func (h *StubsHandlers) OAuthIflowCookie(w http.ResponseWriter, r *http.Request)
 func (h *StubsHandlers) OAuthKiroApiKey(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]any{
 		"success":    true,
-		"connection": map[string]any{},
+		"connection": oauthConnectionResponse(),
 	})
 }
 
@@ -603,7 +926,7 @@ func (h *StubsHandlers) OAuthKiroApiKey(w http.ResponseWriter, r *http.Request) 
 func (h *StubsHandlers) OAuthKiroAutoImport(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]any{
 		"found": false,
-		"error": "not implemented in go port",
+		"error": "kiro auto-import is not implemented in the go port yet",
 	})
 }
 
@@ -611,7 +934,7 @@ func (h *StubsHandlers) OAuthKiroAutoImport(w http.ResponseWriter, r *http.Reque
 func (h *StubsHandlers) OAuthKiroImportCliProxy(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]any{
 		"success":    true,
-		"connection": map[string]any{},
+		"connection": oauthConnectionResponse(),
 	})
 }
 
@@ -619,27 +942,44 @@ func (h *StubsHandlers) OAuthKiroImportCliProxy(w http.ResponseWriter, r *http.R
 func (h *StubsHandlers) OAuthKiroImport(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]any{
 		"success":    true,
-		"connection": map[string]any{},
+		"connection": oauthConnectionResponse(),
 	})
 }
 
 // OAuthKiroSocialAuthorize handles GET /api/oauth/kiro/social-authorize.
 func (h *StubsHandlers) OAuthKiroSocialAuthorize(w http.ResponseWriter, r *http.Request) {
-	writeJSON(w, http.StatusOK, map[string]any{"url": ""})
+	writeJSON(w, http.StatusOK, map[string]any{
+		"authUrl":       "",
+		"state":         "",
+		"codeVerifier":  "",
+		"codeChallenge": "",
+		"provider":      "",
+	})
 }
 
 // OAuthKiroSocialExchange handles POST /api/oauth/kiro/social-exchange.
 func (h *StubsHandlers) OAuthKiroSocialExchange(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]any{
 		"success":    true,
-		"connection": map[string]any{},
+		"connection": oauthConnectionResponse(),
 	})
 }
 
 // OAuthProviderAction handles GET/POST /api/oauth/{provider}/{action}.
+// Action determines the actual response shape; the stub returns a generic
+// OAuth-shaped JSON envelope so the FE can read common keys.
 func (h *StubsHandlers) OAuthProviderAction(w http.ResponseWriter, r *http.Request) {
+	if r.Method == http.MethodGet {
+		writeJSON(w, http.StatusOK, map[string]any{
+			"url":          "",
+			"state":        "",
+			"codeVerifier": "",
+			"status":       "unknown",
+		})
+		return
+	}
 	writeJSON(w, http.StatusOK, map[string]any{
 		"success":    true,
-		"connection": map[string]any{},
+		"connection": oauthConnectionResponse(),
 	})
 }
