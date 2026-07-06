@@ -69,8 +69,12 @@ func (h *StubsHandlers) ModelDisabled(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]any{"disabled": []any{}})
 }
 
-// ModelTest handles GET /api/models/test.
+// ModelTest handles GET/POST /api/models/test.
 func (h *StubsHandlers) ModelTest(w http.ResponseWriter, r *http.Request) {
+	if r.Method == http.MethodPost {
+		writeJSON(w, http.StatusOK, map[string]any{"ok": true, "error": nil, "latency": 0})
+		return
+	}
 	writeJSON(w, http.StatusOK, map[string]any{"result": map[string]any{}})
 }
 

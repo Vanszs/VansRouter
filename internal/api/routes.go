@@ -127,6 +127,7 @@ func dashboardRouter(r *repos.Repos, registry *providers.Registry, builder *mode
 	router.With(dashboard.RequireSession).Get("/models/custom", stubs.ModelCustom)
 	router.With(dashboard.RequireSession).Get("/models/disabled", stubs.ModelDisabled)
 	router.With(dashboard.RequireSession).Get("/models/test", stubs.ModelTest)
+	router.With(dashboard.RequireSession).Post("/models/test", stubs.ModelTest)
 
 	router.With(dashboard.RequireSession).Get("/providers/client", stubs.ProvidersClient)
 	router.With(dashboard.RequireSession).Get("/providers/kilo/free-models", stubs.ProvidersKiloFreeModels)
