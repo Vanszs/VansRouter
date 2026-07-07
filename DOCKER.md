@@ -70,27 +70,61 @@ docker run -d \
 
 ## Optional Headroom sidecar
 
-The VansRouter image does not bundle Python or Headroom. To use Headroom in Docker, run it as a separate service and point VansRouter at that proxy:
+Headroom is an optional sidecar service for tool-history safety and advanced request processing.
+
+### Option A: Docker Compose (Recommended)
+
+Use the provided `docker-compose.yml`:
+
+```bash
+# Copy and customize environment
+cp .env.example .env
+nano .env
+
+# Start both services
+docker compose up -d
+```
+
+### Option B: Manual Compose
+
+Create your own `docker-compose.yml`:
 
 ```yaml
 services:
   vansrouter:
     image: ghcr.io/Vanszs/VansRouter:latest
+    container_name: vansrouter
+    restart: always
     ports:
       - "20128:20128"
     volumes:
-      - "$HOME/.9router:/app/data"
+      - vansrouter-data:/app/data
+    env_file:
+      - .env
     environment:
       DATA_DIR: /app/data
+      PORT: "20128"
+      HOSTNAME: "0.0.0.0"
+      NODE_ENV: production
       HEADROOM_URL: http://headroom:8787
     depends_on:
       - headroom
 
   headroom:
     image: ghcr.io/chopratejas/headroom:latest
+    container_name: headroom
+    restart: always
     ports:
       - "8787:8787"
+
+volumes:
+  vansrouter-data:
+    name: vansrouter-data
 ```
+
+### Option C: Separate Containers
+
+Run Headroom independently:
 
 In the dashboard, open `Endpoint` → `Token Saver` → `Headroom`, confirm the URL is `http://headroom:8787`, recheck status, then enable Headroom.
 

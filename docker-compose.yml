@@ -1,12 +1,18 @@
+# VansRouter Docker Compose
+# Usage:
+#   1. cp .env.example .env && nano .env
+#   2. docker compose up -d
+#   3. Open http://localhost:20128
+
 services:
   vansrouter:
-    image: ghcr.io/Vanszs/VansRouter:latest
+    image: ghcr.io/vanszs/vansrouter:latest
     container_name: vansrouter
-    restart: always
+    restart: unless-stopped
     ports:
-      - "20128:20128"
+      - "${PORT:-20128}:20128"
     volumes:
-      - 9router-data:/app/data
+      - vansrouter-data:/app/data
     env_file:
       - .env
     environment:
@@ -16,15 +22,22 @@ services:
       NODE_ENV: production
       HEADROOM_URL: http://headroom:8787
     depends_on:
-      - headroom
+      headroom:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:20128/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
 
   headroom:
     image: ghcr.io/chopratejas/headroom:latest
     container_name: headroom
-    restart: always
+    restart: unless-stopped
     ports:
-      - "8787:8787"
+      - "${HEADROOM_PORT:-8787}:8787"
 
 volumes:
-  9router-data:
-    name: 9router-data
+  vansrouter-data:
+    name: vansrouter-data
