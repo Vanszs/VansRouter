@@ -52,3 +52,27 @@ func IntNumber(v any) int {
 		return 0
 	}
 }
+
+// BuildUsage builds an OpenAI usage object from explicit token counts.
+// Optional detail fields are added only when > 0.
+func BuildUsage(promptTokens, completionTokens, totalTokens, cachedTokens, cacheCreationTokens, reasoningTokens int) map[string]any {
+	usage := map[string]any{
+		"prompt_tokens":     promptTokens,
+		"completion_tokens": completionTokens,
+		"total_tokens":      totalTokens,
+	}
+	if cachedTokens > 0 || cacheCreationTokens > 0 {
+		details := map[string]any{}
+		if cachedTokens > 0 {
+			details["cached_tokens"] = cachedTokens
+		}
+		if cacheCreationTokens > 0 {
+			details["cache_creation_tokens"] = cacheCreationTokens
+		}
+		usage["prompt_tokens_details"] = details
+	}
+	if reasoningTokens > 0 {
+		usage["completion_tokens_details"] = map[string]any{"reasoning_tokens": reasoningTokens}
+	}
+	return usage
+}
