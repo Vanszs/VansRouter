@@ -108,8 +108,11 @@ export const CLINEPASS_CONFIG = { ...PROVIDER_OAUTH["clinepass"] };
 // GitLab Duo OAuth Configuration (Authorization Code Flow with PKCE)
 export const GITLAB_CONFIG = { ...PROVIDER_OAUTH["gitlab"] };
 
-// CodeBuddy (Tencent) OAuth Configuration (Browser OAuth Polling Flow)
-export const CODEBUDDY_CONFIG = { ...PROVIDER_OAUTH["codebuddy-cn"] };
+// CodeBuddy (Global) OAuth Configuration (Browser OAuth Polling Flow)
+export const CODEBUDDY_CONFIG = { ...PROVIDER_OAUTH["codebuddy"] };
+
+// CodeBuddy CN (Tencent) OAuth Configuration (Browser OAuth Polling Flow)
+export const CODEBUDDY_CN_CONFIG = { ...PROVIDER_OAUTH["codebuddy-cn"] };
 
 // Z.ai (ZCode) OAuth Configuration (Manual paste flow via zcode:// custom scheme)
 export const ZAI_CONFIG = { ...PROVIDER_OAUTH["zcode"] };
@@ -135,6 +138,7 @@ export const PROVIDERS = {
   CLINE: "cline",
   CLINEPASS: "clinepass",
   GITLAB: "gitlab",
-  CODEBUDDY: "codebuddy-cn",
+  CODEBUDDY: "codebuddy",
+  CODEBUDDY_CN: "codebuddy-cn",
   ZCODE: "zcode",
 };

@@ -6,6 +6,12 @@ export default {
   version: 2,
   name: "fix-empty-allowed-lists",
   up(db) {
+    const rows = db.all("PRAGMA table_info(apiKeys)");
+    const columns = Array.isArray(rows) ? rows.map((row) => row.name) : [];
+    if (!columns.includes("allowedProviders")) db.exec("ALTER TABLE apiKeys ADD COLUMN allowedProviders TEXT");
+    if (!columns.includes("allowedCombos")) db.exec("ALTER TABLE apiKeys ADD COLUMN allowedCombos TEXT");
+    if (!columns.includes("allowedKinds")) db.exec("ALTER TABLE apiKeys ADD COLUMN allowedKinds TEXT");
+
     db.exec(`UPDATE apiKeys SET allowedProviders = NULL WHERE allowedProviders = '[]'`);
     db.exec(`UPDATE apiKeys SET allowedCombos    = NULL WHERE allowedCombos    = '[]'`);
     db.exec(`UPDATE apiKeys SET allowedKinds     = NULL WHERE allowedKinds     = '[]'`);

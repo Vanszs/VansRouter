@@ -10,6 +10,7 @@ import { getCodexUsage, consumeCodexRateLimitResetCredit, getCodexRateLimitReset
 export { consumeCodexRateLimitResetCredit, getCodexRateLimitResetCredits };
 import { getKiroUsage } from "./usage/kiro.js";
 import { getMiniMaxUsage } from "./usage/minimax.js";
+import { getCodeBuddyUsage } from "./usage/codebuddy.js";
 import { getCodeBuddyCnUsage } from "./usage/codebuddy-cn.js";
 import {
   getQwenUsage,
@@ -33,6 +34,7 @@ const USAGE_HANDLERS = {
   claude: (c) => getClaudeUsage(c.accessToken, c.proxyOptions),
   codex: (c) => getCodexUsage(c.accessToken, c.proxyOptions),
   kiro: (c) => getKiroUsage(c.accessToken, c.providerSpecificData, c.proxyOptions),
+  codebuddy: (c) => getCodeBuddyUsage(c.accessToken, c.providerSpecificData, c.proxyOptions, c.apiKey),
   qoder: (c) => getQoderUsage(c.accessToken, c.proxyOptions),
   qwen: (c) => getQwenUsage(c.accessToken, c.providerSpecificData),
   iflow: (c) => getIflowUsage(c.accessToken),

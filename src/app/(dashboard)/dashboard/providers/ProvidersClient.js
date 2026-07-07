@@ -51,6 +51,11 @@ function getStatusDisplay(connected, error, errorCode) {
   return parts;
 }
 
+function getFreeAuthTypes(key, info) {
+  if (key === "kiro") return ["oauth", "apikey", "api_key"];
+  return info.authModes?.length ? info.authModes : "oauth";
+}
+
 function getConnectionErrorTag(connection) {
   if (!connection) return null;
 
@@ -164,8 +169,9 @@ export default function ProvidersClient({ initialConnections, initialNodes }) {
     });
 
   const getProviderStats = (providerId, authType) => {
+    const authTypes = Array.isArray(authType) ? authType : [authType];
     const providerConnections = connections.filter(
-      (c) => c.provider === providerId && c.authType === authType,
+      (c) => c.provider === providerId && authTypes.includes(c.authType),
     );
 
     const getEffectiveStatus = (conn) => {
@@ -409,9 +415,12 @@ function FreeAndApiKeySections({ freeEntries, freeTierEntries, apikeyEntries, vi
             <TestAllButton category="free" testingMode={testingMode} onTest={handleBatchTest} label="Free" />
           </div>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3 xl:grid-cols-4">
-            {freeEntries.map(([key, info]) => (
-              <ProviderCard key={key} providerId={key} provider={info} stats={getProviderStats(key, "oauth")} authType="free" onToggle={(active) => handleToggleProvider(key, "oauth", active)} />
-            ))}
+          {freeEntries.map(([key, info]) => {
+            const freeAuthTypes = getFreeAuthTypes(key, info);
+            return (
+              <ProviderCard key={key} providerId={key} provider={info} stats={getProviderStats(key, freeAuthTypes)} authType="free" onToggle={(active) => handleToggleProvider(key, freeAuthTypes, active)} />
+            );
+          })}
             {freeTierEntries.map(([key, info]) => (
               <ApiKeyProviderCard key={key} providerId={key} provider={info} stats={getProviderStats(key, "apikey")} authType="apikey" onToggle={(active) => handleToggleProvider(key, "apikey", active)} />
             ))}
@@ -531,7 +540,7 @@ function ProviderCard({ providerId, provider, stats, authType, onToggle }) {
               }}
             >
               <ProviderIcon
-                src={`/providers/${provider.id}.webp`}
+                src={provider.id === "autoclaw" ? "/providers/autoclaw.webp?v=2" : `/providers/${provider.id}.webp`}
                 alt={provider.name}
                 size={30}
                 className="object-contain rounded-lg max-w-[32px] max-h-[32px]"
@@ -623,7 +632,7 @@ function ApiKeyProviderCard({
         ? "/providers/oai-r.webp"
         : "/providers/oai-cc.webp";
     if (isAnthropicCompatible) return "/providers/anthropic-m.webp";
-    return `/providers/${provider.id}.webp`;
+    return provider.id === "autoclaw" ? "/providers/autoclaw.webp?v=2" : `/providers/${provider.id}.webp`;
   };
 
   return (
