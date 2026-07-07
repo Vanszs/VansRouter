@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/9router/9router/internal/models"
+	"github.com/9router/9router/internal/network"
 )
 
 // StubsHandlers holds placeholder implementations for dashboard routes that
@@ -252,12 +253,22 @@ func (h *StubsHandlers) ProxyPoolsDenoDeploy(w http.ResponseWriter, r *http.Requ
 
 // Settings stubs
 
-// SettingsProxyTest handles POST /api/settings/proxy-test (JS exports POST).
+// SettingsProxyTest handles POST /api/settings/proxy-test.
+// Reads JSON body: { proxyUrl, testUrl?, timeoutMs? } and tests connectivity
+// through the proxy using the network package.
 func (h *StubsHandlers) SettingsProxyTest(w http.ResponseWriter, r *http.Request) {
-	writeJSON(w, http.StatusOK, map[string]any{
-		"ok":    false,
-		"error": "proxy test is not implemented in the go port yet",
-	})
+	var body struct {
+		ProxyURL  string `json:"proxyUrl"`
+		TestURL   string `json:"testUrl"`
+		TimeoutMs int    `json:"timeoutMs"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		writeError(w, http.StatusBadRequest, "invalid_body", "Invalid JSON body")
+		return
+	}
+
+	result := network.TestProxyURL(r.Context(), body.ProxyURL, body.TestURL, body.TimeoutMs)
+	writeJSON(w, http.StatusOK, result)
 }
 
 // SettingsDatabase handles GET/POST /api/settings/database. JS exports

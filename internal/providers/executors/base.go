@@ -228,7 +228,7 @@ func (ex *BaseExecutor) Execute(ctx context.Context, req ExecuteRequest) (*http.
 			}
 			httpReq.Header = ex.BuildHeaders(req.Credentials, req.Stream)
 
-			resp, err := sharedClient.Do(httpReq)
+			resp, err := clientForRequest(url, req.Credentials).Do(httpReq)
 			connectCancel()
 
 			if err != nil {
