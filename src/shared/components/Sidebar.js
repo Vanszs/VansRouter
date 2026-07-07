@@ -23,6 +23,7 @@ const navItems = [
   { href: "/dashboard/combos", label: "Combos", icon: "layers" },
   { href: "/dashboard/usage", label: "Usage", icon: "bar_chart" },
   { href: "/dashboard/quota", label: "Quota Tracker", icon: "data_usage" },
+  { href: "/dashboard/automation", label: "Automation", icon: "smart_toy" },
   { href: "/dashboard/token-saver", label: "Token Saver", icon: "savings" },
   { href: "/dashboard/cli-tools", label: "CLI Tools", icon: "terminal" },
 ];
@@ -424,4 +425,3 @@ function ManualUpdatePanel({ latestVersion, installCmd, copied, onCopyAndShutdow
     </div>
   );
 }
-

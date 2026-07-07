@@ -165,6 +165,55 @@ exports[`GOLDEN buildHeaders (default executor providers) > assemblyai → heade
 }
 `;
 
+exports[`GOLDEN buildHeaders (default executor providers) > autoclaw → headers (apiKey / oauth) 1`] = `
+{
+  "apiKey": {
+    "Accept": "text/event-stream",
+    "Content-Type": "application/json",
+    "X-Authorization": "Bearer <TOK>",
+    "content-type": "application/json",
+    "origin": "https://autoclaw.z.ai",
+    "referer": "https://autoclaw.z.ai/",
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36",
+    "x-channel": "official",
+    "x-client-type": "web",
+    "x-lang": "zh-CN",
+    "x-product": "autoclaw",
+    "x-tm": "web",
+    "x-version": "1.10.0",
+  },
+  "nonStream": {
+    "Content-Type": "application/json",
+    "X-Authorization": "Bearer <TOK>",
+    "content-type": "application/json",
+    "origin": "https://autoclaw.z.ai",
+    "referer": "https://autoclaw.z.ai/",
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36",
+    "x-channel": "official",
+    "x-client-type": "web",
+    "x-lang": "zh-CN",
+    "x-product": "autoclaw",
+    "x-tm": "web",
+    "x-version": "1.10.0",
+  },
+  "oauth": {
+    "Accept": "text/event-stream",
+    "Content-Type": "application/json",
+    "X-Authorization": "Bearer <TOK>",
+    "content-type": "application/json",
+    "origin": "https://autoclaw.z.ai",
+    "referer": "https://autoclaw.z.ai/",
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36",
+    "x-channel": "official",
+    "x-client-type": "web",
+    "x-lang": "zh-CN",
+    "x-product": "autoclaw",
+    "x-tm": "web",
+    "x-version": "1.10.0",
+  },
+}
+`;
+
 exports[`GOLDEN buildHeaders (default executor providers) > baseten → headers (apiKey / oauth) 1`] = `
 {
   "apiKey": {
@@ -447,6 +496,79 @@ exports[`GOLDEN buildHeaders (default executor providers) > cloudflare-ai → he
     "Accept": "text/event-stream",
     "Authorization": "Bearer <TOK>",
     "Content-Type": "application/json",
+  },
+}
+`;
+
+exports[`GOLDEN buildHeaders (default executor providers) > codebuddy → headers (apiKey / oauth) 1`] = `
+{
+  "apiKey": {
+    "Accept": "text/event-stream",
+    "Authorization": "Bearer <TOK>",
+    "Content-Type": "application/json; charset=utf-8",
+    "User-Agent": "CLI/2.105.2 CodeBuddy/2.105.2",
+    "X-Agent-Intent": "craft",
+    "X-App": "cli",
+    "X-Conversation-ID": "<ID>",
+    "X-Conversation-Message-ID": "<ID>",
+    "X-Conversation-Request-ID": "<ID>",
+    "X-Domain": "www.codebuddy.ai",
+    "X-IDE-Name": "CLI",
+    "X-IDE-Type": "CLI",
+    "X-IDE-Version": "2.105.2",
+    "X-Private-Data": "false",
+    "X-Product": "SaaS",
+    "X-Request-ID": "<ID>",
+    "X-Requested-With": "XMLHttpRequest",
+    "X-Stainless-Helper-Method": "stream",
+    "X-Stainless-Lang": "js",
+    "X-Stainless-Retry-Count": "0",
+    "X-Stainless-Runtime": "node",
+  },
+  "nonStream": {
+    "Authorization": "Bearer <TOK>",
+    "Content-Type": "application/json; charset=utf-8",
+    "User-Agent": "CLI/2.105.2 CodeBuddy/2.105.2",
+    "X-Agent-Intent": "craft",
+    "X-App": "cli",
+    "X-Conversation-ID": "<ID>",
+    "X-Conversation-Message-ID": "<ID>",
+    "X-Conversation-Request-ID": "<ID>",
+    "X-Domain": "www.codebuddy.ai",
+    "X-IDE-Name": "CLI",
+    "X-IDE-Type": "CLI",
+    "X-IDE-Version": "2.105.2",
+    "X-Private-Data": "false",
+    "X-Product": "SaaS",
+    "X-Request-ID": "<ID>",
+    "X-Requested-With": "XMLHttpRequest",
+    "X-Stainless-Helper-Method": "stream",
+    "X-Stainless-Lang": "js",
+    "X-Stainless-Retry-Count": "0",
+    "X-Stainless-Runtime": "node",
+  },
+  "oauth": {
+    "Accept": "text/event-stream",
+    "Authorization": "Bearer <TOK>",
+    "Content-Type": "application/json; charset=utf-8",
+    "User-Agent": "CLI/2.105.2 CodeBuddy/2.105.2",
+    "X-Agent-Intent": "craft",
+    "X-App": "cli",
+    "X-Conversation-ID": "<ID>",
+    "X-Conversation-Message-ID": "<ID>",
+    "X-Conversation-Request-ID": "<ID>",
+    "X-Domain": "www.codebuddy.ai",
+    "X-IDE-Name": "CLI",
+    "X-IDE-Type": "CLI",
+    "X-IDE-Version": "2.105.2",
+    "X-Private-Data": "false",
+    "X-Product": "SaaS",
+    "X-Request-ID": "<ID>",
+    "X-Requested-With": "XMLHttpRequest",
+    "X-Stainless-Helper-Method": "stream",
+    "X-Stainless-Lang": "js",
+    "X-Stainless-Retry-Count": "0",
+    "X-Stainless-Runtime": "node",
   },
 }
 `;
@@ -1559,6 +1681,13 @@ exports[`GOLDEN buildUrl (default executor providers) > assemblyai → url (stre
 }
 `;
 
+exports[`GOLDEN buildUrl (default executor providers) > autoclaw → url (stream + non-stream) 1`] = `
+{
+  "nonStream": "https://autoglm-api.autoglm.ai/autoclaw-proxy/proxy/autoclaw/chat/completions",
+  "stream": "https://autoglm-api.autoglm.ai/autoclaw-proxy/proxy/autoclaw/chat/completions",
+}
+`;
+
 exports[`GOLDEN buildUrl (default executor providers) > baseten → url (stream + non-stream) 1`] = `
 {
   "nonStream": "https://inference.baseten.co/v1/chat/completions",
@@ -1626,6 +1755,13 @@ exports[`GOLDEN buildUrl (default executor providers) > cloudflare-ai → url (s
 {
   "nonStream": "https://api.cloudflare.com/client/v4/accounts/ACC123/ai/v1/chat/completions",
   "stream": "https://api.cloudflare.com/client/v4/accounts/ACC123/ai/v1/chat/completions",
+}
+`;
+
+exports[`GOLDEN buildUrl (default executor providers) > codebuddy → url (stream + non-stream) 1`] = `
+{
+  "nonStream": "https://www.codebuddy.ai/v2/chat/completions",
+  "stream": "https://www.codebuddy.ai/v2/chat/completions",
 }
 `;
 

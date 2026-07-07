@@ -1,7 +1,7 @@
 // Migration 003: add allowedProviders/allowedCombos/allowedKinds columns to apiKeys
 // for legacy databases that pre-date the permissions refactor.
 // The column addition is idempotent: skipped if the column already exists.
-export default {
+const migration = {
   version: 3,
   name: "add-allowed-lists-columns",
   up(db) {
@@ -18,3 +18,5 @@ export default {
     }
   },
 };
+
+export default migration;

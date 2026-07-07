@@ -104,6 +104,13 @@ const getPageInfo = (pathname) => {
       icon: "data_usage",
       breadcrumbs: [],
     };
+  if (pathname.includes("/automation"))
+    return {
+      title: "Automation",
+      description: "Provider account automation",
+      icon: "smart_toy",
+      breadcrumbs: [],
+    };
   if (pathname.includes("/mitm"))
     return {
       title: "MITM Proxy",
@@ -361,4 +368,3 @@ function HeaderSearch() {
     </div>
   );
 }
-

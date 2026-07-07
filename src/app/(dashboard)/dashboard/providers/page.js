@@ -144,6 +144,11 @@ export default function ProvidersPage() {
       return (a.name || "").localeCompare(b.name || "");
     });
 
+  const getFreeAuthTypes = (key, info) => {
+    if (key === "kiro") return ["oauth", "apikey", "api_key"];
+    return info.authModes?.length ? info.authModes : "oauth";
+  };
+
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -465,12 +470,9 @@ export default function ProvidersPage() {
         </div>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3 xl:grid-cols-4">
           {freeEntries.map(([key, info]) => {
-            // Kiro accepts both OAuth and api-key connections; count/toggle both
-            // so the card total matches the provider detail page (#kiro-apikey).
-            // Kiro's headless api-key flow persists authType "api_key" (underscore),
-            // while generic apikey providers use "apikey" — include both spellings.
-            const freeAuthTypes =
-              key === "kiro" ? ["oauth", "apikey", "api_key"] : "oauth";
+            // Kiro accepts multiple stored authType spellings; other free providers
+            // can declare custom authModes (e.g. AutoClaw uses access_token).
+            const freeAuthTypes = getFreeAuthTypes(key, info);
             return (
               <ProviderCard
                 key={key}
@@ -651,7 +653,7 @@ function ProviderCard({ providerId, provider, stats, authType, onToggle }) {
               }}
             >
               <ProviderIcon
-                src={`/providers/${provider.id}.webp`}
+                src={provider.id === "autoclaw" ? "/providers/autoclaw.webp?v=2" : `/providers/${provider.id}.webp`}
                 alt={provider.name}
                 size={30}
                 className="object-contain rounded-lg max-w-[32px] max-h-[32px]"
@@ -745,7 +747,7 @@ function ApiKeyProviderCard({
         ? "/providers/oai-r.webp"
         : "/providers/oai-cc.webp";
     if (isAnthropicCompatible) return "/providers/anthropic-m.webp";
-    return `/providers/${provider.id}.webp`;
+    return provider.id === "autoclaw" ? "/providers/autoclaw.webp?v=2" : `/providers/${provider.id}.webp`;
   };
 
   return (
@@ -918,5 +920,3 @@ function ProviderTestResultsView({ results }) {
     </div>
   );
 }
-
-

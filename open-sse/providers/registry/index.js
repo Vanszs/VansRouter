@@ -6,10 +6,11 @@ import p3 from "./alicode-intl.js";
 import p4 from "./alicode.js";
 import p5 from "./anthropic.js";
 import p6 from "./antigravity.js";
-import p7 from "./assemblyai.js";
-import p8 from "./aws-polly.js";
-import p9 from "./azure.js";
-import p10 from "./baseten.js";
+import p7 from "./autoclaw.js";
+import p8 from "./assemblyai.js";
+import p9 from "./aws-polly.js";
+import p10 from "./azure.js";
+import p121 from "./baseten.js";
 import p11 from "./black-forest-labs.js";
 import p12 from "./blackbox.js";
 import p13 from "./brave-search.js";
@@ -120,6 +121,7 @@ import p117 from "./xiaomi-mimo.js";
 import p118 from "./xiaomi-tokenplan.js";
 import p119 from "./youcom.js";
 import p120 from "./zcode.js";
+import p122 from "./codebuddy.js";
 export default [
   p0,
   p1,
@@ -132,6 +134,7 @@ export default [
   p8,
   p9,
   p10,
+  p121,
   p11,
   p12,
   p13,
@@ -242,4 +245,5 @@ export default [
   p118,
   p119,
   p120,
+  p122
 ];
