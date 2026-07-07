@@ -1,3 +1,22 @@
+# v0.8.7 (2026-07-07)
+
+VansRouter 0.8.7 is a focused patch release that fixes the broken ClinePass provider and welcomes two new community contributions.
+
+## Added
+- **ClinePass API-key authentication** — ports the upstream fix so ClinePass authenticates with an API key from `app.cline.bot/settings/api-keys` instead of the broken IDE-extension OAuth flow. Merged from upstream PR [#2332](https://github.com/decolua/9router/pull/2332) by @adentdk.
+- **ClinePass response envelope handling** — unwraps `{success, data}` responses from the ClinePass/Vercel proxy and retries once on transient empty responses. Merged from upstream PR [#2332](https://github.com/decolua/9router/pull/2332) by @adentdk.
+- **ClinePass thinking budget floor** — enforces a 4096 `max_tokens` floor on reasoning models so they do not return empty content. Merged from upstream PR [#2332](https://github.com/decolua/9router/pull/2332) by @adentdk.
+- **Migration guide** — adds `docs/MIGRATION.md` with zero-downtime steps for migrating from 9Router to VansRouter, plus improved `docker-compose.yml` and `.env.example`. Merged from fork PR [#13](https://github.com/Vanszs/VansRouter/pull/13) by @mahdiwafy.
+
+## Fixed
+- **Migration 002 idempotency** — makes the `002-fix-empty-allowed-lists` migration safe for pre-ACL legacy databases by checking `PRAGMA table_info(apiKeys)` before each `UPDATE`. Merged from fork PR [#12](https://github.com/Vanszs/VansRouter/pull/12) by @mahdiwafy.
+- **ClinePass model aliases** — shortens exposed model IDs from `cline-pass/<model>` to `<model>` while preserving the upstream-prefixed ID internally.
+- **ClinePass icon** — aligns the ClinePass dashboard icon with the Cline provider (`smart_toy`).
+
+## Verified
+- `pnpm test tests/unit/clinepass-provider.test.js` → 5/5 passed.
+- `pnpm run build` → build complete.
+
 # v0.8.6 (2026-07-05)
 
 VansRoute 0.8.6 combines the latest VansRouter fork improvements with upstream enhancements from `decolua/9router`, reshaping everything into a faster, more personal AI gateway. Changes are listed by author so every contributor is visible.

@@ -150,6 +150,13 @@ export const PROVIDER_CAPABILITIES = {
     "deepseek-v4-flash":  { vision: true, reasoning: true, thinkingFormat: "openai", thinkingCanDisable: false, contextWindow: 1000000, maxOutput: 50000 },
     "deepseek-v3-2-volc": { reasoning: true, thinkingFormat: "openai", thinkingCanDisable: false, contextWindow: 96000, maxOutput: 32000 },
   },
+  // ClinePass proxies through Vercel's OpenAI Chat Completions API, which only
+  // accepts reasoning.effort in {none,minimal,low,medium,high,xhigh}. Force
+  // "openai" so thinkingUnified.js emits valid Vercel enum values.
+  "clinepass": {
+    "deepseek-v4-pro":   { reasoning: true, thinkingFormat: "openai", thinkingCanDisable: false, contextWindow: 1000000, maxOutput: 50000 },
+    "deepseek-v4-flash": { reasoning: true, thinkingFormat: "openai", thinkingCanDisable: false, contextWindow: 1000000, maxOutput: 50000 },
+  },
   kimi: {
     "kimi-k2.7":              { vision: true, reasoning: true, thinkingFormat: "kimi", thinkingCanDisable: true, contextWindow: 262144, maxOutput: 262144 },
     "kimi-k2.6":              { vision: true, reasoning: true, thinkingFormat: "kimi", thinkingCanDisable: true, contextWindow: 262144, maxOutput: 262144 },

@@ -7,6 +7,7 @@ import { getCachedClaudeHeaders } from "../utils/claudeHeaderCache.js";
 import { proxyAwareFetch } from "../utils/proxyFetch.js";
 import { injectReasoningContent } from "../utils/reasoningContentInjector.js";
 import { stripUnsupportedParams } from "../translator/concerns/paramSupport.js";
+import { getCapabilitiesForModel } from "../providers/capabilities.js";
 
 // Auth header descriptors — derived from registry transport.auth, fallback to hardcoded defaults.
 const BEARER = { combined: true, header: "Authorization", scheme: "bearer" };
@@ -179,7 +180,34 @@ export class DefaultExecutor extends BaseExecutor {
       }
     }
 
-    return injectReasoningContent({ provider: this.provider, model, body: transformed });
+    const withReasoning = injectReasoningContent({ provider: this.provider, model, body: transformed });
+    return this.ensureThinkingBudget(withReasoning, model);
+  }
+
+  // ClinePass / OpenRouter-style thinking models burn all of max_tokens on reasoning
+  // when the budget is too small, leaving content empty (finish_reason: "length").
+  // Bump max_tokens to a safe minimum only when reasoning is enabled and budget undersized.
+  ensureThinkingBudget(body, model) {
+    if (!body || this.provider !== "clinepass") return body;
+    const caps = getCapabilitiesForModel(this.provider, model);
+    if (!caps?.reasoning) return body;
+
+    const reasoningEnabled = body.extra_body?.thinking?.type === "enabled"
+      || (typeof body.reasoning_effort === "string" && body.reasoning_effort !== "none" && body.reasoning_effort !== "off")
+      || body.reasoning_effort === true;
+    if (!reasoningEnabled) return body;
+
+    const MIN_TOKENS = 4096;
+    const cap = typeof caps.maxOutput === "number" && caps.maxOutput > 0 ? caps.maxOutput : MIN_TOKENS;
+    const target = Math.min(MIN_TOKENS, cap);
+    const current = body.max_tokens ?? body.max_completion_tokens;
+
+    if (typeof current !== "number" || current <= 0) {
+      body.max_tokens = target;
+    } else if (current < MIN_TOKENS && current < cap) {
+      body.max_tokens = MIN_TOKENS;
+    }
+    return body;
   }
 
   // Fallback json_schema → json_object for openai-compatible providers without native Structured Output.
@@ -313,7 +341,6 @@ export class DefaultExecutor extends BaseExecutor {
       gemini: () => this.refreshFromGrant(credentials, proxyOptions),
       kiro: () => this.refreshKiro(credentials.refreshToken, proxyOptions),
       cline: () => this.refreshCline(credentials.refreshToken, proxyOptions),
-      clinepass: () => this.refreshCline(credentials.refreshToken, proxyOptions),
       "kimi-coding": () => this.refreshKimiCoding(credentials.refreshToken, proxyOptions),
       kilocode: () => this.refreshKilocode(credentials.refreshToken, proxyOptions)
     };
