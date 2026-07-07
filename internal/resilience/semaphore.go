@@ -90,12 +90,13 @@ func (s *Semaphore) acquire(ctx context.Context, key string, maxConcurrency int,
 	if g == nil {
 		g = &gate{maxConcurrency: maxConcurrency}
 		s.gates[key] = g
-	} else {
-		g.maxConcurrency = maxConcurrency
 	}
 	s.mu.Unlock()
 
 	g.mu.Lock()
+	// Update maxConcurrency under g.mu to avoid data race:
+	// the value is read below while holding only g.mu.
+	g.maxConcurrency = maxConcurrency
 	if g.running < g.maxConcurrency && (g.blockedUntil.IsZero() || time.Now().After(g.blockedUntil)) {
 		g.running++
 		g.mu.Unlock()
