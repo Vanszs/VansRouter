@@ -81,3 +81,8 @@ func generateToolCallID() string {
 	_, _ = rand.Read(b)
 	return "call_" + hex.EncodeToString(b)
 }
+
+// FallbackToolCallID returns a streaming tool_call id when the provider omits one.
+func FallbackToolCallID() string {
+	return generateToolCallID()
+}

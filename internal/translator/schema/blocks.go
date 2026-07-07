@@ -16,11 +16,15 @@ const (
 	ClaudeBlockTypeThinking   = "thinking"
 	ClaudeBlockTypeDocument   = "document"
 
-	ResponsesItemTypeMessage      = "message"
-	ResponsesItemTypeThinking     = "thinking"
-	ResponsesItemTypeFunctionCall = "function_call"
-	ResponsesItemTypeReasoning    = "reasoning"
-	ResponsesItemTypeOutputText   = "output_text"
+	ResponsesItemTypeMessage           = "message"
+	ResponsesItemTypeThinking          = "thinking"
+	ResponsesItemTypeFunctionCall      = "function_call"
+	ResponsesItemTypeFunctionCallOutput = "function_call_output"
+	ResponsesItemTypeReasoning         = "reasoning"
+	ResponsesItemTypeOutputText        = "output_text"
+	ResponsesItemTypeInputText         = "input_text"
+	ResponsesItemTypeInputImage        = "input_image"
+	ResponsesItemTypeSummaryText       = "summary_text"
 )
 
 var (

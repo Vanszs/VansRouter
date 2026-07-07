@@ -28,6 +28,12 @@ type State struct {
 	// Claude -> OpenAI state
 	ServerToolBlockIndex int
 	ToolCallIndex        int
+
+	// OpenAI Responses API state (both directions)
+	// Uses a dynamic map for the many tracking fields needed by the
+	// responses translator (seq, responseId, reasoning/message/toolcall
+	// buffers, completedSent, inThinking, etc.)
+	Responses map[string]any
 }
 
 // TranslateRequest translates a request body from source format to target format.
@@ -58,9 +64,10 @@ func NeedsTranslation(source, target Format) bool {
 // InitState returns a fresh State for the given source format.
 func InitState(source Format) *State {
 	return &State{
-		ToolCalls:        map[string]any{},
-		ToolNameMap:      map[string]string{},
-		ToolArgBuffers:   map[string]any{},
+		ToolCalls:         map[string]any{},
+		ToolNameMap:       map[string]string{},
+		ToolArgBuffers:    map[string]any{},
 		ContentBlockIndex: -1,
+		Responses:         map[string]any{},
 	}
 }
