@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { resetCircuitBreaker } from "@/open-sse/utils/circuitBreaker";
+import { resetCircuitBreaker } from "open-sse/utils/circuitBreaker";
 import { jwtVerify } from "jose";
 import { getSettings } from "@/lib/localDb";
 

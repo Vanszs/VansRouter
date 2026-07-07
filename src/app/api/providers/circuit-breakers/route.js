@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getAllCircuitBreakerStatuses } from "@/open-sse/utils/circuitBreaker";
+import { getAllCircuitBreakerStatuses } from "open-sse/utils/circuitBreaker";
 
 export const runtime = "nodejs";
 
