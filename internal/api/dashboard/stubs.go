@@ -2,8 +2,10 @@ package dashboard
 
 import (
 	"encoding/json"
+	"strings"
 	"net/http"
 
+	"github.com/9router/9router/internal/db/repos"
 	"github.com/9router/9router/internal/models"
 	"github.com/9router/9router/internal/network"
 )
@@ -15,12 +17,16 @@ type StubsHandlers struct {
 	// Builder is the model list builder, used by ModelsList to serve the
 	// /api/models route with real data instead of an empty stub.
 	Builder *models.Builder
+
+	// Repos provides access to DB-backed data for stubs that can serve
+	// real values. Optional — pass nil to keep static stub behavior.
+	Repos *repos.Repos
 }
 
 // NewStubsHandlers creates stub handlers. The builder parameter is optional;
 // pass nil to keep the old empty-stub behaviour for routes that don't need it.
-func NewStubsHandlers(builder *models.Builder) *StubsHandlers {
-	return &StubsHandlers{Builder: builder}
+func NewStubsHandlers(builder *models.Builder, repos *repos.Repos) *StubsHandlers {
+	return &StubsHandlers{Builder: builder, Repos: repos}
 }
 
 func (h *StubsHandlers) empty(w http.ResponseWriter, r *http.Request) {
@@ -726,10 +732,18 @@ func (h *StubsHandlers) Locale(w http.ResponseWriter, r *http.Request) {
 }
 
 // Tags handles GET /api/tags. Returns Ollama-compatible model list.
+// When Builder is available, serves real model list from the models registry.
 func (h *StubsHandlers) Tags(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
 	w.Header().Set("Access-Control-Allow-Headers", "*")
+	if h.Builder != nil {
+		list, err := h.Builder.BuildModelsList(r.Context(), models.AllKinds)
+		if err == nil && list != nil {
+			writeJSON(w, http.StatusOK, map[string]any{"models": list})
+			return
+		}
+	}
 	writeJSON(w, http.StatusOK, map[string]any{"models": []any{}})
 }
 
@@ -781,7 +795,22 @@ func (h *StubsHandlers) OIDCCallback(w http.ResponseWriter, r *http.Request) {
 }
 
 // SettingsRequireLogin handles GET /api/settings/require-login.
+// When Repos is available, serves real values from the settings table;
+// otherwise falls back to safe defaults.
 func (h *StubsHandlers) SettingsRequireLogin(w http.ResponseWriter, r *http.Request) {
+	if h.Repos != nil && h.Repos.Settings != nil {
+		settings, err := h.Repos.Settings.Get()
+		if err == nil && settings != nil {
+			writeJSON(w, http.StatusOK, map[string]any{
+				"requireLogin":          settings["requireLogin"],
+				"tunnelDashboardAccess": settings["tunnelDashboardAccess"],
+				"tunnelUrl":             settings["tunnelUrl"],
+				"tailscaleUrl":          settings["tailscaleUrl"],
+			})
+			return
+		}
+	}
+	// Fallback: safe defaults
 	writeJSON(w, http.StatusOK, map[string]any{
 		"requireLogin":          true,
 		"tunnelDashboardAccess": true,
@@ -812,7 +841,15 @@ func (h *StubsHandlers) VersionUpdate(w http.ResponseWriter, r *http.Request) {
 
 // UsageRequestLogs handles GET /api/usage/request-logs. JS handler returns
 // the raw logs object returned by getRecentLogs.
+// When Repos is available, serves recent usage entries from the DB.
 func (h *StubsHandlers) UsageRequestLogs(w http.ResponseWriter, r *http.Request) {
+	if h.Repos != nil && h.Repos.Usage != nil {
+		logs, err := h.Repos.Usage.ListHistory(50)
+		if err == nil && logs != nil {
+			writeJSON(w, http.StatusOK, map[string]any{"logs": logs})
+			return
+		}
+	}
 	writeJSON(w, http.StatusOK, map[string]any{"logs": []any{}})
 }
 
@@ -833,7 +870,21 @@ func (h *StubsHandlers) ProviderNodeDelete(w http.ResponseWriter, r *http.Reques
 }
 
 // ProviderConnectionGet handles GET /api/providers/{id}.
+// When Repos is available, serves real account data from the DB.
 func (h *StubsHandlers) ProviderConnectionGet(w http.ResponseWriter, r *http.Request) {
+	if h.Repos != nil && h.Repos.Accounts != nil {
+		// Extract {id} from URL path
+		path := r.URL.Path
+		parts := strings.Split(path, "/")
+		if len(parts) >= 2 {
+			id := parts[len(parts)-1]
+			account, err := h.Repos.Accounts.GetByID(id)
+			if err == nil && account != nil {
+				writeJSON(w, http.StatusOK, map[string]any{"connection": account})
+				return
+			}
+		}
+	}
 	writeJSON(w, http.StatusNotFound, map[string]any{"error": "Connection not found"})
 }
 

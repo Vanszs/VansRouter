@@ -90,7 +90,7 @@ func dashboardRouter(r *repos.Repos, registry *providers.Registry, builder *mode
 	router.With(dashboard.RequireSession).Get("/usage/{connectionId}", usageHandlers.ConnectionUsage)
 	router.With(dashboard.RequireSession).Post("/usage/{connectionId}/codex-reset-credits", usageHandlers.CodexResetCredits)
 
-	stubs := dashboard.NewStubsHandlers(builder)
+	stubs := dashboard.NewStubsHandlers(builder, r)
 
 	proxyPoolHandlers := dashboard.NewProxyPoolHandlers(r.ProxyPools)
 	providerNodeHandlers := dashboard.NewProviderNodeHandlers(r.ProviderNodes)
@@ -306,7 +306,7 @@ func v1Router(r *repos.Repos, builder *models.Builder, registry *providers.Regis
 	messagesHandler := &v1.MessagesHandler{}
 	router.Post("/messages/count_tokens", http.HandlerFunc(messagesHandler.ServeHTTP))
 
-	stubs := dashboard.NewStubsHandlers(builder)
+	stubs := dashboard.NewStubsHandlers(builder, r)
 	router.Post("/audio/transcriptions", stubs.V1AudioTranscriptions)
 	router.Post("/embeddings", stubs.V1Embeddings)
 

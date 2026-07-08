@@ -20,7 +20,7 @@ func (s *stubSource) Snapshot(context.Context) (*models.SourceSnapshot, error) {
 }
 
 func TestModelsList_NilBuilder_ReturnsEmpty(t *testing.T) {
-	h := NewStubsHandlers(nil)
+	h := NewStubsHandlers(nil, nil)
 	req := httptest.NewRequest("GET", "/api/models", nil)
 	rec := httptest.NewRecorder()
 	h.ModelsList(rec, req)
@@ -47,7 +47,7 @@ func TestModelsList_WithBuilder_ReturnsError(t *testing.T) {
 	src := &stubSource{err: context.DeadlineExceeded}
 	builder := models.NewBuilder(nil, src)
 
-	h := NewStubsHandlers(builder)
+	h := NewStubsHandlers(builder, nil)
 	req := httptest.NewRequest("GET", "/api/models", nil)
 	rec := httptest.NewRecorder()
 	h.ModelsList(rec, req)
