@@ -88,7 +88,7 @@ func TestAdjustMaxTokens(t *testing.T) {
 					"budget_tokens": 50000,
 				},
 			},
-			expected: DefaultMaxTokens, // capped at default
+			expected: 51024, // budget(50000) + 1024, not capped since < DefaultMaxTokens
 		},
 	}
 

@@ -2,7 +2,6 @@ package dashboard
 
 import (
 	"encoding/json"
-	"strings"
 	"net/http"
 	"strconv"
 
@@ -1009,26 +1008,6 @@ func (h *StubsHandlers) ProviderNodeDelete(w http.ResponseWriter, r *http.Reques
 	writeJSON(w, http.StatusOK, map[string]any{"success": true})
 }
 
-// ProviderConnectionGet handles GET /api/providers/{id}.
-// When Repos is available, serves real account data from the DB.
-func (h *StubsHandlers) ProviderConnectionGet(w http.ResponseWriter, r *http.Request) {
-	if h.Repos != nil && h.Repos.Accounts != nil {
-		// Extract {id} from URL path
-		path := r.URL.Path
-		parts := strings.Split(path, "/")
-		if len(parts) >= 2 {
-			id := parts[len(parts)-1]
-			account, err := h.Repos.Accounts.GetByID(id)
-			if err == nil && account != nil {
-				writeJSON(w, http.StatusOK, map[string]any{"connection": account})
-				return
-			}
-		}
-	}
-	writeJSON(w, http.StatusNotFound, map[string]any{"error": "Connection not found"})
-}
-
-// ProviderConnectionUpdate handles PUT /api/providers/{id}.
 // When Repos is available, updates the provider connection from the JSON body.
 func (h *StubsHandlers) ProviderConnectionUpdate(w http.ResponseWriter, r *http.Request) {
 	if h.Repos == nil {
