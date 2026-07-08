@@ -24,6 +24,8 @@ import { useHeaderSearchStore } from "@/store/headerSearchStore";
 import { fetchCached } from "@/shared/utils/fetchCache";
 import ModelAvailabilityBadge from "./components/ModelAvailabilityBadge";
 import AddCompatibleModal from "./components/AddCompatibleModal";
+import { useCircuitBreakers } from "@/shared/hooks/useCircuitBreakers";
+import CircuitBreakerBadge from "./components/CircuitBreakerBadge";
 
 function getStatusDisplay(connected, error, errorCode) {
   const parts = [];
@@ -108,6 +110,7 @@ export default function ProvidersPage() {
   const searchQuery = useHeaderSearchStore((s) => s.query);
   const registerSearch = useHeaderSearchStore((s) => s.register);
   const unregisterSearch = useHeaderSearchStore((s) => s.unregister);
+  const { getCircuitBreakerForProvider, resetCircuitBreaker } = useCircuitBreakers();
 
   useEffect(() => {
     registerSearch("Search providers...");
@@ -388,6 +391,8 @@ export default function ProvidersPage() {
                   provider={info}
                   stats={getProviderStats(info.id, "apikey")}
                   authType="compatible"
+                  circuitBreaker={getCircuitBreakerForProvider(info.id)}
+                  onResetCircuit={resetCircuitBreaker}
                   onToggle={(active) =>
                     handleToggleProvider(info.id, "apikey", active)
                   }
@@ -435,6 +440,8 @@ export default function ProvidersPage() {
               provider={info}
               stats={getProviderStats(key, "oauth")}
               authType="oauth"
+              circuitBreaker={getCircuitBreakerForProvider(key)}
+              onResetCircuit={resetCircuitBreaker}
               onToggle={(active) => handleToggleProvider(key, "oauth", active)}
             />
           ))}
@@ -480,6 +487,8 @@ export default function ProvidersPage() {
                 provider={info}
                 stats={getProviderStats(key, freeAuthTypes)}
                 authType="free"
+                circuitBreaker={getCircuitBreakerForProvider(key)}
+                onResetCircuit={resetCircuitBreaker}
                 onToggle={(active) =>
                   handleToggleProvider(key, freeAuthTypes, active)
                 }
@@ -621,7 +630,7 @@ export default function ProvidersPage() {
   );
 }
 
-function ProviderCard({ providerId, provider, stats, authType, onToggle }) {
+function ProviderCard({ providerId, provider, stats, authType, onToggle, circuitBreaker, onResetCircuit }) {
   const { connected, error, errorCode, errorTime, allDisabled } = stats;
   const isNoAuth = !!provider.noAuth;
 
@@ -680,6 +689,9 @@ function ProviderCard({ providerId, provider, stats, authType, onToggle }) {
                 ) : (
                   <>
                     {getStatusDisplay(connected, error, errorCode)}
+                    {circuitBreaker && (
+                      <CircuitBreakerBadge status={circuitBreaker} onReset={() => onResetCircuit(providerId)} />
+                    )}
                     {errorTime && (
                       <span className="text-text-muted">{errorTime}</span>
                     )}
@@ -721,6 +733,8 @@ function ApiKeyProviderCard({
   stats,
   authType,
   onToggle,
+  circuitBreaker,
+  onResetCircuit,
 }) {
   const { connected, error, errorCode, errorTime, allDisabled } = stats;
   const isCompatible = providerId.startsWith(OPENAI_COMPATIBLE_PREFIX);

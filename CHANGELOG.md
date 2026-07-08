@@ -1,3 +1,19 @@
+# v0.8.8 (2026-07-08)
+
+VansRouter 0.8.8 adds the first community-built dashboard enhancement and continues the `go-port` work in parallel.
+
+## Added
+- **Circuit breaker dashboard UI** — adds `CircuitBreakerBadge` to provider cards, live status polling, retry countdown, and manual reset. Includes `GET /api/providers/circuit-breakers` and `POST /api/providers/circuit-breakers/[name]/reset` (authenticated). Merged from fork PR [#17](https://github.com/Vanszs/VansRouter/pull/17) by @mahdiwafy.
+
+## Go port (experimental)
+- **Proxy-aware network layer** — ports connection-level proxy resolution, outbound proxy env management, proxy tester, and per-request proxy wiring. Merged from fork PR [#20](https://github.com/Vanszs/VansRouter/pull/20) by @mahdiwafy.
+- **11 missing provider executors** — ports additional executors to Go. Merged from fork PR [#21](https://github.com/Vanszs/VansRouter/pull/21) by @mahdiwafy.
+- **Dashboard handlers for proxy-pools, provider-nodes, and models** — replaces 21 stub routes with real SQLite-backed CRUD handlers. Merged from fork PR [#22](https://github.com/Vanszs/VansRouter/pull/22) by @mahdiwafy.
+
+## Fixed
+- **Contributors section in README** — adds a `contrib.rocks` badge so contributors remain visible while GitHub's forked-repo Insights graph shows no data.
+- **README comparison table** — rewrites the Logic & Backend comparison to be architecture-focused and removes provider-specific selling points.
+
 # v0.8.7 (2026-07-07)
 
 VansRouter 0.8.7 is a focused patch release that fixes the broken ClinePass provider and welcomes two new community contributions.
