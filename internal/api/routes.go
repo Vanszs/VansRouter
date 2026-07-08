@@ -92,11 +92,35 @@ func dashboardRouter(r *repos.Repos, registry *providers.Registry, builder *mode
 
 	stubs := dashboard.NewStubsHandlers(builder)
 
-	router.With(dashboard.RequireSession).Post("/providers/{id}/test", stubs.ProviderTest)
+	proxyPoolHandlers := dashboard.NewProxyPoolHandlers(r.ProxyPools)
+	providerNodeHandlers := dashboard.NewProviderNodeHandlers(r.ProviderNodes)
+	providerHandlers := dashboard.NewProviderHandlers(registry)
+	modelHandlers := dashboard.NewModelHandlers(registry)
 
-	providerNodesHandlers := dashboard.NewProviderNodesHandlers()
-	router.With(dashboard.RequireSession).Get("/provider-nodes", providerNodesHandlers.List)
-	router.With(dashboard.RequireSession).Post("/provider-nodes/validate", stubs.ProviderNodesValidate)
+	router.With(dashboard.RequireSession).Get("/proxy-pools", proxyPoolHandlers.List)
+	router.With(dashboard.RequireSession).Post("/proxy-pools", proxyPoolHandlers.Create)
+	router.With(dashboard.RequireSession).Get("/proxy-pools/{id}", proxyPoolHandlers.Get)
+	router.With(dashboard.RequireSession).Put("/proxy-pools/{id}", proxyPoolHandlers.Update)
+	router.With(dashboard.RequireSession).Delete("/proxy-pools/{id}", proxyPoolHandlers.Delete)
+	router.With(dashboard.RequireSession).Post("/proxy-pools/{id}/test", proxyPoolHandlers.Test)
+
+	router.With(dashboard.RequireSession).Post("/providers/{id}/test", providerHandlers.Test)
+
+	router.With(dashboard.RequireSession).Get("/provider-nodes", providerNodeHandlers.List)
+	router.With(dashboard.RequireSession).Post("/provider-nodes", providerNodeHandlers.Create)
+	router.With(dashboard.RequireSession).Get("/provider-nodes/{id}", providerNodeHandlers.Get)
+	router.With(dashboard.RequireSession).Put("/provider-nodes/{id}", providerNodeHandlers.Update)
+	router.With(dashboard.RequireSession).Delete("/provider-nodes/{id}", providerNodeHandlers.Delete)
+	router.With(dashboard.RequireSession).Post("/provider-nodes/validate", providerNodeHandlers.Validate)
+
+	router.With(dashboard.RequireSession).Get("/models/alias", modelHandlers.AliasList)
+	router.With(dashboard.RequireSession).Put("/models/alias", modelHandlers.AliasUpdate)
+	router.With(dashboard.RequireSession).Delete("/models/alias", modelHandlers.AliasDelete)
+	router.With(dashboard.RequireSession).Get("/models/availability", modelHandlers.Availability)
+	router.With(dashboard.RequireSession).Get("/models/custom", modelHandlers.Custom)
+	router.With(dashboard.RequireSession).Get("/models/disabled", modelHandlers.Disabled)
+	router.With(dashboard.RequireSession).Get("/models/test", modelHandlers.Test)
+	router.With(dashboard.RequireSession).Post("/models/test", modelHandlers.Test)
 
 	tunnelHandlers := dashboard.NewTunnelHandlers()
 	router.With(dashboard.RequireSession).Get("/tunnel/status", tunnelHandlers.Status)
