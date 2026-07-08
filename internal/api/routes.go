@@ -143,23 +143,16 @@ func dashboardRouter(r *repos.Repos, registry *providers.Registry, builder *mode
 	// JSON so the frontend never sees a 404 while the Go port is in progress.
 	router.With(dashboard.RequireSession).Post("/auth/oidc/test", stubs.OIDCTest)
 
-	router.With(dashboard.RequireSession).Get("/models", stubs.ModelsList)
-	router.With(dashboard.RequireSession).Get("/models/alias", stubs.ModelAliases)
-	router.With(dashboard.RequireSession).Put("/models/alias", stubs.ModelAliases)
-	router.With(dashboard.RequireSession).Delete("/models/alias", stubs.ModelAliases)
-	router.With(dashboard.RequireSession).Get("/models/availability", stubs.ModelAvailability)
-	router.With(dashboard.RequireSession).Get("/models/custom", stubs.ModelCustom)
-	router.With(dashboard.RequireSession).Get("/models/disabled", stubs.ModelDisabled)
-	router.With(dashboard.RequireSession).Get("/models/test", stubs.ModelTest)
-	router.With(dashboard.RequireSession).Post("/models/test", stubs.ModelTest)
+	// NOTE: /models/* routes are already wired to real handlers above (modelHandlers).
+	// Do NOT re-register stubs here — chi uses last-writer-wins, which would
+	// silently override the real implementation.
 
 	router.With(dashboard.RequireSession).Get("/providers/client", stubs.ProvidersClient)
 	router.With(dashboard.RequireSession).Get("/providers/kilo/free-models", stubs.ProvidersKiloFreeModels)
 	router.With(dashboard.RequireSession).Post("/providers/test-batch", stubs.ProvidersTestBatch)
 	router.With(dashboard.RequireSession).Post("/providers/validate", stubs.ProvidersValidate)
 
-	router.With(dashboard.RequireSession).Get("/proxy-pools", stubs.ProxyPoolsList)
-	router.With(dashboard.RequireSession).Post("/proxy-pools", stubs.ProxyPoolsCreate)
+	// NOTE: /proxy-pools and /proxy-pools/{id} already wired to real handlers above.
 	router.With(dashboard.RequireSession).Post("/proxy-pools/vercel-deploy", stubs.ProxyPoolsVercelDeploy)
 	router.With(dashboard.RequireSession).Post("/proxy-pools/cloudflare-deploy", stubs.ProxyPoolsCloudflareDeploy)
 	router.With(dashboard.RequireSession).Post("/proxy-pools/deno-deploy", stubs.ProxyPoolsDenoDeploy)
@@ -262,9 +255,7 @@ func dashboardRouter(r *repos.Repos, registry *providers.Registry, builder *mode
 	// Usage additional stub.
 	router.With(dashboard.RequireSession).Get("/usage/request-logs", stubs.UsageRequestLogs)
 
-	// Provider node stubs.
-	router.With(dashboard.RequireSession).Put("/provider-nodes/{id}", stubs.ProviderNodeUpdate)
-	router.With(dashboard.RequireSession).Delete("/provider-nodes/{id}", stubs.ProviderNodeDelete)
+	// NOTE: /provider-nodes/{id} PUT/DELETE already wired to real handlers above.
 
 	// Provider connection stubs.
 	router.With(dashboard.RequireSession).Get("/providers/{id}", stubs.ProviderConnectionGet)
@@ -274,11 +265,7 @@ func dashboardRouter(r *repos.Repos, registry *providers.Registry, builder *mode
 	router.With(dashboard.RequireSession).Post("/providers/{id}/test-models", stubs.ProviderTestModels)
 	router.With(dashboard.RequireSession).Get("/providers/suggested-models", stubs.ProviderSuggestedModels)
 
-	// Proxy pool stubs.
-	router.With(dashboard.RequireSession).Get("/proxy-pools/{id}", stubs.ProxyPoolGet)
-	router.With(dashboard.RequireSession).Put("/proxy-pools/{id}", stubs.ProxyPoolUpdate)
-	router.With(dashboard.RequireSession).Delete("/proxy-pools/{id}", stubs.ProxyPoolDelete)
-	router.With(dashboard.RequireSession).Post("/proxy-pools/{id}/test", stubs.ProxyPoolTest)
+	// NOTE: /proxy-pools/{id} and /proxy-pools/{id}/test already wired to real handlers above.
 
 	// OAuth stubs.
 	router.With(dashboard.RequireSession).Post("/oauth/codex/import-token", stubs.OAuthCodexImportToken)
