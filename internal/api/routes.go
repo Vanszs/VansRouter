@@ -35,7 +35,7 @@ func Routes(logger *slog.Logger, r *repos.Repos, registry *providers.Registry) h
 	router.Get("/models", v1.ModelsHandler(builder))
 
 	// Public OpenAI-compatible surface.
-	router.Mount("/v1", v1Router(r, builder))
+	router.Mount("/v1", v1Router(r, builder, registry))
 
 	// Legacy dashboard path kept for compatibility during the port.
 	router.With(auth.APIKeyMiddleware(r.Keys)).Get("/api/v1/models", v1.ModelsHandler(builder))
@@ -286,11 +286,12 @@ func dashboardRouter(r *repos.Repos, registry *providers.Registry, builder *mode
 	return router
 }
 
-func v1Router(r *repos.Repos, builder *models.Builder) http.Handler {
+func v1Router(r *repos.Repos, builder *models.Builder, registry *providers.Registry) http.Handler {
 	router := chi.NewRouter()
 	router.Use(auth.APIKeyMiddleware(r.Keys))
 	router.Get("/models", v1.ModelsHandler(builder))
-	chatHandler := v1.NewChatHandler(nil, builder)
+	chatService := v1.NewChatServiceImpl(registry, r.Accounts)
+	chatHandler := v1.NewChatHandler(chatService, builder)
 	router.Post("/chat/completions", http.HandlerFunc(chatHandler.ServeHTTP))
 
 	searchHandler := &v1.SearchHandler{}
