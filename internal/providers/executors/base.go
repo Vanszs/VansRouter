@@ -219,6 +219,14 @@ func (ex *BaseExecutor) Execute(ctx context.Context, req ExecuteRequest) (*http.
 			continue
 		}
 
+		// Compute proxy hash for resilience bucket key.
+		proxyHash := proxyHashForRequest(url, req.Credentials)
+
+		// Check circuit breaker before attempting request.
+		if err := CheckBreaker(ex.provider, proxyHash); err != nil {
+			return nil, err
+		}
+
 		for {
 			connectCtx, connectCancel := ex.connectContext(ctx)
 			httpReq, err := http.NewRequestWithContext(connectCtx, http.MethodPost, url, bytes.NewReader(bodyJSON))
@@ -267,11 +275,14 @@ func (ex *BaseExecutor) Execute(ctx context.Context, req ExecuteRequest) (*http.
 				break
 			}
 
+			// Record result to circuit breaker before returning.
+			RecordResult(ex.provider, resp, nil, proxyHash)
 			return resp, nil
 		}
 	}
 
 	if lastErr != nil {
+		RecordResult(ex.provider, nil, lastErr, "direct")
 		return nil, lastErr
 	}
 	return nil, fmt.Errorf("all %d URLs failed with last status %d", fallbackCount, lastStatus)
