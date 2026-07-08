@@ -261,24 +261,43 @@ func refreshLockKey(provider string, creds *Credentials) string {
 	return provider + ":" + base64.RawURLEncoding.EncodeToString(h[:8])
 }
 
-// ponytail: registered refreshers are no-op stubs. The JS port implements
-// provider-specific refresh flows for Claude, Google, Qwen, Codex, Kiro,
-// GitHub, etc. Wire real refresh functions per provider when credentials are
-// stored and the OAuth package is integrated.
-// Init registers built-in stub refreshers for common providers.
+// Init registers provider-specific refresh implementations.
+// Each provider has its own refresh logic ported from the Node.js codebase.
 func Init() {
+	// OpenAI (generic API key, no refresh needed)
 	Register("openai", func(ctx context.Context, creds Credentials) (*Refreshed, error) {
 		return nil, nil
 	}, ProviderConfig{RefreshLeadMs: defaultExpiryBuffer})
-	Register("claude", func(ctx context.Context, creds Credentials) (*Refreshed, error) {
-		return nil, nil
-	}, ProviderConfig{RefreshLeadMs: defaultExpiryBuffer})
-	Register("gemini", func(ctx context.Context, creds Credentials) (*Refreshed, error) {
-		return nil, nil
-	}, ProviderConfig{RefreshLeadMs: defaultExpiryBuffer})
-	Register("codex", func(ctx context.Context, creds Credentials) (*Refreshed, error) {
-		return nil, nil
-	}, ProviderConfig{RefreshLeadMs: defaultExpiryBuffer, MaxRefreshAgeMs: 8 * 24 * time.Hour, TrackRefreshAt: true})
+
+	// Claude (Anthropic OAuth)
+	Register("claude", refreshClaude, ProviderConfig{RefreshLeadMs: defaultExpiryBuffer})
+
+	// Gemini (Google OAuth)
+	Register("gemini", refreshGoogle, ProviderConfig{RefreshLeadMs: defaultExpiryBuffer})
+
+	// Codex (OpenAI OAuth with permanent error detection)
+	Register("codex", refreshCodex, ProviderConfig{RefreshLeadMs: defaultExpiryBuffer, MaxRefreshAgeMs: 8 * 24 * time.Hour, TrackRefreshAt: true})
+
+	// xAI (Grok OAuth)
+	Register("xai", refreshXAI, ProviderConfig{RefreshLeadMs: defaultExpiryBuffer})
+
+	// Qwen (Alibaba Cloud OAuth)
+	Register("qwen", refreshQwen, ProviderConfig{RefreshLeadMs: defaultExpiryBuffer})
+
+	// Kiro (AWS Cognito with multiple auth methods)
+	Register("kiro", refreshKiro, ProviderConfig{RefreshLeadMs: defaultExpiryBuffer})
+
+	// iFlow (OAuth with Basic auth)
+	Register("iflow", refreshIflow, ProviderConfig{RefreshLeadMs: defaultExpiryBuffer})
+
+	// GitHub (OAuth)
+	Register("github", refreshGitHub, ProviderConfig{RefreshLeadMs: defaultExpiryBuffer})
+
+	// GitHub Copilot (uses GitHub access token to get Copilot token)
+	Register("copilot", refreshCopilot, ProviderConfig{RefreshLeadMs: defaultExpiryBuffer})
+
+	// Tencent CodeBuddy (custom header-based refresh)
+	Register("codebuddy-cn", refreshCodebuddy, ProviderConfig{RefreshLeadMs: defaultExpiryBuffer})
 }
 
 func init() {
