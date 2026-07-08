@@ -94,8 +94,8 @@ func dashboardRouter(r *repos.Repos, registry *providers.Registry, builder *mode
 
 	proxyPoolHandlers := dashboard.NewProxyPoolHandlers(r.ProxyPools)
 	providerNodeHandlers := dashboard.NewProviderNodeHandlers(r.ProviderNodes)
-	providerHandlers := dashboard.NewProviderHandlers(registry)
-	modelHandlers := dashboard.NewModelHandlers(registry)
+	providerHandlers := dashboard.NewProviderHandlers(registry, r)
+	modelHandlers := dashboard.NewModelHandlers(registry, r.KV)
 
 	router.With(dashboard.RequireSession).Get("/proxy-pools", proxyPoolHandlers.List)
 	router.With(dashboard.RequireSession).Post("/proxy-pools", proxyPoolHandlers.Create)

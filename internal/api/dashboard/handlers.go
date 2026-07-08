@@ -329,11 +329,12 @@ func (h *ProviderNodeHandlers) Validate(w http.ResponseWriter, r *http.Request) 
 // ProviderHandlers handles provider management
 type ProviderHandlers struct {
 	registry *providers.Registry
+	repos    *repos.Repos
 }
 
 // NewProviderHandlers creates provider handlers
-func NewProviderHandlers(registry *providers.Registry) *ProviderHandlers {
-	return &ProviderHandlers{registry: registry}
+func NewProviderHandlers(registry *providers.Registry, repos *repos.Repos) *ProviderHandlers {
+	return &ProviderHandlers{registry: registry, repos: repos}
 }
 
 // Get returns a provider by ID
@@ -347,14 +348,69 @@ func (h *ProviderHandlers) Get(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]any{"provider": provider})
 }
 
-// Update updates a provider
+// Update updates a provider connection via the accounts repo.
 func (h *ProviderHandlers) Update(w http.ResponseWriter, r *http.Request) {
-	writeError(w, http.StatusNotImplemented, "not_implemented", "Provider update not yet implemented")
+	if h.repos == nil {
+		writeError(w, http.StatusInternalServerError, "internal_error", "Repos unavailable")
+		return
+	}
+	id := chi.URLParam(r, "id")
+	var updates map[string]any
+	if err := json.NewDecoder(r.Body).Decode(&updates); err != nil {
+		writeError(w, http.StatusBadRequest, "invalid_body", err.Error())
+		return
+	}
+
+	account, err := h.repos.Accounts.Update(id, func(acc *repos.Account) {
+		if v, ok := updates["name"]; ok {
+			if s, ok := v.(string); ok {
+				acc.Name = s
+			}
+		}
+		if v, ok := updates["priority"]; ok {
+			if f, ok := v.(float64); ok {
+				acc.Priority = int(f)
+			}
+		}
+		if v, ok := updates["isActive"]; ok {
+			if b, ok := v.(bool); ok {
+				acc.IsActive = b
+			}
+		}
+		if v, ok := updates["providerSpecificData"]; ok {
+			if m, ok := v.(map[string]any); ok {
+				acc.ProviderSpecificData = m
+			}
+		}
+	})
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "update_failed", err.Error())
+		return
+	}
+	if account == nil {
+		writeError(w, http.StatusNotFound, "not_found", "Provider not found")
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"success": true, "connection": account})
 }
 
-// Delete removes a provider
+// Delete removes a provider connection from the database.
 func (h *ProviderHandlers) Delete(w http.ResponseWriter, r *http.Request) {
-	writeError(w, http.StatusNotImplemented, "not_implemented", "Provider delete not yet implemented")
+	if h.repos == nil {
+		writeError(w, http.StatusInternalServerError, "internal_error", "Repos unavailable")
+		return
+	}
+	id := chi.URLParam(r, "id")
+	deleted, err := h.repos.Accounts.Delete(id)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "delete_failed", err.Error())
+		return
+	}
+	if !deleted {
+		writeError(w, http.StatusNotFound, "not_found", "Provider not found")
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"success": true, "message": "Connection deleted successfully"})
 }
 
 // GetModels returns models for a provider
@@ -434,19 +490,28 @@ func (h *ProviderHandlers) TestModels(w http.ResponseWriter, r *http.Request) {
 // ModelHandlers handles model management
 type ModelHandlers struct {
 	registry *providers.Registry
+	kv       *repos.KVRepo
 }
 
-// NewModelHandlers creates model handlers
-func NewModelHandlers(registry *providers.Registry) *ModelHandlers {
-	return &ModelHandlers{registry: registry}
+// NewModelHandlers creates model handlers. kv may be nil to disable KV-backed features.
+func NewModelHandlers(registry *providers.Registry, kv *repos.KVRepo) *ModelHandlers {
+	return &ModelHandlers{registry: registry, kv: kv}
 }
 
-// AliasList returns model aliases
+// AliasList returns model aliases from registry and KV store
 func (h *ModelHandlers) AliasList(w http.ResponseWriter, r *http.Request) {
 	aliases := make(map[string]string)
+	// Registry aliases
 	for _, p := range h.registry.Providers {
 		if p.Alias != "" {
 			aliases[p.Alias] = p.ID
+		}
+	}
+	// KV aliases (user-defined)
+	if h.kv != nil {
+		kvAliases, _ := h.kv.GetAll("modelAliases")
+		for k, v := range kvAliases {
+			aliases[k] = v
 		}
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"aliases": aliases})
@@ -454,12 +519,45 @@ func (h *ModelHandlers) AliasList(w http.ResponseWriter, r *http.Request) {
 
 // AliasUpdate updates a model alias
 func (h *ModelHandlers) AliasUpdate(w http.ResponseWriter, r *http.Request) {
-	writeError(w, http.StatusNotImplemented, "not_implemented", "Alias update not yet implemented")
+	if h.kv == nil {
+		writeError(w, http.StatusInternalServerError, "internal_error", "KV store unavailable")
+		return
+	}
+	var body struct {
+		Alias string `json:"alias"`
+		Model string `json:"model"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		writeError(w, http.StatusBadRequest, "invalid_body", err.Error())
+		return
+	}
+	if body.Alias == "" || body.Model == "" {
+		writeError(w, http.StatusBadRequest, "invalid_request", "alias and model required")
+		return
+	}
+	if err := h.kv.Set("modelAliases", body.Alias, body.Model); err != nil {
+		writeError(w, http.StatusInternalServerError, "update_failed", err.Error())
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"success": true, "alias": body.Alias, "model": body.Model})
 }
 
 // AliasDelete removes a model alias
 func (h *ModelHandlers) AliasDelete(w http.ResponseWriter, r *http.Request) {
-	writeError(w, http.StatusNotImplemented, "not_implemented", "Alias delete not yet implemented")
+	if h.kv == nil {
+		writeError(w, http.StatusInternalServerError, "internal_error", "KV store unavailable")
+		return
+	}
+	alias := chi.URLParam(r, "alias")
+	if alias == "" {
+		writeError(w, http.StatusBadRequest, "invalid_request", "alias required")
+		return
+	}
+	if err := h.kv.Delete("modelAliases", alias); err != nil {
+		writeError(w, http.StatusInternalServerError, "delete_failed", err.Error())
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"success": true})
 }
 
 // Availability returns model availability
