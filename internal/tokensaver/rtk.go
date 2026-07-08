@@ -1,10 +1,5 @@
 package tokensaver
 
-import (
-	"fmt"
-	"strings"
-)
-
 const (
 	rtkRawCap        = 10 * 1024 * 1024 // 10 MiB
 	rtkMinCompressSize = 500
@@ -194,19 +189,12 @@ func compressText(text string, stats *RTKStats, kind string) string {
 }
 
 func applyFilter(text string) string {
-	// ponytail: only smart-truncate is implemented. The JS port runs an
-	// autodetect chain (git-diff → git-status → build-output → grep → find →
-	// tree → ls → search-list → read-numbered → dedup-log → smart-truncate)
-	// to compress shell output 5-10×. Port the filters when a real LLM
-	// session shows tool-result tokens dominating the bill.
-	// Minimal RTK parity: smart-truncate long outputs.
-	lines := strings.Split(text, "\n")
-	if len(lines) <= rtkSmartMinLines {
-		return text
+	// Autodetect chain: git-diff → git-status → build-output → grep → find →
+	// tree → ls → search-list → read-numbered → dedup-log → smart-truncate
+	// Ported from open-sse/rtk/autodetect.js + filters/
+	filter := autoDetectFilter(text)
+	if filter != nil {
+		return filter(text)
 	}
-	head := lines[:rtkSmartHead]
-	tail := lines[len(lines)-rtkSmartTail:]
-	omitted := len(lines) - rtkSmartHead - rtkSmartTail
-	marker := fmt.Sprintf("\n... (%d lines omitted by RTK) ...\n", omitted)
-	return strings.Join(head, "\n") + marker + strings.Join(tail, "\n")
+	return text
 }
