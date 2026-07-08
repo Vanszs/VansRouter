@@ -4,10 +4,12 @@ import (
 	"encoding/json"
 	"strings"
 	"net/http"
+	"strconv"
 
 	"github.com/9router/9router/internal/db/repos"
 	"github.com/9router/9router/internal/models"
 	"github.com/9router/9router/internal/network"
+	"github.com/go-chi/chi/v5"
 )
 
 // StubsHandlers holds placeholder implementations for dashboard routes that
@@ -17,9 +19,6 @@ type StubsHandlers struct {
 	// Builder is the model list builder, used by ModelsList to serve the
 	// /api/models route with real data instead of an empty stub.
 	Builder *models.Builder
-
-	// Repos provides access to DB-backed data for stubs that can serve
-	// real values. Optional — pass nil to keep static stub behavior.
 	Repos *repos.Repos
 }
 
@@ -165,20 +164,84 @@ func (h *StubsHandlers) ModelTest(w http.ResponseWriter, r *http.Request) {
 // Provider stubs
 
 // ProvidersClient handles GET /api/providers/client. Matches the JS shape
-// (connections list + pagination + totals).
+// (connections list + pagination + totals). When Repos is available, serves
+// real provider connections from the database.
 func (h *StubsHandlers) ProvidersClient(w http.ResponseWriter, r *http.Request) {
+	if h.Repos == nil {
+		writeJSON(w, http.StatusOK, map[string]any{
+			"connections":   []any{},
+			"providerOptions": []any{},
+			"pagination": map[string]any{
+				"page":      1,
+				"pageSize":  20,
+				"total":     0,
+				"totalPages": 1,
+			},
+			"totals": map[string]any{
+				"eligibleConnections":         0,
+				"providerFilteredConnections": 0,
+			},
+		})
+		return
+	}
+
+	// Parse pagination parameters from query string.
+	page := 1
+	pageSize := 20
+	if p, err := strconv.Atoi(r.URL.Query().Get("page")); err == nil && p > 0 {
+		page = p
+	}
+	if ps, err := strconv.Atoi(r.URL.Query().Get("pageSize")); err == nil && ps > 0 && ps <= 100 {
+		pageSize = ps
+	}
+	providerFilter := r.URL.Query().Get("provider")
+
+	allConnections, err := h.Repos.Accounts.List(providerFilter, nil)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "internal_error", "Failed to list connections")
+		return
+	}
+
+	// Strip sensitive fields from connections.
+	safeConnections := make([]map[string]any, 0, len(allConnections))
+	for _, c := range allConnections {
+		m := connectionToMap(c)
+		delete(m, "apiKey")
+		delete(m, "accessToken")
+		delete(m, "refreshToken")
+		delete(m, "idToken")
+		safeConnections = append(safeConnections, m)
+	}
+
+	total := len(safeConnections)
+	totalPages := 1
+	if pageSize > 0 {
+		totalPages = (total + pageSize - 1) / pageSize
+	}
+
+	// Apply pagination slice.
+	start := (page - 1) * pageSize
+	if start > total {
+		start = total
+	}
+	end := start + pageSize
+	if end > total {
+		end = total
+	}
+	paged := safeConnections[start:end]
+
 	writeJSON(w, http.StatusOK, map[string]any{
-		"connections":   []any{},
+		"connections":   paged,
 		"providerOptions": []any{},
 		"pagination": map[string]any{
-			"page":      1,
-			"pageSize":  20,
-			"total":     0,
-			"totalPages": 1,
+			"page":       page,
+			"pageSize":   pageSize,
+			"total":      total,
+			"totalPages": totalPages,
 		},
 		"totals": map[string]any{
-			"eligibleConnections":         0,
-			"providerFilteredConnections": 0,
+			"eligibleConnections":         total,
+			"providerFilteredConnections": total,
 		},
 	})
 }
@@ -279,20 +342,97 @@ func (h *StubsHandlers) SettingsProxyTest(w http.ResponseWriter, r *http.Request
 
 // SettingsDatabase handles GET/POST /api/settings/database. JS exports
 // exportDb payload on GET (a full DB dump object) and { success: true }
-// on POST import.
+// on POST import. When Repos is available, serves real counts and data.
 func (h *StubsHandlers) SettingsDatabase(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodPost {
 		writeJSON(w, http.StatusOK, map[string]any{"success": true})
 		return
 	}
-	// GET: exportDb returns the full settings/connections/etc shape. Stub
-	// returns a minimal valid object so the FE doesn't choke.
+
+	// GET: exportDb returns the full settings/connections/etc shape.
+	if h.Repos == nil {
+		// Stub returns a minimal valid object so the FE doesn't choke.
+		writeJSON(w, http.StatusOK, map[string]any{
+			"settings":   map[string]any{},
+			"keys":       []any{},
+			"combos":     []any{},
+			"providers":  []any{},
+			"proxyPools": []any{},
+		})
+		return
+	}
+
+	// Build real export payload from database.
+	settings, err := h.Repos.Settings.Get()
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "internal_error", "Failed to read settings")
+		return
+	}
+
+	keys, err := h.Repos.Keys.List()
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "internal_error", "Failed to read keys")
+		return
+	}
+
+	// Combos are stored in a separate table, query directly.
+	var combos []map[string]any
+	rows, err := h.Repos.DB.Query(`SELECT id, name, COALESCE(kind, '') AS kind, models, createdAt, updatedAt FROM combos ORDER BY name`)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "internal_error", "Failed to read combos")
+		return
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var c struct {
+			ID        string
+			Name      string
+			Kind      string
+			Models    string
+			CreatedAt string
+			UpdatedAt string
+		}
+		if err := rows.Scan(&c.ID, &c.Name, &c.Kind, &c.Models, &c.CreatedAt, &c.UpdatedAt); err != nil {
+			writeError(w, http.StatusInternalServerError, "internal_error", "Failed to scan combo")
+			return
+		}
+		var models []any
+		_ = json.Unmarshal([]byte(c.Models), &models)
+		combos = append(combos, map[string]any{
+			"id":        c.ID,
+			"name":      c.Name,
+			"kind":      c.Kind,
+			"models":    models,
+			"createdAt": c.CreatedAt,
+			"updatedAt": c.UpdatedAt,
+		})
+	}
+	if combos == nil {
+		combos = []map[string]any{}
+	}
+
+	providers, err := h.Repos.Accounts.List("", nil)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "internal_error", "Failed to read providers")
+		return
+	}
+	providerMaps := make([]map[string]any, 0, len(providers))
+	for _, p := range providers {
+		providerMaps = append(providerMaps, connectionToMap(p))
+	}
+
+	proxyPools, err := h.Repos.ProxyPools.List(r.Context())
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "internal_error", "Failed to read proxy pools")
+		return
+	}
+
 	writeJSON(w, http.StatusOK, map[string]any{
-		"settings":  map[string]any{},
-		"keys":      []any{},
-		"combos":    []any{},
-		"providers": []any{},
-		"proxyPools": []any{},
+		"settings":   settings,
+		"keys":       keys,
+		"combos":     combos,
+		"providers":  providerMaps,
+		"proxyPools": proxyPools,
 	})
 }
 
@@ -889,13 +1029,146 @@ func (h *StubsHandlers) ProviderConnectionGet(w http.ResponseWriter, r *http.Req
 }
 
 // ProviderConnectionUpdate handles PUT /api/providers/{id}.
+// When Repos is available, updates the provider connection from the JSON body.
 func (h *StubsHandlers) ProviderConnectionUpdate(w http.ResponseWriter, r *http.Request) {
-	writeJSON(w, http.StatusOK, map[string]any{"connection": map[string]any{}})
+	if h.Repos == nil {
+		writeJSON(w, http.StatusOK, map[string]any{"connection": map[string]any{}})
+		return
+	}
+
+	id := chi.URLParam(r, "id")
+	if id == "" {
+		writeError(w, http.StatusBadRequest, "invalid_request", "ID required")
+		return
+	}
+
+	var body map[string]any
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		writeError(w, http.StatusBadRequest, "invalid_body", "Invalid JSON body")
+		return
+	}
+
+	updated, err := h.Repos.Accounts.Update(id, func(a *repos.Account) {
+		if v, ok := body["provider"].(string); ok {
+			a.Provider = v
+		}
+		if v, ok := body["authType"].(string); ok {
+			a.AuthType = v
+		}
+		if v, ok := body["name"].(string); ok {
+			a.Name = v
+		}
+		if v, ok := body["email"].(string); ok {
+			a.Email = v
+		}
+		if v, ok := body["priority"].(float64); ok {
+			a.Priority = int(v)
+		}
+		if v, ok := body["isActive"].(bool); ok {
+			a.IsActive = v
+		}
+		if v, ok := body["displayName"].(string); ok {
+			a.DisplayName = v
+		}
+		if v, ok := body["defaultModel"].(string); ok {
+			a.DefaultModel = v
+		}
+		if v, ok := body["globalPriority"].(float64); ok {
+			a.GlobalPriority = int(v)
+		}
+		if v, ok := body["apiKey"].(string); ok {
+			a.APIKey = v
+		}
+		if v, ok := body["accessToken"].(string); ok {
+			a.AccessToken = v
+		}
+		if v, ok := body["refreshToken"].(string); ok {
+			a.RefreshToken = v
+		}
+		if v, ok := body["expiresAt"].(string); ok {
+			a.ExpiresAt = v
+		}
+		if v, ok := body["projectId"].(string); ok {
+			a.ProjectID = v
+		}
+		if v, ok := body["providerSpecificData"].(map[string]any); ok {
+			a.ProviderSpecificData = v
+		}
+	})
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "internal_error", "Failed to update connection")
+		return
+	}
+	if updated == nil {
+		writeError(w, http.StatusNotFound, "not_found", "Connection not found")
+		return
+	}
+
+	m := connectionToMap(updated)
+	delete(m, "apiKey")
+	delete(m, "accessToken")
+	delete(m, "refreshToken")
+	delete(m, "idToken")
+	writeJSON(w, http.StatusOK, map[string]any{"connection": m})
 }
 
 // ProviderConnectionDelete handles DELETE /api/providers/{id}.
+// When Repos is available, deletes the provider connection from the database.
 func (h *StubsHandlers) ProviderConnectionDelete(w http.ResponseWriter, r *http.Request) {
+	if h.Repos == nil {
+		writeJSON(w, http.StatusOK, map[string]any{"message": "Connection deleted successfully"})
+		return
+	}
+
+	id := chi.URLParam(r, "id")
+	if id == "" {
+		writeError(w, http.StatusBadRequest, "invalid_request", "ID required")
+		return
+	}
+
+	deleted, err := h.Repos.Accounts.Delete(id)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "internal_error", "Failed to delete connection")
+		return
+	}
+	if !deleted {
+		writeError(w, http.StatusNotFound, "not_found", "Connection not found")
+		return
+	}
+
 	writeJSON(w, http.StatusOK, map[string]any{"message": "Connection deleted successfully"})
+}
+
+// ProviderConnectionGet handles GET /api/providers/{id}.
+// When Repos is available, returns the provider connection from the database.
+func (h *StubsHandlers) ProviderConnectionGet(w http.ResponseWriter, r *http.Request) {
+	if h.Repos == nil {
+		writeJSON(w, http.StatusNotFound, map[string]any{"error": "Connection not found"})
+		return
+	}
+
+	id := chi.URLParam(r, "id")
+	if id == "" {
+		writeError(w, http.StatusBadRequest, "invalid_request", "ID required")
+		return
+	}
+
+	account, err := h.Repos.Accounts.GetByID(id)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "internal_error", "Failed to get connection")
+		return
+	}
+	if account == nil {
+		writeError(w, http.StatusNotFound, "not_found", "Connection not found")
+		return
+	}
+
+	m := connectionToMap(account)
+	delete(m, "apiKey")
+	delete(m, "accessToken")
+	delete(m, "refreshToken")
+	delete(m, "idToken")
+	writeJSON(w, http.StatusOK, map[string]any{"connection": m})
 }
 
 // ProviderModels handles GET /api/providers/{id}/models.

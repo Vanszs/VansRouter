@@ -1,156 +1,160 @@
 package schema
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+)
 
 func TestRoleConstants(t *testing.T) {
-	tests := []struct{ name, expected string }{
-		{"RoleSystem", "system"},
-		{"RoleUser", "user"},
-		{"RoleAssistant", "assistant"},
-		{"RoleTool", "tool"},
-		{"GeminiRoleUser", "user"},
-		{"GeminiRoleModel", "model"},
-		{"GeminiRoleFunction", "function"},
-	}
-	if RoleSystem != "system" {
-		t.Errorf("RoleSystem = %q, want %q", RoleSystem, "system")
-	}
-	if RoleUser != "user" {
-		t.Errorf("RoleUser = %q, want %q", RoleUser, "user")
-	}
-	if RoleAssistant != "assistant" {
-		t.Errorf("RoleAssistant = %q, want %q", RoleAssistant, "assistant")
-	}
-	if RoleTool != "tool" {
-		t.Errorf("RoleTool = %q, want %q", RoleTool, "tool")
-	}
-	if GeminiRoleUser != "user" {
-		t.Errorf("GeminiRoleUser = %q, want %q", GeminiRoleUser, "user")
-	}
-	if GeminiRoleModel != "model" {
-		t.Errorf("GeminiRoleModel = %q, want %q", GeminiRoleModel, "model")
-	}
-	if GeminiRoleFunction != "function" {
-		t.Errorf("GeminiRoleFunction = %q, want %q", GeminiRoleFunction, "function")
-	}
-	_ = tests
+	assert.Equal(t, "system", RoleSystem)
+	assert.Equal(t, "user", RoleUser)
+	assert.Equal(t, "assistant", RoleAssistant)
+	assert.Equal(t, "tool", RoleTool)
 }
 
-func TestBlockTypeConstants(t *testing.T) {
-	checks := map[string]string{
-		"OpenAIBlockTypeText":       OpenAIBlockTypeText,
-		"OpenAIBlockTypeImageURL":   OpenAIBlockTypeImageURL,
-		"OpenAIBlockTypeInputAudio": OpenAIBlockTypeInputAudio,
-		"OpenAIBlockTypeRefusal":    OpenAIBlockTypeRefusal,
-		"OpenAIBlockTypeFunction":   OpenAIBlockTypeFunction,
-		"OpenAIBlockTypeImage":      OpenAIBlockTypeImage,
-		"OpenAIBlockTypeFile":       OpenAIBlockTypeFile,
-		"ClaudeBlockTypeText":       ClaudeBlockTypeText,
-		"ClaudeBlockTypeImage":      ClaudeBlockTypeImage,
-		"ClaudeBlockTypeToolUse":    ClaudeBlockTypeToolUse,
-		"ClaudeBlockTypeToolResult": ClaudeBlockTypeToolResult,
-		"ClaudeBlockTypeThinking":   ClaudeBlockTypeThinking,
-		"ClaudeBlockTypeDocument":   ClaudeBlockTypeDocument,
-	}
-	for name, val := range checks {
-		if val == "" {
-			t.Errorf("%s is empty", name)
-		}
-	}
+func TestGeminiRoleConstants(t *testing.T) {
+	assert.Equal(t, "user", GeminiRoleUser)
+	assert.Equal(t, "model", GeminiRoleModel)
+	assert.Equal(t, "function", GeminiRoleFunction)
+}
+
+func TestOpenAIBlockTypeConstants(t *testing.T) {
+	assert.Equal(t, "text", OpenAIBlockTypeText)
+	assert.Equal(t, "image_url", OpenAIBlockTypeImageURL)
+	assert.Equal(t, "input_audio", OpenAIBlockTypeInputAudio)
+	assert.Equal(t, "refusal", OpenAIBlockTypeRefusal)
+	assert.Equal(t, "function", OpenAIBlockTypeFunction)
+	assert.Equal(t, "image", OpenAIBlockTypeImage)
+	assert.Equal(t, "file", OpenAIBlockTypeFile)
+}
+
+func TestClaudeBlockTypeConstants(t *testing.T) {
+	assert.Equal(t, "text", ClaudeBlockTypeText)
+	assert.Equal(t, "image", ClaudeBlockTypeImage)
+	assert.Equal(t, "tool_use", ClaudeBlockTypeToolUse)
+	assert.Equal(t, "tool_result", ClaudeBlockTypeToolResult)
+	assert.Equal(t, "thinking", ClaudeBlockTypeThinking)
+	assert.Equal(t, "document", ClaudeBlockTypeDocument)
+}
+
+func TestResponsesItemTypeConstants(t *testing.T) {
+	assert.Equal(t, "message", ResponsesItemTypeMessage)
+	assert.Equal(t, "thinking", ResponsesItemTypeThinking)
+	assert.Equal(t, "function_call", ResponsesItemTypeFunctionCall)
+	assert.Equal(t, "function_call_output", ResponsesItemTypeFunctionCallOutput)
+	assert.Equal(t, "reasoning", ResponsesItemTypeReasoning)
+	assert.Equal(t, "output_text", ResponsesItemTypeOutputText)
+	assert.Equal(t, "input_text", ResponsesItemTypeInputText)
+	assert.Equal(t, "input_image", ResponsesItemTypeInputImage)
+	assert.Equal(t, "summary_text", ResponsesItemTypeSummaryText)
 }
 
 func TestValidOpenAIContentTypes(t *testing.T) {
-	if len(ValidOpenAIContentTypes) != 4 {
-		t.Errorf("ValidOpenAIContentTypes len = %d, want 4", len(ValidOpenAIContentTypes))
-	}
-	found := map[string]bool{}
-	for _, ct := range ValidOpenAIContentTypes {
-		found[ct] = true
-	}
-	for _, want := range []string{"text", "image_url", "input_audio", "refusal"} {
-		if !found[want] {
-			t.Errorf("ValidOpenAIContentTypes missing %q", want)
-		}
-	}
+	assert.Contains(t, ValidOpenAIContentTypes, "text")
+	assert.Contains(t, ValidOpenAIContentTypes, "image_url")
+	assert.Contains(t, ValidOpenAIContentTypes, "input_audio")
+	assert.Contains(t, ValidOpenAIContentTypes, "refusal")
+	assert.Len(t, ValidOpenAIContentTypes, 4)
 }
 
 func TestValidOpenAIMessageTypes(t *testing.T) {
-	if len(ValidOpenAIMessageTypes) != 4 {
-		t.Errorf("ValidOpenAIMessageTypes len = %d, want 4", len(ValidOpenAIMessageTypes))
-	}
+	assert.Contains(t, ValidOpenAIMessageTypes, "system")
+	assert.Contains(t, ValidOpenAIMessageTypes, "user")
+	assert.Contains(t, ValidOpenAIMessageTypes, "assistant")
+	assert.Contains(t, ValidOpenAIMessageTypes, "tool")
+	assert.Len(t, ValidOpenAIMessageTypes, 4)
 }
 
 func TestModelFallback(t *testing.T) {
-	checks := map[string]string{
-		"claude": "claude-sonnet-4-20250514",
-		"openai": "gpt-4o",
-		"gemini": "gemini-1.5-pro-latest",
-		"vertex": "gemini-1.5-pro-latest",
-		"ollama": "llama3",
-	}
-	for key, want := range checks {
-		if got, ok := ModelFallback[key]; !ok {
-			t.Errorf("ModelFallback missing key %q", key)
-		} else if got != want {
-			t.Errorf("ModelFallback[%q] = %q, want %q", key, got, want)
-		}
-	}
+	assert.NotEmpty(t, ModelFallback["claude"])
+	assert.NotEmpty(t, ModelFallback["openai"])
+	assert.NotEmpty(t, ModelFallback["gemini"])
+	assert.NotEmpty(t, ModelFallback["vertex"])
+	assert.NotEmpty(t, ModelFallback["ollama"])
+	assert.Equal(t, "claude-sonnet-4-20250514", ModelFallback["claude"])
+	assert.Equal(t, "gpt-4o", ModelFallback["openai"])
+	assert.Equal(t, "gemini-1.5-pro-latest", ModelFallback["gemini"])
+	assert.Equal(t, "gemini-1.5-pro-latest", ModelFallback["vertex"])
+	assert.Equal(t, "llama3", ModelFallback["ollama"])
 }
 
 func TestDefaultImageMIME(t *testing.T) {
-	if DefaultImageMIME != "image/png" {
-		t.Errorf("DefaultImageMIME = %q, want %q", DefaultImageMIME, "image/png")
-	}
+	assert.Equal(t, "image/png", DefaultImageMIME)
 }
 
-func TestOpenAIFinishReason(t *testing.T) {
-	checks := map[string]string{
-		"stop":            "stop",
-		"length":          "length",
-		"tool_calls":      "tool_calls",
-		"content_filter":  "content_filter",
-		"function_call":   "function_call",
+func TestOpenAIFinishReasonMap(t *testing.T) {
+	tests := []struct {
+		key      string
+		expected string
+	}{
+		{"stop", "stop"},
+		{"length", "length"},
+		{"tool_calls", "tool_calls"},
+		{"content_filter", "content_filter"},
+		{"function_call", "function_call"},
 	}
-	for in, want := range checks {
-		if got, ok := OpenAIFinishReason[in]; !ok {
-			t.Errorf("OpenAIFinishReason missing %q", in)
-		} else if got != want {
-			t.Errorf("OpenAIFinishReason[%q] = %q, want %q", in, got, want)
-		}
+	for _, tt := range tests {
+		t.Run(tt.key, func(t *testing.T) {
+			assert.Equal(t, tt.expected, OpenAIFinishReason[tt.key])
+		})
 	}
+	assert.Len(t, OpenAIFinishReason, 5)
 }
 
-func TestClaudeStopReason(t *testing.T) {
-	checks := map[string]string{
-		"end_turn":       "stop",
-		"max_tokens":     "length",
-		"stop_sequence":  "stop",
-		"tool_use":       "tool_calls",
-		"content_filter": "content_filter",
+func TestClaudeStopReasonMap(t *testing.T) {
+	tests := []struct {
+		key      string
+		expected string
+	}{
+		{"end_turn", "stop"},
+		{"max_tokens", "length"},
+		{"stop_sequence", "stop"},
+		{"tool_use", "tool_calls"},
+		{"content_filter", "content_filter"},
 	}
-	for in, want := range checks {
-		if got, ok := ClaudeStopReason[in]; !ok {
-			t.Errorf("ClaudeStopReason missing %q", in)
-		} else if got != want {
-			t.Errorf("ClaudeStopReason[%q] = %q, want %q", in, got, want)
-		}
+	for _, tt := range tests {
+		t.Run(tt.key, func(t *testing.T) {
+			assert.Equal(t, tt.expected, ClaudeStopReason[tt.key])
+		})
 	}
+	assert.Len(t, ClaudeStopReason, 5)
 }
 
-func TestGeminiFinishReason(t *testing.T) {
-	checks := map[string]string{
-		"STOP":                     "stop",
-		"MAX_TOKENS":               "length",
-		"SAFETY":                   "content_filter",
-		"RECITATION":               "content_filter",
-		"OTHER":                    "stop",
-		"FINISH_REASON_UNSPECIFIED": "stop",
+func TestGeminiFinishReasonMap(t *testing.T) {
+	tests := []struct {
+		key      string
+		expected string
+	}{
+		{"STOP", "stop"},
+		{"MAX_TOKENS", "length"},
+		{"SAFETY", "content_filter"},
+		{"RECITATION", "content_filter"},
+		{"OTHER", "stop"},
+		{"FINISH_REASON_UNSPECIFIED", "stop"},
 	}
-	for in, want := range checks {
-		if got, ok := GeminiFinishReason[in]; !ok {
-			t.Errorf("GeminiFinishReason missing %q", in)
-		} else if got != want {
-			t.Errorf("GeminiFinishReason[%q] = %q, want %q", in, got, want)
-		}
+	for _, tt := range tests {
+		t.Run(tt.key, func(t *testing.T) {
+			assert.Equal(t, tt.expected, GeminiFinishReason[tt.key])
+		})
 	}
+	assert.Len(t, GeminiFinishReason, 6)
+}
+
+func TestFinishReasonMissingKeys(t *testing.T) {
+	_, ok := OpenAIFinishReason["unknown"]
+	assert.False(t, ok)
+
+	_, ok = ClaudeStopReason["unknown"]
+	assert.False(t, ok)
+
+	_, ok = GeminiFinishReason["UNKNOWN"]
+	assert.False(t, ok)
+}
+
+func TestRoleOverlap(t *testing.T) {
+	// GeminiRoleUser and RoleUser should be the same
+	assert.Equal(t, RoleUser, GeminiRoleUser)
+	// Gemini model role is different from assistant
+	assert.NotEqual(t, RoleAssistant, GeminiRoleModel)
 }
