@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 )
 
@@ -50,10 +51,10 @@ func TestKiroRegisterClient_Success(t *testing.T) {
 func TestKiroBuildSocialLoginURL_Google(t *testing.T) {
 	s := NewKiroService(http.DefaultClient)
 	url := s.BuildSocialLoginURL("google", "challenge123", "state456")
-	if !contains(url, "idp=Google") {
+	if !strings.Contains(url, "idp=Google") {
 		t.Error("should contain idp=Google")
 	}
-	if !contains(url, "code_challenge=challenge123") {
+	if !strings.Contains(url, "code_challenge=challenge123") {
 		t.Error("should contain code_challenge")
 	}
 }
@@ -61,7 +62,7 @@ func TestKiroBuildSocialLoginURL_Google(t *testing.T) {
 func TestKiroBuildSocialLoginURL_GitHub(t *testing.T) {
 	s := NewKiroService(http.DefaultClient)
 	url := s.BuildSocialLoginURL("github", "challenge123", "state456")
-	if !contains(url, "idp=Github") {
+	if !strings.Contains(url, "idp=Github") {
 		t.Error("should contain idp=Github")
 	}
 }
@@ -116,17 +117,4 @@ func TestIsValidAWSRegion(t *testing.T) {
 	if isValidAWSRegion("invalid-region") {
 		t.Error("invalid-region should not be valid")
 	}
-}
-
-func contains(s, substr string) bool {
-	return len(s) >= len(substr) && (s == substr || len(s) > 0 && containsStr(s, substr))
-}
-
-func containsStr(s, substr string) bool {
-	for i := 0; i <= len(s)-len(substr); i++ {
-		if s[i:i+len(substr)] == substr {
-			return true
-		}
-	}
-	return false
 }
