@@ -417,7 +417,12 @@ func (h *StubsHandlers) SettingsDatabase(w http.ResponseWriter, r *http.Request)
 	}
 	providerMaps := make([]map[string]any, 0, len(providers))
 	for _, p := range providers {
-		providerMaps = append(providerMaps, connectionToMap(p))
+		m := connectionToMap(p)
+		delete(m, "apiKey")
+		delete(m, "accessToken")
+		delete(m, "refreshToken")
+		delete(m, "idToken")
+		providerMaps = append(providerMaps, m)
 	}
 
 	proxyPools, err := h.Repos.ProxyPools.List(r.Context())
