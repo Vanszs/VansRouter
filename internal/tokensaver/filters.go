@@ -307,10 +307,8 @@ func gitDiff(diff string, maxLines int) string {
 					hunkSkipped++
 				}
 			} else if hunkShown < maxHunkLines && !strings.HasPrefix(line, "\\") {
-				if hunkShown > 0 {
-					result = append(result, "  "+line)
-					hunkShown++
-				}
+				result = append(result, "  "+line)
+				hunkShown++
 			}
 		}
 
@@ -469,24 +467,30 @@ func buildOutput(input string) string {
 	var summary string
 	compilingCount := 0
 	downloadingCount := 0
-	inCargoError := false
 
 	reCargoErrCont := regexp.MustCompile(`^\s*(-->|\||\d+\s*\||=)`)
 	const deprecationKeep = 3
-
+	inCargoError := false   // true when inside multi-line error block
+	inCargoWarn := false    // true when inside multi-line warning block
 	for _, line := range lines {
 		trimmed := strings.TrimSpace(line)
 
-		if inCargoError {
+		if inCargoError || inCargoWarn {
 			if trimmed == "" {
 				inCargoError = false
+				inCargoWarn = false
 				continue
 			}
 			if reCargoErrCont.MatchString(line) {
-				errors = append(errors, line)
+				if inCargoError {
+					errors = append(errors, line)
+				} else {
+					warnings = append(warnings, line)
+				}
 				continue
 			}
 			inCargoError = false
+			inCargoWarn = false
 		}
 
 		if trimmed == "" {
@@ -505,7 +509,7 @@ func buildOutput(input string) string {
 			inCargoError = true
 		case reWarningStart.MatchString(trimmed), strings.HasPrefix(trimmed, "warning -->"):
 			warnings = append(warnings, line)
-			inCargoError = true
+			inCargoWarn = true
 		case reErrColon.MatchString(trimmed):
 			errors = append(errors, line)
 		case reBracketErr.MatchString(trimmed), strings.HasPrefix(trimmed, "BUILD FAILED"):
