@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 
 /**
  * Hook to fetch and manage circuit breaker statuses
@@ -7,7 +7,7 @@ export function useCircuitBreakers() {
   const [statuses, setStatuses] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  const fetchStatuses = async () => {
+  const fetchStatuses = useCallback(async () => {
     try {
       const res = await fetch("/api/providers/circuit-breakers");
       const data = await res.json();
@@ -17,12 +17,27 @@ export function useCircuitBreakers() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
-    fetchStatuses();
-    const interval = setInterval(fetchStatuses, 5000); // Poll every 5s
-    return () => clearInterval(interval);
+    let cancelled = false;
+    const tick = async () => {
+      try {
+        const res = await fetch("/api/providers/circuit-breakers");
+        const data = await res.json();
+        if (!cancelled) setStatuses(data.statuses || []);
+      } catch (error) {
+        if (!cancelled) console.error("Failed to fetch circuit breakers:", error);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    };
+    tick();
+    const interval = setInterval(tick, 5000); // Poll every 5s
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+    };
   }, []);
 
   const getCircuitBreakerForProvider = (providerId) => {

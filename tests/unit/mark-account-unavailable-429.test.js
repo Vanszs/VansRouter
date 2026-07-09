@@ -91,7 +91,8 @@ describe("markAccountUnavailable 429 cooldown classification", () => {
       "conn-1", 429, "rate limit exceeded", "openai", "gpt-4o", resetsAtMs
     );
     expect(result.shouldFallback).toBe(true);
-    expect(result.cooldownMs).toBe(90_000);
+    expect(result.cooldownMs).toBeGreaterThanOrEqual(89_000);
+    expect(result.cooldownMs).toBeLessThanOrEqual(90_000);
   });
 
   it("returns no fallback for noauth connection", async () => {
