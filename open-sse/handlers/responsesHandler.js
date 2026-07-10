@@ -56,7 +56,11 @@ export async function handleResponsesCore({ body, modelInfo, credentials, log, o
   // Case 1: Client wants non-streaming, but got SSE (provider forced it, e.g., Codex)
   if (!clientRequestedStreaming && contentType.includes("text/event-stream")) {
     try {
-      const jsonResponse = await convertResponsesStreamToJson(response.body);
+      const stream = response.body;
+      if (!stream || typeof stream.getReader !== "function") {
+        throw new Error("Invalid stream body");
+      }
+      const jsonResponse = await convertResponsesStreamToJson(stream);
 
       return {
         success: true,
@@ -70,11 +74,11 @@ export async function handleResponsesCore({ body, modelInfo, credentials, log, o
         })
       };
     } catch (error) {
-      console.error("[Responses API] Stream-to-JSON conversion failed:", error);
+      console.error("[Responses API] Stream-to-JSON conversion failed:", error?.message || error);
       return {
         success: false,
         status: 500,
-        error: "Failed to convert streaming response to JSON"
+        error: `Failed to convert streaming response to JSON: ${error?.message || error}`
       };
     }
   }
@@ -96,4 +100,3 @@ export async function handleResponsesCore({ body, modelInfo, credentials, log, o
   // Case 3: Non-SSE response (error or non-streaming from provider) - return as-is
   return result;
 }
-
