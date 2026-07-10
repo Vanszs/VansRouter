@@ -1,63 +1,11 @@
 "use client";
 
 import { useState } from "react";
+import PropTypes from "prop-types";
 import { Button, Badge, Input, Modal, Select } from "@/shared/components";
 import { AI_PROVIDERS } from "@/shared/constants/providers";
 
 const BULK_PLACEHOLDER = `name1|sk-key1\nname2|sk-key2\nsk-key-only-auto-named`;
-
-function CloudflareConfigSection({ cloudflareData, setCloudflareData }) {
-  return (
-          <div className="bg-sidebar/50 p-4 rounded-lg border border-accent/20">
-            <h3 className="font-semibold mb-3 text-sm">Cloudflare Workers AI</h3>
-            <Input
-              label="Account ID"
-              value={cloudflareData.accountId}
-              onChange={(e) => setCloudflareData({ ...cloudflareData, accountId: e.target.value })}
-              placeholder="abc123def456..."
-            />
-            <p className="text-xs text-text-muted mt-2">
-              Find your Account ID in the right sidebar of <a href="https://dash.cloudflare.com" target="_blank" rel="noopener noreferrer" className="text-primary underline">dash.cloudflare.com</a>
-            </p>
-          </div>
-  );
-}
-
-
-function AzureConfigSection({ azureData, setAzureData }) {
-  return (
-          <div className="bg-sidebar/50 p-4 rounded-lg border border-accent/20">
-            <h3 className="font-semibold mb-3 text-sm">Azure OpenAI Configuration</h3>
-            <div className="flex flex-col gap-3">
-              <Input
-                label="Azure Endpoint"
-                value={azureData.azureEndpoint}
-                onChange={(e) => setAzureData({ ...azureData, azureEndpoint: e.target.value })}
-                placeholder="https://your-resource.openai.azure.com"
-              />
-              <Input
-                label="Deployment Name"
-                value={azureData.deployment}
-                onChange={(e) => setAzureData({ ...azureData, deployment: e.target.value })}
-                placeholder="gpt-4"
-              />
-              <Input
-                label="API Version"
-                value={azureData.apiVersion}
-                onChange={(e) => setAzureData({ ...azureData, apiVersion: e.target.value })}
-                placeholder="2024-10-01-preview"
-              />
-              <Input
-                label="Organization"
-                value={azureData.organization}
-                onChange={(e) => setAzureData({ ...azureData, organization: e.target.value })}
-                placeholder="Organization ID"
-              />
-            </div>
-          </div>
-  );
-}
-
 
 export default function AddApiKeyModal({ isOpen, provider, providerName, isCompatible, isAnthropic, authType, authHint, website, proxyPools, error, onSave, onBulkDone, onClose }) {
   const NONE_PROXY_POOL_VALUE = "__none__";
@@ -68,10 +16,12 @@ export default function AddApiKeyModal({ isOpen, provider, providerName, isCompa
   const credentialPlaceholder = isCookie
     ? (provider === "grok-web" ? "sso=xxxxx... or just the raw value" : "eyJhbGciOi...")
     : (isXaiApiKey ? "xai-..." : "");
+
   const isAzure = provider === "azure";
   const isCloudflareAi = provider === "cloudflare-ai";
   const providerRegions = AI_PROVIDERS?.[provider]?.regions || null;
   const defaultRegion = AI_PROVIDERS?.[provider]?.defaultRegion || providerRegions?.[0]?.id || "";
+
   const [formData, setFormData] = useState({
     name: "",
     apiKey: "",
@@ -91,9 +41,14 @@ export default function AddApiKeyModal({ isOpen, provider, providerName, isCompa
   const [validating, setValidating] = useState(false);
   const [validationResult, setValidationResult] = useState(null);
   const [saving, setSaving] = useState(false);
+  const bulkPlaceholder = isCloudflareAi
+    ? `name1|sk-key1|acc123456\nname2|sk-key2|def789012\nsk-key-only-auto-named`
+    : BULK_PLACEHOLDER;
+
   const [mode, setMode] = useState("single"); // "single" | "bulk"
   const [bulkText, setBulkText] = useState("");
   const [bulkResult, setBulkResult] = useState(null); // { success, failed }
+
   const buildProviderSpecificData = () => {
     if (isOllamaLocal && formData.ollamaHostUrl.trim()) {
       return { baseUrl: formData.ollamaHostUrl.trim() };
@@ -114,6 +69,7 @@ export default function AddApiKeyModal({ isOpen, provider, providerName, isCompa
     }
     return undefined;
   };
+
   const handleValidate = async () => {
     setValidating(true);
     try {
@@ -130,6 +86,7 @@ export default function AddApiKeyModal({ isOpen, provider, providerName, isCompa
       setValidating(false);
     }
   };
+
   const handleSubmit = async () => {
     if (!provider) return;
     if (!isOllamaLocal && !formData.apiKey) return;
@@ -138,6 +95,7 @@ export default function AddApiKeyModal({ isOpen, provider, providerName, isCompa
       if (!formData.name) return;
     }
     if (isCompatible && !formData.defaultModel.trim()) return;
+
     setSaving(true);
     try {
       let isValid = false;
@@ -157,6 +115,7 @@ export default function AddApiKeyModal({ isOpen, provider, providerName, isCompa
       } finally {
         setValidating(false);
       }
+
       await onSave({
         name: formData.name || (isOllamaLocal ? "Ollama Local" : ""),
         apiKey: formData.apiKey,
@@ -170,39 +129,55 @@ export default function AddApiKeyModal({ isOpen, provider, providerName, isCompa
       setSaving(false);
     }
   };
+
   const handleBulkSubmit = async () => {
-    const lines = bulkText.split("\n").flatMap(l => { const t = l.trim(); return t ? [t] : []; });
+    const lines = bulkText.split("\n").map(l => l.trim()).filter(Boolean);
     if (!lines.length) return;
     setSaving(true);
     setBulkResult(null);
-    const results = await Promise.all(lines.map(async (line, i) => {
-      const parts = line.split("|");
-      const apiKey = parts.length >= 2 ? parts.slice(1).join("|").trim() : parts[0].trim();
+    let success = 0;
+    let failed = 0;
+    for (let i = 0; i < lines.length; i++) {
+      const parts = lines[i].split("|");
       const baseName = parts.length >= 2 ? parts[0].trim() : "Key";
       const name = `${baseName} ${i + 1}`;
+
+      let apiKey;
+      let providerSpecificData;
+      if (isCloudflareAi && parts.length >= 3) {
+        // Format: name|apiKey|accountId
+        apiKey = parts.slice(1, -1).join("|").trim();
+        providerSpecificData = { accountId: parts[parts.length - 1].trim() };
+      } else {
+        apiKey = parts.length >= 2 ? parts.slice(1).join("|").trim() : parts[0].trim();
+      }
+
       try {
         const res = await fetch("/api/providers", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ provider, apiKey, name, priority: 1, testStatus: "unknown" }),
+          body: JSON.stringify({
+            provider,
+            apiKey,
+            name,
+            priority: 1,
+            testStatus: "unknown",
+            ...(providerSpecificData ? { providerSpecificData } : {}),
+          }),
         });
-        const data = await res.json();
-        // Trigger validation test right after bulk adding to determine active / error status
-        if (res.ok && data.connection?.id) {
-          fetch(`/api/providers/${data.connection.id}/test`, { method: "POST" }).catch(() => {});
-        }
-        return res.ok ? "ok" : "fail";
+        if (res.ok) success++;
+        else failed++;
       } catch {
-        return "fail";
+        failed++;
       }
-    }));
-    const success = results.filter(r => r === "ok").length;
-    const failed = results.filter(r => r === "fail").length;
+    }
     setSaving(false);
     setBulkResult({ success, failed });
     if (success > 0 && onBulkDone) onBulkDone();
   };
+
   if (!provider) return null;
+
   return (
     <Modal isOpen={isOpen} title={`Add ${providerName || provider} ${credentialLabel}`} onClose={onClose}>
       <div className="flex flex-col gap-4">
@@ -211,15 +186,20 @@ export default function AddApiKeyModal({ isOpen, provider, providerName, isCompa
           <Button size="sm" variant={mode === "single" ? "primary" : "ghost"} onClick={() => { setMode("single"); setBulkResult(null); }}>Single</Button>
           <Button size="sm" variant={mode === "bulk" ? "primary" : "ghost"} onClick={() => { setMode("bulk"); setBulkResult(null); }}>Bulk Add</Button>
         </div>
+
         {mode === "bulk" && (
           <div className="flex flex-col gap-3">
-            <p className="text-xs text-text-muted">One key per line. Format: <code>name|apiKey</code> or just <code>apiKey</code> (auto-named by index).</p>
+            <p className="text-xs text-text-muted">
+              {isCloudflareAi
+                ? <>One key per line. Format: <code>name|apiKey|accountId</code> or just <code>apiKey</code> (auto-named by index).</>
+                : <>One key per line. Format: <code>name|apiKey</code> or just <code>apiKey</code> (auto-named by index).</>
+              }
+            </p>
             <textarea
               className="w-full rounded border border-accent/30 bg-sidebar p-2 text-sm font-mono resize-y min-h-[140px] focus:outline-none focus:ring-1 focus:ring-primary"
-              placeholder={BULK_PLACEHOLDER}
+              placeholder={bulkPlaceholder}
               value={bulkText}
               onChange={(e) => setBulkText(e.target.value)}
-              aria-label="Bulk API keys"
             />
             {bulkResult && (
               <div className={`text-sm font-medium ${bulkResult.failed > 0 ? "text-yellow-400" : "text-green-400"}`}>
@@ -234,6 +214,7 @@ export default function AddApiKeyModal({ isOpen, provider, providerName, isCompa
             </div>
           </div>
         )}
+
         {mode === "single" && (<>
         <Input
           label="Name"
@@ -318,20 +299,67 @@ export default function AddApiKeyModal({ isOpen, provider, providerName, isCompa
             {validationResult === "success" ? "Valid" : "Invalid"}
           </Badge>
         )}
-        {error && <p className="text-xs text-red-500 break-words">{error}</p>}
+        {error && (
+          <p className="text-xs text-red-500 break-words">{error}</p>
+        )}
         {isCompatible && (
           <p className="text-xs text-text-muted">
             Enter the model ID exactly as your compatible endpoint expects it. This model will be saved as the connection default.
           </p>
         )}
-        {isCloudflareAi && <CloudflareConfigSection cloudflareData={cloudflareData} setCloudflareData={setCloudflareData} />}
-        {isAzure && <AzureConfigSection azureData={azureData} setAzureData={setAzureData} />}
+        {isCloudflareAi && (
+          <div className="bg-sidebar/50 p-4 rounded-lg border border-accent/20">
+            <h3 className="font-semibold mb-3 text-sm">Cloudflare Workers AI</h3>
+            <Input
+              label="Account ID"
+              value={cloudflareData.accountId}
+              onChange={(e) => setCloudflareData({ ...cloudflareData, accountId: e.target.value })}
+              placeholder="abc123def456..."
+            />
+            <p className="text-xs text-text-muted mt-2">
+              Find your Account ID in the right sidebar of <a href="https://dash.cloudflare.com" target="_blank" rel="noopener noreferrer" className="text-primary underline">dash.cloudflare.com</a>
+            </p>
+          </div>
+        )}
+        {isAzure && (
+          <div className="bg-sidebar/50 p-4 rounded-lg border border-accent/20">
+            <h3 className="font-semibold mb-3 text-sm">Azure OpenAI Configuration</h3>
+            <div className="flex flex-col gap-3">
+              <Input
+                label="Azure Endpoint"
+                value={azureData.azureEndpoint}
+                onChange={(e) => setAzureData({ ...azureData, azureEndpoint: e.target.value })}
+                placeholder="https://your-resource.openai.azure.com"
+              />
+              <Input
+                label="Deployment Name"
+                value={azureData.deployment}
+                onChange={(e) => setAzureData({ ...azureData, deployment: e.target.value })}
+                placeholder="gpt-4"
+              />
+              <Input
+                label="API Version"
+                value={azureData.apiVersion}
+                onChange={(e) => setAzureData({ ...azureData, apiVersion: e.target.value })}
+                placeholder="2024-10-01-preview"
+              />
+              <Input
+                label="Organization"
+                value={azureData.organization}
+                onChange={(e) => setAzureData({ ...azureData, organization: e.target.value })}
+                placeholder="Organization ID"
+              />
+            </div>
+          </div>
+        )}
+
         <Input
           label="Priority"
           type="number"
           value={formData.priority}
           onChange={(e) => setFormData({ ...formData, priority: Number.parseInt(e.target.value) || 1 })}
         />
+
         <Select
           label="Proxy Pool"
           value={formData.proxyPoolId}
@@ -342,14 +370,17 @@ export default function AddApiKeyModal({ isOpen, provider, providerName, isCompa
           ]}
           placeholder="None"
         />
+
         {(proxyPools || []).length === 0 && (
           <p className="text-xs text-text-muted">
             No active proxy pools available. Create one in Proxy Pools page first.
           </p>
         )}
+
         <p className="text-xs text-text-muted">
           Legacy manual proxy fields are still accepted by API for backward compatibility.
         </p>
+
         <div className="flex gap-2">
           <Button onClick={handleSubmit} fullWidth disabled={saving || (!isOllamaLocal && (!formData.name || !formData.apiKey)) || (isCompatible && !formData.defaultModel.trim()) || (isAzure && (!azureData.azureEndpoint || !azureData.deployment || !azureData.organization)) || (isCloudflareAi && !cloudflareData.accountId)}>
             {saving ? "Saving..." : "Save"}
@@ -363,3 +394,22 @@ export default function AddApiKeyModal({ isOpen, provider, providerName, isCompa
     </Modal>
   );
 }
+
+AddApiKeyModal.propTypes = {
+  isOpen: PropTypes.bool.isRequired,
+  provider: PropTypes.string,
+  providerName: PropTypes.string,
+  isCompatible: PropTypes.bool,
+  isAnthropic: PropTypes.bool,
+  authType: PropTypes.string,
+  authHint: PropTypes.string,
+  website: PropTypes.string,
+  proxyPools: PropTypes.arrayOf(PropTypes.shape({
+    id: PropTypes.string,
+    name: PropTypes.string,
+  })),
+  error: PropTypes.string,
+  onSave: PropTypes.func.isRequired,
+  onBulkDone: PropTypes.func,
+  onClose: PropTypes.func.isRequired,
+};
