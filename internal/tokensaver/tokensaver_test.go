@@ -168,7 +168,8 @@ func TestCompressMessages_OpenAITool(t *testing.T) {
 	require.NotNil(t, stats)
 	assert.Greater(t, stats.BytesBefore, stats.BytesAfter)
 	msg := body["messages"].([]any)[0].(map[string]any)
-	assert.Contains(t, msg["content"], "lines omitted by RTK")
+	// 300 repeated "line" → autodetect picks dedupLog → collapses duplicates
+	assert.Contains(t, msg["content"], "duplicate lines")
 }
 
 func TestCompressMessages_Disabled(t *testing.T) {

@@ -12,6 +12,7 @@ type Repos struct {
 	Settings      *SettingsRepo
 	ProxyPools    *ProxyPoolRepo
 	ProviderNodes *ProviderNodeRepo
+	KV            *KVRepo
 }
 
 // New creates a Repos instance backed by db.
@@ -24,5 +25,6 @@ func New(db *sql.DB) *Repos {
 		Settings:      NewSettingsRepo(db),
 		ProxyPools:    NewProxyPoolRepo(db),
 		ProviderNodes: NewProviderNodeRepo(db),
+		KV:            NewKVRepo(db),
 	}
 }

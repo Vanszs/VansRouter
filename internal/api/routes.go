@@ -94,8 +94,8 @@ func dashboardRouter(r *repos.Repos, registry *providers.Registry, builder *mode
 
 	proxyPoolHandlers := dashboard.NewProxyPoolHandlers(r.ProxyPools)
 	providerNodeHandlers := dashboard.NewProviderNodeHandlers(r.ProviderNodes)
-	providerHandlers := dashboard.NewProviderHandlers(registry)
-	modelHandlers := dashboard.NewModelHandlers(registry)
+	providerHandlers := dashboard.NewProviderHandlers(registry, r)
+	modelHandlers := dashboard.NewModelHandlers(registry, r.KV)
 
 	router.With(dashboard.RequireSession).Get("/proxy-pools", proxyPoolHandlers.List)
 	router.With(dashboard.RequireSession).Post("/proxy-pools", proxyPoolHandlers.Create)
@@ -115,7 +115,7 @@ func dashboardRouter(r *repos.Repos, registry *providers.Registry, builder *mode
 
 	router.With(dashboard.RequireSession).Get("/models/alias", modelHandlers.AliasList)
 	router.With(dashboard.RequireSession).Put("/models/alias", modelHandlers.AliasUpdate)
-	router.With(dashboard.RequireSession).Delete("/models/alias", modelHandlers.AliasDelete)
+	router.With(dashboard.RequireSession).Delete("/models/alias/{alias}", modelHandlers.AliasDelete)
 	router.With(dashboard.RequireSession).Get("/models/availability", modelHandlers.Availability)
 	router.With(dashboard.RequireSession).Get("/models/custom", modelHandlers.Custom)
 	router.With(dashboard.RequireSession).Get("/models/disabled", modelHandlers.Disabled)
@@ -258,9 +258,9 @@ func dashboardRouter(r *repos.Repos, registry *providers.Registry, builder *mode
 	// NOTE: /provider-nodes/{id} PUT/DELETE already wired to real handlers above.
 
 	// Provider connection stubs.
-	router.With(dashboard.RequireSession).Get("/providers/{id}", stubs.ProviderConnectionGet)
-	router.With(dashboard.RequireSession).Put("/providers/{id}", stubs.ProviderConnectionUpdate)
-	router.With(dashboard.RequireSession).Delete("/providers/{id}", stubs.ProviderConnectionDelete)
+	router.With(dashboard.RequireSession).Get("/providers/{id}", providerHandlers.Get)
+	router.With(dashboard.RequireSession).Put("/providers/{id}", providerHandlers.Update)
+	router.With(dashboard.RequireSession).Delete("/providers/{id}", providerHandlers.Delete)
 	router.With(dashboard.RequireSession).Get("/providers/{id}/models", stubs.ProviderModels)
 	router.With(dashboard.RequireSession).Post("/providers/{id}/test-models", stubs.ProviderTestModels)
 	router.With(dashboard.RequireSession).Get("/providers/suggested-models", stubs.ProviderSuggestedModels)

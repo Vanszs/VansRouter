@@ -2,8 +2,10 @@ package services
 
 import (
 	"context"
+	"encoding/base64"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 )
 
@@ -124,16 +126,16 @@ func TestXaiBuildAuthURL(t *testing.T) {
 	if authURL == "" {
 		t.Fatal("auth URL should not be empty")
 	}
-	if !contains(authURL, "client_id=test-client-id") {
+	if !strings.Contains(authURL, "client_id=test-client-id") {
 		t.Error("auth URL should contain client_id")
 	}
-	if !contains(authURL, "code_challenge=challenge456") {
+	if !strings.Contains(authURL, "code_challenge=challenge456") {
 		t.Error("auth URL should contain code_challenge")
 	}
-	if !contains(authURL, "state=state123") {
+	if !strings.Contains(authURL, "state=state123") {
 		t.Error("auth URL should contain state")
 	}
-	if !contains(authURL, "redirect_uri=") {
+	if !strings.Contains(authURL, "redirect_uri=") {
 		t.Error("auth URL should contain redirect_uri")
 	}
 }
@@ -144,7 +146,7 @@ func TestXaiExchangeCode_Success(t *testing.T) {
 		w.Write([]byte(`{
 			"access_token": "at-123",
 			"refresh_token": "rt-456",
-			"id_token": "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6InRlc3RAeC5haSJ9.sig",
+			"id_token": "eyJhbG...aSJ9.sig",
 			"expires_in": 3600,
 			"token_type": "Bearer"
 		}`))
@@ -212,8 +214,9 @@ func TestXaiRefreshToken_Success(t *testing.T) {
 func TestDecodeIDTokenEmail_Valid(t *testing.T) {
 	// Create a simple JWT: header.payload.signature
 	// Payload: {"email":"test@x.ai"}
-	payload := base64URLEncode([]byte(`{"email":"test@x.ai"}`))
-	idToken := "eyJhbGciOiJSUzI1NiJ9." + payload + ".sig"
+	header := base64.RawURLEncoding.EncodeToString([]byte(`{"alg":"HS256","typ":"JWT"}`))
+	payload := base64.RawURLEncoding.EncodeToString([]byte(`{"email":"test@x.ai"}`))
+	idToken := header + "." + payload + ".sig"
 
 	email := DecodeIDTokenEmail(idToken)
 	if email != "test@x.ai" {
@@ -222,8 +225,9 @@ func TestDecodeIDTokenEmail_Valid(t *testing.T) {
 }
 
 func TestDecodeIDTokenEmail_PreferredUsername(t *testing.T) {
-	payload := base64URLEncode([]byte(`{"preferred_username":"user@x.ai"}`))
-	idToken := "header." + payload + ".sig"
+	payload := base64.RawURLEncoding.EncodeToString([]byte(`{"preferred_username":"user@x.ai"}`))
+	header := base64.RawURLEncoding.EncodeToString([]byte(`{"alg":"HS256"}`))
+	idToken := header + "." + payload + ".sig"
 
 	email := DecodeIDTokenEmail(idToken)
 	if email != "user@x.ai" {
@@ -232,8 +236,9 @@ func TestDecodeIDTokenEmail_PreferredUsername(t *testing.T) {
 }
 
 func TestDecodeIDTokenEmail_Sub(t *testing.T) {
-	payload := base64URLEncode([]byte(`{"sub":"12345"}`))
-	idToken := "header." + payload + ".sig"
+	payload := base64.RawURLEncoding.EncodeToString([]byte(`{"sub":"12345"}`))
+	header := base64.RawURLEncoding.EncodeToString([]byte(`{"alg":"HS256"}`))
+	idToken := header + "." + payload + ".sig"
 
 	email := DecodeIDTokenEmail(idToken)
 	if email != "12345" {
@@ -260,43 +265,4 @@ func TestDecodeIDTokenEmail_TwoParts(t *testing.T) {
 	if email != "" {
 		t.Error("two-part token should return empty string")
 	}
-}
-
-// Helpers
-func contains(s, substr string) bool {
-	return len(s) >= len(substr) && (s == substr || len(s) > 0 && containsStr(s, substr))
-}
-
-func containsStr(s, substr string) bool {
-	for i := 0; i <= len(s)-len(substr); i++ {
-		if s[i:i+len(substr)] == substr {
-			return true
-		}
-	}
-	return false
-}
-
-func base64URLEncode(data []byte) string {
-	encoded := make([]byte, 0, len(data)*2)
-	const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_"
-	for i := 0; i < len(data); i += 3 {
-		b0 := data[i]
-		b1 := byte(0)
-		b2 := byte(0)
-		if i+1 < len(data) {
-			b1 = data[i+1]
-		}
-		if i+2 < len(data) {
-			b2 = data[i+2]
-		}
-		encoded = append(encoded, alphabet[b0>>2])
-		encoded = append(encoded, alphabet[((b0&3)<<4)|(b1>>4)])
-		if i+1 < len(data) {
-			encoded = append(encoded, alphabet[((b1&15)<<2)|(b2>>6)])
-		}
-		if i+2 < len(data) {
-			encoded = append(encoded, alphabet[b2&63])
-		}
-	}
-	return string(encoded)
 }
