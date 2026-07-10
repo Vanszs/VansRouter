@@ -101,6 +101,14 @@ console.log(`▶ copying public/ + ${distDir}/static into ${distDir}/standalone`
 fs.cpSync(path.join(appDir, "public"), path.join(appDir, distDir, "standalone", "public"), { recursive: true });
 fs.cpSync(path.join(appDir, distDir, "static"), path.join(appDir, distDir, "standalone", distDir, "static"), { recursive: true });
 
+// Copy scripts/python/ into standalone for python -m autoclaw subprocess
+const scriptsDir = path.join(appDir, "scripts", "python");
+const standaloneScriptsDir = path.join(appDir, distDir, "standalone", "scripts", "python");
+if (fs.existsSync(scriptsDir)) {
+  console.log("▶ copying scripts/python/ into standalone for autoclaw subprocess");
+  fs.cpSync(scriptsDir, standaloneScriptsDir, { recursive: true });
+}
+
 fixStandaloneSymlinks(path.resolve(__dirname, "..", ".next", "standalone"));
 
 // ─── Fix standalone instrumentation import ───────────────────────────────────

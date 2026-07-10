@@ -1,5 +1,5 @@
 import crypto from "node:crypto";
-import { execFile } from "node:child_process";
+import { execFile, execFileSync } from "node:child_process";
 import path from "node:path";
 import { DATA_DIR } from "../../dataDir.js";
 import {
@@ -15,6 +15,18 @@ import {
 function noopBrowser() {
   return { close: async () => {}, __ninerouterProxyUrl: null };
 }
+
+function findPythonBinary() {
+  for (const bin of ["python3", "python"]) {
+    try {
+      execFileSync(bin, ["--version"], { stdio: "ignore" });
+      return bin;
+    } catch { /* try next */ }
+  }
+  return "python3"; // default, will fail with clear ENOENT
+}
+
+const PYTHON_BIN = findPythonBinary();
 
 const AUTOCLAW_PROVIDER_ID = "autoclaw";
 const MAX_SIGNIN_RETRY_ATTEMPTS = 3;
@@ -151,7 +163,7 @@ export class AutoclawBulkImportManager extends KiroBulkImportManager {
     const SCRIPT_DIR = path.join(process.cwd(), "scripts", "python");
     const TIMEOUT_MS = 15 * 60_000; // 15 min same as JS path
 
-    this.setAccountStep(account, "python_automation", `Worker ${workerId} invoking python -m ${PYTHON_MODULE} (attempt ${attempt})`);
+    this.setAccountStep(account, "python_automation", `Worker ${workerId} invoking ${PYTHON_BIN} -m ${PYTHON_MODULE} (attempt ${attempt})`);
     await this.persistJobSnapshot(job, { forcePreview: false });
 
     const args = ["-m", PYTHON_MODULE, account.email, account.password];
@@ -167,7 +179,7 @@ export class AutoclawBulkImportManager extends KiroBulkImportManager {
 
     const childPromise = new Promise((resolve, reject) => {
       const child = execFile(
-        "python3",
+        PYTHON_BIN,
         args,
         { cwd: SCRIPT_DIR, env, timeout: TIMEOUT_MS, maxBuffer: 1024 * 1024 },
         (err, stdout, stderr) => {

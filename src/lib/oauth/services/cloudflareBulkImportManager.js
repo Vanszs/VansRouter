@@ -599,7 +599,7 @@ async function mailTmGenerate(domain, desiredLocal) {
     if (attempt > 0) await new Promise((r) => setTimeout(r, 2000 * attempt));
     const local = desiredLocal || generateNameLocal();
     const address = `${local}@${domain}`;
-    const password = "Gomugomu123!";
+    const password = "Gomugomu123098!@";
     const res = await fetch("https://api.mail.tm/accounts", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -1022,7 +1022,7 @@ async function loginCloudflareWithPassword(page, email, password, onStep) {
 }
 
 async function generatePassword() {
-  return "Gomugomu123!";
+  return "Gomugomu123098!@";
 }
 
 export async function importCloudflareToken({ token, accountId, name }) {
@@ -1163,7 +1163,7 @@ export class CloudflareBulkImportManager extends KiroBulkImportManager {
         await new Promise((r) => setTimeout(r, isMail ? 2000 : 500));
         const desiredLocal = generateNameLocal();
         const { address, jwt, password: mailPassword } = await generateTempEmail(mailApi, mailDomain, undefined, mailProvider, desiredLocal);
-        const realPassword = "Gomugomu123!";
+        const realPassword = "Gomugomu123098!@";
         meta.email = address;
         meta.password = realPassword;
         meta.jwt = jwt;
