@@ -25,7 +25,7 @@ function getProviderConfig(providerId) {
 
 // Use local provider images from /public/providers/
 function getProviderImageUrl(providerId) {
-  return `/providers/${providerId}.webp`;
+  return `/providers/${providerId}.webp${providerId === "autoclaw" ? "?v=2" : ""}`;
 }
 
 // Custom provider node - rectangle with image + name

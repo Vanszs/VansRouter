@@ -170,8 +170,8 @@ export default function ConnectionRow({ connection, autoclawBalance, autoclawAut
               {authLabel}
             </Badge>
             {autoclawBalance && (
-              <Badge variant={autoclawBalance.balanceError ? "error" : autoclawBalance.balance > 0 ? "success" : "warning"} size="sm">
-                {autoclawBalance.balanceError ? autoclawBalance.balanceError : `${autoclawBalance.balance != null ? autoclawBalance.balance.toLocaleString() : "—"} pts`}
+              <Badge variant={autoclawBalance.balanceError && autoclawBalance.balance == null ? "error" : autoclawBalance.balance > 0 ? "success" : "warning"} size="sm">
+                {autoclawBalance.balance != null ? `${autoclawBalance.balance.toLocaleString()} pts` : autoclawBalance.balanceError || "—"}
               </Badge>
             )}
             {autoclawAutoRefreshing && (

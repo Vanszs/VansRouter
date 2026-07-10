@@ -78,7 +78,25 @@ export default function ProviderDetailPage() {
   const [oneByOneSummary, setOneByOneSummary] = useState(null);
   const stopOneByOneRef = useRef(false);
   const [importingQoderModels, setImportingQoderModels] = useState(false);
-  const [connectionPage, setConnectionPage] = useState(1);
+  const [connectionPage, setConnectionPage] = useState(() => {
+    if (typeof window !== "undefined") {
+      const p = Number(new URLSearchParams(window.location.search).get("connectionPage"));
+      if (p >= 1) return p;
+    }
+    return 1;
+  });
+
+  const syncConnectionPageUrl = useCallback((page) => {
+    const params = new URLSearchParams(window.location.search);
+    if (page <= 1) {
+      params.delete("connectionPage");
+    } else {
+      params.set("connectionPage", String(page));
+    }
+    const qs = params.toString();
+    const newUrl = `${window.location.pathname}${qs ? `?${qs}` : ""}`;
+    router.replace(newUrl, { scroll: false });
+  }, [router]);
   const [autoclawBalances, setAutoclawBalances] = useState([]);
   const [refreshingAutoclawBalance, setRefreshingAutoclawBalance] = useState(false);
   const [autoRefreshingAutoclawIds, setAutoRefreshingAutoclawIds] = useState(() => new Set());
@@ -835,12 +853,17 @@ export default function ProviderDetailPage() {
 
   useEffect(() => {
     const maxPage = Math.max(1, Math.ceil(connections.length / CONNECTIONS_PER_PAGE));
-    setConnectionPage((p) => (p > maxPage ? maxPage : p < 1 ? 1 : p));
-  }, [connections.length]);
+    setConnectionPage((p) => {
+      const clamped = p > maxPage ? maxPage : p < 1 ? 1 : p;
+      if (clamped !== connectionPage) syncConnectionPageUrl(clamped);
+      return clamped;
+    });
+  }, [connections.length]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     setConnectionPage(1);
-  }, [providerId]);
+    syncConnectionPageUrl(1);
+  }, [providerId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const toggleSelectConnection = (connectionId) => {
     setSelectedConnectionIds((prev) => (
@@ -961,6 +984,7 @@ export default function ProviderDetailPage() {
         if (cancelled) break;
         await new Promise((r) => setTimeout(r, 1000));
       }
+      if (!cancelled) await fetchConnections();
     })();
     return () => { cancelled = true; };
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -1638,7 +1662,7 @@ export default function ProviderDetailPage() {
                   currentPage={connectionPageClamped}
                   pageSize={CONNECTIONS_PER_PAGE}
                   totalItems={connections.length}
-                  onPageChange={setConnectionPage}
+                  onPageChange={(page) => { setConnectionPage(page); syncConnectionPageUrl(page); }}
                 />
               )}
               {!isCompatible && (

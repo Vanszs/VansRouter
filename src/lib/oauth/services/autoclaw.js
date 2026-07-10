@@ -131,6 +131,7 @@ export class AutoclawService {
         refreshToken: newTokens.refreshToken,
         expiresAt: newTokens.expiresAt,
         lastRefreshAt: new Date().toISOString(),
+        lastError: null,
       });
     });
   }
