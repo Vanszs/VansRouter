@@ -1,0 +1,4 @@
+playwright>=1.48.0
+cloakbrowser>=0.4
+numpy>=1.24
+opencv-python-headless>=4.8

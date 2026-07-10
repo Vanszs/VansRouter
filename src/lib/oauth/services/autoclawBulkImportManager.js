@@ -1,15 +1,20 @@
 import crypto from "node:crypto";
+import { execFile } from "node:child_process";
+import path from "node:path";
+import { DATA_DIR } from "../../dataDir.js";
 import {
   KiroBulkImportManager,
-  createFreshContext,
   buildLookupResponse,
 } from "./kiroBulkImportManager.js";
-import { createAutoclawTokenMonitor, runAutoclawGoogleAutomation } from "./autoclawAutomation.js";
 import { createProviderConnection, getProviderConnectionById } from "../../../models/index.js";
 import {
   recoverAutoclawTokenCheckpoints,
   writeAutoclawTokenCheckpoint,
 } from "./autoclawTokenCheckpoint.js";
+
+function noopBrowser() {
+  return { close: async () => {}, __ninerouterProxyUrl: null };
+}
 
 const AUTOCLAW_PROVIDER_ID = "autoclaw";
 const MAX_SIGNIN_RETRY_ATTEMPTS = 3;
@@ -70,17 +75,20 @@ async function assertConnectionPersisted(connection) {
 export class AutoclawBulkImportManager extends KiroBulkImportManager {
   constructor({
     browserLauncher,
-    googleAutomation = runAutoclawGoogleAutomation,
     socialExchange = defaultSocialExchange,
     storageName = "autoclaw-bulk-import",
   } = {}) {
-    super({ browserLauncher, googleAutomation, socialExchange, storageName });
+    super({ browserLauncher: browserLauncher || (async () => noopBrowser()), googleAutomation: null, socialExchange, storageName });
   }
 
   async processAccount(job, account, workerId, browser = job.browser) {
-    let currentBrowser = browser;
-    let currentProxyUrl = browser?.__ninerouterProxyUrl || job.proxyUrl || null;
-    let ownsBrowser = false;
+    // Python subprocess mode — delegates Playwright automation to python -m autoclaw.
+    // Python script manages its own browser — no in-process browser lifecycle needed.
+    return this._processAccountPythonRetry(job, account, workerId);
+  }
+
+  async _processAccountPythonRetry(job, account, workerId) {
+    let currentProxyUrl = job.proxyUrl || null;
 
     for (let attempt = 1; attempt <= MAX_SIGNIN_RETRY_ATTEMPTS; attempt++) {
       if (job.cancelRequested) {
@@ -88,13 +96,7 @@ export class AutoclawBulkImportManager extends KiroBulkImportManager {
         return;
       }
 
-      // For retry attempts (attempt > 1), close the old browser and launch a
-      // new one with a rotated proxy session ID to get a fresh IP.
       if (attempt > 1) {
-        if (ownsBrowser && currentBrowser) {
-          await currentBrowser.close().catch(() => null);
-          currentBrowser = null;
-        }
         const rotatedProxyUrl = rotateProxySessionId(currentProxyUrl);
         if (rotatedProxyUrl !== currentProxyUrl) {
           this.setAccountStep(account, "retrying_with_fresh_ip", `Retrying with fresh proxy IP (attempt ${attempt}/${MAX_SIGNIN_RETRY_ATTEMPTS})`);
@@ -103,91 +105,92 @@ export class AutoclawBulkImportManager extends KiroBulkImportManager {
         }
         await this.persistJobSnapshot(job, { forcePreview: false });
         currentProxyUrl = rotatedProxyUrl;
-
-        try {
-          currentBrowser = await this.browserLauncher({ ...job, proxyUrl: currentProxyUrl });
-          currentBrowser.__ninerouterProxyUrl = currentProxyUrl;
-          job.workerBrowsers.add(currentBrowser);
-          ownsBrowser = true;
-        } catch (e) {
-          this.finalizeAccount(account, "failed", {
-            error: `Failed to launch browser for retry: ${e.message}`,
-            step: "failed",
-            message: `Failed to launch browser for retry: ${e.message}`,
-          });
-          await this.persistJobSnapshot(job, { forcePreview: false });
-          return;
-        }
       }
 
-      const result = await this.processAccountOnce(job, account, workerId, currentBrowser, currentProxyUrl, attempt);
+      const result = await this._processAccountPython(job, account, workerId, currentProxyUrl, attempt);
 
-      // If the automation returned needs_retry, loop again with fresh IP.
-      // Otherwise, the account is finalized (success/failed/needs_manual) and
-      // we're done.
       if (result !== "needs_retry") {
         account.password = undefined;
-        // Clean up owned browser on terminal states
-        if (ownsBrowser && currentBrowser) {
-          await currentBrowser.close().catch(() => null);
-          if (job.workerBrowsers) job.workerBrowsers.delete(currentBrowser);
-        }
         return;
       }
-
-      // needs_retry — close context and loop to retry with fresh IP
-      this.setAccountStep(account, "signin_failed_retry", `Sign-in failed on attempt ${attempt}/${MAX_SIGNIN_RETRY_ATTEMPTS} — rotating proxy IP`);
-      await this.persistJobSnapshot(job, { forcePreview: false });
     }
 
-    // All retry attempts exhausted
     this.finalizeAccount(account, "failed", {
-      error: `AutoClaw sign-in failed after ${MAX_SIGNIN_RETRY_ATTEMPTS} attempts with different proxy IPs. The account may be rate-limited or blocked.`,
+      error: `AutoClaw sign-in failed after ${MAX_SIGNIN_RETRY_ATTEMPTS} Python automation attempts.`,
       step: "signin_failed_exhausted",
       message: `Sign-in failed after ${MAX_SIGNIN_RETRY_ATTEMPTS} attempts`,
     });
     account.password = undefined;
-    if (ownsBrowser && currentBrowser) {
-      await currentBrowser.close().catch(() => null);
-      if (job.workerBrowsers) job.workerBrowsers.delete(currentBrowser);
-    }
     await this.persistJobSnapshot(job, { forcePreview: false });
   }
 
-  async processAccountOnce(job, account, workerId, browser, currentProxyUrl, attempt = 1) {
-    if (job.cancelRequested || !browser) {
-      this.finalizeAccount(account, "cancelled", { error: "Job cancelled" });
-      return "done";
-    }
+  /**
+   * Python subprocess path — calls python -m autoclaw instead of in-process Playwright.
+   * Activated by AUTOCLAW_USE_PYTHON=1. Social exchange, checkpoint, and DB persistence
+   * stay identical to the JS path.
+   *
+   * ponytail: per-account timeout from DEFAULT_MANUAL_TIMEOUT_MS. Add configurable
+   * timeout per proxy speed tier if slow proxies cause premature kills.
+   */
+  async _processAccountPython(job, account, workerId, currentProxyUrl, attempt) {
+    const PYTHON_MODULE = "autoclaw";
+    const DB_PATH = path.join(DATA_DIR, "db", "data.sqlite");
+    const SCRIPT_DIR = path.join(process.cwd(), "scripts", "python");
+    const TIMEOUT_MS = 15 * 60_000; // 15 min same as JS path
 
-    const deviceId = crypto.randomUUID();
-    const { context, page } = await createFreshContext(browser);
-    const callbackPromise = createAutoclawTokenMonitor(context);
-    account.runtimeSession = {
-      context,
-      page,
-      proxyUrl: currentProxyUrl || browser.__ninerouterProxyUrl || job.proxyUrl || null,
+    this.setAccountStep(account, "python_automation", `Worker ${workerId} invoking python -m ${PYTHON_MODULE} (attempt ${attempt})`);
+    await this.persistJobSnapshot(job, { forcePreview: false });
+
+    const args = ["-m", PYTHON_MODULE, account.email, account.password];
+    if (currentProxyUrl) args.push("--proxy", currentProxyUrl);
+    args.push("--db", DB_PATH);
+    if (job.engine) args.push("--engine", job.engine);
+
+    const env = {
+      ...process.env,
+      PYTHONPATH: SCRIPT_DIR,
+      PYTHONUNBUFFERED: "1",
     };
 
-    try {
-      this.setAccountStep(account, "preparing_worker", `Worker ${workerId} preparing AutoClaw browser context`);
-      await this.persistJobSnapshot(job, { forcePreview: false });
+    const childPromise = new Promise((resolve, reject) => {
+      const child = execFile(
+        "python3",
+        args,
+        { cwd: SCRIPT_DIR, env, timeout: TIMEOUT_MS, maxBuffer: 1024 * 1024 },
+        (err, stdout, stderr) => {
+          if (stderr) {
+            // Parse step progress from stderr for live reporting
+            for (const line of String(stderr).split("\n")) {
+              const match = line.match(/\[(\w+)\]\s+(.+)/);
+              if (match) {
+                this.setAccountStep(account, match[1], match[2].trim());
+              }
+            }
+          }
+          if (err) {
+            if (err.killed) {
+              reject(new Error(`Python subprocess timed out after ${TIMEOUT_MS}ms`));
+            } else {
+              reject(new Error(`Python subprocess exited with code ${err.code}: ${String(stdout || "").slice(0, 200)}`));
+            }
+            return;
+          }
+          resolve(stdout);
+        }
+      );
 
-      const automationResult = await this.googleAutomation({
-        page,
-        email: account.email,
-        password: account.password,
-        deviceId,
-        proxyUrl: currentProxyUrl || browser.__ninerouterProxyUrl || job.proxyUrl || null,
-        callbackPromise,
-        onStep: (step, message) => {
-          this.setAccountStep(account, step, message);
-          void this.persistJobSnapshot(job, { forcePreview: false });
-        },
-      });
+      // Cancel on job abort — sends SIGTERM to python, cleanup handled by Python's finally block
+      const cancelKey = `python-${account.line ?? account.email}`;
+      job._pythonChildren = job._pythonChildren || new Map();
+      job._pythonChildren.set(cancelKey, child);
+    });
+
+    try {
+      const stdout = await childPromise;
+      const automationResult = JSON.parse(String(stdout).trim());
 
       if (automationResult.status === "success") {
-        this.setAccountStep(account, "exchanging_tokens", "Saving AutoClaw connection");
+        this.setAccountStep(account, "exchanging_tokens", "Saving AutoClaw connection (Python)");
         await this.persistJobSnapshot(job, { forcePreview: false });
         writeAutoclawTokenCheckpoint({
           jobId: job.jobId,
@@ -212,46 +215,29 @@ export class AutoclawBulkImportManager extends KiroBulkImportManager {
         this.finalizeAccount(account, "success", {
           connectionId: connection.id,
           step: "connection_saved",
-          message: "AutoClaw connection saved successfully",
+          message: "AutoClaw connection saved successfully (Python)",
         });
         account.runtimeSession = null;
-        await context.close().catch(() => null);
         await this.persistJobSnapshot(job, { forcePreview: false });
-        return "done";
-      }
-
-      if (automationResult.status === "needs_manual") {
-        account.manualSession = {
-          context,
-          page,
-          opened: false,
-          openedAt: null,
-          rebind: typeof callbackPromise?.rebind === "function" ? callbackPromise.rebind : null,
-        };
-        this.setAccountStep(account, "awaiting_manual", "Waiting for manual completion in the browser session");
-        this.finalizeAccount(account, "needs_manual", {
-          error: automationResult.error,
-          step: "awaiting_manual",
-          message: automationResult.error,
-        });
-        await this.persistJobSnapshot(job, { forcePreview: false });
-        await this.runManualFollowup(
-          job,
-          account,
-          workerId,
-          context,
-          callbackPromise,
-          deviceId
-        );
         return "done";
       }
 
       if (automationResult.status === "needs_retry") {
-        // Sign-in failed (rate limit / IP block). Close context and signal
-        // the retry loop in processAccount to re-launch with fresh proxy IP.
-        account.runtimeSession = null;
-        await context.close().catch(() => null);
+        this.setAccountStep(account, "signin_failed_retry", `Python: ${automationResult.error || "needs retry"}`);
+        await this.persistJobSnapshot(job, { forcePreview: false });
         return "needs_retry";
+      }
+
+      // needs_manual — no browser to keep open in subprocess mode, treat as terminal
+      if (automationResult.status === "needs_manual") {
+        this.finalizeAccount(account, "failed_manual_no_browser", {
+          error: automationResult.error || "Python automation needs manual assist — not supported in subprocess mode",
+          step: "needs_manual_python",
+          message: automationResult.error || "Manual assist required but not supported in Python subprocess mode",
+        });
+        account.runtimeSession = null;
+        await this.persistJobSnapshot(job, { forcePreview: false });
+        return "done";
       }
 
       const terminalStatus = ["failed", "failed_invalid_credentials", "failed_timeout", "failed_restricted", "cancelled"].includes(
@@ -260,107 +246,32 @@ export class AutoclawBulkImportManager extends KiroBulkImportManager {
         ? automationResult.status
         : "failed";
       this.finalizeAccount(account, terminalStatus, {
-        error: automationResult.error || "AutoClaw automation failed.",
+        error: automationResult.error || "Python automation failed.",
         step: terminalStatus,
-        message: automationResult.error || "AutoClaw automation failed.",
+        message: automationResult.error || "Python automation failed.",
       });
       account.runtimeSession = null;
-      await context.close().catch(() => null);
       await this.persistJobSnapshot(job, { forcePreview: false });
       return "done";
     } catch (error) {
       this.finalizeAccount(account, "failed", {
-        error: error.message || "Unexpected AutoClaw bulk import failure.",
-        step: "failed",
-        message: error.message || "Unexpected AutoClaw bulk import failure.",
+        error: `Python subprocess error: ${error.message}`,
+        step: "python_subprocess_failed",
+        message: `Python subprocess error: ${error.message}`,
       });
       account.runtimeSession = null;
-      await context.close().catch(() => null);
       await this.persistJobSnapshot(job, { forcePreview: false });
       return "done";
     } finally {
-      // Only clear password on final attempt — retry needs it
-      if (attempt >= MAX_SIGNIN_RETRY_ATTEMPTS) {
-        account.password = undefined;
+      if (job._pythonChildren) {
+        const cancelKey = `python-${account.line ?? account.email}`;
+        const child = job._pythonChildren.get(cancelKey);
+        if (child && !child.killed && child.exitCode === null) {
+          child.kill("SIGTERM");
+        }
+        job._pythonChildren.delete(cancelKey);
       }
     }
-  }
-
-  async runManualFollowup(job, account, workerId, context, callbackPromise, deviceId) {
-    const followupPromise = (async () => {
-      const closeManualResources = async () => {
-        const ms = account.manualSession;
-        const ctx = ms?.context || context;
-        const headed = ms?.headedBrowser || null;
-        if (ctx) await ctx.close().catch(() => null);
-        if (headed) await headed.close().catch(() => null);
-      };
-      try {
-        const callback = await callbackPromise;
-        if (job.cancelRequested) {
-          this.finalizeAccount(account, "cancelled", {
-            error: "Job cancelled",
-            step: "cancelled",
-            message: "Job cancelled while waiting for manual completion",
-          });
-          await this.persistJobSnapshot(job, { forcePreview: false });
-          return;
-        }
-
-        this.setAccountStep(account, "exchanging_tokens", "Saving AutoClaw connection");
-        await this.persistJobSnapshot(job, { forcePreview: false });
-        writeAutoclawTokenCheckpoint({
-          jobId: job.jobId,
-          line: account.line,
-          email: account.email,
-          tokens: {
-            accessToken: callback.access_token,
-            refreshToken: callback.refresh_token,
-            deviceId: callback.device_id,
-            userId: callback.user_id,
-            userName: callback.user_name,
-          },
-        });
-        const { connection } = await this.socialExchange({
-          access_token: callback.access_token,
-          refresh_token: callback.refresh_token,
-          user_id: callback.user_id,
-          user_name: callback.user_name,
-          device_id: callback.device_id,
-        });
-        await assertConnectionPersisted(connection);
-
-        this.finalizeAccount(account, "success", {
-          connectionId: connection.id,
-          step: "connection_saved",
-          message: "AutoClaw connection saved successfully",
-        });
-        await this.persistJobSnapshot(job, { forcePreview: false });
-      } catch (error) {
-        if (job.cancelRequested) {
-          this.finalizeAccount(account, "cancelled", {
-            error: "Job cancelled",
-            step: "cancelled",
-            message: "Job cancelled while waiting for manual completion",
-          });
-        } else {
-          this.finalizeAccount(account, "failed_exchange", {
-            error: error.message || "Manual assist flow failed during token exchange.",
-            step: "exchange_failed",
-            message: error.message || "Manual assist flow failed during token exchange.",
-          });
-        }
-        await this.persistJobSnapshot(job, { forcePreview: false });
-      } finally {
-        await closeManualResources();
-        account.manualSession = null;
-        account.runtimeSession = null;
-        job.manualFollowups.delete(followupPromise);
-        await this.persistJobSnapshot(job, { forcePreview: false });
-      }
-    })();
-
-    job.manualFollowups.add(followupPromise);
   }
 
   async getJobWithPreview(jobId) {

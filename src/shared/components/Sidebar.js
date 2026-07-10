@@ -38,6 +38,12 @@ const systemItems = [
   { href: "/dashboard/skills", label: "Skills", icon: "extension" },
 ];
 
+function VersionText() {
+  const [version, setVersion] = useState("");
+  useEffect(() => { setVersion(APP_CONFIG.version); }, []);
+  return <span className="text-xs text-text-muted">{version ? `v${version}` : ""}</span>;
+}
+
 export default function Sidebar({ onClose }) {
   const pathname = usePathname();
   const [mediaOpen, setMediaOpen] = useState(false);
@@ -126,7 +132,7 @@ export default function Sidebar({ onClose }) {
               <h1 className="text-lg font-semibold tracking-tight text-text-main">
                 {APP_CONFIG.name}
               </h1>
-              <span className="text-xs text-text-muted" suppressHydrationWarning>v{APP_CONFIG.version}</span>
+              <VersionText />
             </div>
           </Link>
           {updateInfo && (
