@@ -22,6 +22,10 @@ const nextConfig = {
   outputFileTracingExcludes: {
     "*": ["./gitbook/**/*", "./.git/**/*", "./tests/**/*", "./docs/**/*", "./.fakehome/**/*"]
   },
+  // Disable Next.js built-in gzip/br compression so SSE chunks are flushed
+  // immediately to the client instead of being batched by the compressor.
+  // Express/nginx handles compression at the edge if needed.
+  compress: false,
   images: {
     unoptimized: true
   },
