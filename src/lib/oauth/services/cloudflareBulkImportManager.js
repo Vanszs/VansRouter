@@ -8,7 +8,7 @@ import {
   stopCdpScreencast,
 } from "./kiroBulkImportManager.js";
 import { runGoogleAccountAutomation } from "./googleAutomation.js";
-import { execFile as execFileCb } from "node:child_process";
+import { execFile as execFileCb, spawn } from "node:child_process";
 import { promisify } from "node:util";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
@@ -884,43 +884,70 @@ async function isTurnstilePassed(page, onStep) {
   return false;
 }
 
-async function signupCloudflareViaPython(email, password, proxyUrl, headless, onStep) {
-  onStep?.("python_signup_start", "Starting Python nodriver signup (Turnstile bypass)");
+async function signupCloudflareViaPython(email, password, proxyUrl, headless, mailApi, tokenName, onStep) {
+  onStep?.("python_signup_start", "Starting Python nodriver signup + verify + token creation");
   const args = [
     CF_SIGNUP_SCRIPT,
     "--email", email,
     "--password", password,
   ];
+  if (mailApi) args.push("--mail-api", mailApi);
+  if (tokenName) args.push("--token-name", tokenName);
   if (proxyUrl) args.push("--proxy", proxyUrl);
   if (headless) args.push("--headless");
 
   onStep?.("python_signup_running", `Running: python3 cf_signup.py --email ${email.slice(0, 10)}...`);
-  try {
-    const { stdout, stderr } = await execFile("python3", args, {
-      timeout: 120_000,
-      maxBuffer: 10 * 1024 * 1024,
+  return new Promise((resolve) => {
+    const child = spawn("python3", args, {
+      timeout: 300_000,
+      stdio: ["ignore", "pipe", "pipe"],
     });
-    if (stderr) {
-      const lines = stderr.trim().split("\n").slice(-5);
-      onStep?.("python_signup_stderr", lines.join("; "));
-    }
-    const result = JSON.parse(stdout.trim().split("\n").pop());
-    if (result.success) {
-      onStep?.("python_signup_success", `Signup success, account_id: ${result.account_id?.slice(0, 8)}...`);
-      return {
-        submitted: true,
-        needsVerification: true,
-        accountId: result.account_id,
-        cookies: result.cookies || [],
-        error: null,
-      };
-    }
-    onStep?.("python_signup_failed", `Signup failed: ${result.error}`);
-    return { submitted: false, needsVerification: false, accountId: null, cookies: [], error: result.error };
-  } catch (e) {
-    onStep?.("python_signup_error", `Python script error: ${e.message}`);
-    return { submitted: false, needsVerification: false, accountId: null, cookies: [], error: e.message };
-  }
+    let stdout = "";
+    let stderrLast = "";
+
+    child.stderr.on("data", (chunk) => {
+      const text = chunk.toString();
+      stderrLast = text.trim().split("\n").pop();
+      const lines = text.trim().split("\n");
+      for (const line of lines) {
+        if (line && !line.includes("[poll]") && !line.includes("[verify] error") && !line.includes("[verify] HTTP")) {
+          onStep?.("python_log", line);
+        }
+      }
+    });
+
+    child.stdout.on("data", (chunk) => {
+      stdout += chunk.toString();
+    });
+
+    child.on("close", (code) => {
+      try {
+        const result = JSON.parse(stdout.trim().split("\n").pop());
+        if (result.success) {
+          onStep?.("python_signup_success", `Signup success, account_id: ${result.account_id?.slice(0, 8)}... token: ${result.api_token ? result.api_token.slice(0, 8) + "..." : "no"}`);
+          resolve({
+            submitted: true,
+            needsVerification: false,
+            accountId: result.account_id,
+            apiToken: result.api_token || null,
+            cookies: result.cookies || [],
+            error: null,
+          });
+        } else {
+          onStep?.("python_signup_failed", `Signup failed: ${result.error}`);
+          resolve({ submitted: false, needsVerification: false, accountId: result.account_id || null, apiToken: null, cookies: result.cookies || [], error: result.error });
+        }
+      } catch (e) {
+        onStep?.("python_signup_error", `Python output parse error: ${e.message}`);
+        resolve({ submitted: false, needsVerification: false, accountId: null, apiToken: null, cookies: [], error: `Parse error (exit ${code}): ${stderrLast}` });
+      }
+    });
+
+    child.on("error", (err) => {
+      onStep?.("python_signup_error", `Python spawn error: ${err.message}`);
+      resolve({ submitted: false, needsVerification: false, accountId: null, apiToken: null, cookies: [], error: err.message });
+    });
+  });
 }
 
 async function signupCloudflare(page, email, password, onStep) {
@@ -1175,7 +1202,8 @@ export class CloudflareBulkImportManager extends KiroBulkImportManager {
         // Phase 1: signup + Turnstile via Python nodriver (verify_cf OpenCV approach)
         const proxyUrl = job.proxyUrl || null;
         const pyHeadless = job?.headless ?? false;
-        const pyResult = await signupCloudflareViaPython(address, realPassword, proxyUrl, pyHeadless, (step, message) => this.setAccountStep(account, step, message));
+        const tokenName = meta.name || `9router-workers-ai-${new Date().toISOString().replace(/[-:.TZ]/g, "").slice(0, 14)}`;
+        const pyResult = await signupCloudflareViaPython(address, realPassword, proxyUrl, pyHeadless, job.mailApi, tokenName, (step, message) => this.setAccountStep(account, step, message));
         if (pyResult.error) {
           this.finalizeAccount(account, "needs_manual", { error: pyResult.error, step: "signup_error", message: "Signup failed — manual intervention required" });
           await this.persistJobSnapshot(job, { forcePreview: true });
@@ -1183,60 +1211,73 @@ export class CloudflareBulkImportManager extends KiroBulkImportManager {
         }
         if (pyResult.accountId) meta.accountId = pyResult.accountId;
 
-        // Phase 2: create CloakBrowser with cookies from Python, continue flow
-        browser = await this.browserLauncher(job);
-        job.workerBrowsers.add(browser);
-        const fresh = await createFreshContext(browser, { engine: job.engine });
-        context = fresh.context;
-        // inject cookies from nodriver session
-        if (pyResult.cookies?.length) {
-          try {
-            const playwrightCookies = pyResult.cookies.map(c => ({
-              name: c.name,
-              value: c.value,
-              domain: c.domain,
-              path: c.path || "/",
-              secure: c.secure ?? true,
-              httpOnly: c.httpOnly ?? false,
-              sameSite: c.sameSite || "Lax",
-            }));
-            await fresh.context.addCookies(playwrightCookies);
-          } catch (e) {
-            this.setAccountStep(account, "cookie_inject_error", `Cookie injection failed: ${e.message}`);
-          }
-        }
-        account.runtimeSession = { context, page: fresh.page, proxyUrl: browser.__ninerouterProxyUrl || job.proxyUrl || null };
-
-        const signupResult = { submitted: pyResult.submitted, needsVerification: pyResult.needsVerification };
-        if (signupResult.error) {
-          account.manualSession = { context, page: fresh.page, opened: false, openedAt: null };
-          this.finalizeAccount(account, "needs_manual", { error: signupResult.error, step: "signup_error", message: "Signup failed — manual intervention required" });
-          await this.persistJobSnapshot(job, { forcePreview: true });
-          return;
-        }
-        if (signupResult.needsVerification) {
-          const mailApi = job.mailApi || "";
-          const jwt = meta.jwt || "";
-          this.setAccountStep(account, "verifying_email", "Waiting for Cloudflare verification email");
+        if (pyResult.apiToken) {
+          // Python did everything (signup + verify + token) — skip Playwright
+          meta.apiToken = pyResult.apiToken;
+          meta.name = tokenName;
+          this.setAccountStep(account, "python_complete", `Worker ${workerId} Python completed full flow, token: ${pyResult.apiToken.slice(0, 8)}...`);
           await this.persistJobSnapshot(job, { forcePreview: false });
-          const verifyLink = await waitForEmailVerification(mailApi, meta.email, jwt, 180_000, mailProvider);
-          if (verifyLink) {
-            this.setAccountStep(account, "clicking_verify_link", "Clicking email verification link");
-            await fresh.page.goto(verifyLink, { waitUntil: "domcontentloaded", timeout: 30_000 }).catch(() => {});
-            await fresh.page.waitForTimeout(3_000);
-          } else {
-            this.setAccountStep(account, "verification_timeout", "Email verification timed out — trying to proceed anyway");
+        } else {
+          // Fallback: no token from Python, use Playwright for verification/login/token
+          browser = await this.browserLauncher(job);
+          job.workerBrowsers.add(browser);
+          const fresh = await createFreshContext(browser, { engine: job.engine });
+          context = fresh.context;
+          if (pyResult.cookies?.length) {
+            try {
+              const playwrightCookies = pyResult.cookies.map(c => ({
+                name: c.name,
+                value: c.value,
+                domain: c.domain,
+                path: c.path || "/",
+                secure: c.secure ?? true,
+                httpOnly: c.httpOnly ?? false,
+                sameSite: c.sameSite || "Lax",
+              }));
+              await fresh.context.addCookies(playwrightCookies);
+            } catch (e) {
+              this.setAccountStep(account, "cookie_inject_error", `Cookie injection failed: ${e.message}`);
+            }
           }
+          account.runtimeSession = { context, page: fresh.page, proxyUrl: browser.__ninerouterProxyUrl || job.proxyUrl || null };
+
+          const signupResult = { submitted: pyResult.submitted, needsVerification: pyResult.needsVerification };
+          if (signupResult.error) {
+            account.manualSession = { context, page: fresh.page, opened: false, openedAt: null };
+            this.finalizeAccount(account, "needs_manual", { error: signupResult.error, step: "signup_error", message: "Signup failed — manual intervention required" });
+            await this.persistJobSnapshot(job, { forcePreview: true });
+            return;
+          }
+          if (signupResult.needsVerification) {
+            const mailApi = job.mailApi || "";
+            const jwt = meta.jwt || "";
+            this.setAccountStep(account, "verifying_email", "Waiting for Cloudflare verification email");
+            await this.persistJobSnapshot(job, { forcePreview: false });
+            const verifyLink = await waitForEmailVerification(mailApi, meta.email, jwt, 180_000, mailProvider);
+            if (verifyLink) {
+              this.setAccountStep(account, "clicking_verify_link", "Clicking email verification link");
+              await fresh.page.goto(verifyLink, { waitUntil: "domcontentloaded", timeout: 30_000 }).catch(() => {});
+              await fresh.page.waitForTimeout(3_000);
+            } else {
+              this.setAccountStep(account, "verification_timeout", "Email verification timed out — trying to proceed anyway");
+            }
+          }
+          const currentUrl = fresh.page.url();
+          const alreadyOnDashboard = /dash\.cloudflare\.com\/[a-f0-9]{20,}/i.test(currentUrl);
+          if (alreadyOnDashboard) {
+            this.setAccountStep(account, "already_logged_in", `Worker ${workerId} already logged in (session from signup)`);
+          } else {
+            this.setAccountStep(account, "logging_in_after_signup", `Worker ${workerId} logging in after signup`);
+            await loginCloudflareWithPassword(fresh.page, meta.email, meta.password, (step, message) => this.setAccountStep(account, step, message));
+          }
+          const created = await createCloudflareTokenFromDashboard(fresh.page, meta.accountId, meta.name, (step, message) => this.setAccountStep(account, step, message));
+          if (!created?.apiToken) throw new Error("Token creation completed but no token value was captured");
+          meta.apiToken = created.apiToken;
+          meta.accountId = created.accountId;
+          meta.name = meta.name || created.accountName || created.tokenName;
+          this.setAccountStep(account, "token_captured", `Worker ${workerId} captured API token (${created.apiToken.slice(0, 8)}...)`);
+          await this.persistJobSnapshot(job, { forcePreview: false });
         }
-        this.setAccountStep(account, "logging_in_after_signup", `Worker ${workerId} logging in after signup`);
-        await loginCloudflareWithPassword(fresh.page, meta.email, meta.password, (step, message) => this.setAccountStep(account, step, message));
-        const created = await createCloudflareTokenFromDashboard(fresh.page, meta.accountId, meta.name, (step, message) => this.setAccountStep(account, step, message));
-        if (!created?.apiToken) throw new Error("Token creation completed but no token value was captured");
-        meta.apiToken = created.apiToken;
-        meta.accountId = created.accountId;
-        meta.name = meta.name || created.accountName || created.tokenName;
-        this.setAccountStep(account, "token_captured", `Worker ${workerId} captured API token (${created.apiToken.slice(0, 8)}...)`);
-        await this.persistJobSnapshot(job, { forcePreview: false });
       } else if (meta.mode === "browser" || meta.mode === "google") {
         this.setAccountStep(account, "creating_cloudflare_token", `Worker ${workerId} creating Cloudflare token from dashboard`);
         await this.persistJobSnapshot(job, { forcePreview: false });
