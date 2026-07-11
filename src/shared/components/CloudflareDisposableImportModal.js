@@ -15,6 +15,7 @@ const STORAGE_KEY = "cloudflare-disposable-active-job";
 const ENGINE_OPTIONS = [
   { value: "cloakbrowser", label: "CloakBrowser (anti-detect)" },
   { value: "chromium", label: "Chromium (fast)" },
+  { value: "nodriver", label: "Nodriver (native CF solver)" },
   { value: "camoufox", label: "Camoufox (stealth Firefox)" },
   { value: "patchright", label: "Patchright (Chromium stealth)" },
 ];

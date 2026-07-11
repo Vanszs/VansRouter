@@ -884,8 +884,8 @@ async function isTurnstilePassed(page, onStep) {
   return false;
 }
 
-async function signupCloudflareViaPython(email, password, proxyUrl, headless, mailApi, tokenName, onStep) {
-  onStep?.("python_signup_start", "Starting Python nodriver signup + verify + token creation");
+async function signupCloudflareViaPython(email, password, proxyUrl, headless, mailApi, tokenName, engine, onStep, onPreview, jobRef) {
+  onStep?.("python_signup_start", "Starting Python signup + verify + token creation");
   const args = [
     CF_SIGNUP_SCRIPT,
     "--email", email,
@@ -895,6 +895,7 @@ async function signupCloudflareViaPython(email, password, proxyUrl, headless, ma
   if (tokenName) args.push("--token-name", tokenName);
   if (proxyUrl) args.push("--proxy", proxyUrl);
   if (headless) args.push("--headless");
+  if (engine) args.push("--engine", engine);
 
   onStep?.("python_signup_running", `Running: python3 cf_signup.py --email ${email.slice(0, 10)}...`);
   return new Promise((resolve) => {
@@ -902,17 +903,30 @@ async function signupCloudflareViaPython(email, password, proxyUrl, headless, ma
       timeout: 300_000,
       stdio: ["ignore", "pipe", "pipe"],
     });
+    // allow cancel button to kill subprocess
+    if (jobRef) {
+      if (!jobRef._pythonChildren) jobRef._pythonChildren = new Set();
+      jobRef._pythonChildren.add(child);
+    }
     let stdout = "";
     let stderrLast = "";
+    let stderrBuffer = "";
 
     child.stderr.on("data", (chunk) => {
-      const text = chunk.toString();
-      stderrLast = text.trim().split("\n").pop();
-      const lines = text.trim().split("\n");
+      stderrBuffer += chunk.toString();
+      const lines = stderrBuffer.split("\n");
+      stderrBuffer = lines.pop() || "";
       for (const line of lines) {
-        if (line && !line.includes("[poll]") && !line.includes("[verify] error") && !line.includes("[verify] HTTP")) {
-          onStep?.("python_log", line);
+        if (!line.trim()) continue;
+        stderrLast = line.trim();
+        const previewMatch = line.match(/^\[preview\]\s+(\S+)\s+(.+)$/);
+        if (previewMatch) {
+          console.log(`[cloudflare] preview received: step=${previewMatch[1]} b64_len=${previewMatch[2].length}`);
+          onPreview?.(previewMatch[1], previewMatch[2]);
+          continue;
         }
+        if (line.includes("[poll]") || line.includes("[verify] error") || line.includes("[verify] HTTP")) continue;
+        onStep?.("python_log", line);
       }
     });
 
@@ -920,7 +934,12 @@ async function signupCloudflareViaPython(email, password, proxyUrl, headless, ma
       stdout += chunk.toString();
     });
 
+    const _cleanup = () => {
+      if (jobRef?._pythonChildren) jobRef._pythonChildren.delete(child);
+    };
+
     child.on("close", (code) => {
+      _cleanup();
       try {
         const result = JSON.parse(stdout.trim().split("\n").pop());
         if (result.success) {
@@ -944,6 +963,7 @@ async function signupCloudflareViaPython(email, password, proxyUrl, headless, ma
     });
 
     child.on("error", (err) => {
+      _cleanup();
       onStep?.("python_signup_error", `Python spawn error: ${err.message}`);
       resolve({ submitted: false, needsVerification: false, accountId: null, apiToken: null, cookies: [], error: err.message });
     });
@@ -1105,7 +1125,7 @@ export class CloudflareBulkImportManager extends KiroBulkImportManager {
       }));
       return super.startJob({
         accounts: placeholders.map((a) => `${a.email}|placeholder`),
-        concurrency: 1,
+        concurrency: concurrency || 1,
         engine,
         headless,
         proxyUrl,
@@ -1152,12 +1172,19 @@ export class CloudflareBulkImportManager extends KiroBulkImportManager {
     if (!job) return;
     const metas = job.accountsMeta || [];
     const concurrency = Math.max(1, Math.min(job.concurrency || 1, job.accounts.length));
+    console.log(`[cloudflare] runJob jobId=${jobId} concurrency=${concurrency} accounts=${job.accounts.length} job.concurrency=${job.concurrency}`);
     const workers = Array.from({ length: concurrency }, (_, index) => this.runWorker(job, index + 1, metas));
     await Promise.allSettled(workers);
     for (const browser of job.workerBrowsers || []) {
       await browser.close().catch(() => null);
     }
     job.workerBrowsers?.clear?.();
+    if (job._pythonChildren) {
+      for (const child of job._pythonChildren) {
+        child.kill("SIGTERM");
+      }
+      job._pythonChildren.clear();
+    }
     job.status = job.cancelRequested ? "cancelled" : "completed";
     job.finishedAt = new Date().toISOString();
     await this.persistJobSnapshot(job, { forcePreview: false });
@@ -1199,11 +1226,26 @@ export class CloudflareBulkImportManager extends KiroBulkImportManager {
         this.setAccountStep(account, "signing_up_cloudflare", `Worker ${workerId} signing up Cloudflare with ${address}`);
         await this.persistJobSnapshot(job, { forcePreview: false });
 
-        // Phase 1: signup + Turnstile via Python nodriver (verify_cf OpenCV approach)
+        // Phase 1: signup + Turnstile via Python (OpenCV template matching)
         const proxyUrl = job.proxyUrl || null;
         const pyHeadless = job?.headless ?? false;
+        const engine = job?.engine || "cloakbrowser";
         const tokenName = meta.name || `9router-workers-ai-${new Date().toISOString().replace(/[-:.TZ]/g, "").slice(0, 14)}`;
-        const pyResult = await signupCloudflareViaPython(address, realPassword, proxyUrl, pyHeadless, job.mailApi, tokenName, (step, message) => this.setAccountStep(account, step, message));
+        const pyResult = await signupCloudflareViaPython(
+          address, realPassword, proxyUrl, pyHeadless, job.mailApi, tokenName, engine,
+          (step, message) => this.setAccountStep(account, step, message),
+          async (step, b64) => {
+            job.lastPreview = {
+              email: address,
+              workerId,
+              status: account.status,
+              step,
+              updatedAt: new Date().toISOString(),
+              imageData: `data:image/jpeg;base64,${b64}`,
+            };
+          },
+          job
+        );
         if (pyResult.error) {
           this.finalizeAccount(account, "needs_manual", { error: pyResult.error, step: "signup_error", message: "Signup failed — manual intervention required" });
           await this.persistJobSnapshot(job, { forcePreview: true });
@@ -1216,7 +1258,7 @@ export class CloudflareBulkImportManager extends KiroBulkImportManager {
           meta.apiToken = pyResult.apiToken;
           meta.name = tokenName;
           this.setAccountStep(account, "python_complete", `Worker ${workerId} Python completed full flow, token: ${pyResult.apiToken.slice(0, 8)}...`);
-          await this.persistJobSnapshot(job, { forcePreview: false });
+          await this.persistJobSnapshot(job, { forcePreview: true });
         } else {
           // Fallback: no token from Python, use Playwright for verification/login/token
           browser = await this.browserLauncher(job);

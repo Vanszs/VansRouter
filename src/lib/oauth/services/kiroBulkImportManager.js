@@ -695,6 +695,12 @@ export class KiroBulkImportManager {
       }
       job.workerBrowsers.clear();
     }
+    if (job._pythonChildren) {
+      for (const child of job._pythonChildren) {
+        child.kill("SIGTERM");
+      }
+      job._pythonChildren.clear();
+    }
 
     await this.persistJobSnapshot(job, { forcePreview: true });
 

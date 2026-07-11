@@ -146,7 +146,7 @@ export class AutoclawBulkImportManager extends KiroBulkImportManager {
       message: `Sign-in failed after ${MAX_SIGNIN_RETRY_ATTEMPTS} attempts`,
     });
     account.password = undefined;
-    await this.persistJobSnapshot(job, { forcePreview: false });
+    await this.persistJobSnapshot(job, { forcePreview: true });
   }
 
   /**
@@ -230,7 +230,7 @@ export class AutoclawBulkImportManager extends KiroBulkImportManager {
 
       if (automationResult.status === "success") {
         this.setAccountStep(account, "exchanging_tokens", "Saving AutoClaw connection (Python)");
-        await this.persistJobSnapshot(job, { forcePreview: false });
+        await this.persistJobSnapshot(job, { forcePreview: true });
         writeAutoclawTokenCheckpoint({
           jobId: job.jobId,
           line: account.line,
@@ -257,7 +257,7 @@ export class AutoclawBulkImportManager extends KiroBulkImportManager {
           message: "AutoClaw connection saved successfully (Python)",
         });
         account.runtimeSession = null;
-        await this.persistJobSnapshot(job, { forcePreview: false });
+        await this.persistJobSnapshot(job, { forcePreview: true });
         return "done";
       }
 
@@ -275,7 +275,7 @@ export class AutoclawBulkImportManager extends KiroBulkImportManager {
           message: automationResult.error || "Manual assist required but not supported in Python subprocess mode",
         });
         account.runtimeSession = null;
-        await this.persistJobSnapshot(job, { forcePreview: false });
+        await this.persistJobSnapshot(job, { forcePreview: true });
         return "done";
       }
 
@@ -290,7 +290,7 @@ export class AutoclawBulkImportManager extends KiroBulkImportManager {
         message: automationResult.error || "Python automation failed.",
       });
       account.runtimeSession = null;
-      await this.persistJobSnapshot(job, { forcePreview: false });
+      await this.persistJobSnapshot(job, { forcePreview: true });
       return "done";
     } catch (error) {
       this.finalizeAccount(account, "failed", {
@@ -299,7 +299,7 @@ export class AutoclawBulkImportManager extends KiroBulkImportManager {
         message: `Python subprocess error: ${error.message}`,
       });
       account.runtimeSession = null;
-      await this.persistJobSnapshot(job, { forcePreview: false });
+      await this.persistJobSnapshot(job, { forcePreview: true });
       return "done";
     } finally {
       if (job._pythonChildren) {

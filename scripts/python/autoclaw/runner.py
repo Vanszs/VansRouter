@@ -1213,7 +1213,7 @@ async def run_autoclaw_automation(
 
     async with async_playwright() as p:
         browser: Browser = await p.chromium.launch(
-            headless=False,
+            headless=True,
             args=browser_args,
         )
         context = await browser.new_context(
@@ -1250,7 +1250,7 @@ async def _run_with_cloakbrowser(
     from cloakbrowser import launch_async
 
     launch_opts: dict[str, Any] = {
-        "headless": False,
+        "headless": True,
         "humanize": True,
     }
     if proxy_url:
