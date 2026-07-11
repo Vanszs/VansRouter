@@ -86,9 +86,8 @@ export default function PxpipeClient() {
     }
   }, []);
 
-  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => {
-    refresh();
+    refresh(); // eslint-disable-line react-hooks/set-state-in-effect
   }, [refresh]);
 
   const w = stats?.windows?.[windowId];
