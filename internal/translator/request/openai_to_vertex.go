@@ -24,24 +24,35 @@ func openaiToVertexRequest(model string, body map[string]any, stream bool, creds
 }
 
 func postProcessForVertex(body map[string]any) {
-	contents, ok := body["contents"].([]any)
-	if !ok {
+	// Handle both []any and []map[string]any — the Gemini translator
+	// builds contents as []map[string]any, but external callers may pass []any.
+	var turns []map[string]any
+	switch c := body["contents"].(type) {
+	case []any:
+		for _, item := range c {
+			if m, ok := item.(map[string]any); ok {
+				turns = append(turns, m)
+			}
+		}
+	case []map[string]any:
+		turns = c
+	default:
 		return
 	}
-	for _, c := range contents {
-		turn, ok := c.(map[string]any)
-		if !ok {
-			continue
-		}
-		parts, ok := turn["parts"].([]any)
-		if !ok {
-			continue
-		}
-		for _, p := range parts {
-			part, ok := p.(map[string]any)
-			if !ok {
-				continue
+	for _, turn := range turns {
+		// Similarly handle both types for parts
+		var parts []map[string]any
+		switch p := turn["parts"].(type) {
+		case []any:
+			for _, item := range p {
+				if m, ok := item.(map[string]any); ok {
+					parts = append(parts, m)
+				}
 			}
+		case []map[string]any:
+			parts = p
+		}
+		for _, part := range parts {
 			// Strip id from functionCall (Vertex rejects these)
 			if fc, ok := part["functionCall"].(map[string]any); ok {
 				delete(fc, "id")
