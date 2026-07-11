@@ -43,6 +43,12 @@ jobs:
         # Note: setup-node's pnpm cache requires a workspace "packages" field,
         # which this repo does not use. pnpm/action-setup handles installation.
 
+      - name: Configure pnpm hoisting config
+        shell: bash
+        run: |
+          echo "public-hoist-pattern=*" >> .npmrc
+          echo "shamefully-hoist=true" >> .npmrc
+
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
@@ -50,7 +56,7 @@ jobs:
         run: pnpm lint:undef
 
       - name: Build application
-        run: pnpm run build
+        run: node scripts/build.js
 
       - name: Verify standalone output exists
         shell: bash

@@ -21,42 +21,12 @@ These rules override all other instructions. Every AI agent working on this code
 ## Quick Start
 
 ```bash
-# 1. Node.js
 pnpm install
 pnpm run build
-
-# 2. Python automation engine — pick at least one:
-#    a) Chromium (default, easiest):
-pip install -r scripts/python/requirements.txt
-playwright install chromium
-
-#    b) CloakBrowser (anti-detect, harder to flag):
-pip install -r scripts/python/requirements.txt
-
-# 3. Deploy
 cp -r public .next/standalone/public
 cp -r .next/static .next/standalone/.next/static
 PORT=3003 pm2 start .next/standalone/server.js --name 9router
 pm2 save
-```
-
-### Automation Engines
-
-Automation jobs (bulk import, Google OAuth) run via Python subprocess. The engine determines which browser binary Playwright uses:
-
-| Engine | Flag | Install | Notes |
-|--------|------|---------|-------|
-| **Chromium** | `--engine chromium` (default) | `playwright install chromium` | Playwright-bundled, zero config. May get flagged by Google rate-limits on repeated logins. |
-| **CloakBrowser** | `--engine cloakbrowser` | `pip install cloakbrowser` | Anti-detect Chromium fork with 66 C++ source-level stealth patches. Fingerprint randomized per session — much harder for Google to link accounts. Uses `humanize=True` by default for realistic mouse/keyboard behavior. |
-
-CloakBrowser auto-downloads its stealth binary on first launch (~200MB, cached at `~/.cloakbrowser`). No `CLOAKBROWSER_PATH` env var needed — the pip package handles everything.
-
-Engine selection flows from the dashboard: bulk import form picks engine → stored in `job.engine` → passed to `python3 -m autoclaw ... --engine cloakbrowser`.
-
-```bash
-# Manual single-account test:
-python3 -m autoclaw user@gmail.com pass123 --engine chromium
-python3 -m autoclaw user@gmail.com pass123 --engine cloakbrowser --proxy socks5://user:pass@host:port
 ```
 
 Full deployment details: see [`agent.md`](./agent.md)

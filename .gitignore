@@ -50,11 +50,6 @@ nohup.out
 logs/*
 *.pem
 
-# Python
-__pycache__/
-*.pyc
-*.pyo
-
 # =============================================================================
 # Test artifacts & debug scripts
 # =============================================================================
@@ -102,6 +97,7 @@ gitbooks/*
 gitbook/README.md
 .github/instructions/codacy.instructions.md
 
+<<<<<<< HEAD
 # =============================================================================
 # TypeScript
 # =============================================================================
@@ -126,3 +122,4 @@ next-env.d.ts
 # Refactor backup reference / graphify output (do not bundle/lint)
 .graphifyignore
 graphify-out/*
+.next-analyze/*

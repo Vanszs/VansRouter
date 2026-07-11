@@ -7,3 +7,8 @@
 !README.md
 !LICENSE
 
+!app/_nm/@swc/helpers/_
+!app/_nm/@swc/helpers/_/**
+!app/_nm/@swc/helpers/cjs
+!app/_nm/@swc/helpers/cjs/**
+

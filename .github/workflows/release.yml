@@ -91,6 +91,12 @@ jobs:
           node-version: 22
           registry-url: https://registry.npmjs.org/
 
+      - name: Configure pnpm hoisting config
+        shell: bash
+        run: |
+          echo "public-hoist-pattern=*" >> .npmrc
+          echo "shamefully-hoist=true" >> .npmrc
+
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
