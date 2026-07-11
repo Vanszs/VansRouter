@@ -20,6 +20,8 @@
     "@dnd-kit/sortable": "^10.0.0",
     "@dnd-kit/utilities": "^3.2.2",
     "@monaco-editor/react": "^4.7.0",
+    "@swc/helpers": "^0.5.15",
+    "@next/env": "^16.1.6",
     "@next/third-parties": "^16.2.9",
     "@xyflow/react": "^12.10.1",
     "bcryptjs": "^3.0.3",

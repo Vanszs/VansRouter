@@ -218,6 +218,7 @@ if (require.main === module) {
   console.log("3️⃣ b Configuring SQLite drivers...");
   ensureModuleInBundle("sql.js", { cliAppDir, appDir, rootDir, copyRecursive });
   ensureModuleInBundle("@swc/helpers", { cliAppDir, appDir, rootDir, copyRecursive });
+  ensureModuleInBundle("@next/env", { cliAppDir, appDir, rootDir, copyRecursive });
   const betterDir = path.join(cliAppDir, "node_modules", "better-sqlite3");
   if (fs.existsSync(betterDir)) {
     fs.rmSync(betterDir, { recursive: true, force: true });
