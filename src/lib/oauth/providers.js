@@ -6,6 +6,31 @@
 // Ensure outbound fetch respects HTTP(S)_PROXY/ALL_PROXY in Node runtime
 import "open-sse/index.js";
 import crypto from "crypto";
+import os from "os";
+
+// ponytail: ZCode source headers — generated once per process; not per-request, since the
+// X-ZCode-Agent / X-Platform etc. are static identity of this client. x-request-id is
+// added per-request at the call site, not here.
+let _zcodeSourceHeaders = null;
+function buildZCodeSourceHeaders() {
+  if (_zcodeSourceHeaders) return _zcodeSourceHeaders;
+  const arch = os.arch() || "x64";
+  const platform = os.platform() || "linux";
+  _zcodeSourceHeaders = {
+    "User-Agent": "ZCode/3.1.0",
+    "X-ZCode-Agent": "glm",
+    "X-Platform": `${platform}-${arch}`,
+    "X-Client-Language": "en",
+    "X-Client-Timezone": Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC",
+    "X-Os-Category": "linux",
+    "X-Os-Version": os.release?.() || "",
+  };
+  return _zcodeSourceHeaders;
+}
+
+function newZCodeRequestId() {
+  return crypto.randomUUID();
+}
 
 import { generatePKCE, generateState } from "./utils/pkce";
 import {
@@ -26,6 +51,7 @@ import {
   CLINEPASS_CONFIG,
   GITLAB_CONFIG,
   CODEBUDDY_CONFIG,
+  ZAI_CONFIG,
   KIMCHI_CONFIG,
   GROK_CLI_CONFIG,
   getOAuthClientMetadata,
@@ -1430,6 +1456,183 @@ const PROVIDERS = {
       refreshToken: tokens.refresh_token,
       expiresIn: tokens.expires_in || 86400,
       providerSpecificData: {},
+    }),
+  },
+
+  // Zcode: Z.ai OAuth via zcode.z.ai proxy + business token exchange for /api/anthropic.
+  // Manual paste flow only (zcode:// custom scheme — browser shows ERR_UNKNOWN_URL_SCHEME,
+  // user copies URL from address bar). Client: zcode://zai-auth/callback (ZCode source v3.1.0).
+  zcode: {
+    config: ZAI_CONFIG,
+    flowType: "authorization_code",
+    buildAuthUrl: (config, redirectUri, state) => {
+      const params = new URLSearchParams({
+        redirect_uri: redirectUri,
+        response_type: "code",
+        client_id: config.clientId,
+        state,
+      });
+      return `${config.authorizeUrl}?${params.toString()}`;
+    },
+    exchangeToken: async (config, code, redirectUri, _codeVerifier, state, _meta) => {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 20000);
+      try {
+        const response = await fetch(config.tokenUrl, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Accept: "application/json" },
+          body: JSON.stringify({ provider: "zai", code, redirect_uri: redirectUri, state: state || "" }),
+          signal: controller.signal,
+        });
+        clearTimeout(timeout);
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok || (data.code !== undefined && data.code !== 0)) {
+          const msg = data.msg || `HTTP ${response.status}`;
+          throw new Error(`Z.ai token exchange failed: ${msg}`);
+        }
+        const accessToken = data.data?.zai?.access_token || data.data?.access_token;
+        if (!accessToken) throw new Error("Z.ai token exchange: missing data.zai.access_token");
+        return {
+          accessToken,
+          refreshToken: data.data?.zai?.refresh_token,
+          zcodeJwtToken: data.data?.token,
+          expiresIn: data.data?.expires_in,
+          raw: data.data,
+        };
+      } catch (e) {
+        clearTimeout(timeout);
+        if (e.name === "AbortError") throw new Error("Z.ai token exchange timed out (20s)");
+        throw e;
+      }
+    },
+    postExchange: async (tokens) => {
+      const accessToken = tokens.accessToken;
+      const zcodeHeaders = () => ({
+        ...buildZCodeSourceHeaders(),
+        "x-request-id": newZCodeRequestId(),
+        Authorization: `Bearer ${accessToken}`,
+        Accept: "application/json",
+      });
+
+      // User info (non-fatal — missing profile should not block connection)
+      let userInfo = {};
+      try {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 10000);
+        const res = await fetch(ZAI_CONFIG.userInfoUrl, { headers: zcodeHeaders(), signal: controller.signal });
+        clearTimeout(timeout);
+        if (res.ok) userInfo = await res.json();
+      } catch (e) {
+        console.log("Zcode userInfo fetch failed (non-fatal):", e?.message);
+      }
+
+      // Business token exchange: OAuth token → business access token for /api/anthropic.
+      // ponytail: business token refresh on 401, not preemptively. Retry once on transient failure.
+      let businessToken = "";
+      if (ZAI_CONFIG.businessLoginUrl) {
+        for (let attempt = 0; attempt < 2 && !businessToken; attempt++) {
+          let timeout;
+          try {
+            const controller = new AbortController();
+            timeout = setTimeout(() => controller.abort(), 15000);
+            const res = await fetch(ZAI_CONFIG.businessLoginUrl, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ token: accessToken }),
+              signal: controller.signal,
+            });
+            clearTimeout(timeout);
+            if (res.ok) {
+              const data = await res.json().catch(() => ({}));
+              businessToken = data.data?.access_token || data.data?.token || "";
+            } else {
+              console.log(`Zcode business-token exchange attempt ${attempt + 1} failed: HTTP ${res.status}`);
+            }
+          } catch (e) {
+            clearTimeout(timeout);
+            console.log(`Zcode business-token exchange attempt ${attempt + 1} error:`, e?.message);
+          }
+          if (!businessToken && attempt === 0) await new Promise((r) => setTimeout(r, 1000));
+        }
+        if (!businessToken) console.log("Zcode business-token exchange gave up after retries; connection may fail for /api/anthropic");
+      }
+
+      // Subscription / coding plan (non-fatal)
+      let planId = "";
+      let tier = "free";
+      let quotaPools = {
+        fiveHourPool: { remaining: 0, total: 0 },
+        weeklyQuota: { remaining: 0, total: 0 },
+        monthlyMcpQuota: { remaining: 0, total: 0 },
+      };
+      let modelUsage = {};
+      let modelAccess = [];
+      if (ZAI_CONFIG.subscriptionUrl) {
+        try {
+          const controller = new AbortController();
+          const timeout = setTimeout(() => controller.abort(), 10000);
+          const res = await fetch(ZAI_CONFIG.subscriptionUrl, {
+            method: "POST",
+            headers: { ...zcodeHeaders(), "Content-Type": "application/json", "User-Agent": ZAI_CONFIG.userAgent },
+            body: JSON.stringify({}),
+            signal: controller.signal,
+          });
+          clearTimeout(timeout);
+          if (res.ok) {
+            const data = await res.json();
+            planId = data.planId || data.plan?.id || "";
+            tier = data.tier || data.plan?.tier || "free";
+            if (data.quotaPools) {
+              quotaPools.fiveHourPool = {
+                remaining: data.quotaPools.fiveHour?.remaining || 0,
+                total: data.quotaPools.fiveHour?.total || 0,
+              };
+              quotaPools.weeklyQuota = {
+                remaining: data.quotaPools.weekly?.remaining || 0,
+                total: data.quotaPools.weekly?.total || 0,
+              };
+              quotaPools.monthlyMcpQuota = {
+                remaining: data.quotaPools.monthlyMcp?.remaining || 0,
+                total: data.quotaPools.monthlyMcp?.total || 0,
+              };
+            }
+            if (data.modelUsage) modelUsage = data.modelUsage;
+            if (Array.isArray(data.allowedModels)) modelAccess = data.allowedModels;
+            else if (data.models) modelAccess = data.models;
+          }
+        } catch (e) {
+          console.log("Zcode subscription fetch failed (non-fatal):", e?.message);
+        }
+      }
+
+      return { userInfo, planId, tier, quotaPools, modelUsage, modelAccess, businessToken };
+    },
+    mapTokens: (tokens, extra) => ({
+      accessToken: tokens.accessToken || tokens.access_token,
+      refreshToken: tokens.refreshToken || tokens.refresh_token,
+      expiresIn: tokens.expiresIn || tokens.expires_in,
+      scope: tokens.scope,
+      zcodeJwtToken: tokens.zcodeJwtToken,
+      email: extra?.userInfo?.email,
+      planId: extra?.planId,
+      tier: extra?.tier,
+      providerSpecificData: {
+        sub: "zai",
+        quotaPools: extra?.quotaPools || {
+          fiveHourPool: { remaining: 0, total: 0 },
+          weeklyQuota: { remaining: 0, total: 0 },
+          monthlyMcpQuota: { remaining: 0, total: 0 },
+        },
+        modelUsage: extra?.modelUsage || {},
+        modelAccess: extra?.modelAccess || [],
+        apiBaseUrl: ZAI_CONFIG.apiBaseUrl,
+        zcodePlanBaseUrl: ZAI_CONFIG.zcodePlanBaseUrl,
+        region: "global",
+        zcodeJwtToken: tokens.zcodeJwtToken || "",
+        businessToken: extra?.businessToken || "",
+        // ponytail: hardcoded 4 variants; sync with PROVIDER_MODELS.zcode when model set changes
+        enabledModels: ["GLM-5.2", "GLM-5.2-Max", "GLM-5-Turbo", "GLM-5-Turbo-Max"],
+      },
     }),
   },
 

@@ -111,6 +111,9 @@ export const GITLAB_CONFIG = { ...PROVIDER_OAUTH["gitlab"] };
 // CodeBuddy (Tencent) OAuth Configuration (Browser OAuth Polling Flow)
 export const CODEBUDDY_CONFIG = { ...PROVIDER_OAUTH["codebuddy-cn"] };
 
+// Z.ai (ZCode) OAuth Configuration (Manual paste flow via zcode:// custom scheme)
+export const ZAI_CONFIG = { ...PROVIDER_OAUTH["zcode"] };
+
 // Kimchi OAuth Configuration (Browser token callback flow)
 export const KIMCHI_CONFIG = { ...PROVIDER_OAUTH["kimchi"] };
 
@@ -140,6 +143,7 @@ export const PROVIDERS = {
   CLINEPASS: "clinepass",
   GITLAB: "gitlab",
   CODEBUDDY: "codebuddy-cn",
+  ZCODE: "zcode",
   KIMCHI: "kimchi",
   GROK_CLI: "grok-cli",
 };
