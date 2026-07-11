@@ -155,7 +155,9 @@ function translateOpenAIToOpenAIResponses(openaiResponse) {
         content: [
           {
             type: "output_text",
-            text: message.content
+            text: message.content,
+            annotations: [],
+            logprobs: []
           }
         ]
       });
@@ -187,6 +189,7 @@ function translateOpenAIToOpenAIResponses(openaiResponse) {
     object: "response",
     created_at: openaiResponse.created || Math.floor(Date.now() / 1000),
     status: "completed",
+    model: openaiResponse.model || "",
     output,
     usage
   };

@@ -23,8 +23,29 @@ export async function OPTIONS() {
 /**
  * POST /v1/responses - OpenAI Responses API format
  * Now handled by translator pattern (openai-responses format auto-detected)
+ * 
+ * Fix: default stream to false when client omits it.
+ * chatCore.js treats `body.stream !== false` as streaming (undefined !== false = true).
+ * AI SDKs (e.g. @ai-sdk/openai) omit `stream` field for non-streaming calls,
+ * which caused VansRouter to force SSE and break JSON parsing downstream.
  */
 export async function POST(request) {
   await ensureInitialized();
-  return await handleChat(request);
+  // Inject stream:false default for Responses API when client omits stream field
+  try {
+    const body = await request.json();
+    if (body.stream === undefined) {
+      body.stream = false;
+    }
+    // Rebuild request with patched body
+    const patched = new Request(request.url, {
+      method: request.method,
+      headers: request.headers,
+      body: JSON.stringify(body),
+    });
+    return await handleChat(patched);
+  } catch {
+    // If body parsing fails, fall through to original handler
+    return await handleChat(request);
+  }
 }
