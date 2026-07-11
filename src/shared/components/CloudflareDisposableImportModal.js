@@ -93,6 +93,7 @@ export default function CloudflareDisposableImportModal({ isOpen, onClose, onSuc
     [...(activeJob?.activity || [])].reverse()
   ), [activeJob]);
 
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => {
     if (!isOpen || activeJob || mailProvider !== "mailtm") return;
     if (loadingDomains) return;

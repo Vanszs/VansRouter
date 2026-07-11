@@ -40,6 +40,7 @@ const systemItems = [
 
 function VersionText() {
   const [version, setVersion] = useState("");
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { setVersion(APP_CONFIG.version); }, []);
   return <span className="text-xs text-text-muted">{version ? `v${version}` : ""}</span>;
 }
