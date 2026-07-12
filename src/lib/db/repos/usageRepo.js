@@ -404,7 +404,7 @@ export async function getUsageStats(period = "all") {
       seen.add(key);
       return true;
     })
-    .slice(0, 20);
+    .slice(0, 50);
 
   const stats = {
     totalRequests: 0,
