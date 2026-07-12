@@ -76,6 +76,7 @@ function aggregateEntryToDay(day, entry) {
   day.byProvider ||= {};
   day.byModel ||= {};
   day.byAccount ||= {};
+  day.byCombo ||= {};
   day.byApiKey ||= {};
   day.byEndpoint ||= {};
 
@@ -95,6 +96,10 @@ function aggregateEntryToDay(day, entry) {
   const endpoint = entry.endpoint || "Unknown";
   const epKey = `${endpoint}|${entry.model}|${entry.provider || "unknown"}`;
   addToCounter(day.byEndpoint, epKey, { ...vals, meta: { endpoint, rawModel: entry.model, provider: entry.provider } });
+
+  if (entry.comboName) {
+    addToCounter(day.byCombo, entry.comboName, { ...vals, meta: { comboName: entry.comboName } });
+  }
 }
 
 function pushToRing(entry) {
@@ -122,10 +127,10 @@ async function ensureRingInitialized() {
   recentRing.initialized = true;
   try {
     const db = await getAdapter();
-    const rows = db.all(`SELECT timestamp, provider, model, connectionId, apiKey, endpoint, cost, status, tokens FROM usageHistory ORDER BY id DESC LIMIT ?`, [RING_CAP]);
+    const rows = db.all(`SELECT timestamp, provider, model, connectionId, apiKey, endpoint, comboName, cost, status, tokens FROM usageHistory ORDER BY id DESC LIMIT ?`, [RING_CAP]);
     recentRing.items = rows.reverse().map((r) => ({
       timestamp: r.timestamp, provider: r.provider, model: r.model, connectionId: r.connectionId,
-      apiKey: r.apiKey, endpoint: r.endpoint, cost: r.cost, status: r.status,
+      apiKey: r.apiKey, endpoint: r.endpoint, comboName: r.comboName, cost: r.cost, status: r.status,
       tokens: parseJson(r.tokens, {}),
     }));
   } catch {}
@@ -280,10 +285,11 @@ export async function saveRequestUsage(entry) {
       }
 
       db.run(
-        `INSERT INTO usageHistory(timestamp, provider, model, connectionId, apiKey, endpoint, promptTokens, completionTokens, cost, status, tokens, meta) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        `INSERT INTO usageHistory(timestamp, provider, model, connectionId, apiKey, endpoint, comboName, promptTokens, completionTokens, cost, status, tokens, meta) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           entry.timestamp, entry.provider || null, entry.model || null,
           entry.connectionId || null, entry.apiKey || null, entry.endpoint || null,
+          entry.comboName || null,
           promptTokens, completionTokens, entry.cost || 0, entry.status || "ok",
           stringifyJson(tokens), stringifyJson({}),
         ]
@@ -293,7 +299,7 @@ export async function saveRequestUsage(entry) {
       const row = db.get(`SELECT data FROM usageDaily WHERE dateKey = ?`, [dateKey]);
       const day = row ? parseJson(row.data, {}) : {
         requests: 0, promptTokens: 0, completionTokens: 0, cost: 0,
-        byProvider: {}, byModel: {}, byAccount: {}, byApiKey: {}, byEndpoint: {},
+        byProvider: {}, byModel: {}, byAccount: {}, byCombo: {}, byApiKey: {}, byEndpoint: {},
       };
       aggregateEntryToDay(day, entry);
       db.run(`INSERT INTO usageDaily(dateKey, data) VALUES(?, ?) ON CONFLICT(dateKey) DO UPDATE SET data = excluded.data`, [dateKey, stringifyJson(day)]);
@@ -370,23 +376,30 @@ export async function getUsageStats(period = "all") {
   for (const k of allApiKeys) apiKeyMap[k.key] = { name: k.name, id: k.id, createdAt: k.createdAt };
 
   // recentRequests from live history (last 100 entries enough for 20 deduped)
-  const recentRows = db.all(`SELECT timestamp, provider, model, tokens, status FROM usageHistory ORDER BY id DESC LIMIT 100`);
+  const recentRows = db.all(`SELECT timestamp, provider, model, apiKey, comboName, tokens, status FROM usageHistory ORDER BY id DESC LIMIT 100`);
   const seen = new Set();
   const recentRequests = recentRows
     .map((r) => {
       const t = parseJson(r.tokens, {}) || {};
+      const maskedApiKey = r.apiKey && typeof r.apiKey === "string"
+        ? r.apiKey.slice(0, 8) + "..." : "";
+      const keyInfo = r.apiKey ? apiKeyMap[r.apiKey] : null;
+      const keyName = keyInfo?.name || maskedApiKey || "Local";
       return {
         timestamp: r.timestamp, model: r.model, provider: r.provider || "",
         promptTokens: t.prompt_tokens || t.input_tokens || 0,
         completionTokens: t.completion_tokens || t.output_tokens || 0,
         cachedTokens: t.cached_tokens || t.cache_read_input_tokens || 0,
         status: r.status || "ok",
+        apiKey: r.apiKey,
+        keyName,
+        comboName: r.comboName || "",
       };
     })
     .filter((e) => {
       if (e.promptTokens === 0 && e.completionTokens === 0) return false;
       const minute = e.timestamp ? e.timestamp.slice(0, 16) : "";
-      const key = `${e.model}|${e.provider}|${e.promptTokens}|${e.completionTokens}|${minute}`;
+      const key = `${e.model}|${e.provider}|${e.promptTokens}|${e.completionTokens}|${minute}|${e.apiKey}`;
       if (seen.has(key)) return false;
       seen.add(key);
       return true;
@@ -396,6 +409,7 @@ export async function getUsageStats(period = "all") {
   const stats = {
     totalRequests: 0,
     totalPromptTokens: 0, totalCompletionTokens: 0, totalCachedTokens: 0, totalCost: 0,
+    byCombo: {},
     byProvider: {}, byModel: {}, byAccount: {}, byApiKey: {}, byEndpoint: {},
     last10Minutes: [],
     pending: pendingRequests,
@@ -536,6 +550,19 @@ export async function getUsageStats(period = "all") {
         stats.byEndpoint[epKey].cost += ep.cost || 0;
         if (dateKey > (stats.byEndpoint[epKey].lastUsed || "")) stats.byEndpoint[epKey].lastUsed = dateKey;
       }
+
+      for (const [cKey, c] of Object.entries(day.byCombo || {})) {
+        const comboName = c.comboName || cKey;
+        if (!stats.byCombo[cKey]) {
+          stats.byCombo[cKey] = { requests: 0, promptTokens: 0, completionTokens: 0, cachedTokens: 0, cost: 0, comboName, lastUsed: dateKey };
+        }
+        stats.byCombo[cKey].requests += c.requests || 0;
+        stats.byCombo[cKey].promptTokens += c.promptTokens || 0;
+        stats.byCombo[cKey].completionTokens += c.completionTokens || 0;
+        stats.byCombo[cKey].cachedTokens += c.cachedTokens || 0;
+        stats.byCombo[cKey].cost += c.cost || 0;
+        if (dateKey > (stats.byCombo[cKey].lastUsed || "")) stats.byCombo[cKey].lastUsed = dateKey;
+      }
     }
 
     // Overlay precise lastUsed timestamps from history
@@ -575,7 +602,7 @@ export async function getUsageStats(period = "all") {
       cutoff = new Date(Date.now() - PERIOD_MS["24h"]).toISOString();
     }
     const filtered = db.all(
-      `SELECT timestamp, provider, model, connectionId, apiKey, endpoint, promptTokens, completionTokens, cost, tokens FROM usageHistory WHERE timestamp >= ?`,
+      `SELECT timestamp, provider, model, connectionId, apiKey, endpoint, comboName, promptTokens, completionTokens, cost, tokens FROM usageHistory WHERE timestamp >= ?`,
       [cutoff]
     );
 
@@ -652,6 +679,16 @@ export async function getUsageStats(period = "all") {
       const epe = stats.byEndpoint[epKey];
       epe.requests++; epe.promptTokens += promptTokens; epe.completionTokens += completionTokens; epe.cachedTokens += cachedTokens; epe.cost += entryCost;
       if (new Date(r.timestamp) > new Date(epe.lastUsed)) epe.lastUsed = r.timestamp;
+
+      const comboName = r.comboName || "";
+      if (comboName) {
+        if (!stats.byCombo[comboName]) {
+          stats.byCombo[comboName] = { requests: 0, promptTokens: 0, completionTokens: 0, cachedTokens: 0, cost: 0, comboName, lastUsed: r.timestamp };
+        }
+        const ce = stats.byCombo[comboName];
+        ce.requests++; ce.promptTokens += promptTokens; ce.completionTokens += completionTokens; ce.cachedTokens += cachedTokens; ce.cost += entryCost;
+        if (new Date(r.timestamp) > new Date(ce.lastUsed)) ce.lastUsed = r.timestamp;
+      }
     }
   }
 

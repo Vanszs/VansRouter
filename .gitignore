@@ -123,3 +123,5 @@ next-env.d.ts
 .graphifyignore
 graphify-out/*
 .next-analyze/*
+db/
+TASK.md
