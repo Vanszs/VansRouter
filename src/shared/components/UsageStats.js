@@ -94,10 +94,10 @@ function RecentRequests({ requests = EMPTY_REQUESTS }) {
                 const ok = !r.status || r.status === "ok" || r.status === "success";
                 return (
                   <tr key={`${r.timestamp}-${r.model}-${i}`} className="hover:bg-bg-subtle transition-colors">
-                    <td className="py-1.5">
+                    <td className="py-1.5 pr-1.5">
                       <span className={`block w-1.5 h-1.5 rounded-full ${ok ? "bg-success" : "bg-error"}`} aria-label={ok ? "Success" : "Error"} />
                     </td>
-                    <td className="py-1.5 text-text-muted truncate max-w-[100px]" title={r.keyName || r.apiKey}>{r.keyName || (r.apiKey && typeof r.apiKey === 'string' ? r.apiKey.slice(0, 12) + '…' : '—')}</td>
+                    <td className="py-1.5 text-text-muted truncate max-w-[80px] pr-3" title={r.keyName || r.apiKey}>{r.keyName || (r.apiKey && typeof r.apiKey === 'string' ? r.apiKey.slice(0, 10) + '…' : '—')}</td>
                     <td className="py-1.5 font-mono truncate max-w-[120px]" title={r.model}>{r.model}</td>
                     <td className="py-1.5 text-right whitespace-nowrap">
                       <span className="text-primary">{fmt(r.promptTokens)}↑</span>
