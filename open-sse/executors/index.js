@@ -20,6 +20,7 @@ import { XiaomiTokenplanExecutor } from "./xiaomi-tokenplan.js";
 import { MimoFreeExecutor } from "./mimo-free.js";
 import { ZcodeExecutor } from "./zcode.js";
 import { CodeBuddyExecutor } from "./codebuddy-cn.js";
+import { AgentRouterExecutor } from "./agentrouter.js";
 import { DefaultExecutor } from "./default.js";
 
 const executors = {
@@ -51,6 +52,7 @@ const executors = {
   zcode: new ZcodeExecutor(),
   zc: new ZcodeExecutor(), // Alias for zcode
   "codebuddy-cn": new CodeBuddyExecutor(),
+  agentrouter: new AgentRouterExecutor(),
 };
 
 const defaultCache = new Map();

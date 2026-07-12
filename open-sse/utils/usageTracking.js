@@ -246,11 +246,11 @@ export function extractUsage(chunk) {
     });
   }
 
-  // Claude format (message_delta event)
+  // Claude format (message_delta event) - also handles OpenAI format in final chunk
   if (chunk.type === "message_delta" && chunk.usage && typeof chunk.usage === "object") {
     return normalizeUsage({
-      prompt_tokens: chunk.usage.input_tokens || 0,
-      completion_tokens: chunk.usage.output_tokens || 0,
+      prompt_tokens: chunk.usage.prompt_tokens || chunk.usage.input_tokens || 0,
+      completion_tokens: chunk.usage.completion_tokens || chunk.usage.output_tokens || 0,
       cache_read_input_tokens: chunk.usage.cache_read_input_tokens,
       cache_creation_input_tokens: chunk.usage.cache_creation_input_tokens
     });

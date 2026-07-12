@@ -4,8 +4,6 @@
 // Passthrough provider: accepts any model ID, no fixed model list.
 // Free tier: $200 credits on signup, no credit card required.
 
-import { CLAUDE_CLI_SPOOF_HEADERS } from "../shared.js";
-
 export default {
   id: "agentrouter",
   alias: "agentrouter",
@@ -31,7 +29,6 @@ export default {
     baseUrl: "https://agentrouter.org/v1/messages",
     format: "claude",
     timeoutMs: 600000,
-    headers: { ...CLAUDE_CLI_SPOOF_HEADERS },
     auth: {
       apiKey: {
         header: "x-api-key",

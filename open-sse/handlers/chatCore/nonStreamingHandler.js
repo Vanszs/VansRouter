@@ -127,10 +127,15 @@ export function translateNonStreamingResponse(responseBody, targetFormat, source
 
     if (responseBody.usage) {
       result.usage = {
-        prompt_tokens: responseBody.usage.input_tokens || 0,
-        completion_tokens: responseBody.usage.output_tokens || 0,
-        total_tokens: (responseBody.usage.input_tokens || 0) + (responseBody.usage.output_tokens || 0)
+        prompt_tokens: responseBody.usage.prompt_tokens || responseBody.usage.input_tokens || 0,
+        completion_tokens: responseBody.usage.completion_tokens || responseBody.usage.output_tokens || 0,
+        total_tokens: responseBody.usage.total_tokens || 
+          ((responseBody.usage.prompt_tokens || responseBody.usage.input_tokens || 0) + 
+           (responseBody.usage.completion_tokens || responseBody.usage.output_tokens || 0))
       };
+      if (responseBody.usage.completion_tokens_details) {
+        result.usage.completion_tokens_details = responseBody.usage.completion_tokens_details;
+      }
     }
     return result;
   }
@@ -140,7 +145,74 @@ export function translateNonStreamingResponse(responseBody, targetFormat, source
     return ollamaBodyToOpenAI(responseBody);
   }
 
+  // Final conversion: if client requested Responses API format, convert OpenAI → Responses
+  if (sourceFormat === FORMATS.OPENAI_RESPONSES) {
+    return translateOpenAIToOpenAIResponses(responseBody);
+  }
+
   return responseBody;
+}
+
+/**
+ * Translate OpenAI chat.completion format → OpenAI Responses API format.
+ * Required by @ai-sdk/openai and Firecrawl AI SDK which validate against strict Zod schema.
+ */
+function translateOpenAIToOpenAIResponses(openaiResponse) {
+  if (!openaiResponse) return openaiResponse;
+
+  const choices = openaiResponse.choices || [];
+  const output = [];
+
+  if (choices.length > 0) {
+    const choice = choices[0];
+    const message = choice.message || {};
+    const responseId = openaiResponse.id ? `resp_${openaiResponse.id.replace(/^chatcmpl-/, "")}` : `resp_${Date.now()}`;
+
+    const reasoningText = message.reasoning_content || message.reasoning || (message.provider_specific_fields?.reasoning_content) || "";
+    if (reasoningText) {
+      output.push({
+        id: `rs_${responseId}_0`,
+        type: "reasoning",
+        summary: [{ type: "summary_text", text: reasoningText }]
+      });
+    }
+
+    if (message.content !== undefined && message.content !== null) {
+      output.push({
+        id: `msg_${responseId}_0`,
+        type: "message",
+        role: "assistant",
+        content: [{ type: "output_text", text: message.content, annotations: [], logprobs: [] }]
+      });
+    }
+
+    if (Array.isArray(message.tool_calls)) {
+      for (const tc of message.tool_calls) {
+        output.push({
+          id: `fc_${tc.id}`,
+          type: "function_call",
+          call_id: tc.id,
+          name: tc.function?.name || "",
+          arguments: tc.function?.arguments || "{}"
+        });
+      }
+    }
+  }
+
+  const openaiUsage = openaiResponse.usage || {};
+  return {
+    id: openaiResponse.id ? `resp_${openaiResponse.id.replace(/^chatcmpl-/, "")}` : `resp_${Date.now()}`,
+    object: "response",
+    created_at: openaiResponse.created || Math.floor(Date.now() / 1000),
+    status: "completed",
+    model: openaiResponse.model || "",
+    output,
+    usage: {
+      input_tokens: openaiUsage.prompt_tokens || 0,
+      output_tokens: openaiUsage.completion_tokens || 0,
+      total_tokens: openaiUsage.total_tokens || 0
+    }
+  };
 }
 
 /**

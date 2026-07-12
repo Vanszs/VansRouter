@@ -1,3 +1,68 @@
+# v0.9.1 (2026-07-11)
+
+VansRouter 0.9.1 fixes the `content-blocked` fallback locking loop, aligns `agentrouter` headers dynamically to bypass WAF edge blocks (405), and includes recent fixes for Responses API compatibility, usage tracking, and CI/lint configurations.
+
+## Added
+- **AgentRouter Dynamic Wire Image** — Spoofs Claude Code SDK headers dynamically, matching dynamic user agent and lowercase version/beta headers, and appends `?beta=true` to bypass WAF edge blocks (405).
+
+## Fixed
+- **Content-Blocked Fallback Loop** — Prevents error status 400 containing `content-blocked` or `content_blocked` from locking the provider account. The moderation error is surfaced directly to the client instead of triggering endless fallback loops.
+- **Responses API / Usage Tracking** — Fixes Responses API compatibility for AI SDKs and usage tracking for Antigravity/Gemini streaming responses.
+- **CI & Linting** — Fixes pnpm v10 hoisting on CI runners and undef lint configurations.
+
+# v0.9.0 (2026-07-11)
+
+VansRouter 0.9.0 delivers a major sync with upstream v0.5.30, adds experimental PXPIPE token saver (multimodal prompt compression), integrates Perplexity Agent / Grok CLI / Featherless providers, and resolves critical packaging, environment, and streaming regressions.
+
+## Added
+- **Upstream v0.5.30 sync** — cherry-picks 23 upstream commits.
+- **PXPIPE Token Saver** — experimental fifth token saver. Claude-format request bodies are rendered as dense PNGs via pxpipe-proxy, cutting input tokens by ~35-60%.
+- **New Providers** — Perplexity Agent, Grok CLI (with OAuth device-code flow), and Featherless OpenAI-compatible presets.
+- **Proxy Auto-Rotation** — strategy for unauthenticated providers.
+- **Headroom Extras** — activation, uninstall UI, and interpreter auto-detection.
+
+## Fixed
+- **NPM Package Env Crash** — whitelisted swc-helpers underscore folders (`_`) and bundled `@next/env` inside `app/_nm` to avoid npm's default `node_modules` stripping.
+- **SSE Streaming Batching** — disabled Next.js default compression (`compress: false`) to flush SSE chunks immediately to the client without buffering.
+- **ZCode OAuth Flow** — restored missing ZCode/Z.ai configuration and helper functions from the merge.
+- **Registry Index** — regenerated index to include all 124 local and custom providers.
+
+# v0.8.9 (2026-07-09)
+
+VansRouter 0.8.9 syncs the latest upstream v0.5.20 fixes, hardens production data-directory handling, and cleans up the remaining test/lint regressions.
+
+## Added
+- **Upstream v0.5.20 sync** — cherry-picks 9 upstream fixes into `dev`:
+  - Headroom dashboard proxy through the Next.js app.
+  - `CLAUDE.md` guidance for Claude Code.
+  - Claude `max_tokens` vs thinking-budget reconciliation.
+  - Kiro native system-prompt delivery and Opus 4.5/4.7/4.8 model slots.
+  - Structured Anthropic block token counting.
+  - JS-native git-log RTK filter.
+  - VolcEngine Ark GLM-5 `max_tokens` clamping.
+  - Kimi `reasoning_effort` normalization.
+  - Upstream-aligned Caveman style rules.
+  - Developer-message preservation in OpenAI Responses conversion.
+  - MITM stale lock-file recovery on startup.
+
+## Fixed
+- **DATA_DIR smoke/temp guard** — `src/lib/dataDir.js` now refuses to use a temp/smoke directory (e.g. `/tmp/9router-data-smoke5`) when running in production or under PM2, falling back to the persistent `~/.9router` default. Prevents the "DB kosong" symptom when `.env` accidentally points at an ephemeral path.
+- **useCircuitBreakers hook** — moves the async polling logic inside `useEffect` and adds a `cancelled` cleanup flag, eliminating the `react-hooks/set-state-in-effect` lint error introduced by the circuit-breaker dashboard UI.
+- **Golden snapshot drift** — updates `golden-url-header` and `golden-request` snapshots after the ClinePass provider fix and upstream v0.5.20 translator changes.
+- **Flaky 429 cooldown test** — widens the assertion tolerance for `resetsAtMs` so the test no longer fails on 1 ms timing drift.
+- **ESLint ignore** — excludes generated `.next-cli-build/**` artifacts from linting.
+
+## Changed
+- Root and CLI package versions bumped to **0.8.9**.
+
+## Verified
+- `pnpm test` → 169 test files passed / 13 skipped / 2044 tests passed / 18 expected fail / 84 skipped.
+- `pnpm lint` → 0 errors.
+- `pnpm lint:undef` → clean.
+- `pnpm lint:reacthooks` → clean.
+- `pnpm run build` → build complete.
+- `pm2 start .next/standalone/server.js --name 9router` → online, DB file `~/.9router/db/data.sqlite`.
+
 # v0.8.8 (2026-07-08)
 
 VansRouter 0.8.8 adds the first community-built dashboard enhancement and continues the `go-port` work in parallel.
