@@ -46,29 +46,17 @@ const ANTIGRAVITY_REQUEST_BLACKLIST = [
   "reasoning",
   "enable_thinking",
   "thinking_budget",
-  "thinkingConfig",
 ];
 
-// Model patterns whose native thinking fields are handled in their own format
-// (Claude via Anthropic-native thinking, gpt-oss via harmony, tab_* via custom).
-// Gemini reasoning-capable models use Google's own thinkingConfig — must pass through.
-const AG_REASONING_NATIVE_PATTERNS = [/^claude-/i, /^gpt-oss-/i, /^tab_/i];
+// thinkingConfig handling is delegated to the shared cloudCodeThinking module
+// so behavior stays in sync with OmniRoute (selective strip: only for Claude/gpt-oss/tab_).
+import { shouldStripCloudCodeThinking, stripCloudCodeThinkingConfig } from "../services/cloudCodeThinking.js";
 
-function agModelUsesNativeThinking(model) {
-  if (!model) return true;
-  return AG_REASONING_NATIVE_PATTERNS.some((p) => p.test(model));
-}
-
-// Strip blacklisted fields from an object. Model-aware: Gemini reasoning-capable
-// models keep thinkingConfig so Google streams real thought parts; Claude/gpt-oss/tab_
-// have their thinking handled in their own format and would be rejected by Google.
-const stripBlacklisted = (obj, model) => {
+// Strip blacklisted fields from an object (used for both body.request and top-level body).
+// thinkingConfig is NOT blacklisted here — model-aware strip is handled by cloudCodeThinking.
+const stripBlacklisted = (obj) => {
   if (!obj) return;
-  const keepThinkingConfig = !agModelUsesNativeThinking(model);
-  for (const key of ANTIGRAVITY_REQUEST_BLACKLIST) {
-    if (key === "thinkingConfig" && keepThinkingConfig) continue;
-    delete obj[key];
-  }
+  for (const key of ANTIGRAVITY_REQUEST_BLACKLIST) delete obj[key];
 };
 
 // Image generation model name patterns
@@ -270,7 +258,11 @@ export class AntigravityExecutor extends BaseExecutor {
         requestWithoutTools[key] = sourceRequest[key];
       }
     }
-    stripBlacklisted(requestWithoutTools, model);
+    stripBlacklisted(requestWithoutTools);
+    // Model-aware thinkingConfig strip — keep for Gemini, drop for Claude/gpt-oss/tab_.
+    if (shouldStripCloudCodeThinking("antigravity", model)) {
+      stripCloudCodeThinkingConfig(requestWithoutTools);
+    }
     const generationConfig = { ...(requestWithoutTools.generationConfig || {}) };
     if (generationConfig.maxOutputTokens > MAX_ANTIGRAVITY_OUTPUT_TOKENS) {
       generationConfig.maxOutputTokens = MAX_ANTIGRAVITY_OUTPUT_TOKENS;
@@ -287,7 +279,14 @@ export class AntigravityExecutor extends BaseExecutor {
     };
 
     // Strip blacklisted thinking fields from top-level body (set by thinkingUnified.js at root, not body.request)
-    stripBlacklisted(body, model);
+    stripBlacklisted(body);
+    if (shouldStripCloudCodeThinking("antigravity", model)) {
+      // stripCloudCodeThinkingConfig is safe on non-record bodies (no-op)
+      const stripped = stripCloudCodeThinkingConfig(body);
+      // mutate body in-place keys (the helper returns a new object)
+      for (const k of Object.keys(body)) delete body[k];
+      Object.assign(body, stripped);
+    }
 
     // Strip OpenAI-format fields that leak from passthrough or translation residue.
     // The API only accepts: project, model, userAgent, requestId, requestType, request.
