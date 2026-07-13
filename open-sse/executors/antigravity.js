@@ -49,9 +49,26 @@ const ANTIGRAVITY_REQUEST_BLACKLIST = [
   "thinkingConfig",
 ];
 
-// Strip blacklisted fields from an object (used for both body.request and top-level body)
-const stripBlacklisted = obj => {
-  for (const key of ANTIGRAVITY_REQUEST_BLACKLIST) delete obj[key];
+// Model patterns whose native thinking fields are handled in their own format
+// (Claude via Anthropic-native thinking, gpt-oss via harmony, tab_* via custom).
+// Gemini reasoning-capable models use Google's own thinkingConfig — must pass through.
+const AG_REASONING_NATIVE_PATTERNS = [/^claude-/i, /^gpt-oss-/i, /^tab_/i];
+
+function agModelUsesNativeThinking(model) {
+  if (!model) return true;
+  return AG_REASONING_NATIVE_PATTERNS.some((p) => p.test(model));
+}
+
+// Strip blacklisted fields from an object. Model-aware: Gemini reasoning-capable
+// models keep thinkingConfig so Google streams real thought parts; Claude/gpt-oss/tab_
+// have their thinking handled in their own format and would be rejected by Google.
+const stripBlacklisted = (obj, model) => {
+  if (!obj) return;
+  const keepThinkingConfig = !agModelUsesNativeThinking(model);
+  for (const key of ANTIGRAVITY_REQUEST_BLACKLIST) {
+    if (key === "thinkingConfig" && keepThinkingConfig) continue;
+    delete obj[key];
+  }
 };
 
 // Image generation model name patterns
@@ -253,7 +270,7 @@ export class AntigravityExecutor extends BaseExecutor {
         requestWithoutTools[key] = sourceRequest[key];
       }
     }
-    stripBlacklisted(requestWithoutTools);
+    stripBlacklisted(requestWithoutTools, model);
     const generationConfig = { ...(requestWithoutTools.generationConfig || {}) };
     if (generationConfig.maxOutputTokens > MAX_ANTIGRAVITY_OUTPUT_TOKENS) {
       generationConfig.maxOutputTokens = MAX_ANTIGRAVITY_OUTPUT_TOKENS;
@@ -270,7 +287,7 @@ export class AntigravityExecutor extends BaseExecutor {
     };
 
     // Strip blacklisted thinking fields from top-level body (set by thinkingUnified.js at root, not body.request)
-    stripBlacklisted(body);
+    stripBlacklisted(body, model);
 
     // Strip OpenAI-format fields that leak from passthrough or translation residue.
     // The API only accepts: project, model, userAgent, requestId, requestType, request.
