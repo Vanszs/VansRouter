@@ -21,6 +21,7 @@ import { MimoFreeExecutor } from "./mimo-free.js";
 import { ZcodeExecutor } from "./zcode.js";
 import { CodeBuddyExecutor } from "./codebuddy-cn.js";
 import { AgentRouterExecutor } from "./agentrouter.js";
+import { MuseSparkWebExecutor } from "./muse-spark-web.js";
 import { DefaultExecutor } from "./default.js";
 
 const executors = {
@@ -53,6 +54,7 @@ const executors = {
   zc: new ZcodeExecutor(), // Alias for zcode
   "codebuddy-cn": new CodeBuddyExecutor(),
   agentrouter: new AgentRouterExecutor(),
+  "muse-spark-web": new MuseSparkWebExecutor(),
 };
 
 const defaultCache = new Map();
@@ -91,3 +93,4 @@ export { XiaomiTokenplanExecutor } from "./xiaomi-tokenplan.js";
 export { MimoFreeExecutor } from "./mimo-free.js";
 export { ZcodeExecutor } from "./zcode.js";
 export { CodeBuddyExecutor } from "./codebuddy-cn.js";
+export { MuseSparkWebExecutor } from "./muse-spark-web.js";
