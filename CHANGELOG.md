@@ -1,3 +1,11 @@
+# v0.9.3.1 (2026-07-16)
+
+VansRouter 0.9.3.1 fixes version update detection for source-clone installations by checking the published `vansrouter` package.
+
+## Fixed
+- **Version Update Detection** — checks `vansrouter` instead of the legacy `9router` npm package.
+
+
 # v0.9.3 (2026-07-16)
 
 VansRouter 0.9.3 replaces placeholder logos with official icons, aligns multi-name provider assets, removes redundant defaultModel input for custom compatible endpoints, and syncs upstream omnirouter provider additions.
