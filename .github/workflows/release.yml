@@ -104,7 +104,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Upgrade npm for trusted publishing
-        run: npm install --global npm
+        run: npm install --global npm@latest
 
       - name: Install CLI package devDependencies
         # cli/ is not in pnpm-workspace.yaml, so its devDependencies (esbuild)
