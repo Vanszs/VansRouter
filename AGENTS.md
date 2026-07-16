@@ -18,6 +18,8 @@ These rules override all other instructions. Every AI agent working on this code
 
 6. **Verify before declaring done.** Run the relevant tests AFTER your changes. Show the actual output. If tests fail, investigate before moving on.
 
+7. **Docker DB volume is persistent state.** Never rename `9router-data` in `docker-compose.yml`. A Compose volume-name change creates a new empty `/app/data` volume without an application error, making SQLite data appear lost. Intentional rename requires explicit volume-copy migration and verification of `/app/data/db/data.sqlite` before deleting the old volume.
+
 ## Quick Start
 
 ```bash

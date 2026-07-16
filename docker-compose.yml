@@ -12,7 +12,7 @@ services:
     ports:
       - "${PORT:-20128}:20128"
     volumes:
-      - vansrouter-data:/app/data
+      - 9router-data:/app/data
     env_file:
       - .env
     environment:
@@ -39,5 +39,5 @@ services:
       - "${HEADROOM_PORT:-8787}:8787"
 
 volumes:
-  vansrouter-data:
-    name: vansrouter-data
+  9router-data:
+    name: 9router-data
