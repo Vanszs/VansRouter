@@ -13,6 +13,12 @@
     "src",
     "app"
   ],
+  "scripts": {
+    "build": "node scripts/build-cli.js",
+    "pack:cli": "npm run build && npm pack --pack-destination ../..",
+    "publish:cli": "npm run build && npm publish",
+    "postinstall": "node hooks/postinstall.js"
+  },
   "dependencies": {
     "chalk": "^4.1.2",
     "commander": "^11.1.0",
