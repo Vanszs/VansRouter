@@ -316,10 +316,10 @@ exports[`GOLDEN buildHeaders (default executor providers) > cline → headers (a
     "Authorization": "Bearer <TOK>",
     "Content-Type": "application/json",
     "HTTP-Referer": "https://cline.bot",
-    "User-Agent": "VansRouter/0.9.51",
+    "User-Agent": "VansRouter/0.9.55",
     "X-CLIENT-TYPE": "vansrouter",
-    "X-CLIENT-VERSION": "0.9.51",
-    "X-CORE-VERSION": "0.9.51",
+    "X-CLIENT-VERSION": "0.9.55",
+    "X-CORE-VERSION": "0.9.55",
     "X-IS-MULTIROOT": "false",
     "X-PLATFORM": "linux",
     "X-PLATFORM-VERSION": "v24.15.0",
@@ -329,10 +329,10 @@ exports[`GOLDEN buildHeaders (default executor providers) > cline → headers (a
     "Authorization": "Bearer <TOK>",
     "Content-Type": "application/json",
     "HTTP-Referer": "https://cline.bot",
-    "User-Agent": "VansRouter/0.9.51",
+    "User-Agent": "VansRouter/0.9.55",
     "X-CLIENT-TYPE": "vansrouter",
-    "X-CLIENT-VERSION": "0.9.51",
-    "X-CORE-VERSION": "0.9.51",
+    "X-CLIENT-VERSION": "0.9.55",
+    "X-CORE-VERSION": "0.9.55",
     "X-IS-MULTIROOT": "false",
     "X-PLATFORM": "linux",
     "X-PLATFORM-VERSION": "v24.15.0",
@@ -343,10 +343,10 @@ exports[`GOLDEN buildHeaders (default executor providers) > cline → headers (a
     "Authorization": "Bearer <TOK>",
     "Content-Type": "application/json",
     "HTTP-Referer": "https://cline.bot",
-    "User-Agent": "VansRouter/0.9.51",
+    "User-Agent": "VansRouter/0.9.55",
     "X-CLIENT-TYPE": "vansrouter",
-    "X-CLIENT-VERSION": "0.9.51",
-    "X-CORE-VERSION": "0.9.51",
+    "X-CLIENT-VERSION": "0.9.55",
+    "X-CORE-VERSION": "0.9.55",
     "X-IS-MULTIROOT": "false",
     "X-PLATFORM": "linux",
     "X-PLATFORM-VERSION": "v24.15.0",
@@ -856,35 +856,11 @@ exports[`GOLDEN buildHeaders (default executor providers) > kimi → headers (ap
     "Anthropic-Beta": "claude-code-20250219,interleaved-thinking-2025-05-14",
     "Anthropic-Version": "2023-06-01",
     "Content-Type": "application/json",
-    "x-api-key": "<CRED>",
-  },
-  "nonStream": {
-    "Anthropic-Beta": "claude-code-20250219,interleaved-thinking-2025-05-14",
-    "Anthropic-Version": "2023-06-01",
-    "Content-Type": "application/json",
-    "x-api-key": "<CRED>",
-  },
-  "oauth": {
-    "Accept": "text/event-stream",
-    "Anthropic-Beta": "claude-code-20250219,interleaved-thinking-2025-05-14",
-    "Anthropic-Version": "2023-06-01",
-    "Content-Type": "application/json",
-    "x-api-key": "<CRED>",
-  },
-}
-`;
-
-exports[`GOLDEN buildHeaders (default executor providers) > kimi-coding → headers (apiKey / oauth) 1`] = `
-{
-  "apiKey": {
-    "Accept": "text/event-stream",
-    "Anthropic-Beta": "claude-code-20250219,interleaved-thinking-2025-05-14",
-    "Anthropic-Version": "2023-06-01",
-    "Content-Type": "application/json",
     "X-Msh-Device-Id": "kimi-<TS>",
-    "X-Msh-Device-Model": "linux x64",
+    "X-Msh-Device-Model": "Linux x64",
+    "X-Msh-Device-Name": "archlinux",
     "X-Msh-Platform": "9router",
-    "X-Msh-Version": "2.1.2",
+    "X-Msh-Version": "0.9.55",
     "x-api-key": "<CRED>",
   },
   "nonStream": {
@@ -892,9 +868,10 @@ exports[`GOLDEN buildHeaders (default executor providers) > kimi-coding → head
     "Anthropic-Version": "2023-06-01",
     "Content-Type": "application/json",
     "X-Msh-Device-Id": "kimi-<TS>",
-    "X-Msh-Device-Model": "linux x64",
+    "X-Msh-Device-Model": "Linux x64",
+    "X-Msh-Device-Name": "archlinux",
     "X-Msh-Platform": "9router",
-    "X-Msh-Version": "2.1.2",
+    "X-Msh-Version": "0.9.55",
     "x-api-key": "<CRED>",
   },
   "oauth": {
@@ -903,9 +880,10 @@ exports[`GOLDEN buildHeaders (default executor providers) > kimi-coding → head
     "Anthropic-Version": "2023-06-01",
     "Content-Type": "application/json",
     "X-Msh-Device-Id": "kimi-<TS>",
-    "X-Msh-Device-Model": "linux x64",
+    "X-Msh-Device-Model": "Linux x64",
+    "X-Msh-Device-Name": "archlinux",
     "X-Msh-Platform": "9router",
-    "X-Msh-Version": "2.1.2",
+    "X-Msh-Version": "0.9.55",
     "x-api-key": "<CRED>",
   },
 }
@@ -1817,13 +1795,6 @@ exports[`GOLDEN buildUrl (default executor providers) > kimchi → url (stream +
 `;
 
 exports[`GOLDEN buildUrl (default executor providers) > kimi → url (stream + non-stream) 1`] = `
-{
-  "nonStream": "https://api.kimi.com/coding/v1/messages?beta=true",
-  "stream": "https://api.kimi.com/coding/v1/messages?beta=true",
-}
-`;
-
-exports[`GOLDEN buildUrl (default executor providers) > kimi-coding → url (stream + non-stream) 1`] = `
 {
   "nonStream": "https://api.kimi.com/coding/v1/messages?beta=true",
   "stream": "https://api.kimi.com/coding/v1/messages?beta=true",
