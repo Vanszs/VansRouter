@@ -147,34 +147,24 @@ export function isKimchiQuotaExhausted(provider, errorText) {
 }
 
 /**
- * Compute the next-month reset timestamp (00:00 UTC on the 1st of next month).
- * If today is already the 1st of the current month (at or after 00:00 UTC),
- * returns today's 00:00 UTC so accounts deactivated on the 1st don't sit idle
- * for an entire extra month.
- * Otherwise returns the 1st of next month at 00:00 UTC.
+ * Compute the next-day reset timestamp (1 hour from now for fast reactivation).
  * @param {Date} [now=new Date()]
  * @returns {Date}
  */
-export function getNextMonthReset(now = new Date()) {
-  const d = new Date(now.getTime());
-  // If today is the 1st, the next reset is today (the month already started)
-  if (d.getUTCDate() === 1) {
-    return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), 1, 0, 0, 0, 0));
-  }
-  // Otherwise the next reset is the 1st of the following month
-  return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + 1, 1, 0, 0, 0, 0));
+export function getNextDayReset(now = new Date()) {
+  return new Date(now.getTime() + 60 * 60 * 1000);
 }
 
 /**
  * Build update payload that deactivates a Kimchi account due to quota exhaustion.
  * Sets testStatus="quota_exhausted" (distinguishable from manual deactivation)
- * and rateLimitedUntil to next-month reset, so the existing cooldown filters
+ * and rateLimitedUntil to next-day reset (1 hour), so the existing cooldown filters
  * skip it until then. Auto-reactivation runs on startup / periodically.
  * @param {Date} [now]
  * @returns {{ isActive: boolean, rateLimitedUntil: string, testStatus: string, lastErrorType: string, errorCode: number, quotaExhaustedAt: string }}
  */
 export function buildKimchiQuotaExhaustedUpdate(now = new Date()) {
-  const reset = getNextMonthReset(now);
+  const reset = getNextDayReset(now);
   return {
     isActive: false,
     rateLimitedUntil: reset.toISOString(),
