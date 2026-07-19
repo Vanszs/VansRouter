@@ -4,14 +4,6 @@ import { useState } from "react";
 import PropTypes from "prop-types";
 import { getProviderIconSrc, markProviderIconMissing } from "@/shared/utils/providerIcon";
 
-function resolveSrc(src, providerId) {
-  if (providerId) return getProviderIconSrc(providerId);
-  if (!src) return null;
-  const m = String(src).match(/^\/providers\/([^/]+)\.(png|webp)$/i);
-  if (m) return getProviderIconSrc(m[1]);
-  return src;
-}
-
 export default function ProviderIcon({
   src,
   providerId,
@@ -21,7 +13,8 @@ export default function ProviderIcon({
   fallbackText = "?",
   fallbackColor,
 }) {
-  const effectiveSrc = resolveSrc(src, providerId);
+  const providerName = providerId || (src ? String(src).match(/^\/providers\/([^/.]+)/i)?.[1] : null);
+  const effectiveSrc = providerName ? getProviderIconSrc(providerName) : src;
   const [errored, setErrored] = useState(false);
 
   if (!effectiveSrc || errored) {
@@ -50,9 +43,7 @@ export default function ProviderIcon({
       loading="lazy"
       decoding="async"
       onError={() => {
-        const m = effectiveSrc.match(/^\/providers\/([^/]+)\.(png|webp)$/i);
-        if (m) markProviderIconMissing(m[1]);
-        if (providerId) markProviderIconMissing(providerId);
+        if (providerName) markProviderIconMissing(providerName);
         setErrored(true);
       }}
     />
