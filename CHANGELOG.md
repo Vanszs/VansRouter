@@ -1,6 +1,18 @@
+# v0.9.55 (2026-07-19)
+
+VansRouter 0.9.55 restores the CLI package scripts for NPM publishing, adds documentation warnings against incorrect package renames, and verifies sandbox execution.
+
+## Added
+- **CLI Package Scripts** — Restored `build`, `pack:cli`, `publish:cli`, and `postinstall` to `cli/package.json` to ensure postinstall hooks (dynamic SQLite and tray runtime setup) execute during global npm installations.
+- **Rename Protection Comment** — Added `comment_name` to `cli/package.json` warning future AI agents against renaming the package to `9router` (which breaks the global updater).
+- **Virgin Sandbox Verification** — Verified plug-and-play local installation of the generated `.tgz` package inside a clean `/tmp` directory.
+
+## Fixed
+- **Turbopack Dev Server CSS Warn** — Identified and documented the Next.js Turbopack CSS parser bug with Tailwind v4 (hex escape normalization failure on `--shadow-elev` inside `.shadow-[var(...)]`). Provided `npm run dev:webpack` as the recommended workaround for development.
+
 # v0.9.51 (2026-07-19)
 
-VansRouter 0.9.51 adopts all upstream `decolua/9router` commits from `v0.5.31` to `v0.5.35`.
+VansRouter 0.9.51 adopts all upstream `decolua/9router` commits from `v0.5.31` to `v0.5.35` and fixes critical packaging, translation, and reasoning leaks.
 
 ## Adopted from upstream (v0.5.31–v0.5.35)
 
@@ -26,7 +38,12 @@ VansRouter 0.9.51 adopts all upstream `decolua/9router` commits from `v0.5.31` t
 - **kiro** — improve direct session cache reuse (`9c58ba645`)
 - **startup** — skip inactive background services on boot (`27b37705b`)
 
-## Fixed (VansRouter-specific — no-undef regressions dari upstream merge)
+## Fixed (VansRouter-specific)
+- **CLI Packaging (Issue #53)** — Added `"app"` and `"src"` back to the `files` array of `cli/package.json` so the Next.js production build is bundled, raising size from a broken `197 kB` back to a healthy `88.3 MB`.
+- **Thinking Concerns ReferenceError** — Resolved `ReferenceError: Cannot access 'fmt' before initialization` in `open-sse/translator/concerns/thinkingUnified.js`.
+- **GLM-5.2 Reasoning Leak** — Re-integrated the `effectiveCfg` logic in `thinkingUnified.js` to prevent reasoning leak on `agentrouter` when the client does not explicitly request thinking.
+- **Kiro Auto Slot** — Added the missing `{ id: "auto", name: "Auto / Agent default", alias: "auto" }` mapping to Kiro's `defaultModels` in `src/shared/constants/cliTools.js`.
+- **NPM Package Rename** — Renamed root package to `"vansrouter-app"`, tests package to `"vansrouter-tests"`, and CLI package to `"vansrouter"`.
 - `open-sse/handlers/chatCore.js` — tambah import `extractThinking` dan definisi `reqTag` yang upstream referensikan tapi tidak dideklarasikan
 - `open-sse/translator/request/openai-to-kiro.js` — tambah `import { randomUUID } from "node:crypto"`
 - `src/app/api/v1/models/route.js` — inisialisasi `liveCapabilitiesById` dan `liveKind` dari hasil live resolver
