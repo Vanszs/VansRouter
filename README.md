@@ -43,6 +43,50 @@
 
 ---
 
+## 📊 Comparison: VansRouter vs 9Router vs OmniRoute
+
+### Logic & Backend — what each has
+
+| Feature | 9Router | OmniRoute | **VansRouter** |
+|---------|---------|-----------|---------------|
+| **Circuit breaker** | ❌ | ✅ TypeScript + DB persistence | ✅ JS, in-memory (no DB dependency) |
+| **Account semaphore** | ❌ | ✅ TypeScript | ✅ JS, ported + proxy-aware |
+| **Provider-level failure tracking** | ❌ | ✅ with 5s dedup | ✅ ported, with dedup bound 10K |
+| **Provider exhaustion detection** | ❌ | ✅ `isProviderExhaustedReason()` | ✅ ported + tightened regex |
+| **429 excluded from breaker** | ❌ N/A | ❌ (429 counts) | ✅ Only 5xx/timeout counts |
+| **Proxy-aware resilience** | ❌ | ❌ | ✅ per-proxy breaker + semaphore |
+| **Kimchi CLI alignment** | ❌ | ❌ | ✅ 5 models, per-model caps from models.dev |
+| **Kimchi quota auto-reactivation** | ❌ | ❌ | ✅ monthly auto-reset via instrumentation hook |
+| **AgentRouter provider** | ❌ | ✅ | ✅ |
+| **Model lockout** | ✅ DB flat field | ✅ in-memory Map | ✅ DB flat field (inherited) |
+| **RTK + Caveman + Ponytail** | ✅ | ✅ | ✅ inherited |
+| **NVIDIA Kimi stream coercion** | ✅ | ✅ | ✅ inherited |
+| **Per-API-key ACL** | ✅ fork-only | ❌ | ✅ inherited |
+| **Format translation** | ✅ OpenAI↔Claude↔Gemini↔Kiro | ✅ | ✅ inherited |
+| **Kimi native tool parser** | ✅ | ✅ | ✅ inherited + hardened |
+| **Combo strategies** | 4 (fallback/RR/fusion/capacity) | 17 | 4 (inherited) |
+| **Settings cache (TPS)** | ❌ (3 sync DB reads/req) | ❌ | ✅ 5s TTL cache |
+| **Connections cache (TPS)** | ❌ (1 sync DB read/req) | ❌ | ✅ 2s TTL cache + invalidation |
+| **Per-provider mutex** | ❌ (global mutex) | ❌ | ✅ per-provider parallel selection |
+| **Provider count** | 40+ | 231+ | 40+ + AgentRouter |
+
+### What VansRouter has that neither 9Router nor OmniRoute has
+
+1. **Kimchi CLI alignment** — 9router's Kimchi provider masquerades as the official Kimchi CLI, with exactly the same 5 models, capabilities, and temperature rules
+2. **Kimchi quota auto-reactivation** — accounts deactivated due to quota exhaustion automatically reactivate at the 1st of each month
+3. **In-memory circuit breaker without DB** — simpler than OmniRoute's DB-backed version, no `domainState.js` dependency
+4. **Proxy-aware resilience** — circuit breaker and semaphore keyed per `provider:proxyHash` so one dead proxy doesn't block others
+5. **TPS optimization** — cached settings + cached connections + per-provider mutex = fewer sync DB reads per request
+
+### What VansRouter does NOT have (yet)
+
+- OmniRoute's 17 combo strategies (VansRouter has 4)
+- OmniRoute's `sessionPool` with fingerprint rotation
+- OmniRoute's `autoCombo` with complexity routing and task fitness scoring
+- OmniRoute's 231 providers (VansRouter has 40+)
+
+---
+
 ## 🔄 How It Works
 
 ```
