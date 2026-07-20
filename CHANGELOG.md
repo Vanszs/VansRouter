@@ -1,3 +1,27 @@
+# v0.9.70 (2026-07-21)
+
+VansRouter 0.9.70 adds the new `a6api` provider with a curated selection of Top 5 models per provider family (GPT, Claude, Gemini, Grok, etc.), adopts critical upstream v0.5.40 Cursor HTTP/2 AgentService (`agent.api5.cursor.sh`) Connect RPC updates, aligns UsageStats table headers, and optimizes provider icon anti-spam caching.
+
+## Features
+- **a6api Provider** — Registration for `a6api` featuring top 5 curated models per brand family (GPT, Claude, Gemini, Grok, DeepSeek, Kimi) with OpenAI API compatibility and passthrough support.
+- **Custom a6api Cooldown Logic** — Pure HTTP status code error handling (3s cooldown for transient/network errors; standard fallback for 401/402/404).
+- **a6api Visual Branding** — Custom circular conic-gradient `A6` CSS icon for provider cards and dynamic topology maps.
+
+## Adopted Upstream Updates (v0.5.35 → v0.5.40)
+- **Cursor HTTP/2 Overhaul (`6994cd1f7`)** — Migrated Cursor IDE upstream from retired `api2.cursor.sh` to raw HTTP/2 Connect RPC `agent.api5.cursor.sh`, adding MCP tool calling, automatic `GetUsableModels`, and bumping client version to 3.12.17.
+- **Codex Client Sync (`d587b2a48`)** — Updated Codex `client_version` headers and added refresh-aware model sync.
+- **Kiro Reasoning Effort Mapping (`cef5dd4d6`, `eb00222c4`)** — Preserved `reasoning_effort` (`high`, `medium`, `low`) through OpenAI ↔ Kiro translation for GPT-5.6 models (`gpt-5.6-sol`, `gpt-5.6-terra`, `gpt-5.6-luna`).
+- **Kiro Stream Terminal Output Validation (`7c7fae395`)** — Added stream payload validation to prevent empty SSE emissions.
+- **Translator `service_tier` Pass-through (`c97963c4f`)** — Passed `service_tier` field through OpenAI → Responses conversion.
+- **Better-SQLite3 Array Binding Crash Fix (`4f48ab8c7`)** — Resolved parameter array binding crash in SQLite queries.
+- **Alicode-Intl Split (`55628eea0`)** — Separated DashScope provider into Alibaba Coding Plan & Model Studio (`alims-intl`).
+- **Grok Build Subagent Models (`e0ba66745`)** — Configured Grok Build subagent model selection presets.
+
+## Fixed
+- **PR #54 (Gemini RPM & Circuit Breaker)** — Classified Gemini generic per-minute RPM `resource_exhausted` error as a short 60s rate-limit backoff (avoiding 1-hour quota lock loops) and aligned Embeddings handler with `settings.circuitBreakerEnabled`.
+- **UsageStats Table Alignment** — Fixed empty provider/model headers by synchronizing account column order and metadata aggregation.
+- **Cursor IDE Compatibility** — Resolved Cursor 429 "Update Required" errors via Connect RPC HTTP/2 protocol adoption and version bump to 3.12.17.
+
 # v0.9.63 (2026-07-19)
 
 VansRouter 0.9.63 fixes the AgentRouter validation failures by implementing proper Claude CLI header spoofing during credential checks and validation probes.
