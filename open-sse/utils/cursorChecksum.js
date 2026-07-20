@@ -6,29 +6,7 @@
  */
 
 import crypto from "crypto";
-
-// DNS namespace UUID for UUIDv5 (RFC 4122)
-const UUIDV5_DNS = "6ba7b810-9dad-11d1-80b4-00c04fd430c8";
-
-function uuidToBytes(uuid) {
-  return Buffer.from(uuid.replace(/-/g, ""), "hex");
-}
-
-function bytesToUuid(buf) {
-  const hex = buf.toString("hex");
-  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20, 32)}`;
-}
-
-/**
- * Minimal UUID v5 implementation using node:crypto.
- * Drops the `uuid` dependency entirely.
- */
-function uuidv5(name, namespace) {
-  const hash = crypto.createHash("sha1").update(uuidToBytes(namespace)).update(name, "utf8").digest();
-  hash[6] = (hash[6] & 0x0f) | 0x50; // version 5
-  hash[8] = (hash[8] & 0x3f) | 0x80; // variant 10
-  return bytesToUuid(hash.slice(0, 16));
-}
+import { v5 as uuidv5 } from "uuid";
 
 /**
  * Generate SHA-256 hash like generateHashed64Hex
@@ -36,7 +14,7 @@ function uuidv5(name, namespace) {
  * @param {string} salt - Optional salt
  * @returns {string} - 64-character hex string
  */
-function generateHashed64Hex(input, salt = "") {
+export function generateHashed64Hex(input, salt = "") {
   return crypto.createHash("sha256").update(input + salt).digest("hex");
 }
 
@@ -45,8 +23,8 @@ function generateHashed64Hex(input, salt = "") {
  * @param {string} authToken - Auth token
  * @returns {string} - UUID string
  */
-function generateSessionId(authToken) {
-  return uuidv5(authToken, UUIDV5_DNS);
+export function generateSessionId(authToken) {
+  return uuidv5(authToken, uuidv5.DNS);
 }
 
 /**
@@ -62,7 +40,7 @@ function generateSessionId(authToken) {
  * @param {string} machineId - Machine ID from Cursor storage or generated
  * @returns {string} - Checksum string
  */
-function generateCursorChecksum(machineId) {
+export function generateCursorChecksum(machineId) {
   // Math.floor(Date.now() / 1e6) - same as Python implementation
   const timestamp = Math.floor(Date.now() / 1000000);
 
@@ -150,7 +128,8 @@ export function buildCursorHeaders(accessToken, machineId = null, ghostMode = tr
     "x-amzn-trace-id": `Root=${crypto.randomUUID()}`,
     "x-client-key": clientKey,
     "x-cursor-checksum": checksum,
-    "x-cursor-client-version": "3.1.0",
+    "x-cursor-client-version": "3.12.17",
+    "x-cursor-client-commit": "0fb762053c34788bb7760d5673f8a6d4c8589d50",
     "x-cursor-client-type": "ide",
     "x-cursor-client-os": os,
     "x-cursor-client-arch": arch,
@@ -163,4 +142,9 @@ export function buildCursorHeaders(accessToken, machineId = null, ghostMode = tr
   };
 }
 
-
+export default {
+  generateCursorChecksum,
+  buildCursorHeaders,
+  generateHashed64Hex,
+  generateSessionId
+};
