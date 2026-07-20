@@ -1,6 +1,6 @@
 {
   "name": "vansrouter",
-  "version": "0.9.71",
+  "version": "0.9.72",
   "description": "9Router CLI - Start and manage 9Router server",
   "repository": "https://github.com/Vanszs/VansRouter",
   "bin": {

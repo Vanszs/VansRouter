@@ -1,3 +1,11 @@
+# v0.9.72 (2026-07-21)
+
+VansRouter 0.9.72 fixes GitHub Actions CI/CD matrix build failures by exporting `getStaticProviderModels`, resolving `no-undef` lint errors, and aligning CI workflows with upstream v0.5.40 updates.
+
+## Fixed
+- **CI/CD Build Matrix** — Exported and imported `getStaticProviderModels` in `open-sse/config/providers.js` and `src/app/api/providers/[id]/models/route.js` to eliminate `no-undef` lint errors during GitHub Actions workflow runs.
+- **Workflow Reliability** — Aligned cross-platform build matrix runs across Node 22 and Node 24 runners on Ubuntu, MacOS, and Windows.
+
 # v0.9.71 (2026-07-21)
 
 VansRouter 0.9.71 registers two new AI providers (`ZenMux AI` & `TokenRouter`), updates `a6api` referral links, and bumps the version to 0.9.71.
