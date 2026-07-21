@@ -13,7 +13,6 @@ export async function GET(request) {
   const cleanup = () => {
     if (state.closed) return;
     state.closed = true;
-    if (state.send) emitter.off("line", state.send);
     if (state.sendLines) emitter.off("lines", state.sendLines);
     if (state.sendClear) emitter.off("clear", state.sendClear);
     if (state.keepalive) clearInterval(state.keepalive);
@@ -30,16 +29,6 @@ export async function GET(request) {
       if (buffered.length > 0) {
         controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: "init", logs: buffered })}\n\n`));
       }
-
-      // Push new lines as they arrive
-      state.send = (line) => {
-        if (state.closed) return;
-        try {
-          controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: "line", line })}\n\n`));
-        } catch {
-          cleanup();
-        }
-      };
 
       state.sendLines = (lines) => {
         if (state.closed || !Array.isArray(lines) || lines.length === 0) return;
@@ -60,7 +49,6 @@ export async function GET(request) {
         }
       };
 
-      emitter.on("line", state.send);
       emitter.on("lines", state.sendLines);
       emitter.on("clear", state.sendClear);
 

@@ -1,6 +1,6 @@
 // Barrel: PROVIDERS now built from providers/registry (transport co-located with models)
-import { PROVIDERS } from "../providers/index.js";
-export { PROVIDERS, PROVIDER_OAUTH } from "../providers/index.js";
+import { PROVIDERS, PROVIDER_MODELS } from "../providers/index.js";
+export { PROVIDERS, PROVIDER_OAUTH, PROVIDER_MODELS } from "../providers/index.js";
 
 export const OLLAMA_LOCAL_DEFAULT_HOST = "http://localhost:11434";
 
@@ -19,6 +19,5 @@ export function resolveXiaomiTokenplanBaseUrl(credentials) {
 }
 
 export function getStaticProviderModels(providerId) {
-  const p = PROVIDERS[providerId];
-  return p?.models || [];
+  return PROVIDER_MODELS[providerId] || [];
 }
