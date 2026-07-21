@@ -34,10 +34,11 @@ export default function CombosPage() {
   const fetchData = async () => {
     try {
       const [combosRes, providersRes, settingsRes] = await Promise.all([
-        fetchCached("/api/combos"),
-        fetchCached("/api/providers"),
-        fetchCached("/api/settings"),
+        fetch("/api/combos", { cache: "no-store" }),
+        fetch("/api/providers", { cache: "no-store" }),
+        fetch("/api/settings", { cache: "no-store" }),
       ]);
+
       const combosData = await combosRes.json();
       const providersData = await providersRes.json();
       const settingsData = settingsRes.ok ? await settingsRes.json() : {};

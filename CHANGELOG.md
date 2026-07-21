@@ -1,4 +1,16 @@
+# v0.9.75 (2026-07-21)
+
+VansRouter 0.9.75 introduces a materialized provider model catalog in SQLite (`cachedProviderModels`), parallelizes dynamic model resolution, switches dashboard pages to native direct fetching with `cache: "no-store"`, and adds background idle preloading for provider icons and font assets.
+
+## Performance & Optimization
+- **SQLite Materialized Model Catalog** — Created `cachedProviderModels` table (schema v2) for background non-blocking model catalog persistence and instant 1ms local DB queries.
+- **Parallel Upstream Resolution** — Replaced serial `for..of` loop in `allowedModels.js` with `Promise.allSettled` to cut initial `/v1/models` load time from ~16s to ~2.5s and cached response time to 11ms.
+- **ACL Deduplication** — Deduplicated `isProviderAllowed` and `isComboAllowed` evaluations per request via `Map` cache, reducing ACL overhead from 500+ calls to ~5 calls.
+- **Native Direct Dashboard Fetching** — Replaced legacy ad-hoc `fetchCache.js` with native `fetch(url, { cache: "no-store" })` across dashboard pages for 100% real-time accuracy without manual refresh.
+- **Icon & Font Asset Preloading** — Added `preloadProviderIcons` idle background preloader (`requestIdleCallback`) and preconnect font stylesheet links in `RootLayout`.
+
 # v0.9.72 (2026-07-21)
+
 
 VansRouter 0.9.72 fixes GitHub Actions CI/CD matrix build failures by exporting `getStaticProviderModels`, resolving `no-undef` lint errors, and aligning CI workflows with upstream v0.5.40 updates.
 

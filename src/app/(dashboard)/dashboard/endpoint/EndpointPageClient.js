@@ -551,11 +551,12 @@ export default function APIPageClient({ machineId }) {
   const fetchData = async () => {
     try {
       const [keysRes, providersRes, combosRes, nodesRes] = await Promise.all([
-        fetchCached("/api/keys"),
-        fetchCached("/api/providers"),
-        fetchCached("/api/combos"),
-        fetchCached("/api/provider-nodes"),
+        fetch("/api/keys", { cache: "no-store" }),
+        fetch("/api/providers", { cache: "no-store" }),
+        fetch("/api/combos", { cache: "no-store" }),
+        fetch("/api/provider-nodes", { cache: "no-store" }),
       ]);
+
       const keysData = await keysRes.json();
       if (keysRes.ok) {
         setKeys(keysData.keys || []);

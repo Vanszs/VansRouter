@@ -67,18 +67,26 @@ export async function GET(request, { params }) {
     let data = await buildModelsList(kindFilter);
 
     if (apiKeyInfo) {
-      const allowedChecks = await Promise.all(
-        data.map(async (model) => {
-          const isCombo = model.owned_by === "combo";
-          if (isCombo) {
-            const comboName = stripComboPrefix(model.id);
-            return isComboAllowed(apiKeyInfo, comboName);
-          }
-          const providerAlias = model.id.includes("/") ? model.id.split("/")[0] : model.owned_by;
-          return await isProviderAllowed(apiKeyInfo, providerAlias);
-        })
-      );
-      data = data.filter((_, i) => allowedChecks[i]);
+      const allowedOwners = new Map();
+      for (const model of data) {
+        const isCombo = model.owned_by === "combo";
+        const key = isCombo
+          ? `combo:${stripComboPrefix(model.id)}`
+          : `provider:${model.id.includes("/") ? model.id.split("/")[0] : model.owned_by}`;
+        if (!allowedOwners.has(key)) {
+          const allowed = isCombo
+            ? isComboAllowed(apiKeyInfo, key.slice(6))
+            : await isProviderAllowed(apiKeyInfo, key.slice(9));
+          allowedOwners.set(key, allowed);
+        }
+      }
+      data = data.filter((model) => {
+        const isCombo = model.owned_by === "combo";
+        const key = isCombo
+          ? `combo:${stripComboPrefix(model.id)}`
+          : `provider:${model.id.includes("/") ? model.id.split("/")[0] : model.owned_by}`;
+        return allowedOwners.get(key);
+      });
     }
 
 

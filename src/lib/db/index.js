@@ -55,6 +55,11 @@ export {
   getDisabledModels, getDisabledByProvider, disableModels, enableModels,
 } from "./repos/disabledModelsRepo.js";
 
+// Cached provider models
+export {
+  getCachedProviderModels, saveCachedProviderModels, clearCachedProviderModels,
+} from "./repos/cachedModelsRepo.js";
+
 // Usage
 export {
   statsEmitter, trackPendingRequest, getActiveRequests,

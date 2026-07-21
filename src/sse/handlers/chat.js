@@ -28,7 +28,7 @@ import {
   resolveAccountSemaphoreMaxConcurrency,
   isSemaphoreCapacityError,
 } from "open-sse/services/accountSemaphore.js";
-import { getProxyHash } from "@/lib/network/connectionProxy";
+import { getProxyHash } from "@/lib/network/connectionProxy.js";
 import { updateProviderConnection, getProviderConnections } from "@/lib/localDb";
 import { isModelAllowed } from "../services/allowedModels.js";
 import { cacheClaudeHeaders } from "open-sse/utils/claudeHeaderCache.js";

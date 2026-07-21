@@ -3,8 +3,10 @@
 import { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
 import { useNotificationStore } from "@/store/notificationStore";
+import { preloadProviderIcons } from "@/shared/utils/providerIcon";
 import Sidebar from "../Sidebar";
 import Header from "../Header";
+
 
 function getToastStyle(type) {
   if (type === "success") {
@@ -38,11 +40,16 @@ export default function DashboardLayout({ children }) {
   const removeNotification = useNotificationStore((state) => state.removeNotification);
 
   useEffect(() => {
+    preloadProviderIcons();
+  }, []);
+
+  useEffect(() => {
     if (!sidebarOpen) return;
     const onEsc = (e) => { if (e.key === "Escape") setSidebarOpen(false); };
     document.addEventListener("keydown", onEsc);
     return () => document.removeEventListener("keydown", onEsc);
   }, [sidebarOpen]);
+
 
   return (
     <div className="flex h-screen w-full overflow-hidden bg-bg">

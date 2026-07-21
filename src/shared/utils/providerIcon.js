@@ -38,3 +38,27 @@ export function markProviderIconMissing(providerId) {
   const aliased = ICON_ALIASES[id];
   if (aliased) failedIds.add(aliased);
 }
+
+const POPULAR_PROVIDERS = [
+  "openai", "anthropic", "claude", "gemini", "github", "copilot", "cursor",
+  "grok-cli", "kiro", "deepseek", "qwen", "mistral", "groq", "openrouter",
+  "together", "cohere", "ollama", "cerebras", "sambanova", "fireworks",
+  "siliconflow", "vllm", "vertex", "azure", "aws-polly", "deepgram", "elevenlabs",
+  "searxng", "jina-ai", "tavily", "perplexing", "alicode", "cline", "roo", "kilo", "codex"
+];
+
+/** Non-blocking background preloader for provider icon webp images */
+export function preloadProviderIcons(providerIds = POPULAR_PROVIDERS) {
+  if (typeof window === "undefined") return;
+  const schedule = window.requestIdleCallback || ((cb) => setTimeout(cb, 200));
+  schedule(() => {
+    for (const pId of providerIds) {
+      const src = getProviderIconSrc(pId);
+      if (src) {
+        const img = new Image();
+        img.src = src;
+      }
+    }
+  });
+}
+

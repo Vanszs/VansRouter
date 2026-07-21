@@ -152,9 +152,10 @@ export default function ProvidersPage() {
     const fetchData = async () => {
       try {
         const [connectionsRes, nodesRes] = await Promise.all([
-          fetchCached("/api/providers"),
-          fetchCached("/api/provider-nodes"),
+          fetch("/api/providers", { cache: "no-store" }),
+          fetch("/api/provider-nodes", { cache: "no-store" }),
         ]);
+
         const connectionsData = await connectionsRes.json();
         const nodesData = await nodesRes.json();
         if (connectionsRes.ok)
