@@ -1,13 +1,13 @@
 # v0.9.80 (2026-07-22)
 
-VansRouter 0.9.80 adds Gemini 3.6 Flash / Flash-Lite / Pro support via Google Cloud Code host, classifies Grok CLI free-usage-exhausted 429s as daily quota, unwraps Antigravity non-stream usage metadata, and optimizes code quality and timers.
+VansRouter 0.9.80 incorporates merged Pull Requests (#55, #56, #57) adding Gemini 3.6 Flash / Flash-Lite / Pro support via Google Cloud Code host, classifying Grok CLI free-usage-exhausted 429s as daily quota, unwrapping Antigravity non-stream usage metadata, and optimizing code quality & timers.
 
 ## Features
-- **Gemini 3.6 Flash Support** — Added Gemini 3.6 Flash (High / Medium / Low) model tiers for Antigravity provider.
+- **Gemini 3.6 Flash Support** ([PR #55](https://github.com/Vanszs/VansRouter/pull/55)) — Added Gemini 3.6 Flash (High / Medium / Low) model tiers for Antigravity provider.
 
 ## Fixed
-- **Grok Daily Quota 429** — Classified `subscription:free-usage-exhausted` errors from Grok CLI as `daily_quota` instead of 60s rate limit.
-- **Antigravity Usage Metadata** — Unwrapped `response.usageMetadata` envelope in non-stream requests to prevent 0/0 token recordings in request details.
+- **Grok Daily Quota 429** ([PR #56](https://github.com/Vanszs/VansRouter/pull/56)) — Classified `subscription:free-usage-exhausted` errors from Grok CLI as `daily_quota` instead of 60s rate limit.
+- **Antigravity Usage Metadata** ([PR #57](https://github.com/Vanszs/VansRouter/pull/57)) — Unwrapped `response.usageMetadata` envelope in non-stream requests to prevent 0/0 token recordings in request details.
 
 ## Refactoring & Code Quality
 - **Timer & Regex Optimization** — Replaced hand-rolled sleep timers with stdlib `node:timers/promises` and consolidated 429 regex patterns.
