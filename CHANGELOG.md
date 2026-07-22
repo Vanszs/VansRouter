@@ -1,3 +1,17 @@
+# v0.9.80 (2026-07-22)
+
+VansRouter 0.9.80 adds Gemini 3.6 Flash / Flash-Lite / Pro support via Google Cloud Code host, classifies Grok CLI free-usage-exhausted 429s as daily quota, unwraps Antigravity non-stream usage metadata, and optimizes code quality and timers.
+
+## Features
+- **Gemini 3.6 Flash Support** — Added Gemini 3.6 Flash (High / Medium / Low) model tiers for Antigravity provider.
+
+## Fixed
+- **Grok Daily Quota 429** — Classified `subscription:free-usage-exhausted` errors from Grok CLI as `daily_quota` instead of 60s rate limit.
+- **Antigravity Usage Metadata** — Unwrapped `response.usageMetadata` envelope in non-stream requests to prevent 0/0 token recordings in request details.
+
+## Refactoring & Code Quality
+- **Timer & Regex Optimization** — Replaced hand-rolled sleep timers with stdlib `node:timers/promises` and consolidated 429 regex patterns.
+
 # v0.9.75 (2026-07-21)
 
 VansRouter 0.9.75 introduces a materialized provider model catalog in SQLite (`cachedProviderModels`), parallelizes dynamic model resolution, switches dashboard pages to native direct fetching with `cache: "no-store"`, and adds background idle preloading for provider icons and font assets.
