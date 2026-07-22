@@ -1,3 +1,11 @@
+const GEMINI_36_FLASH_BASE = Object.freeze({
+  contextLength: 1048576,
+  maxOutputTokens: 65536,
+  supportsReasoning: true,
+  supportsVision: true,
+  toolCalling: true,
+});
+
 export const ANTIGRAVITY_PUBLIC_MODELS = Object.freeze([
   {
     id: "claude-sonnet-5",
