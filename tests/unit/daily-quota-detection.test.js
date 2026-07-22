@@ -30,6 +30,14 @@ describe("detectDailyQuotaExhaustion", () => {
     expect(result?.kind).toBe("daily_quota");
   });
 
+  it("returns daily_quota for Grok CLI subscription:free-usage-exhausted", () => {
+    const result = detectDailyQuotaExhaustion(
+      "grok-cli",
+      { code: "subscription:free-usage-exhausted", error: "You've used all the included free usage" },
+    );
+    expect(result?.kind).toBe("daily_quota");
+  });
+
   it("returns daily_quota for nested JSON body with daily quota message", () => {
     const result = detectDailyQuotaExhaustion("openai", { error: { message: "daily quota used up" } });
     expect(result?.kind).toBe("daily_quota");

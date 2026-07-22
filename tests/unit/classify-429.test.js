@@ -115,6 +115,39 @@ describe("classify429 — daily_quota", () => {
   });
 });
 
+describe("classify429 — Grok CLI free-usage-exhausted is daily_quota (00:00 UTC)", () => {
+  it("classifies subscription:free-usage-exhausted JSON as daily_quota", () => {
+    const body = {
+      code: "subscription:free-usage-exhausted",
+      error: "You've used all the included free usage",
+    };
+    const result = classify429({ status: 429, body, provider: "grok-cli" });
+    expect(result.kind).toBe("daily_quota");
+    expect(result.cooldownMs).toBeGreaterThan(0);
+    expect(result.cooldownMs).toBeLessThanOrEqual(24 * 60 * 60 * 1000);
+  });
+
+  it("classifies 'You've used all the included free usage' as daily_quota", () => {
+    const result = classify429({
+      status: 429,
+      body: "You've used all the included free usage",
+      provider: "grok-cli",
+    });
+    expect(result.kind).toBe("daily_quota");
+  });
+
+  it("classifies 'free usage exhausted' as daily_quota", () => {
+    const result = classify429({ status: 429, body: "free usage exhausted", provider: "grok-cli" });
+    expect(result.kind).toBe("daily_quota");
+  });
+
+  it("does not treat plain rate-limit text as daily_quota", () => {
+    const result = classify429({ status: 429, body: "rate limit exceeded", provider: "grok-cli" });
+    expect(result.kind).toBe("rate_limit");
+    expect(result.cooldownMs).toBe(RATE_LIMIT_COOLDOWN_MS);
+  });
+});
+
 describe("classify429 — daily_quota takes priority over quota_exhausted", () => {
   it("classifies 'daily quota exceeded' as daily_quota (not quota_exhausted)", () => {
     // "exceed.*quota" would match quota_exhausted, but "daily" prefix makes it daily_quota
