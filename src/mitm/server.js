@@ -164,7 +164,7 @@ async function passthrough(req, res, bodyBuffer, onResponse) {
 
   const tool = getToolForHost(req.headers.host);
   const versionOverride = tool === "antigravity"
-    ? applyAntigravityIdeVersionOverride(bodyBuffer, req.headers)
+    ? applyAntigravityIdeVersionOverride(bodyBuffer, req.headers, req.url)
     : { bodyBuffer, headers: req.headers };
   // Antigravity passthrough bodies skip the translator, so the same unsupported schema
   // keywords (e.g. "optional") must be scrubbed here or Google 400s the request.
