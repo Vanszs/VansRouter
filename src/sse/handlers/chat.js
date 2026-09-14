@@ -46,6 +46,7 @@ import * as log from "../utils/logger.js";
 import { updateProviderCredentials, checkAndRefreshToken } from "../services/tokenRefresh.js";
 import { getProjectIdForConnection } from "open-sse/services/projectId.js";
 import { maybeWaitForCooldown, MAX_COOLDOWN_RETRIES } from "open-sse/utils/cooldownRetry.js";
+import { enforceRateLimit } from "../services/rateLimiter.js";
 
 function checkCircuitBreaker(provider, proxyHash = null, enabled = true) {
   if (!enabled) return false;
@@ -122,6 +123,13 @@ export async function handleChat(request, clientRawRequest = null) {
       log.warn("AUTH", "Invalid API key (requireApiKey=true)");
       return errorResponse(HTTP_STATUS.UNAUTHORIZED, "Invalid API key");
     }
+  }
+
+  // Per-key rate limiting
+  const rateLimitResp = enforceRateLimit(apiKey, apiKeyInfo);
+  if (rateLimitResp) {
+    log.warn("RATELIMIT", `Rate limit exceeded for key ${log.maskKey(apiKey)}`);
+    return rateLimitResp;
   }
 
   if (!modelStr) {

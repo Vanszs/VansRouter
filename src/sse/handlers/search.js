@@ -12,6 +12,7 @@ import {
 import { errorResponse, unavailableResponse } from "open-sse/utils/error.js";
 import { HTTP_STATUS } from "open-sse/config/runtimeConfig.js";
 import * as log from "../utils/logger.js";
+import { enforceRateLimit } from "../services/rateLimiter.js";
 import { updateProviderCredentials, checkAndRefreshToken } from "../services/tokenRefresh.js";
 import { handleComboChat, getComboModelsFromData, stripComboPrefix } from "open-sse/services/combo.js";
 import { getSettings, getCombos } from "@/lib/localDb";
@@ -65,6 +66,10 @@ export async function handleSearch(request) {
       return errorResponse(HTTP_STATUS.UNAUTHORIZED, "Invalid API key");
     }
   }
+
+  // Per-key rate limiting
+  const rateLimitResp = enforceRateLimit(apiKey, apiKeyInfo);
+  if (rateLimitResp) return rateLimitResp;
 
   if (!providerInput || typeof providerInput !== "string") {
     log.warn("SEARCH", "Missing provider/model");
