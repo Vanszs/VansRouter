@@ -35,6 +35,7 @@ import { stripUnsupportedModalities } from "../translator/concerns/modality.js";
 import { prefetchRemoteImages } from "../translator/concerns/prefetch.js";
 import { defaultClaudeToolType } from "../translator/concerns/toolCall.js";
 import { markPoolUnfit } from "../services/proxyPoolFitness.js";
+import { buildCacheKey, shouldSkipCache, getCachedResponse, setCachedResponse } from "../services/requestCache.js";
 
 const MAX_POOL_RETRIES = 2;
 const TOOL_PROTOCOL_PROMPT_PROVIDERS = new Set(["kimchi", "nvidia"]);
@@ -134,6 +135,26 @@ export async function handleChatCore({ body, modelInfo, credentials, log, onCred
   // Check for bypass patterns (warmup, skip, cc naming)
   const bypassResponse = handleBypassRequest(body, model, userAgent, ccFilterNaming);
   if (bypassResponse) return bypassResponse;
+
+  // Request cache: check for cached non-streaming response before executor dispatch
+  const _skipCache = shouldSkipCache(body, clientRawRequest?.headers);
+  const _cacheKey = _skipCache ? null : buildCacheKey(body);
+  if (_cacheKey) {
+    const cached = getCachedResponse(_cacheKey);
+    if (cached.hit) {
+      log?.debug?.("CACHE", `HIT ${model} key=${_cacheKey.slice(0, 12)}…`);
+      return {
+        success: true,
+        response: new Response(JSON.stringify(cached.data), {
+          headers: {
+            "Content-Type": "application/json",
+            "Access-Control-Allow-Origin": "*",
+            "X-9Router-Cache": "HIT",
+          },
+        }),
+      };
+    }
+  }
 
   const alias = PROVIDER_ID_TO_ALIAS[provider] || provider;
   const modelTargetFormat = getModelTargetFormat(alias, model);
@@ -657,6 +678,27 @@ export async function handleChatCore({ body, modelInfo, credentials, log, onCred
     }
 
     streamController.handleComplete();
+
+    // Cache successful non-streaming responses
+    if (_cacheKey && result?.success && result?.response) {
+      try {
+        const cloned = result.response.clone();
+        const jsonData = await cloned.json();
+        setCachedResponse(_cacheKey, jsonData);
+        // Rebuild response with MISS header (first time)
+        result = {
+          success: true,
+          response: new Response(JSON.stringify(jsonData), {
+            headers: {
+              "Content-Type": "application/json",
+              "Access-Control-Allow-Origin": "*",
+              "X-9Router-Cache": "MISS",
+            },
+          }),
+        };
+      } catch { /* best effort */ }
+    }
+
     return result;
   }
 

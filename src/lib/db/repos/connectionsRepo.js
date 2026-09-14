@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { getAdapter } from "../driver.js";
 import { parseJson, stringifyJson } from "../helpers/jsonCol.js";
+import { encryptConnectionData, decryptConnectionData } from "../helpers/encryption.js";
 
 const OPTIONAL_FIELDS = [
   "displayName", "email", "globalPriority", "defaultModel",
@@ -12,7 +13,8 @@ const OPTIONAL_FIELDS = [
 
 function rowToConn(row) {
   if (!row) return null;
-  const extra = parseJson(row.data, {});
+  const rawData = decryptConnectionData(row.data);
+  const extra = parseJson(rawData, {});
   return {
     ...extra,
     id: row.id,
@@ -37,7 +39,7 @@ function connToRow(c) {
     email: email ?? null,
     priority: priority ?? null,
     isActive: isActive === false ? 0 : 1,
-    data: stringifyJson(rest),
+    data: encryptConnectionData(stringifyJson(rest)),
     createdAt,
     updatedAt,
   };
