@@ -1,10 +1,57 @@
 const path = require("path");
 const fs = require("fs");
 const forge = require("node-forge");
+const crypto = require("crypto");
+const os = require("os");
+const { execSync } = require("child_process");
 const { MITM_DIR } = require("../paths");
 
 const ROOT_CA_KEY_PATH = path.join(MITM_DIR, "rootCA.key");
 const ROOT_CA_CERT_PATH = path.join(MITM_DIR, "rootCA.crt");
+
+/**
+ * Derive a passphrase for CA key encryption from machine identity.
+ */
+function deriveKeyPassphrase() {
+  const APP_SALT = "9router-rootca-key-protection-v1";
+  let machineId = process.env.ENCRYPTION_KEY || "";
+  if (!machineId) {
+    for (const p of ["/etc/machine-id", "/var/lib/dbus/machine-id"]) {
+      try { machineId = fs.readFileSync(p, "utf8").trim(); break; } catch {}
+    }
+  }
+  if (!machineId) {
+    try {
+      const uuid = execSync("ioreg -rd1 -c IOPlatformExpertDevice | grep IOPlatformUUID", { encoding: "utf8" });
+      const m = uuid.match(/"([A-F0-9-]+)"/);
+      if (m) machineId = m[1];
+    } catch {}
+  }
+  if (!machineId) {
+    machineId = `${os.hostname()}-${os.cpus()[0]?.model || "unknown"}-${os.arch()}`;
+  }
+  return crypto.pbkdf2Sync(machineId, APP_SALT, 100000, 32, "sha256").toString("hex");
+}
+
+/**
+ * Encrypt a PEM private key with AES-256-CBC (PEM-level encryption).
+ */
+function encryptPrivateKeyPem(pemString) {
+  const passphrase = deriveKeyPassphrase();
+  const privateKey = forge.pki.privateKeyFromPem(pemString);
+  return forge.pki.encryptRsaPrivateKey(privateKey, passphrase, { algorithm: "aes256" });
+}
+
+/**
+ * Decrypt a PEM private key. If unencrypted, returns as-is.
+ */
+function decryptPrivateKeyPem(pemString) {
+  if (!pemString.includes("ENCRYPTED")) return pemString;
+  const passphrase = deriveKeyPassphrase();
+  const privateKey = forge.pki.decryptRsaPrivateKey(pemString, passphrase);
+  if (!privateKey) throw new Error("Failed to decrypt Root CA private key — wrong passphrase?");
+  return forge.pki.privateKeyToPem(privateKey);
+}
 
 /**
  * Check if cert file is expired or expiring within 30 days
@@ -81,11 +128,11 @@ async function generateRootCA() {
   // Self-sign the certificate
   cert.sign(keys.privateKey, forge.md.sha256.create());
 
-  // Save to disk
+  // Save to disk (encrypt the private key)
   const privateKeyPem = forge.pki.privateKeyToPem(keys.privateKey);
   const certPem = forge.pki.certificateToPem(cert);
 
-  fs.writeFileSync(ROOT_CA_KEY_PATH, privateKeyPem);
+  fs.writeFileSync(ROOT_CA_KEY_PATH, encryptPrivateKeyPem(privateKeyPem));
   fs.writeFileSync(ROOT_CA_CERT_PATH, certPem);
 
   console.log("✅ Root CA generated successfully");
@@ -103,8 +150,11 @@ function loadRootCA() {
   const keyPem = fs.readFileSync(ROOT_CA_KEY_PATH, "utf8");
   const certPem = fs.readFileSync(ROOT_CA_CERT_PATH, "utf8");
 
+  // Decrypt the private key (handles both encrypted and plaintext keys)
+  const decryptedKeyPem = decryptPrivateKeyPem(keyPem);
+
   return {
-    key: forge.pki.privateKeyFromPem(keyPem),
+    key: forge.pki.privateKeyFromPem(decryptedKeyPem),
     cert: forge.pki.certificateFromPem(certPem)
   };
 }
