@@ -42,6 +42,18 @@ export async function PATCH(request) {
     // Strip protected secrets before any internal handling sets them
     for (const key of PROTECTED_SETTING_KEYS) delete body[key];
 
+    // Security: disabling login requires explicit confirmation
+    if (Object.prototype.hasOwnProperty.call(body, "requireLogin") && body.requireLogin === false) {
+      if (!body.confirmDisableAuth) {
+        return NextResponse.json(
+          { error: "Disabling authentication is a security risk. Include confirmDisableAuth: true to confirm." },
+          { status: 400 }
+        );
+      }
+      console.warn("[SECURITY WARNING] Dashboard authentication (requireLogin) is being disabled. This exposes the dashboard without password protection.");
+      delete body.confirmDisableAuth;
+    }
+
     // If updating password, hash it
     if (body.newPassword) {
       const settings = await getSettings();
@@ -57,15 +69,20 @@ export async function PATCH(request) {
           return NextResponse.json({ error: "Invalid current password" }, { status: 401 });
         }
       } else {
-        // First time setting password, no current password needed
-        // Allow empty currentPassword or default "123456"
-        if (body.currentPassword && body.currentPassword !== "123456") {
-           return NextResponse.json({ error: "Invalid current password" }, { status: 401 });
+        // First time setting password — no stored hash exists.
+        // Verify against the initial password (env or default) if provided.
+        if (body.currentPassword) {
+          const initialPassword = process.env.INITIAL_PASSWORD || "123456";
+          const isValid = body.currentPassword === initialPassword;
+          if (!isValid) {
+            return NextResponse.json({ error: "Invalid current password" }, { status: 401 });
+          }
         }
       }
 
       const salt = await bcrypt.genSalt(10);
       body.password = await bcrypt.hash(body.newPassword, salt);
+      body.passwordChanged = true;
       delete body.newPassword;
       delete body.currentPassword;
     }
