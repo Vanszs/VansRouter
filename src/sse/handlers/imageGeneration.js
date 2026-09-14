@@ -19,6 +19,7 @@ import { HTTP_STATUS } from "open-sse/config/runtimeConfig.js";
 import { updateProviderCredentials, checkAndRefreshToken } from "../services/tokenRefresh.js";
 import { handleComboChat, stripComboPrefix } from "open-sse/services/combo.js";
 import * as log from "../utils/logger.js";
+import { enforceRateLimit } from "../services/rateLimiter.js";
 
 // Providers that don't require credentials (noAuth)
 const NO_AUTH_PROVIDERS = new Set(["sdwebui", "comfyui"]);
@@ -50,6 +51,12 @@ export async function handleImageGeneration(request) {
     if (!apiKey) return errorResponse(HTTP_STATUS.UNAUTHORIZED, "Missing API key");
     apiKeyInfo = await isValidApiKey(apiKey);
     if (!apiKeyInfo) return errorResponse(HTTP_STATUS.UNAUTHORIZED, "Invalid API key");
+  }
+
+  // Per-API-key rate limiting
+  {
+    const rateLimitResp = enforceRateLimit(apiKey, apiKeyInfo);
+    if (rateLimitResp) return rateLimitResp;
   }
 
   if (!modelStr) return errorResponse(HTTP_STATUS.BAD_REQUEST, "Missing model");

@@ -6,6 +6,7 @@ import {
   getProviderNodes,
   getProxyPoolById,
 } from "@/models";
+import { auditLog } from "@/lib/db/index.js";
 import { APIKEY_PROVIDERS } from "@/shared/constants/config";
 import { AI_PROVIDERS, FREE_TIER_PROVIDERS, WEB_COOKIE_PROVIDERS, isOpenAICompatibleProvider, isAnthropicCompatibleProvider, isCustomEmbeddingProvider } from "@/shared/constants/providers";
 import { normalizeProviderId, normalizeProviderSpecificData } from "@/lib/providerNormalization";
@@ -211,6 +212,14 @@ export async function POST(request) {
     // Hide sensitive fields
     const result = { ...newConnection };
     delete result.apiKey;
+
+    auditLog({
+      action: "provider.create",
+      actor: "dashboard",
+      target: newConnection.id,
+      details: { provider, name: connectionName },
+      ip: request.headers.get("x-forwarded-for") || request.headers.get("x-real-ip") || null,
+    }).catch(() => {});
 
     return NextResponse.json({ connection: result }, { status: 201 });
   } catch (error) {

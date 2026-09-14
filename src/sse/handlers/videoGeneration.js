@@ -4,6 +4,7 @@ import {
   clearAccountError,
   extractApiKey,
   isValidApiKey,
+  isTrustedInternalRequest,
 } from "../services/auth.js";
 import { getSettings } from "@/lib/localDb";
 import { getModelInfo } from "../services/model.js";
@@ -12,6 +13,7 @@ import { errorResponse, unavailableResponse } from "open-sse/utils/error.js";
 import { HTTP_STATUS } from "open-sse/config/runtimeConfig.js";
 import { updateProviderCredentials, checkAndRefreshToken } from "../services/tokenRefresh.js";
 import * as log from "../utils/logger.js";
+import { enforceRateLimit } from "../services/rateLimiter.js";
 
 // Video generation is xAI-only today; requests without a provider prefix
 // (bare model id, or multipart bodies we deliberately don't parse) land here.
@@ -27,6 +29,10 @@ const CREATE_ROTATION_STATUSES = new Set([
 ]);
 
 async function requireValidApiKey(request) {
+  // Trusted internal (dashboard/CLI) requests bypass API key requirement
+  const trustedInternal = await isTrustedInternalRequest(request);
+  if (trustedInternal) return null;
+
   const apiKey = extractApiKey(request);
   const settings = await getSettings();
   if (settings.requireApiKey) {
@@ -94,6 +100,11 @@ function withConnectionHeader(response, connectionId) {
 export async function handleVideoCreate(request, action) {
   const authError = await requireValidApiKey(request);
   if (authError) return authError;
+
+  // Per-key rate limiting
+  const apiKey = extractApiKey(request);
+  const rateLimitResp = enforceRateLimit(apiKey);
+  if (rateLimitResp) return rateLimitResp;
 
   const bodyInfo = await readForwardableBody(request);
   if (bodyInfo.error) return bodyInfo.error;

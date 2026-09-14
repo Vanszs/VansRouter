@@ -1,7 +1,7 @@
 import { ollamaModels } from "open-sse/config/ollamaModels.js";
 
 const CORS_HEADERS = {
-  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Origin": getCorsOriginSync(),
   "Access-Control-Allow-Methods": "GET, OPTIONS",
   "Access-Control-Allow-Headers": "*"
 };

@@ -1,14 +1,7 @@
 import { NextResponse } from "next/server";
 import { jwtVerify } from "jose";
 import { getSettings } from "@/lib/localDb";
-
-function getSecret() {
-  const secret = process.env.JWT_SECRET;
-  if (!secret) {
-    throw new Error("JWT_SECRET environment variable is required");
-  }
-  return new TextEncoder().encode(secret);
-}
+import { getJwtSecret } from "@/lib/auth/dashboardSession";
 
 export async function GET() {
   try {
@@ -27,7 +20,7 @@ export async function GET() {
     }
 
     try {
-      await jwtVerify(token, getSecret());
+      await jwtVerify(token, getJwtSecret());
       return NextResponse.json({ authenticated: true });
     } catch {
       return NextResponse.json({ authenticated: false }, { status: 401 });

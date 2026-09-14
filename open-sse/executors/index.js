@@ -64,10 +64,18 @@ const executors = {
 };
 
 const defaultCache = new Map();
+const DEFAULT_CACHE_MAX = 100;
 
 export function getExecutor(provider) {
   if (executors[provider]) return executors[provider];
-  if (!defaultCache.has(provider)) defaultCache.set(provider, new DefaultExecutor(provider));
+  if (!defaultCache.has(provider)) {
+    if (defaultCache.size >= DEFAULT_CACHE_MAX) {
+      // LRU eviction: remove oldest entry (first key in insertion order)
+      const oldestKey = defaultCache.keys().next().value;
+      defaultCache.delete(oldestKey);
+    }
+    defaultCache.set(provider, new DefaultExecutor(provider));
+  }
   return defaultCache.get(provider);
 }
 

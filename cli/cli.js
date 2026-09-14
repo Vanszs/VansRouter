@@ -80,6 +80,42 @@ if (args[0] === "xai" && args[1] === "video") {
   return;
 }
 
+// `9router status` / `vansrouter status` subcommand
+if (args[0] === "status") {
+  const { runStatus } = require("./src/cli/commands/status");
+  runStatus(args.slice(1), pkg)
+    .then((code) => process.exit(code))
+    .catch((err) => {
+      console.error(`❌ ${err?.message || err}`);
+      process.exit(1);
+    });
+  return;
+}
+
+// `9router export` / `vansrouter export` subcommand
+if (args[0] === "export") {
+  const { runExport } = require("./src/cli/commands/exportImport");
+  runExport(args.slice(1), pkg)
+    .then((code) => process.exit(code))
+    .catch((err) => {
+      console.error(`❌ ${err?.message || err}`);
+      process.exit(1);
+    });
+  return;
+}
+
+// `9router import` / `vansrouter import` subcommand
+if (args[0] === "import") {
+  const { runImport } = require("./src/cli/commands/exportImport");
+  runImport(args.slice(1), pkg)
+    .then((code) => process.exit(code))
+    .catch((err) => {
+      console.error(`❌ ${err?.message || err}`);
+      process.exit(1);
+    });
+  return;
+}
+
 // Self-heal SQLite runtime deps (sql.js + better-sqlite3) into ~/.9router/runtime
 // so the server can resolve them via NODE_PATH. Best-effort — sql.js is required,
 // better-sqlite3 is optional. Logs to stderr only on failure.
@@ -154,6 +190,11 @@ Options:
   -v, --version       Show version
 
 Commands:
+  status [--json] [--port <port>]
+                      Show server status (running, version, providers, etc.)
+  export [--include-secrets]
+                      Export all settings to JSON (stdout)
+  import <file.json>  Import settings from a JSON backup file
   xai video --prompt "..." --output video.mp4
                       Generate a Grok Imagine video via the running gateway
                       (see: ${APP_NAME} xai video --help)

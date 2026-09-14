@@ -11,6 +11,7 @@ import { errorResponse, unavailableResponse } from "open-sse/utils/error.js";
 import { HTTP_STATUS } from "open-sse/config/runtimeConfig.js";
 import { AI_PROVIDERS } from "@/shared/constants/providers";
 import * as log from "../utils/logger.js";
+import { enforceRateLimit } from "../services/rateLimiter.js";
 
 // Providers requiring credentials for STT
 const CREDENTIALED_PROVIDERS = new Set(
@@ -38,6 +39,13 @@ export async function handleStt(request) {
     if (!apiKey) return errorResponse(HTTP_STATUS.UNAUTHORIZED, "Missing API key");
     apiKeyInfo = await isValidApiKey(apiKey);
     if (!apiKeyInfo) return errorResponse(HTTP_STATUS.UNAUTHORIZED, "Invalid API key");
+  }
+
+  // Per-API-key rate limiting
+  {
+    const apiKey = extractApiKey(request);
+    const rateLimitResp = enforceRateLimit(apiKey, apiKeyInfo);
+    if (rateLimitResp) return rateLimitResp;
   }
 
   if (!modelStr) return errorResponse(HTTP_STATUS.BAD_REQUEST, "Missing model");

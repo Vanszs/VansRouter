@@ -8,9 +8,11 @@ import {
   isComboAllowed,
   isKindAllowed,
 } from "../services/auth.js";
+import { getCorsOriginSync } from "@/lib/cors.js";
 import { errorResponse, unavailableResponse } from "open-sse/utils/error.js";
 import { HTTP_STATUS } from "open-sse/config/runtimeConfig.js";
 import * as log from "../utils/logger.js";
+import { enforceRateLimit } from "../services/rateLimiter.js";
 import { updateProviderCredentials, checkAndRefreshToken } from "../services/tokenRefresh.js";
 import { handleComboChat, getComboModelsFromData, stripComboPrefix } from "open-sse/services/combo.js";
 import { getSettings, getCombos } from "@/lib/localDb";
@@ -65,6 +67,10 @@ export async function handleFetch(request) {
       return errorResponse(HTTP_STATUS.UNAUTHORIZED, "Invalid API key");
     }
   }
+
+  // Per-key rate limiting
+  const rateLimitResp = enforceRateLimit(apiKey, apiKeyInfo);
+  if (rateLimitResp) return rateLimitResp;
 
   if (!providerInput || typeof providerInput !== "string") {
     log.warn("FETCH", "Missing provider/model");
@@ -175,7 +181,7 @@ async function handleSingleProviderFetch(body, providerInput, request, apiKey, s
     });
     if (result.success) {
       return new Response(JSON.stringify(result.data), {
-        headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" }
+        headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": getCorsOriginSync() }
       });
     }
     return errorResponse(result.status || HTTP_STATUS.BAD_GATEWAY, result.error || "Fetch failed");
@@ -229,7 +235,7 @@ async function handleSingleProviderFetch(body, providerInput, request, apiKey, s
     if (result.success) {
       await clearAccountError(credentials.connectionId, credentials);
       return new Response(JSON.stringify(result.data), {
-        headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" }
+        headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": getCorsOriginSync() }
       });
     }
 

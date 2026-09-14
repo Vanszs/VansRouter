@@ -46,6 +46,7 @@ import * as log from "../utils/logger.js";
 import { updateProviderCredentials, checkAndRefreshToken } from "../services/tokenRefresh.js";
 import { getProjectIdForConnection } from "open-sse/services/projectId.js";
 import { maybeWaitForCooldown, MAX_COOLDOWN_RETRIES } from "open-sse/utils/cooldownRetry.js";
+import { enforceRateLimit } from "../services/rateLimiter.js";
 
 function checkCircuitBreaker(provider, proxyHash = null, enabled = true) {
   if (!enabled) return false;
@@ -122,6 +123,13 @@ export async function handleChat(request, clientRawRequest = null) {
       log.warn("AUTH", "Invalid API key (requireApiKey=true)");
       return errorResponse(HTTP_STATUS.UNAUTHORIZED, "Invalid API key");
     }
+  }
+
+  // Per-key rate limiting
+  const rateLimitResp = enforceRateLimit(apiKey, apiKeyInfo);
+  if (rateLimitResp) {
+    log.warn("RATELIMIT", `Rate limit exceeded for key ${log.maskKey(apiKey)}`);
+    return rateLimitResp;
   }
 
   if (!modelStr) {
@@ -268,6 +276,17 @@ async function handleSingleModelChat(body, modelStr, clientRawRequest = null, re
   if (!isAllowed) {
     log.warn("CHAT", `Model not in available models list`, { model: resolvedModelStr });
     return errorResponse(HTTP_STATUS.NOT_FOUND, `Model "${resolvedModelStr}" is not available. Only models listed in /v1/models can be used.`);
+  }
+
+  // ACL: per-key model restriction
+  if (apiKeyInfo?.allowedModels && Array.isArray(apiKeyInfo.allowedModels) && apiKeyInfo.allowedModels.length > 0) {
+    const keyModelAllowed = apiKeyInfo.allowedModels.some(m =>
+      m === modelStr || m === resolvedModelStr || m === model || resolvedModelStr.endsWith(`/${m}`)
+    );
+    if (!keyModelAllowed) {
+      log.warn("AUTH", `Model "${resolvedModelStr}" not in API key's allowedModels`, { allowed: apiKeyInfo.allowedModels });
+      return errorResponse(HTTP_STATUS.FORBIDDEN, `Model "${resolvedModelStr}" is not allowed for this API key`);
+    }
   }
 
   // Log model routing (alias → actual model)

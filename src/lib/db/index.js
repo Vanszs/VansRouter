@@ -39,6 +39,7 @@ export {
 // API keys
 export {
   getApiKeys, getApiKeyById, createApiKey, updateApiKey, deleteApiKey, validateApiKey,
+  incrementApiKeyUsage, resetApiKeyUsage, getApiKeyUsageDetails,
 } from "./repos/apiKeysRepo.js";
 
 // Combos
@@ -58,6 +59,11 @@ export {
 export {
   getPricing, getPricingForModel, updatePricing, resetPricing, resetAllPricing,
 } from "./repos/pricingRepo.js";
+
+// Audit logs
+export {
+  auditLog, getAuditLogs, getAuditActions,
+} from "./repos/auditLogRepo.js";
 
 // Disabled models
 export {

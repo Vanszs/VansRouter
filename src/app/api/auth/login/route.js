@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getSettings } from "@/lib/localDb";
+import { auditLog } from "@/lib/db/index.js";
 import bcrypt from "bcryptjs";
 import { cookies } from "next/headers";
 import { setDashboardAuthCookie } from "@/lib/auth/dashboardSession";
@@ -9,6 +10,7 @@ import { isLocalRequest } from "@/dashboardGuard";
 
 const RESET_HINT = "Forgot password? Reset to default via 9Router CLI → Settings → Reset Password to Default.";
 const NO_STORE_HEADERS = { "Cache-Control": "no-store" };
+const DEFAULT_PASSWORD = "123456";
 
 function isTunnelRequest(request, settings) {
   const host = (request.headers.get("host") || "").split(":")[0].toLowerCase();
@@ -28,7 +30,8 @@ export async function POST(request) {
       );
     }
 
-    const { password } = await request.json();
+    const body = await request.json();
+    const { password, totpCode } = body;
     const settings = await getSettings();
 
     // Block login via tunnel/tailscale if dashboard access is disabled
@@ -44,12 +47,15 @@ export async function POST(request) {
     }
 
     let isValid = false;
+    const initialPassword = process.env.INITIAL_PASSWORD || DEFAULT_PASSWORD;
+    let isUsingDefaultPassword = false;
+
     if (storedHash) {
       isValid = await bcrypt.compare(password, storedHash);
     } else {
-      // Use env var or default
-      const initialPassword = process.env.INITIAL_PASSWORD || "123456";
+      // No stored hash — using default/initial password
       isValid = password === initialPassword;
+      if (isValid) isUsingDefaultPassword = true;
     }
 
     if (isValid) {
@@ -69,7 +75,31 @@ export async function POST(request) {
         );
       }
 
+      // 2FA check: if TOTP is enabled, require TOTP code
+      if (settings.totpSecret) {
+        if (!totpCode) {
+          // First step: password OK, need TOTP
+          return NextResponse.json({ success: true, requires2FA: true }, { status: 200, headers: NO_STORE_HEADERS });
+        }
+        // Verify TOTP code
+        const { verifyTOTP } = await import("@/lib/auth/totp.js");
+        if (!verifyTOTP(settings.totpSecret, totpCode)) {
+          return NextResponse.json({ error: "Invalid 2FA code" }, { status: 401, headers: NO_STORE_HEADERS });
+        }
+      }
+
+      // Force password change if still using default password and not yet changed
+      if (isUsingDefaultPassword && !settings.passwordChanged) {
+        recordSuccess(ip);
+      auditLog({ action: "login.success", actor: "dashboard", ip }).catch(() => {});
+        return NextResponse.json(
+          { success: true, requirePasswordChange: true },
+          { status: 200, headers: NO_STORE_HEADERS }
+        );
+      }
+
       recordSuccess(ip);
+      auditLog({ action: "login.success", actor: "dashboard", ip }).catch(() => {});
       const cookieStore = await cookies();
       await setDashboardAuthCookie(cookieStore, request);
 
@@ -77,6 +107,7 @@ export async function POST(request) {
     }
 
     const { remainingBeforeLock } = recordFail(ip);
+    auditLog({ action: "login.failed", actor: "dashboard", ip }).catch(() => {});
     const postLock = checkLock(ip);
     if (postLock.locked) {
       return NextResponse.json(

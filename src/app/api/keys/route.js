@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getApiKeys, createApiKey } from "@/lib/localDb";
+import { auditLog } from "@/lib/db/index.js";
 import { getConsistentMachineId } from "@/shared/utils/machineId";
 
 export const dynamic = "force-dynamic";
@@ -28,6 +29,14 @@ export async function POST(request) {
     // Always get machineId from server
     const machineId = await getConsistentMachineId();
     const apiKey = await createApiKey(name, machineId);
+
+    auditLog({
+      action: "apikey.create",
+      actor: "dashboard",
+      target: apiKey.id,
+      details: { name },
+      ip: request.headers.get("x-forwarded-for") || request.headers.get("x-real-ip") || null,
+    }).catch(() => {});
 
     return NextResponse.json({
       key: apiKey.key,
