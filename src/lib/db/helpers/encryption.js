@@ -2,6 +2,7 @@ import crypto from "node:crypto";
 import os from "node:os";
 import fs from "node:fs";
 import path from "node:path";
+import { execSync } from "node:child_process";
 
 const ALGORITHM = "aes-256-gcm";
 const IV_LENGTH = 12;
@@ -26,7 +27,6 @@ function getMachineIdentifier() {
 
   // macOS: IOPlatformUUID
   try {
-    const { execSync } = await import("node:child_process");
     const uuid = execSync("ioreg -rd1 -c IOPlatformExpertDevice | grep IOPlatformUUID", { encoding: "utf8" });
     const match = uuid.match(/"([A-F0-9-]+)"/);
     if (match) return match[1];
