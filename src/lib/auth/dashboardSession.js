@@ -22,6 +22,10 @@ function loadJwtSecret() {
 
 const SECRET = new TextEncoder().encode(loadJwtSecret());
 
+export function getJwtSecret() {
+  return SECRET;
+}
+
 export function shouldUseSecureCookie(request) {
   const forceSecureCookie = process.env.AUTH_COOKIE_SECURE === "true";
   const forwardedProto = request?.headers?.get?.("x-forwarded-proto");
