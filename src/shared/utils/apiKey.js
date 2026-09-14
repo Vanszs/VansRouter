@@ -60,15 +60,24 @@ function generateCrc(machineId, keyId) {
 }
 
 /**
- * Generate API key with machineId embedded
- * Format: sk-{machineId}-{keyId}-{crc8}
- * @param {string} machineId - 16-char machine ID
+ * Hash a machineId to 8 chars using SHA-256.
+ * Avoids embedding raw machineId in the key.
+ */
+function hashMachineId(machineId) {
+  return crypto.createHash("sha256").update(machineId).digest("hex").slice(0, 8);
+}
+
+/**
+ * Generate API key with hashed machineId embedded.
+ * Format: sk-{hashedMachineId8}-{keyId}-{crc8}
+ * @param {string} machineId - machine ID (raw; will be hashed)
  * @returns {{ key: string, keyId: string }}
  */
 export function generateApiKeyWithMachine(machineId) {
+  const hashedId = hashMachineId(machineId);
   const keyId = generateKeyId();
-  const crc = generateCrc(machineId, keyId);
-  const key = `sk-${machineId}-${keyId}-${crc}`;
+  const crc = generateCrc(hashedId, keyId);
+  const key = `sk-${hashedId}-${keyId}-${crc}`;
   return { key, keyId };
 }
 
