@@ -278,6 +278,17 @@ async function handleSingleModelChat(body, modelStr, clientRawRequest = null, re
     return errorResponse(HTTP_STATUS.NOT_FOUND, `Model "${resolvedModelStr}" is not available. Only models listed in /v1/models can be used.`);
   }
 
+  // ACL: per-key model restriction
+  if (apiKeyInfo?.allowedModels && Array.isArray(apiKeyInfo.allowedModels) && apiKeyInfo.allowedModels.length > 0) {
+    const keyModelAllowed = apiKeyInfo.allowedModels.some(m =>
+      m === modelStr || m === resolvedModelStr || m === model || resolvedModelStr.endsWith(`/${m}`)
+    );
+    if (!keyModelAllowed) {
+      log.warn("AUTH", `Model "${resolvedModelStr}" not in API key's allowedModels`, { allowed: apiKeyInfo.allowedModels });
+      return errorResponse(HTTP_STATUS.FORBIDDEN, `Model "${resolvedModelStr}" is not allowed for this API key`);
+    }
+  }
+
   // Log model routing (alias → actual model)
   if (modelStr !== `${provider}/${model}`) {
     log.info("ROUTING", `${modelStr} → ${provider}/${model}`);
