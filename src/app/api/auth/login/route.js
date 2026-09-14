@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getSettings } from "@/lib/localDb";
+import { auditLog } from "@/lib/db/index.js";
 import bcrypt from "bcryptjs";
 import { cookies } from "next/headers";
 import { setDashboardAuthCookie } from "@/lib/auth/dashboardSession";
@@ -90,6 +91,7 @@ export async function POST(request) {
       // Force password change if still using default password and not yet changed
       if (isUsingDefaultPassword && !settings.passwordChanged) {
         recordSuccess(ip);
+      auditLog({ action: "login.success", actor: "dashboard", ip }).catch(() => {});
         return NextResponse.json(
           { success: true, requirePasswordChange: true },
           { status: 200, headers: NO_STORE_HEADERS }
@@ -97,6 +99,7 @@ export async function POST(request) {
       }
 
       recordSuccess(ip);
+      auditLog({ action: "login.success", actor: "dashboard", ip }).catch(() => {});
       const cookieStore = await cookies();
       await setDashboardAuthCookie(cookieStore, request);
 
@@ -104,6 +107,7 @@ export async function POST(request) {
     }
 
     const { remainingBeforeLock } = recordFail(ip);
+    auditLog({ action: "login.failed", actor: "dashboard", ip }).catch(() => {});
     const postLock = checkLock(ip);
     if (postLock.locked) {
       return NextResponse.json(

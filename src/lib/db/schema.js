@@ -187,6 +187,22 @@ export const TABLES = {
       "CREATE INDEX IF NOT EXISTS idx_cpm_provider ON cachedProviderModels(providerId)",
     ],
   },
+  auditLogs: {
+    columns: {
+      id: "INTEGER PRIMARY KEY AUTOINCREMENT",
+      timestamp: "TEXT NOT NULL",
+      action: "TEXT NOT NULL",
+      actor: "TEXT",
+      target: "TEXT",
+      details: "TEXT",
+      ip: "TEXT",
+    },
+    indexes: [
+      "CREATE INDEX IF NOT EXISTS idx_al_ts ON auditLogs(timestamp DESC)",
+      "CREATE INDEX IF NOT EXISTS idx_al_action ON auditLogs(action)",
+      "CREATE INDEX IF NOT EXISTS idx_al_actor ON auditLogs(actor)",
+    ],
+  },
 };
 
 

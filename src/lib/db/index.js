@@ -59,6 +59,11 @@ export {
   getPricing, getPricingForModel, updatePricing, resetPricing, resetAllPricing,
 } from "./repos/pricingRepo.js";
 
+// Audit logs
+export {
+  auditLog, getAuditLogs, getAuditActions,
+} from "./repos/auditLogRepo.js";
+
 // Disabled models
 export {
   getDisabledModels, getDisabledByProvider, disableModels, enableModels,

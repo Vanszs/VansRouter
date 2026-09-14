@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getSettings, updateSettings } from "@/lib/localDb";
+import { auditLog } from "@/lib/db/index.js";
 import { applyOutboundProxyEnv } from "@/lib/network/outboundProxy";
 import { resetComboRotation } from "open-sse/services/combo.js";
 import bcrypt from "bcryptjs";
@@ -95,6 +96,16 @@ export async function PATCH(request) {
     }
 
     const settings = await updateSettings(body);
+
+    // Audit log: settings change
+    const changedKeys = Object.keys(body).filter(k => k !== "confirmDisableAuth");
+    auditLog({
+      action: "settings.update",
+      actor: "dashboard",
+      target: "settings",
+      details: { keys: changedKeys },
+      ip: request.headers.get("x-forwarded-for") || request.headers.get("x-real-ip") || null,
+    }).catch(() => {});
 
     // Apply outbound proxy settings immediately (no restart required)
     if (
