@@ -35,10 +35,20 @@ rl.on("line", (line) => {
       setTimeout(() => writeJson({ jsonrpc: "2.0", id: request.id, result: { text: "correlated result", stopReason: "end_turn" } }), 5);
       return;
     }
+    let finished = false;
     const update = (type, text) => writeJson({ jsonrpc: "2.0", method: "session/update", params: { type, text } }, true);
     update("text_delta", "frag");
-    setTimeout(() => update("text_delta", "mented"), 5);
-    setTimeout(() => update("message_stop"), 10);
+    setTimeout(() => update("text_delta", "mented"), 10);
+    setTimeout(() => {
+      update("message_stop");
+      finished = true;
+    }, 25);
   }
 });
-process.stdin.on("end", () => { if (prompt) process.exit(0); });
+process.stdin.on("end", () => {
+  const tryExit = () => {
+    if (!prompt || finished) process.exit(0);
+    else setTimeout(tryExit, 10);
+  };
+  tryExit();
+});
