@@ -17,15 +17,14 @@ ENV NEXT_TELEMETRY_DISABLED=1
 RUN npm run build
 
 # Step 2: Compile native C++ modules (better-sqlite3) for the TARGETPLATFORM.
-# Only compiles native C++ modules; avoids running heavy Next.js build under QEMU.
+# Only compiles native C++ modules; avoids running heavy Next.js build or extracting 500+ unrelated packages under QEMU.
 FROM ${NODE_IMAGE} AS native-deps
 WORKDIR /app
 
 RUN apk add --no-cache python3 make g++ linux-headers
 
-COPY package.json ./
-RUN --mount=type=cache,target=/root/.npm \
-  npm install --include=optional --no-audit --no-fund
+RUN npm init -y && \
+  npm install better-sqlite3@12.10.0 bindings file-uri-to-path --no-audit --no-fund
 
 # Tailscale static binaries for Alpine Linux (bundled so tunnel works in Docker).
 # Fetches the latest stable tailscale and tailscaled. Override with --build-arg.
