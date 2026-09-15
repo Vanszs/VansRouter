@@ -136,6 +136,30 @@ function switchPm2(buildId = null) {
   run("pm2", ["start", ecosystem, "--only", appName, "--update-env"], env);
 }
 
+function pruneReleases(rootPath = releaseRoot, keep = 2) {
+  if (!fs.existsSync(rootPath)) return;
+  const current = readCurrentTarget();
+  // Clean up any stale staging directories from previous failed/interrupted runs
+  const entries = fs.readdirSync(rootPath, { withFileTypes: true });
+  for (const entry of entries) {
+    if (entry.isDirectory() && entry.name.startsWith(".staging-")) {
+      try { fs.rmSync(path.join(rootPath, entry.name), { recursive: true, force: true }); } catch {}
+    }
+  }
+  const releases = entries
+    .filter((entry) => entry.isDirectory() && !entry.name.startsWith("."))
+    .map((entry) => path.join(rootPath, entry.name))
+    .sort()
+    .reverse();
+  const toKeep = new Set(releases.slice(0, keep));
+  if (current) toKeep.add(current);
+  for (const rel of releases) {
+    if (!toKeep.has(rel)) {
+      try { fs.rmSync(rel, { recursive: true, force: true }); } catch {}
+    }
+  }
+}
+
 function selectRollbackRelease(rootPath, currentPath = null) {
   const releases = fs.readdirSync(rootPath, { withFileTypes: true })
     .filter((entry) => entry.isDirectory() && !entry.name.startsWith("."))
@@ -238,6 +262,7 @@ async function deploy() {
       throw error;
     }
     console.log(`Activated ${targetRelease}`);
+    pruneReleases();
   } catch (error) {
     fs.rmSync(stagedRelease, { recursive: true, force: true });
     throw error;
@@ -293,6 +318,7 @@ module.exports = {
   readCurrentTarget,
   rollback,
   selectRollbackRelease,
+  pruneReleases,
   staticDirOf,
   verifyRelease,
 };

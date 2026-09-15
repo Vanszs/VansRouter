@@ -1,7 +1,7 @@
 // Unit tests to ensure database pathing and Docker configurations
 // remain bound to "9router" to prevent data loss on VansRouter upgrades.
 import { describe, it, expect } from "vitest";
-import { readFileSync, existsSync } from "node:fs";
+import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import yaml from "js-yaml";
 

@@ -210,4 +210,28 @@ describe("model test route kind routing", () => {
 
     expect(await res.json()).toMatchObject({ ok: true, status: 200 });
   });
+
+  it("surfaces Cline error envelopes with statusCode during model test ping", async () => {
+    global.fetch = vi.fn().mockResolvedValue(new Response(JSON.stringify({
+      success: false,
+      error: "insufficient_quota",
+      statusCode: 402,
+    }), {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    }));
+
+    const { POST } = await import("../../src/app/api/models/test/route.js");
+    const res = await POST(new Request("http://localhost/api/models/test", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ model: "cl/anthropic/claude-sonnet-4.6", kind: "llm" }),
+    }));
+
+    expect(await res.json()).toMatchObject({
+      ok: false,
+      status: 402,
+      error: "Provider error: insufficient_quota",
+    });
+  });
 });

@@ -5,7 +5,7 @@ import os from "node:os";
 import path from "node:path";
 import { execFileSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
-import { acquireLock, activate, getFreePort, readCurrentTarget, selectRollbackRelease, staticDirOf, verifyRelease } from "../../scripts/deploy-atomic.cjs";
+import { acquireLock, activate, getFreePort, pruneReleases, readCurrentTarget, selectRollbackRelease, staticDirOf, verifyRelease } from "../../scripts/deploy-atomic.cjs";
 
 const tempRoots = [];
 
@@ -134,5 +134,22 @@ describe("atomic deployment artifact", () => {
   it("allocates a free loopback smoke port", async () => {
     const assigned = await getFreePort();
     expect(assigned).toBeGreaterThan(0);
+  });
+
+  it("prunes older releases and stale staging directories while keeping active and rollback targets", () => {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), "deploy-atomic-prune-"));
+    tempRoots.push(root);
+    const rel1 = makeRelease(root, "2026-01-01");
+    const rel2 = makeRelease(root, "2026-01-02");
+    const rel3 = makeRelease(root, "2026-01-03");
+    const staleStaging = path.join(root, ".staging-2026-01-04");
+    fs.mkdirSync(staleStaging);
+
+    pruneReleases(root, 2);
+
+    expect(fs.existsSync(staleStaging)).toBe(false);
+    expect(fs.existsSync(rel3)).toBe(true);
+    expect(fs.existsSync(rel2)).toBe(true);
+    expect(fs.existsSync(rel1)).toBe(false);
   });
 });

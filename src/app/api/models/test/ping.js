@@ -157,7 +157,13 @@ async function pingModelByKindImpl(model, kind, baseUrl = `http://127.0.0.1:${pr
   try { parsed = rawText ? JSON.parse(rawText) : null; } catch {}
 
   const providerId = resolveProviderId(String(model).split("/")[0]);
-  parsed = unwrapClinepassEnvelope(parsed, providerId).body;
+  const unwrapped = unwrapClinepassEnvelope(parsed, providerId);
+  parsed = unwrapped.body;
+  if (unwrapped.error) {
+    const detail = typeof unwrapped.error === "string" ? unwrapped.error : (unwrapped.error.message || JSON.stringify(unwrapped.error));
+    const errorStatus = unwrapped.error?.status || unwrapped.error?.statusCode || res.status || 200;
+    return { ok: false, latencyMs, error: `Provider error: ${detail}`, status: errorStatus };
+  }
 
   if (!res.ok) {
     const detail = parsed?.error?.message || parsed?.msg || parsed?.message || parsed?.error || rawText;
