@@ -1,10 +1,130 @@
 // NOTE: driver.js → migrate.js → metaStore.js → driver.js forms a static import cycle,
 // but all cross-module references use dynamic `await import()` which breaks the cycle at runtime.
-import { ensureDirs, DATA_FILE } from "./paths.js";
+import fs from "node:fs";
+import path from "node:path";
+import { ensureDirs, DATA_FILE, BACKUPS_DIR } from "./paths.js";
 
 // Use global to survive Next.js dev hot-reload (module state resets on reload)
 if (!global._dbAdapter) global._dbAdapter = { instance: null, initPromise: null, logged: false };
 const state = global._dbAdapter;
+
+/**
+ * Pre-flight integrity check (PRAGMA quick_check) to detect and auto-recover from
+ * truncated or corrupt SQLite files (e.g. abrupt SIGKILL / OS crash before WAL checkpoint).
+ */
+async function verifyDatabaseIntegrity(file) {
+  if (!fs.existsSync(file)) return true;
+  try {
+    if (fs.statSync(file).size === 0) return true;
+  } catch {
+    return true;
+  }
+
+  // Check with bun:sqlite if running under Bun
+  if (process.versions.bun) {
+    let bunDb = null;
+    try {
+      const { Database } = await import("bun:sqlite");
+      bunDb = new Database(file, { readonly: true });
+      const row = bunDb.prepare("PRAGMA quick_check;").get();
+      return row?.quick_check === "ok";
+    } catch {
+      return false;
+    } finally {
+      try { bunDb?.close(); } catch {}
+    }
+  }
+
+  // Check with better-sqlite3 first (standard Node driver)
+  let betterDb = null;
+  try {
+    const Database = (await import("better-sqlite3")).default;
+    betterDb = new Database(file, { readonly: true, fileMustExist: true });
+    const row = betterDb.pragma("quick_check");
+    const isOk = Array.isArray(row) ? row[0]?.quick_check === "ok" : (row?.quick_check === "ok" || row === "ok");
+    return Boolean(isOk);
+  } catch {
+    // If better-sqlite3 fails or isn't built, try node:sqlite
+  } finally {
+    try { betterDb?.close(); } catch {}
+  }
+
+  // Fallback to node:sqlite (Node >= 22.5)
+  let nodeDb = null;
+  try {
+    const { DatabaseSync } = await import("node:sqlite");
+    nodeDb = new DatabaseSync(file, { readOnly: true });
+    const row = nodeDb.prepare("PRAGMA quick_check;").get();
+    return row?.quick_check === "ok";
+  } catch {
+    return false;
+  } finally {
+    try { nodeDb?.close(); } catch {}
+  }
+}
+
+async function checkAndRecoverDatabase() {
+  if (!fs.existsSync(DATA_FILE)) return;
+  const isHealthy = await verifyDatabaseIntegrity(DATA_FILE);
+  if (isHealthy) return;
+
+  const stamp = new Date().toISOString().replace(/[:.]/g, "-");
+  const corruptFile = `${DATA_FILE}.corrupt-${stamp}`;
+  console.error(`[DB] ❌ CRITICAL: ${DATA_FILE} is malformed or corrupted! Quarantining to ${corruptFile}...`);
+
+  try {
+    fs.renameSync(DATA_FILE, corruptFile);
+    // Also quarantine any detached WAL / SHM files
+    for (const ext of ["-wal", "-shm"]) {
+      const aux = `${DATA_FILE}${ext}`;
+      if (fs.existsSync(aux)) fs.renameSync(aux, `${corruptFile}${ext}`);
+    }
+  } catch (e) {
+    console.error(`[DB] Failed to quarantine corrupt database: ${e.message}`);
+  }
+
+  // Scan BACKUPS_DIR for candidate backups to restore from
+  if (fs.existsSync(BACKUPS_DIR)) {
+    const candidates = [];
+    try {
+      const entries = fs.readdirSync(BACKUPS_DIR, { withFileTypes: true });
+      for (const entry of entries) {
+        if (entry.isFile() && entry.name.endsWith(".sqlite")) {
+          candidates.push(path.join(BACKUPS_DIR, entry.name));
+        } else if (entry.isDirectory()) {
+          const sub = path.join(BACKUPS_DIR, entry.name, "data.sqlite");
+          if (fs.existsSync(sub)) candidates.push(sub);
+        }
+      }
+    } catch {}
+
+    candidates.sort((a, b) => {
+      try {
+        return fs.statSync(b).mtimeMs - fs.statSync(a).mtimeMs;
+      } catch {
+        return 0;
+      }
+    });
+
+    for (const candidate of candidates) {
+      if (await verifyDatabaseIntegrity(candidate)) {
+        try {
+          fs.copyFileSync(candidate, DATA_FILE);
+          console.warn(`[DB] ✅ Auto-recovered healthy database from backup: ${candidate}`);
+          return;
+        } catch (e) {
+          console.error(`[DB] Failed restoring backup ${candidate}: ${e.message}`);
+        }
+      }
+    }
+  }
+
+  throw new Error(
+    `[DB] FATAL: ${DATA_FILE} is malformed and no valid backup was found in ${BACKUPS_DIR}. ` +
+    `Refusing to initialize a fresh empty database to prevent silent data loss. ` +
+    `Preserved corrupt copy at ${corruptFile}.`
+  );
+}
 
 async function tryBunSqlite() {
   // Bun runtime only — built-in, no install needed
@@ -56,6 +176,7 @@ async function trySqlJs() {
 
 async function initAdapter() {
   ensureDirs();
+  await checkAndRecoverDatabase();
   // Order per runtime:
   //   Bun:  bun:sqlite → sql.js
   //   Node: better-sqlite3 → node:sqlite (≥22.5) → sql.js

@@ -1,9 +1,10 @@
 # syntax=docker/dockerfile:1.7
 ARG NODE_IMAGE=node:22-alpine
-FROM ${NODE_IMAGE} AS base
-WORKDIR /app
 
-FROM base AS builder
+# Step 1: Build the Next.js app on the native host CPU (BUILDPLATFORM).
+# Running Webpack and bundling under native architecture is ~20x faster than QEMU emulation.
+FROM --platform=$BUILDPLATFORM ${NODE_IMAGE} AS builder
+WORKDIR /app
 
 RUN apk add --no-cache python3 make g++ linux-headers
 
@@ -14,6 +15,17 @@ RUN --mount=type=cache,target=/root/.npm \
 COPY . ./
 ENV NEXT_TELEMETRY_DISABLED=1
 RUN npm run build
+
+# Step 2: Compile native C++ modules (better-sqlite3) for the TARGETPLATFORM.
+# Only compiles native C++ modules; avoids running heavy Next.js build under QEMU.
+FROM ${NODE_IMAGE} AS native-deps
+WORKDIR /app
+
+RUN apk add --no-cache python3 make g++ linux-headers
+
+COPY package.json ./
+RUN --mount=type=cache,target=/root/.npm \
+  npm install --include=optional --no-audit --no-fund
 
 # Tailscale static binaries for Alpine Linux (bundled so tunnel works in Docker).
 # Fetches the latest stable tailscale and tailscaled. Override with --build-arg.
@@ -57,12 +69,11 @@ COPY --from=builder /app/open-sse ./open-sse
 COPY --from=builder /app/src/mitm ./src/mitm
 # Standalone tracing may omit packages loaded through dynamic imports.
 COPY --from=builder /app/node_modules/node-forge ./node_modules/node-forge
-# SQLite is loaded dynamically by src/lib/db/driver.js; keep the native driver
-# and its runtime dependency tree in the final image. This prevents production
-# from silently falling back to the single-process sql.js adapter.
-COPY --from=builder /app/node_modules/better-sqlite3 ./node_modules/better-sqlite3
-COPY --from=builder /app/node_modules/bindings ./node_modules/bindings
-COPY --from=builder /app/node_modules/file-uri-to-path ./node_modules/file-uri-to-path
+# SQLite is loaded dynamically by src/lib/db/driver.js; keep the target-architecture
+# native driver compiled in native-deps.
+COPY --from=native-deps /app/node_modules/better-sqlite3 ./node_modules/better-sqlite3
+COPY --from=native-deps /app/node_modules/bindings ./node_modules/bindings
+COPY --from=native-deps /app/node_modules/file-uri-to-path ./node_modules/file-uri-to-path
 # Ensure `next` is available at runtime in case tracing did not include it.
 COPY --from=builder /app/node_modules/next ./node_modules/next
 COPY --from=builder /app/node_modules/sql.js ./node_modules/sql.js

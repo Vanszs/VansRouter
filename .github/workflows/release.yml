@@ -150,8 +150,8 @@ jobs:
           retention-days: 1
 
   publish-npm:
-    needs: [check-branch, package-npm, build-and-verify-ghcr]
-    if: needs.check-branch.outputs.is-main == 'true' && needs.package-npm.result == 'success' && needs.build-and-verify-ghcr.result == 'success'
+    needs: [check-branch, package-npm]
+    if: needs.check-branch.outputs.is-main == 'true' && needs.package-npm.result == 'success'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
@@ -186,8 +186,8 @@ jobs:
         run: npm publish "$RUNNER_TEMP/npm-package/vansrouter-${RELEASE_VERSION}.tgz" --provenance
 
   promote-ghcr:
-    needs: [check-branch, publish-npm, build-and-verify-ghcr]
-    if: needs.check-branch.outputs.is-main == 'true' && needs.publish-npm.result == 'success' && needs.build-and-verify-ghcr.result == 'success'
+    needs: [check-branch, build-and-verify-ghcr]
+    if: needs.check-branch.outputs.is-main == 'true' && needs.build-and-verify-ghcr.result == 'success'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
