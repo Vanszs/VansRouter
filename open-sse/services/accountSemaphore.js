@@ -155,8 +155,19 @@ export function acquire(semaphoreKey, options = {}) {
 
 function drainQueue(semaphoreKey, gate) {
   while (gate.queue.length > 0 && gate.running < gate.maxConcurrency) {
-    if (gate.blockedUntil && Date.now() < gate.blockedUntil) break;
-    gate.blockedUntil = null;
+    if (gate.blockedUntil) {
+      const remaining = gate.blockedUntil - Date.now();
+      if (remaining > 0) {
+        if (!gate.blockTimer) {
+          gate.blockTimer = setTimeout(() => {
+            gate.blockTimer = null;
+            drainQueue(semaphoreKey, gate);
+          }, remaining);
+        }
+        break;
+      }
+      gate.blockedUntil = null;
+    }
     const entry = gate.queue.shift();
     if (!entry) break;
     gate.running++;
@@ -188,10 +199,11 @@ export function markBlocked(semaphoreKey, durationMs) {
   // Auto-wakeup: drain queued waiters when the block expires instead of
   // leaving them stuck until the next acquire() call.
   if (gate.blockTimer) clearTimeout(gate.blockTimer);
+  const delay = Math.max(1, gate.blockedUntil - Date.now());
   gate.blockTimer = setTimeout(() => {
     gate.blockTimer = null;
     drainQueue(semaphoreKey, gate);
-  }, gate.blockedUntil - Date.now());
+  }, delay);
 }
 
 /**
