@@ -1,6 +1,5 @@
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
-import { createRequire } from "node:module";
 
 const projectRoot = dirname(fileURLToPath(import.meta.url));
 // CLI bundling needs workspace root so tracing includes hoisted node_modules (slim ~50MB).
@@ -38,7 +37,7 @@ const nextConfig = {
     // Tree-shake heavy barrel imports to cut compile + bundle size
     optimizePackageImports: ["@xyflow/react", "@dnd-kit/core", "@dnd-kit/sortable", "material-symbols", "marked"],
   },
-  webpack: (config, { isServer }) => {
+  webpack: (config, { isServer, webpack }) => {
     // Ignore fs/path modules in browser bundle
     if (!isServer) {
       config.resolve.fallback = {
@@ -47,20 +46,18 @@ const nextConfig = {
         path: false,
       };
     }
-    // Mark bun: and node:sqlite as ignored — they're runtime-only,
-    // webpack can't bundle them. serverExternalPackages handles named packages
-    // but dynamic `import("bun:sqlite")` / `import("node:sqlite")` still leak
-    // into the client graph. IgnorePlugin via createRequire (webpack is
-    // transitive dep via next, not a direct dep we can ESM-import).
-    // NOTE: only ignore bun:sqlite and node:sqlite — NOT node:fs/node:path
-    // which ARE needed server-side by next/standalone.
-    const require = createRequire(import.meta.url);
-    const webpack = require("webpack");
-    config.plugins = [...(config.plugins || []),
-      new webpack.IgnorePlugin({
+    if (isServer) {
+      // These are runtime built-ins, not npm packages. Keep the imports intact
+      // even when building under a runtime that does not provide both modules.
+      config.externals = [
+        { "bun:sqlite": "commonjs bun:sqlite", "node:sqlite": "commonjs node:sqlite" },
+        ...(Array.isArray(config.externals) ? config.externals : config.externals ? [config.externals] : []),
+      ];
+    } else {
+      config.plugins = [...(config.plugins || []), new webpack.IgnorePlugin({
         resourceRegExp: /^(bun:sqlite|node:sqlite)$/,
-      }),
-    ];
+      })];
+    }
     // Exclude non-source dirs from watcher to reduce inotify load
     config.watchOptions = {
       ...config.watchOptions,
