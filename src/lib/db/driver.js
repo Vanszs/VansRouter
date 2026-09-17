@@ -1,156 +1,84 @@
 // NOTE: driver.js → migrate.js → metaStore.js → driver.js forms a static import cycle,
 // but all cross-module references use dynamic `await import()` which breaks the cycle at runtime.
 import fs from "node:fs";
-import path from "node:path";
-import { ensureDirs, DATA_FILE, BACKUPS_DIR } from "./paths.js";
+import { ensureDirs, DATA_FILE } from "./paths.js";
 
 // Use global to survive Next.js dev hot-reload (module state resets on reload)
 if (!global._dbAdapter) global._dbAdapter = { instance: null, initPromise: null, logged: false };
 const state = global._dbAdapter;
 
-/**
- * Pre-flight integrity check (PRAGMA quick_check) to detect and auto-recover from
- * truncated or corrupt SQLite files (e.g. abrupt SIGKILL / OS crash before WAL checkpoint).
- */
-async function verifyDatabaseIntegrity(file) {
-  if (!fs.existsSync(file)) return true;
-  try {
-    if (fs.statSync(file).size === 0) return true;
-  } catch {
-    return true;
-  }
-
-  // Check with bun:sqlite if running under Bun
+/** Open an existing database read-only, without treating driver failures as corruption. */
+async function openIntegrityDatabase(file) {
   if (process.versions.bun) {
-    let bunDb = null;
-    try {
-      const { Database } = await import("bun:sqlite");
-      bunDb = new Database(file, { readonly: true });
-      const row = bunDb.prepare("PRAGMA quick_check;").get();
-      return row?.quick_check === "ok";
-    } catch {
-      return false;
-    } finally {
-      try { bunDb?.close(); } catch {}
-    }
+    const { Database } = await import("bun:sqlite");
+    return new Database(file, { readonly: true });
   }
 
-  // Check with better-sqlite3 first (standard Node driver)
-  let betterDb = null;
+  const errors = [];
   try {
     const Database = (await import("better-sqlite3")).default;
-    betterDb = new Database(file, { readonly: true, fileMustExist: true });
-    const row = betterDb.pragma("quick_check");
-    const isOk = Array.isArray(row) ? row[0]?.quick_check === "ok" : (row?.quick_check === "ok" || row === "ok");
-    return Boolean(isOk);
-  } catch {
-    // If better-sqlite3 fails or isn't built, try node:sqlite
-  } finally {
-    try { betterDb?.close(); } catch {}
+    return new Database(file, { readonly: true, fileMustExist: true });
+  } catch (error) {
+    // Native bindings can fail to load at construction rather than import time.
+    errors.push(error);
   }
-
-  // Fallback to node:sqlite (Node >= 22.5)
-  let nodeDb = null;
   try {
     const { DatabaseSync } = await import("node:sqlite");
-    nodeDb = new DatabaseSync(file, { readOnly: true });
-    const row = nodeDb.prepare("PRAGMA quick_check;").get();
-    return row?.quick_check === "ok";
-  } catch {
-    return false;
-  } finally {
-    try { nodeDb?.close(); } catch {}
+    return new DatabaseSync(file, { readOnly: true });
+  } catch (error) {
+    errors.push(error);
   }
+  throw new AggregateError(errors, `[DB] Cannot open ${file} for a read-only integrity check. Database files were left in place.`);
 }
 
-async function checkAndRecoverDatabase() {
-  if (!fs.existsSync(DATA_FILE)) return;
-  const isHealthy = await verifyDatabaseIntegrity(DATA_FILE);
-  if (isHealthy) return;
-
-  const stamp = new Date().toISOString().replace(/[:.]/g, "-");
-  const corruptFile = `${DATA_FILE}.corrupt-${stamp}`;
-  console.error(`[DB] ❌ CRITICAL: ${DATA_FILE} is malformed or corrupted! Quarantining to ${corruptFile}...`);
-
+/** Fail closed on any preflight error; backup restoration must be an explicit action. */
+async function verifyDatabaseIntegrity(file) {
   try {
-    fs.renameSync(DATA_FILE, corruptFile);
-    // Also quarantine any detached WAL / SHM files
-    for (const ext of ["-wal", "-shm"]) {
-      const aux = `${DATA_FILE}${ext}`;
-      if (fs.existsSync(aux)) fs.renameSync(aux, `${corruptFile}${ext}`);
-    }
-  } catch (e) {
-    console.error(`[DB] Failed to quarantine corrupt database: ${e.message}`);
+    fs.statSync(file);
+  } catch (error) {
+    if (error.code === "ENOENT") return false;
+    throw error;
   }
 
-  // Scan BACKUPS_DIR for candidate backups to restore from
-  if (fs.existsSync(BACKUPS_DIR)) {
-    const candidates = [];
-    try {
-      const entries = fs.readdirSync(BACKUPS_DIR, { withFileTypes: true });
-      for (const entry of entries) {
-        if (entry.isFile() && entry.name.endsWith(".sqlite")) {
-          candidates.push(path.join(BACKUPS_DIR, entry.name));
-        } else if (entry.isDirectory()) {
-          const sub = path.join(BACKUPS_DIR, entry.name, "data.sqlite");
-          if (fs.existsSync(sub)) candidates.push(sub);
-        }
-      }
-    } catch {}
-
-    candidates.sort((a, b) => {
-      try {
-        return fs.statSync(b).mtimeMs - fs.statSync(a).mtimeMs;
-      } catch {
-        return 0;
-      }
-    });
-
-    for (const candidate of candidates) {
-      if (await verifyDatabaseIntegrity(candidate)) {
-        try {
-          fs.copyFileSync(candidate, DATA_FILE);
-          console.warn(`[DB] ✅ Auto-recovered healthy database from backup: ${candidate}`);
-          return;
-        } catch (e) {
-          console.error(`[DB] Failed restoring backup ${candidate}: ${e.message}`);
-        }
-      }
+  const db = await openIntegrityDatabase(file);
+  try {
+    const rows = db.prepare("PRAGMA quick_check;").all();
+    if (!rows.length || rows.some((row) => row.quick_check !== "ok")) {
+      throw new Error(`[DB] Integrity check failed for ${file}: ${rows.map((row) => row.quick_check).join("; ") || "no result"}. Database files were left in place.`);
     }
+  } finally {
+    try { db.close(); } catch {}
   }
-
-  throw new Error(
-    `[DB] FATAL: ${DATA_FILE} is malformed and no valid backup was found in ${BACKUPS_DIR}. ` +
-    `Refusing to initialize a fresh empty database to prevent silent data loss. ` +
-    `Preserved corrupt copy at ${corruptFile}.`
-  );
+  return true;
 }
 
-async function tryBunSqlite() {
+async function tryBunSqlite(errors) {
   // Bun runtime only — built-in, no install needed
   if (!process.versions.bun) return null;
   try {
     const { createBunSqliteAdapter } = await import("./adapters/bunSqliteAdapter.js");
     return await createBunSqliteAdapter(DATA_FILE);
   } catch (e) {
+    errors.push(e);
     console.warn(`[DB] bun:sqlite unavailable: ${e.message}`);
     return null;
   }
 }
 
-async function tryBetterSqlite() {
+async function tryBetterSqlite(errors) {
   // Skip on Bun — better-sqlite3 native bindings unsupported
   if (process.versions.bun) return null;
   try {
     const { createBetterSqliteAdapter } = await import("./adapters/betterSqliteAdapter.js");
     return createBetterSqliteAdapter(DATA_FILE);
   } catch (e) {
+    errors.push(e);
     console.warn(`[DB] better-sqlite3 unavailable: ${e.message}`);
     return null;
   }
 }
 
-async function tryNodeSqlite() {
+async function tryNodeSqlite(errors) {
   // Built-in since Node 22.5.0 — no install needed. Skip under Bun (no node:sqlite).
   if (process.versions.bun) return null;
   const [maj, min] = process.versions.node.split(".").map(Number);
@@ -159,6 +87,7 @@ async function tryNodeSqlite() {
     const { createNodeSqliteAdapter } = await import("./adapters/nodeSqliteAdapter.js");
     return await createNodeSqliteAdapter(DATA_FILE);
   } catch (e) {
+    errors.push(e);
     console.warn(`[DB] node:sqlite unavailable: ${e.message}`);
     return null;
   }
@@ -176,13 +105,15 @@ async function trySqlJs() {
 
 async function initAdapter() {
   ensureDirs();
-  await checkAndRecoverDatabase();
-  // Order per runtime:
-  //   Bun:  bun:sqlite → sql.js
-  //   Node: better-sqlite3 → node:sqlite (≥22.5) → sql.js
-  let adapter = await tryBunSqlite();
-  if (!adapter) adapter = await tryBetterSqlite();
-  if (!adapter) adapter = await tryNodeSqlite();
+  const existingDatabase = await verifyDatabaseIntegrity(DATA_FILE);
+  // Native drivers understand WAL; sql.js may only initialize a new database.
+  const errors = [];
+  let adapter = await tryBunSqlite(errors);
+  if (!adapter) adapter = await tryBetterSqlite(errors);
+  if (!adapter) adapter = await tryNodeSqlite(errors);
+  if (!adapter && existingDatabase) {
+    throw new AggregateError(errors, `[DB] No native SQLite driver could initialize ${DATA_FILE}. Refusing sql.js fallback for an existing database because it cannot read SQLite WAL files.`);
+  }
   if (!adapter) adapter = await trySqlJs();
   if (!adapter) throw new Error("[DB] No SQLite driver available (bun/better/node/sql.js all failed)");
 
