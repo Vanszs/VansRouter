@@ -293,6 +293,17 @@ function ComboCard({ combo, getCaps, activeProviders = [], copied, onCopy, onEdi
                 <span className="text-[10px] text-text-muted">+{combo.models.length - 3} more</span>
               )}
             </div>
+            {combo.models.length > 0 && combo.models.every((model) => getCaps?.(model)?.vision === false) && (
+              <button
+                type="button"
+                onClick={onEdit}
+                className="mt-1 inline-flex items-center gap-1 text-[11px] text-amber-600 hover:text-amber-700 dark:text-amber-400 dark:hover:text-amber-300"
+                title="Edit combo to add a vision-capable model"
+              >
+                <span className="material-symbols-outlined text-[14px]">visibility_off</span>
+                Cannot see images — edit combo
+              </button>
+            )}
             {/* Fusion: judge picker (Auto = first model) */}
             {isFusion && (
               <div className="mt-2 flex min-w-0 flex-wrap items-center gap-1.5">
@@ -481,9 +492,11 @@ function ComboFormModal({ isOpen, combo, onClose, onSave, activeProviders, kindF
   const [name, setName] = useState(combo?.name || "");
   const [models, setModels] = useState(combo?.models || []);
   const [showModelSelect, setShowModelSelect] = useState(false);
+  const [modelPickerCap, setModelPickerCap] = useState(null);
   const [saving, setSaving] = useState(false);
   const [nameError, setNameError] = useState("");
   const [modelAliases, setModelAliases] = useState({});
+  const { getCaps } = useModelCaps();
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
@@ -636,9 +649,23 @@ function ComboFormModal({ isOpen, combo, onClose, onSave, activeProviders, kindF
             </DndContext>
             )}
 
+            {models.length > 0 && models.every((model) => getCaps?.(model)?.vision === false) && (
+              <p className="mt-2 flex items-center gap-1 text-[11px] text-amber-600 dark:text-amber-400">
+                <span className="material-symbols-outlined text-[14px]">visibility_off</span>
+                Cannot see images — add a vision-capable model.
+                <button
+                  type="button"
+                  onClick={() => { setModelPickerCap("vision"); setShowModelSelect(true); }}
+                  className="font-medium underline underline-offset-2 hover:no-underline"
+                >
+                  Add one
+                </button>
+              </p>
+            )}
+
             {/* Add Model button */}
             <button
-              onClick={() => setShowModelSelect(true)}
+              onClick={() => { setModelPickerCap(null); setShowModelSelect(true); }}
               className="w-full mt-2 py-2 border border-dashed border-black/10 dark:border-white/10 rounded-lg text-xs text-primary font-medium hover:text-primary hover:border-primary/50 transition-colors flex items-center justify-center gap-1"
             >
               <span className="material-symbols-outlined text-[16px]">add</span>
@@ -674,6 +701,7 @@ function ComboFormModal({ isOpen, combo, onClose, onSave, activeProviders, kindF
           modelAliases={modelAliases}
           title="Add Model to Combo"
           kindFilter={kindFilter}
+          capFilter={modelPickerCap}
           addedModelValues={models}
           closeOnSelect={false}
         />
