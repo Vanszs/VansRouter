@@ -25,6 +25,7 @@ import { resolveCursorModels } from "open-sse/services/cursorModels.js";
 import { updateProviderCredentials } from "@/sse/services/tokenRefresh";
 import { resolveConnectionProxyConfig } from "@/lib/network/connectionProxy";
 import { capabilitiesFromServiceKind, getCapabilitiesForModel } from "open-sse/providers/capabilities.js";
+import { aggregateComboCapabilities } from "open-sse/services/combo.js";
 import { guardedFetch } from "@/shared/utils/ssrfGuard.js";
 
 const UPSTREAM_CONNECTION_RE = /[-_][0-9a-f]{8,}$/i;
@@ -390,11 +391,16 @@ async function buildAllModelEntries(kindFilter, combos, customModels, modelAlias
   kindFilter = new Set(kindFilter);
   const entries = [];
 
+  const comboByName = Object.fromEntries(combos.map((c) => [c.name, c.models]));
+
   for (const combo of combos) {
     if (!comboMatchesKinds(combo, kindFilter)) continue;
     const entry = { id: `combo/${combo.name}`, object: "model", owned_by: "combo" };
     if (combo.kind === "webSearch" || combo.kind === "webFetch") {
       entry.kind = combo.kind;
+    } else {
+      const comboCaps = aggregateComboCapabilities(combo.models, comboByName);
+      if (comboCaps) entry.capabilities = comboCaps;
     }
     entries.push(entry);
   }
@@ -409,7 +415,12 @@ async function buildAllModelEntries(kindFilter, combos, customModels, modelAlias
       for (const model of providerModels) {
         if (!kindFilter.has(modelKind(model))) continue;
         if (isDisabled(alias, model.id)) continue;
-        entries.push({ id: `${alias}/${model.id}`, object: "model", owned_by: alias });
+        entries.push({
+          id: `${alias}/${model.id}`,
+          object: "model",
+          owned_by: alias,
+          capabilities: getCapabilitiesForModel(providerId, model.id),
+        });
       }
     }
     for (const [providerId, providerInfo] of Object.entries(AI_PROVIDERS)) {

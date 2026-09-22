@@ -90,6 +90,45 @@ export function reorderByCapabilities(models, required) {
     .map((x) => x.m);
 }
 
+// Aggregate the capabilities of a combo's targets. Features a request may need
+// are unioned (any target can serve them), `tools` is intersected (every target
+// in the chain must accept them), reasoning fields follow the primary target,
+// and the limits are the safe extremes: smallest window, largest output.
+// Members that name another combo resolve through comboLookup (name → models).
+export function aggregateComboCapabilities(comboModels, comboLookup = null, _depth = 0) {
+  const members = Array.isArray(comboModels) ? comboModels.filter((id) => typeof id === "string") : [];
+  if (members.length === 0 || _depth > 6) return null;
+
+  const allCaps = members.map((fullId) => {
+    const name = stripComboPrefix(fullId);
+    if (comboLookup?.[name]) {
+      return aggregateComboCapabilities(comboLookup[name], comboLookup, _depth + 1)
+        ?? getCapabilitiesForModel(null, name);
+    }
+    const slash = fullId.indexOf("/");
+    return getCapabilitiesForModel(slash > 0 ? fullId.slice(0, slash) : null, fullId.slice(slash + 1));
+  });
+
+  const primary = allCaps[0];
+  const any = (key) => allCaps.some((c) => c[key] === true);
+  return {
+    vision: any("vision"),
+    pdf: any("pdf"),
+    audioInput: any("audioInput"),
+    videoInput: any("videoInput"),
+    imageOutput: any("imageOutput"),
+    audioOutput: any("audioOutput"),
+    search: any("search"),
+    tools: allCaps.every((c) => c.tools === true),
+    reasoning: primary.reasoning,
+    thinkingFormat: primary.thinkingFormat,
+    thinkingCanDisable: primary.thinkingCanDisable,
+    thinkingRange: primary.thinkingRange,
+    contextWindow: Math.min(...allCaps.map((c) => c.contextWindow)),
+    maxOutput: Math.max(...allCaps.map((c) => c.maxOutput)),
+  };
+}
+
 /**
  * Track rotation state per combo (for round-robin strategy)
  * @type {Map<string, { index: number, consecutiveUseCount: number }>}
