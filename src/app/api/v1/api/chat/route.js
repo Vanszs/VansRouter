@@ -1,4 +1,5 @@
 import { handleChat } from "@/sse/handlers/chat.js";
+import { readBoundedJson } from "@/sse/utils/boundedBody.js";
 import { initTranslators } from "open-sse/translator/index.js";
 import { transformToOllama } from "open-sse/utils/ollamaTransform.js";
 
@@ -26,10 +27,9 @@ export async function POST(request) {
   
   const clonedReq = request.clone();
   let modelName = "llama3.2";
-  try {
-    const body = await clonedReq.json();
-    modelName = body.model || "llama3.2";
-  } catch {}
+  const { body, error } = await readBoundedJson(clonedReq);
+  if (error) return error;
+  modelName = body.model || "llama3.2";
 
   const response = await handleChat(request);
   return transformToOllama(response, modelName);

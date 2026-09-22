@@ -1,3 +1,4 @@
+import { readBoundedJson } from "../utils/boundedBody.js";
 import {
   getProviderCredentials,
   markAccountUnavailable,
@@ -26,12 +27,10 @@ import { assertPublicUrl } from "@/shared/utils/ssrfGuard.js";
  * @param {Request} request
  */
 export async function handleFetch(request) {
-  let body;
-  try {
-    body = await request.json();
-  } catch {
+  const { body, error } = await readBoundedJson(request);
+  if (error) {
     log.warn("FETCH", "Invalid JSON body");
-    return errorResponse(HTTP_STATUS.BAD_REQUEST, "Invalid JSON body");
+    return error;
   }
 
   const reqUrl = new URL(request.url);

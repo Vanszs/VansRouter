@@ -1,4 +1,5 @@
 import { handleChat } from "@/sse/handlers/chat.js";
+import { readBoundedJson } from "@/sse/utils/boundedBody.js";
 import { initTranslators } from "open-sse/translator/index.js";
 
 let initialized = false;
@@ -26,7 +27,8 @@ export async function OPTIONS() {
  */
 export async function POST(request) {
   await ensureInitialized();
-  const body = await request.json();
+  const { body, error } = await readBoundedJson(request);
+  if (error) return error;
   body._compact = true;
   const newRequest = new Request(request.url, {
     method: "POST",

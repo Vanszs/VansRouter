@@ -1,3 +1,4 @@
+import { readBoundedJson } from "../utils/boundedBody.js";
 import {
   getProviderCredentials,
   markAccountUnavailable,
@@ -28,12 +29,8 @@ const NO_AUTH_PROVIDERS = new Set(["sdwebui", "comfyui"]);
  * @param {Request} request
  */
 export async function handleImageGeneration(request) {
-  let body;
-  try {
-    body = await request.json();
-  } catch {
-    return errorResponse(HTTP_STATUS.BAD_REQUEST, "Invalid JSON body");
-  }
+  const { body, error } = await readBoundedJson(request);
+  if (error) return error;
 
   const url = new URL(request.url);
   const preferredConnectionId = request.headers.get("x-connection-id") || null;

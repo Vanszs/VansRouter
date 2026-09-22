@@ -1,3 +1,4 @@
+import { readBoundedJson } from "../utils/boundedBody.js";
 import {
   extractApiKey, isValidApiKey,
   getProviderCredentials, markAccountUnavailable,
@@ -24,12 +25,8 @@ const CREDENTIALED_PROVIDERS = new Set(
 );
 
 export async function handleTts(request) {
-  let body;
-  try {
-    body = await request.json();
-  } catch {
-    return errorResponse(HTTP_STATUS.BAD_REQUEST, "Invalid JSON body");
-  }
+  const { body, error } = await readBoundedJson(request);
+  if (error) return error;
 
   const url = new URL(request.url);
   const modelStr = body.model;

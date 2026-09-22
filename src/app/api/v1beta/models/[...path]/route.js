@@ -1,4 +1,5 @@
 import { handleChat } from "@/sse/handlers/chat.js";
+import { readBoundedJson } from "@/sse/utils/boundedBody.js";
 import {
   clearAccountError,
   getProviderCredentials,
@@ -82,7 +83,8 @@ export async function POST(request, { params }) {
         .replace(":generateContent", "");
     }
 
-    const body = await request.json();
+    const { body, error } = await readBoundedJson(request);
+    if (error) return error;
 
     if (isGeminiNativeTtsRequest(model, body)) {
       return await forwardGeminiNativeRequest(request, body, model, action);
