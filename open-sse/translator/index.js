@@ -2,6 +2,7 @@ import { FORMATS } from "./formats.js";
 import { ensureToolCallIds, fixMissingToolResponses } from "./concerns/toolCall.js";
 import { prepareClaudeRequest } from "./formats/claude.js";
 import { cloakClaudeTools, decloakStreamChunk } from "../utils/claudeCloaking.js";
+import { restoreToolNames } from "../utils/opencodeFingerprint.js";
 import { filterToOpenAIFormat } from "./formats/openai.js";
 import { normalizeThinkingConfig } from "../services/provider.js";
 import { applyThinking, captureThinking } from "./concerns/thinkingUnified.js";
@@ -134,8 +135,10 @@ export function translateResponse(targetFormat, sourceFormat, chunk, state) {
   // translateRequest() suffixes client tools for OAuth-cloaked Claude providers
   // even when no format conversion is needed, so streamed tool_use blocks must
   // be decloaked here or the client sees an unknown ("_ide"-suffixed) tool.
+  // restoreToolNames covers the other shapes (OpenAI deltas, Responses items) an
+  // executor may have renamed on the wire, e.g. OpenCode's free-tier fingerprint.
   if (sourceFormat === targetFormat) {
-    return [decloakStreamChunk(chunk, state?.toolNameMap)];
+    return [restoreToolNames(decloakStreamChunk(chunk, state?.toolNameMap), state?.toolNameMap)];
   }
 
   let results = [chunk];
@@ -148,7 +151,8 @@ export function translateResponse(targetFormat, sourceFormat, chunk, state) {
   const directFn = getResponseTranslator(`${targetFormat}:${sourceFormat}`);
   if (directFn) {
     const converted = directFn(chunk, state);
-    return converted ? (Array.isArray(converted) ? converted : [converted]) : [];
+    const directResults = converted ? (Array.isArray(converted) ? converted : [converted]) : [];
+    return restoreToolNames(directResults, state?.toolNameMap);
   }
 
   // Step 1: target -> openai (if target is not openai)
@@ -178,6 +182,10 @@ export function translateResponse(targetFormat, sourceFormat, chunk, state) {
       results = finalResults;
     }
   }
+
+  // Restore caller tool spellings for renames applied on the wire; the direct
+  // routes above return earlier, so only the pivoted results reach this point.
+  results = restoreToolNames(results, state?.toolNameMap);
 
   // Attach OpenAI intermediate results for logging
   if (openaiResults && sourceFormat !== FORMATS.OPENAI && targetFormat !== FORMATS.OPENAI) {

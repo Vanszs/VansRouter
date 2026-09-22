@@ -5,6 +5,7 @@ import { injectReasoningContent } from "../utils/reasoningContentInjector.js";
 import { ANTHROPIC_API_VERSION } from "../providers/shared.js";
 import crypto from "node:crypto";
 import { resolveSessionId } from "../utils/sessionManager.js";
+import { applyFingerprintToolNames } from "../utils/opencodeFingerprint.js";
 
 // OpenCode free tier limits requests per egress IP.
 const IP_LIMIT_BODY = /limit|rate|quota|exhausted|capacity|too many|retry/i;
@@ -17,9 +18,7 @@ const OPENCODE_UA = "opencode/1.18.31";
 const RESPONSES_MODELS = new Set(["muse-spark-1.2-contributor-free", "muse-spark-1.3-contributor-free"]);
 
 // The free tier gates on the lowercase file-search quartet: every request must
-// declare bash/glob/grep/read. Presence is matched case-insensitively so a
-// caller that already declares `Bash` is never sent a duplicate `bash`.
-const FINGERPRINT_TOOLS = ["bash", "glob", "grep", "read"];
+// declare bash/glob/grep/read exactly once. See utils/opencodeFingerprint.js.
 const DECOY_DESCRIPTION = "This tool is currently unavailable and must not be used.";
 
 // OpenCode's free tier rejects requests whose User-Agent has no version >= 1.17.0.
@@ -103,15 +102,6 @@ function isMessagesModel(model) {
   return MESSAGES_MODELS.has(baseModelId(model));
 }
 
-function declaredToolName(tool) {
-  if (!tool || typeof tool !== "object" || Array.isArray(tool)) return "";
-  if (typeof tool.name === "string" && tool.name.trim()) return tool.name.trim();
-  const fn = tool.function;
-  return fn && typeof fn === "object" && !Array.isArray(fn) && typeof fn.name === "string"
-    ? fn.name.trim()
-    : "";
-}
-
 // Decoy shape follows the lane: Responses takes flat entries, Chat Completions
 // nests them under `function`, the Messages API uses Anthropic's input_schema form.
 function decoyTool(name, shape) {
@@ -130,12 +120,10 @@ function decoyTool(name, shape) {
 function cloakFingerprintTools(body, shape) {
   if (!body || typeof body !== "object") return;
   const hadTools = Array.isArray(body.tools) && body.tools.length > 0;
-  const tools = Array.isArray(body.tools) ? body.tools : [];
-  const declared = new Set(tools.map((tool) => declaredToolName(tool).toLowerCase()));
-  // Copy instead of push: a passthrough body shares the caller's tools array,
-  // and combo fallbacks must not inherit the decoys.
-  const missing = FINGERPRINT_TOOLS.filter((name) => !declared.has(name));
-  if (missing.length) body.tools = [...tools, ...missing.map((name) => decoyTool(name, shape))];
+  // Canonicalise the quartet (Claude Code's `Bash` goes upstream as `bash`) and
+  // append whatever the caller did not declare; the rename map is recorded on the
+  // body so the response side can hand the client its own spellings back.
+  applyFingerprintToolNames(body, (name) => decoyTool(name, shape));
   // Responses uses auto once the quartet is supplied; chat requests with no
   // caller tools use none so the injected decoys cannot be selected. Anthropic
   // tool_choice shapes are left to the client.
