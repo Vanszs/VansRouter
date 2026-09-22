@@ -50,6 +50,30 @@ describe("RTK size threshold (#132)", () => {
     expect(compressMessages(body, true)).toBe(null);
   });
 
+  it("skips an oversized body before reading it when bytes are known", () => {
+    let reads = 0;
+    const body = new Proxy({}, {
+      get() {
+        reads++;
+        throw new Error("body read");
+      },
+    });
+    expect(compressMessages(body, true, RTK_MAX_BODY_BYTES + 1)).toBe(null);
+    expect(reads).toBe(0);
+  });
+
+  it("reads a body when an explicit small size allows compression", () => {
+    let reads = 0;
+    const body = new Proxy(toolResult("src/app.js:12:  const value = 1;\n".repeat(40)), {
+      get(target, property, receiver) {
+        reads++;
+        return Reflect.get(target, property, receiver);
+      },
+    });
+    expect(compressMessages(body, true, 1)).not.toBe(null);
+    expect(reads).toBeGreaterThan(0);
+  });
+
   it("still compresses a small body", () => {
     const body = toolResult("src/app.js:12:  const value = 1;\n".repeat(40));
     const stats = compressMessages(body, true);
