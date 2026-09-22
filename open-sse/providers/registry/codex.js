@@ -60,6 +60,9 @@ export default {
     { id: "gpt-5.4-mini-review", name: "GPT 5.4 Mini Review", upstreamModelId: "gpt-5.4-mini", quotaFamily: "review" },
     { id: "gpt-5.3-codex-spark", name: "GPT 5.3 Codex Spark" },
     { id: "gpt-5.3-codex-spark-review", name: "GPT 5.3 Codex Spark Review", upstreamModelId: "gpt-5.3-codex-spark", quotaFamily: "review" },
+    // Codex CLI's auto-review virtual model. Unlike the "-review" variants above it is not derived
+    // from a base model, so it is forwarded verbatim instead of having "-review" stripped.
+    { id: "codex-auto-review", name: "Codex Auto Review", upstreamModelId: "codex-auto-review", quotaFamily: "review" },
     {
       id: "gpt-image-2.5",
       name: "GPT Image 2.5",
