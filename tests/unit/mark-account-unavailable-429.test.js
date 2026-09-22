@@ -83,6 +83,24 @@ describe("markAccountUnavailable 429 cooldown classification", () => {
     expect(result.shouldFallback).toBe(true);
     // Non-429 uses ERROR_RULES: 401 → 2min
     expect(result.cooldownMs).toBe(2 * 60 * 1000);
+
+    // Auth failures still mark the account unavailable.
+    const update = updateProviderConnection.mock.calls[0][1];
+    expect(update.errorCode).toBe(401);
+    expect(update.testStatus).toBe("unavailable");
+    expect(update["modelLock_gpt-4o"]).toBeDefined();
+  });
+
+  it("does not lock the account for a request-scoped 4xx", async () => {
+    const result = await markAccountUnavailable(
+      "conn-1",
+      400,
+      JSON.stringify({ error: { message: "This model's maximum context length is 1048576 tokens" } }),
+      "openai",
+      "gpt-4o"
+    );
+    expect(result).toEqual({ shouldFallback: false, cooldownMs: 0 });
+    expect(updateProviderConnection).not.toHaveBeenCalled();
   });
 
   it("still respects provider-specific resetsAtMs override", async () => {

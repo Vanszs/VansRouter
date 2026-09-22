@@ -320,7 +320,7 @@ export async function markAccountUnavailable(connectionId, status, errorText, pr
   // leave the account lock state untouched.
   const disableLock = options && options.disableLock === true;
 
-  const reason = typeof errorText === "string" ? errorText.slice(0, 100) : "Provider error";
+  const reason = typeof errorText === "string" ? errorText.slice(0, 200) : "Provider error";
 
   if (disableLock) {
     // Toggle OFF: skip the lock write entirely so the account stays usable.
