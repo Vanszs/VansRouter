@@ -14,13 +14,46 @@ import { ROLE, OPENAI_BLOCK, RESPONSES_ITEM, OPENAI_FINISH, MODEL_FALLBACK } fro
  * Translate OpenAI chunk to Responses API events
  * @returns {Array} Array of events with { event, data } structure
  */
+
+// Upstream Chat Completions usage → Responses API usage shape. Responses clients
+// (Codex CLI) size their context gauge and auto-compaction from the usage on
+// response.completed; without it the gauge stays at 0 and the session grows
+// until the upstream context limit rejects it.
+//
+// Kept under state.responsesUsage, NOT state.usage: state.usage is owned by the
+// stream layer, which fills it with normalizeUsage()-shaped counts
+// (prompt_tokens/prompt_tokens_details) for logging and cost accounting.
+function toResponsesUsage(usage) {
+  if (!usage || typeof usage !== "object") return null;
+
+  const inputTokens = [usage.input_tokens, usage.prompt_tokens].find(Number.isFinite) ?? 0;
+  const outputTokens = [usage.output_tokens, usage.completion_tokens].find(Number.isFinite) ?? 0;
+  const responseUsage = {
+    input_tokens: inputTokens,
+    output_tokens: outputTokens,
+    total_tokens: Number.isFinite(usage.total_tokens) ? usage.total_tokens : inputTokens + outputTokens
+  };
+  const cachedTokens = [usage.input_tokens_details?.cached_tokens, usage.prompt_tokens_details?.cached_tokens].find(Number.isFinite);
+  const reasoningTokens = [usage.output_tokens_details?.reasoning_tokens, usage.completion_tokens_details?.reasoning_tokens].find(Number.isFinite);
+  if (Number.isFinite(cachedTokens)) responseUsage.input_tokens_details = { cached_tokens: cachedTokens };
+  if (Number.isFinite(reasoningTokens)) responseUsage.output_tokens_details = { reasoning_tokens: reasoningTokens };
+
+  return responseUsage;
+}
+
 export function openaiToOpenAIResponsesResponse(chunk, state) {
   if (!chunk) {
     return flushEvents(state);
   }
-  
+
+  // Capture upstream usage BEFORE the choices guard: the last OpenAI chunk may
+  // carry usage together with an empty choices array, and it must not be dropped.
+  if (chunk.usage) {
+    state.responsesUsage = toResponsesUsage(chunk.usage);
+  }
+
   if (!chunk.choices?.length) return [];
-  
+
   const events = [];
   const nextSeq = () => ++state.seq;
   
@@ -112,7 +145,15 @@ export function openaiToOpenAIResponsesResponse(chunk, state) {
     for (const i in state.msgItemAdded) closeMessage(state, emit, i);
     closeReasoning(state, emit);
     for (const i in state.funcCallIds) closeToolCall(state, emit, i);
-    sendCompleted(state, emit);
+    // Upstreams report usage either on the finish chunk or on a trailing chunk
+    // with an empty choices array (OpenAI does the latter). When it is not known
+    // yet, leave completion to flushEvents(), which runs once the upstream
+    // stream ends and by then has seen every chunk — but only on the direct
+    // openai:openai-responses route. This converter also runs as the second hop
+    // of a pivot, where the terminal null chunk is dropped before reaching it
+    // and deferring would swallow the terminal event.
+    const flushReachesUs = state.targetFormat === FORMATS.OPENAI;
+    if (state.responsesUsage || !flushReachesUs) sendCompleted(state, emit);
   }
 
   return events;
@@ -337,7 +378,8 @@ function sendCompleted(state, emit) {
         created_at: state.created,
         status: "completed",
         background: false,
-        error: null
+        error: null,
+        ...(state.responsesUsage ? { usage: state.responsesUsage } : {})
       }
     });
   }
