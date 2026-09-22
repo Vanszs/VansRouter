@@ -23,7 +23,7 @@ Verdict codes: **A** still broken here · **B** already fixed here · **C** not 
 | 129 | Add Muse Spark from muse.ai | feature | **A / needs info** | clarify target service; name collides with existing Meta AI `muse-spark-web` |
 | 123 | Cline non-stream envelope unread | bug | **B** (fixed in v0.91.22) + **C** for catalog | close as fixed; optionally adopt upstream live catalog |
 | 121 | OpenCode Zen missing / Zen key ≠ Go | bug+feature | **A/C** (seed stale) + **C** for the 403 gate | port upstream free-tier fix `6091ff597`/`93837af09` (executor `opencode.js` is 471 lines behind) + 1.3 seed entry; no Zen apikey provider in either repo |
-| 118 | SQLite corruption wipes accounts | bug | **B** (fixed in v0.91.22) | verify with reporter, close; residual: no rolling backups |
+| 118 | SQLite corruption wipes accounts | bug | **B** (fail-closed; manual restore) | verify with reporter, close; rolling `VACUUM INTO` backups still absent |
 | 107 | tokenrouter gpt-5.6-luna HTTP 405 | bug | **A** + **C** | adopt upstream host `api.tokenrouter.com`; ours points at `www` (405 proven) |
 
 **Fix status in working tree, 2026-09-22** (details + proof per entry below): #107 **fixed** (host switch,
@@ -171,18 +171,20 @@ Proof: `pnpm test tests/unit/opencode-session.test.js tests/unit/opencode-muse-s
 a 429/session-drift report exists. Still UNVERIFIABLE live: end-to-end free-tier call (needs a running instance
 from inside OpenCode's allowed client, or an OpenCode install).
 
-## #118 — SQLite corruption silently destroys all connections — **B (fixed in v0.91.22)**
+## #118 — SQLite corruption silently destroys all connections — **B (fail-closed; manual restore; not all four asks met)**
 
 Fixed by `d3b631a1b` (2026-09-15 20:08 +0700, "fix(release): fast multi-arch docker build and sqlite
 corruption recovery"), shipped in `v0.91.22` (`git describe --contains d3b631a1b` → `v0.91.22~5`).
 
-All four asks from the issue, mapped to code:
+The issue's asks, mapped to code (not all four are met; the outcome is fail-closed with manual restore):
 
 1. Startup integrity detection + refusal/auto-swap — `src/lib/db/driver.js:12-15` (`verifyDatabaseIntegrity`,
    `PRAGMA quick_check`, bun/better-sqlite3/node:sqlite fallbacks), `:66-84` quarantine of `data.sqlite`
    plus `-wal`/`-shm` to `.corrupt-<timestamp>`, `:86-118` scan `BACKUPS_DIR` newest-first and restore the
    first healthy copy, `:123` FATAL "Refusing to initialize a fresh empty database to prevent silent data
-   loss" when no backup is healthy, `:179` invoked during adapter init.
+   loss" when no backup is healthy, `:179` invoked during adapter init. The current outcome is fail-closed with
+   manual restore: PR #130 removed automatic restore from `db/backups/`; the cited auto-swap path describes the
+   earlier v0.91.22 behavior.
 2. Graceful-shutdown checkpoint — `PRAGMA wal_checkpoint(TRUNCATE)` wired to `SIGINT`/`SIGTERM` in
    `src/lib/db/adapters/betterSqliteAdapter.js:25,38-56` and `:37-86` of `nodeSqliteAdapter.js`
    (also `bunSqliteAdapter.js:24-56`).
