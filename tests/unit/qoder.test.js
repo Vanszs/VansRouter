@@ -9,7 +9,21 @@
  *   - device flow URL construction
  */
 
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
+
+// execute() reaches Qoder through proxyAwareFetch and fetches the live model
+// config over the network — both stubbed so it can be driven offline.
+const { fetchMock } = vi.hoisted(() => ({ fetchMock: vi.fn() }));
+vi.mock("../../open-sse/utils/proxyFetch.js", () => ({ proxyAwareFetch: fetchMock }));
+vi.mock("../../open-sse/services/qoderModels.js", async (importOriginal) => ({
+  ...(await importOriginal()),
+  getQoderModelConfig: async (_credentials, key) => ({
+    key,
+    is_reasoning: false,
+    max_output_tokens: 8192,
+    source: "system",
+  }),
+}));
 import crypto from "crypto";
 
 import { qoderEncodeBody } from "../../src/lib/qoder/encoding.js";
@@ -385,6 +399,31 @@ describe("normalizeMessages", () => {
   });
 });
 
+describe("isBillingBlock", () => {
+  const { isBillingBlock } = qoderExecutorInternals;
+
+  it("detects code 110 as a string", () => {
+    expect(isBillingBlock('{"code":"110","message":"Billing daily count exceeded"}')).toBe(true);
+  });
+
+  it("detects code 110 as a number", () => {
+    expect(isBillingBlock('{"code":110,"message":"Billing daily count exceeded"}')).toBe(true);
+  });
+
+  it("detects codes 112, 10605 and pricingUrl", () => {
+    expect(isBillingBlock('{"code":"112","message":"Quota exhausted"}')).toBe(true);
+    expect(isBillingBlock('{"code":"10605","message":"Queue limit"}')).toBe(true);
+    expect(isBillingBlock('{"message":"Upgrade","pricingUrl":"https://x"}')).toBe(true);
+  });
+
+  it("ignores unrelated codes and code-110 prefixes", () => {
+    expect(isBillingBlock('{"code":"500","message":"Internal error"}')).toBe(false);
+    expect(isBillingBlock('{"code":"1105","message":"Other"}')).toBe(false);
+    expect(isBillingBlock("error 110 means billing in the docs")).toBe(false);
+    expect(isBillingBlock(null)).toBe(false);
+  });
+});
+
 describe("wrapQoderSSE", () => {
   const { wrapQoderSSE } = qoderExecutorInternals;
 
@@ -436,15 +475,19 @@ describe("wrapQoderSSE", () => {
   });
 
   // Regression for review finding #3: chunks could leak past [DONE] when
-  // the success branch had no doneEmitted guard. We synthesize an error
-  // envelope (which sets doneEmitted=true) followed by a valid envelope
-  // and assert the second envelope is NOT forwarded.
+  // the success branch had no doneEmitted guard. One good frame goes out
+  // first (so the peek sees a healthy stream), then an error envelope which
+  // sets doneEmitted=true; the valid envelope after it must NOT be forwarded.
   it("does not forward chunks after [DONE] has been emitted", async () => {
+    const okEnv = JSON.stringify({
+      statusCodeValue: 200,
+      body: JSON.stringify({ choices: [{ delta: { content: "hi" } }] }),
+    });
     const errorEnv = JSON.stringify({ statusCodeValue: 500, body: "boom" });
     const validInner = JSON.stringify({ choices: [{ delta: { content: "leak" } }] });
     const validEnv = JSON.stringify({ statusCodeValue: 200, body: validInner });
     const wrapped = await wrapQoderSSE(
-      makeResponse([`data: ${errorEnv}\n\ndata: ${validEnv}\n\n`]),
+      makeResponse([`data: ${okEnv}\n\ndata: ${errorEnv}\n\ndata: ${validEnv}\n\n`]),
       "qoder/auto",
     );
     const out = await drain(wrapped);
@@ -482,17 +525,117 @@ describe("wrapQoderSSE", () => {
     expect(cancelled).toBe(true);
   });
 
-  it("upstream error envelope produces an error chunk + [DONE]", async () => {
+  it("upstream first-frame error envelope becomes a real HTTP error", async () => {
     const env = JSON.stringify({ statusCodeValue: 503, body: "service unavailable" });
     const wrapped = await wrapQoderSSE(makeResponse([`data: ${env}\n\n`]), "qoder/lite");
+    expect(wrapped.status).toBe(503);
+    expect(await wrapped.json()).toEqual({
+      error: { message: "service unavailable", code: 503 },
+    });
+  });
+
+  it("returns 403 when the first frame is a code-110 billing block", async () => {
+    const billingEnv = JSON.stringify({
+      statusCodeValue: 403,
+      body: '{"code":"110","message":"Billing daily count exceeded"}',
+    });
+    const wrapped = await wrapQoderSSE(makeResponse([`data: ${billingEnv}\n\n`]), "qoder/qfmodel");
+    expect(wrapped.status).toBe(403);
+    const json = await wrapped.json();
+    expect(json.error.message).toContain("Billing daily count exceeded");
+  });
+
+  it("accepts a numeric-string statusCodeValue and an object body", async () => {
+    const billingEnv = JSON.stringify({
+      statusCodeValue: "429",
+      body: { code: 110, message: "Billing daily count exceeded" },
+    });
+    const wrapped = await wrapQoderSSE(makeResponse([`data: ${billingEnv}\n\n`]), "qoder/qfmodel");
+    expect(wrapped.status).toBe(403);
+  });
+
+  it("maps an out-of-range first-frame error status to 502", async () => {
+    const env = JSON.stringify({ statusCodeValue: "302", body: "weird redirect" });
+    const wrapped = await wrapQoderSSE(makeResponse([`data: ${env}\n\n`]), "qoder/lite");
+    expect(wrapped.status).toBe(502);
+  });
+
+  it("emits a structured 403 error chunk for a mid-stream billing envelope", async () => {
+    const okEnv = JSON.stringify({
+      statusCodeValue: 200,
+      body: JSON.stringify({ choices: [{ delta: { content: "hi" } }] }),
+    });
+    const billingEnv = JSON.stringify({
+      statusCodeValue: 403,
+      body: '{"code":"110","message":"Billing daily count exceeded"}',
+    });
+    const wrapped = await wrapQoderSSE(
+      makeResponse([`data: ${okEnv}\n\ndata: ${billingEnv}\n\n`]),
+      "qoder/qfmodel",
+    );
     const out = await drain(wrapped);
-    expect(out).toContain("[qoder error 503");
-    expect(out).toContain("data: [DONE]\n\n");
+    expect(out).not.toContain("[qoder error");
+    const errEvent = out.split("\n\n").find((e) => e.includes("quota_error"));
+    expect(errEvent).toBeDefined();
+    const errChunk = JSON.parse(errEvent.slice("data: ".length));
+    expect(errChunk.error.status).toBe(403);
+    expect(errChunk.error.message).toContain("Billing daily count exceeded");
+    expect(errChunk.choices).toBeUndefined();
+  });
+
+  it("keeps assistant text that merely mentions code 110", async () => {
+    const inner = JSON.stringify({
+      choices: [{ delta: { content: "error 110 means billing daily count exceeded" } }],
+    });
+    const env = JSON.stringify({ statusCodeValue: 200, body: inner });
+    const wrapped = await wrapQoderSSE(makeResponse([`data: ${env}\n\n`]), "qoder/qfmodel");
+    expect(wrapped.status).toBe(200);
+    const out = await drain(wrapped);
+    expect(out).toContain("billing daily count exceeded");
+    expect(out).not.toContain("[qoder error");
   });
 
   it("non-ok responses are returned unchanged (no transform)", async () => {
     const r = new Response("not ok", { status: 500 });
     const wrapped = await wrapQoderSSE(r, "qoder/auto");
     expect(wrapped).toBe(r);
+  });
+
+  it("fails the request when the proxy fails instead of replaying it direct", async () => {
+    fetchMock.mockRejectedValueOnce(
+      new Error("[ProxyFetch] Proxy required but failed (strictProxy=true): ECONNREFUSED"),
+    );
+    const executor = new QoderExecutor();
+    const credentials = {
+      accessToken: "dt-test",
+      providerSpecificData: { userId: "u-test", machineId: "m-test" },
+    };
+    await expect(
+      executor.execute({
+        model: "qoder/auto",
+        body: { messages: [{ role: "user", content: "hi" }] },
+        credentials,
+        log: null,
+      }),
+    ).rejects.toThrow(/strictProxy=true/);
+    expect(fetchMock.mock.calls[0][2]).toMatchObject({ strictProxy: true });
+  });
+
+  it("keeps caller cancellation as the rejection reason", async () => {
+    fetchMock.mockRejectedValueOnce(
+      new Error("[ProxyFetch] Proxy required but failed (strictProxy=true): aborted"),
+    );
+    const executor = new QoderExecutor();
+    const controller = new AbortController();
+    controller.abort(new Error("client gone"));
+    await expect(
+      executor.execute({
+        model: "qoder/auto",
+        body: { messages: [{ role: "user", content: "hi" }] },
+        credentials: { accessToken: "dt-test", providerSpecificData: { userId: "u-test" } },
+        signal: controller.signal,
+        log: null,
+      }),
+    ).rejects.toThrow("client gone");
   });
 });
