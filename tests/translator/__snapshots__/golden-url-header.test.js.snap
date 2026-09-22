@@ -2446,8 +2446,8 @@ exports[`GOLDEN buildUrl (default executor providers) > together → url (stream
 
 exports[`GOLDEN buildUrl (default executor providers) > tokenrouter → url (stream + non-stream) 1`] = `
 {
-  "nonStream": "https://www.tokenrouter.com/v1/chat/completions",
-  "stream": "https://www.tokenrouter.com/v1/chat/completions",
+  "nonStream": "https://api.tokenrouter.com/v1/chat/completions",
+  "stream": "https://api.tokenrouter.com/v1/chat/completions",
 }
 `;
 

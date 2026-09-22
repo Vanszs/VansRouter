@@ -11,16 +11,57 @@ const IP_LIMIT_BODY = /limit|rate|quota|exhausted|capacity|too many|retry/i;
 // Models that use /zen/v1/messages (claude format)
 const MESSAGES_MODELS = new Set();
 
-const OPENCODE_UA = "opencode";
+const OPENCODE_UA = "opencode/1.18.31";
 // Models served by /zen/v1/responses; every other model stays on /chat/completions.
-const RESPONSES_MODELS = new Set(["muse-spark-1.2-contributor-free"]);
+const RESPONSES_MODELS = new Set(["muse-spark-1.2-contributor-free", "muse-spark-1.3-contributor-free"]);
+
+// OpenCode's free tier rejects requests whose User-Agent has no version >= 1.17.0.
+function hasValidOpencodeVersion(ua) {
+  const m = String(ua || "").match(/opencode\/(\d+)\.(\d+)/i);
+  if (!m) return false;
+  const major = parseInt(m[1], 10);
+  const minor = parseInt(m[2], 10);
+  return major > 1 || (major === 1 && minor >= 17);
+}
+
+// A client-supplied session id in a non-canonical shape makes the free tier 403,
+// so ignore anything that does not match the canonical format upstream validates.
+const CANONICAL_SESSION = /^ses_[0-9a-f]{12}[0-9A-Za-z]{14}$/;
+const CANONICAL_REQUEST = /^msg_[0-9a-f]{12}[0-9A-Za-z]{14}$/;
+
+function canonicalId(value, pattern) {
+  const trimmed = typeof value === "string" ? value.trim() : "";
+  return pattern.test(trimmed) ? trimmed : "";
+}
+
+function clientSession(sessionId) {
+  return canonicalId(sessionId, CANONICAL_SESSION);
+}
+
+function clientRequestId(requestId) {
+  return canonicalId(requestId, CANONICAL_REQUEST);
+}
+
+// Canonical id formats OpenCode validates: ses_<12 hex><14 base62> / msg_<12 hex><14 base62>.
+const BASE62 = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+
+function timeHex(value) {
+  return Array.from({ length: 6 }, (_, i) =>
+    Number((value >> BigInt(40 - 8 * i)) & 0xffn).toString(16).padStart(2, "0")
+  ).join("");
+}
+
+function randomPart() {
+  const bytes = crypto.randomBytes(14);
+  return Array.from(bytes, (b) => BASE62[b % 62]).join("");
+}
 
 function generateRequestId() {
-  return `msg_${crypto.randomUUID().replace(/-/g, "")}`;
+  return `msg_${timeHex(BigInt(Date.now()) * 0x1000n + 1n)}${randomPart()}`;
 }
 
 function generateSessionId() {
-  return `ses_${crypto.randomUUID().replace(/-/g, "")}`;
+  return `ses_${timeHex(~(BigInt(Date.now()) * 0x1000n))}${randomPart()}`;
 }
 
 // Strip the thinking suffix "model(level)" so registry lookups hit the base id.
@@ -99,10 +140,10 @@ export class OpenCodeExecutor extends BaseExecutor {
     return {
       "Content-Type": "application/json",
       "Authorization": "Bearer public",
-      "User-Agent": raw["user-agent"]?.toLowerCase().includes("opencode") ? raw["user-agent"] : "opencode",
+      "User-Agent": hasValidOpencodeVersion(raw["user-agent"]) ? raw["user-agent"] : OPENCODE_UA,
       "x-opencode-client": raw["x-opencode-client"] || "desktop",
-      "x-opencode-session": raw["x-opencode-session"] || credentials?.runtimeOpencodeSession || `ses_${crypto.randomUUID().replaceAll("-", "")}`,
-      "x-opencode-request": raw["x-opencode-request"] || `msg_${crypto.randomUUID().replaceAll("-", "")}`,
+      "x-opencode-session": clientSession(raw["x-opencode-session"]) || clientSession(credentials?.runtimeOpencodeSession) || generateSessionId(),
+      "x-opencode-request": clientRequestId(raw["x-opencode-request"]) || generateRequestId(),
       "x-opencode-project": raw["x-opencode-project"] || "global",
       "Accept": stream ? "text/event-stream" : "*/*"
     };

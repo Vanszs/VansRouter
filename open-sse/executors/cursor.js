@@ -186,6 +186,26 @@ function isComposerModel(model) {
   return /^composer(?:-|$)/i.test(modelId);
 }
 
+// Cursor upstream only speaks current model ids; legacy/aliased ids and the
+// "default"/"auto" placeholders come back as an empty completion.
+const LEGACY_CURSOR_MODELS = {
+  "claude-3-5-sonnet": "claude-4.5-sonnet",
+  "claude-3-5-sonnet-20241022": "claude-4.5-sonnet",
+  "claude-3-5-sonnet-20240620": "claude-4.5-sonnet",
+  "claude-3-5-haiku": "claude-4.5-haiku",
+  "gpt-4o": "gpt-5.2",
+  "gpt-4o-mini": "gpt-5.2",
+};
+
+const DEFAULT_CURSOR_UPSTREAM_MODEL = process.env.CURSOR_DEFAULT_UPSTREAM_MODEL || "claude-4.5-sonnet";
+
+export function resolveCursorUpstreamModel(model) {
+  const bare = String(model || "").split("/").pop() || "";
+  const withoutDate = bare.replace(/-\d{8}$/, "");
+  const id = LEGACY_CURSOR_MODELS[withoutDate] || withoutDate;
+  return id === "default" || id === "auto" ? DEFAULT_CURSOR_UPSTREAM_MODEL : id;
+}
+
 function visibleComposerContentFromThinking(thinking) {
   if (!thinking) return "";
   const endTag = "</think>";
@@ -313,8 +333,13 @@ export class CursorExecutor extends BaseExecutor {
     const reasoningEffort = body.reasoning_effort || null;
     // Detect Claude Code UA to force Agent mode (issue #643)
     const ua = credentials?.rawHeaders?.["user-agent"] || "";
-    const forceAgentMode = ua.includes("claude-cli") || ua.includes("claude-code") || ua.includes("Claude Code");
-    return generateCursorBody(messages, model, tools, reasoningEffort, forceAgentMode);
+    // cu/default + cu/auto must also run through Agent mode, otherwise Cursor
+    // answers with an empty completion.
+    const bareModel = String(model || "").split("/").pop() || "";
+    const upstreamModel = resolveCursorUpstreamModel(model);
+    const forceAgentMode = ua.includes("claude-cli") || ua.includes("claude-code") || ua.includes("Claude Code")
+      || bareModel === "default" || bareModel === "auto";
+    return generateCursorBody(messages, upstreamModel, tools, reasoningEffort, forceAgentMode);
   }
 
   async makeFetchRequest(url, headers, body, signal, proxyOptions = null) {

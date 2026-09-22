@@ -47,6 +47,10 @@ import { updateProviderCredentials, checkAndRefreshToken } from "../services/tok
 import { getProjectIdForConnection } from "open-sse/services/projectId.js";
 import { maybeWaitForCooldown, MAX_COOLDOWN_RETRIES } from "open-sse/utils/cooldownRetry.js";
 
+// Hard ceiling before JSON.parse. Override per deployment; default keeps
+// even a 1200-message agent session (≈700 KB) working while rejecting runaway bodies.
+const MAX_REQUEST_BODY_BYTES = parseInt(process.env.NINEROUTER_MAX_BODY_BYTES || "", 10) || 8 * 1024 * 1024;
+
 function checkCircuitBreaker(provider, proxyHash = null, enabled = true) {
   if (!enabled) return false;
   return proxyHash ? isProviderInCooldown(provider, proxyHash) : isProviderFullyBlocked(provider);
@@ -59,8 +63,22 @@ function checkCircuitBreaker(provider, proxyHash = null, enabled = true) {
  */
 export async function handleChat(request, clientRawRequest = null) {
   let body;
+  // Read as text so an oversized body is rejected (413) before JSON.parse
+  // and the synchronous RTK pass can stall the event loop on it.
+  const rawBody = await request.text().catch(() => null);
+  if (rawBody === null) {
+    log.warn("CHAT", "Invalid JSON body");
+    return errorResponse(HTTP_STATUS.BAD_REQUEST, "Invalid JSON body");
+  }
+  if (rawBody.length > MAX_REQUEST_BODY_BYTES) {
+    log.warn("CHAT", `Body too large: ${rawBody.length} bytes > ${MAX_REQUEST_BODY_BYTES}`);
+    return errorResponse(
+      HTTP_STATUS.PAYLOAD_TOO_LARGE,
+      `Request body too large (${rawBody.length} bytes, limit ${MAX_REQUEST_BODY_BYTES}). Raise NINEROUTER_MAX_BODY_BYTES to accept it.`
+    );
+  }
   try {
-    body = await request.json();
+    body = JSON.parse(rawBody);
   } catch {
     log.warn("CHAT", "Invalid JSON body");
     return errorResponse(HTTP_STATUS.BAD_REQUEST, "Invalid JSON body");

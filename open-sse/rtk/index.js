@@ -8,11 +8,16 @@ let _rtkEnabled = false;
 export function setRtkEnabled(v) { _rtkEnabled = !!v; }
 export function isRtkEnabled() { return _rtkEnabled; }
 
+// The per-message sync pass is what stalls the event loop on ~700 KB agent
+// sessions, so skip compression entirely above this size. Override per deployment.
+export const RTK_MAX_BODY_BYTES = parseInt(process.env.NINEROUTER_RTK_MAX_BYTES || "", 10) || 512 * 1024;
+
 // Compress tool_result content in-place. Returns stats or null if disabled/failed.
 export function compressMessages(body, enabled) {
   if (enabled === undefined) enabled = _rtkEnabled;
   if (!enabled) return null;
   if (!body) return null;
+  if (JSON.stringify(body).length > RTK_MAX_BODY_BYTES) return null;
 
   // Kiro format: conversationState.history + conversationState.currentMessage
   if (body.conversationState) {

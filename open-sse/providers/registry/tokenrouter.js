@@ -15,17 +15,17 @@ export default {
   },
   category: "apikey",
   transport: {
-    baseUrl: "https://www.tokenrouter.com/v1/chat/completions",
-    validateUrl: "https://www.tokenrouter.com/v1/models",
+    baseUrl: "https://api.tokenrouter.com/v1/chat/completions",
+    validateUrl: "https://api.tokenrouter.com/v1/models",
   },
   serviceKinds: ["llm", "embedding", "image"],
   embeddingConfig: {
-    baseUrl: "https://www.tokenrouter.com/v1/embeddings",
+    baseUrl: "https://api.tokenrouter.com/v1/embeddings",
     authType: "apikey",
     authHeader: "bearer",
   },
   imageConfig: {
-    baseUrl: "https://www.tokenrouter.com/v1/images/generations",
+    baseUrl: "https://api.tokenrouter.com/v1/images/generations",
   },
   models: [
     { id: "minimax-m3", name: "MiniMax M3" },
@@ -53,6 +53,6 @@ export default {
     { id: "qwen3.6-plus", name: "Qwen 3.6 Plus" },
     { id: "mimo-v2.5-pro", name: "Mimo V2.5 Pro" },
   ],
-  modelsFetcher: { url: "https://www.tokenrouter.com/v1/models", type: "openai" },
+  modelsFetcher: { url: "https://api.tokenrouter.com/v1/models", type: "openai" },
   passthroughModels: true,
 };
