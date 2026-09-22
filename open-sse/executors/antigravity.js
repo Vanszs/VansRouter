@@ -342,12 +342,16 @@ export class AntigravityExecutor extends BaseExecutor {
 
     this._lastSessionId = transformedRequest.sessionId; // cached for buildHeaders (base.execute order)
 
+    // The agent (chat) path must NOT carry `requestType`: Google then buckets the
+    // request and returns a detail-free 429 RESOURCE_EXHAUSTED even with quota left.
+    // Also drops the field when it leaks in via the ...body spread below.
+    delete body.requestType;
+
     return {
       ...body,
       project: projectId,
       model: upstreamModel,
       userAgent: "antigravity",
-      requestType: "agent",
       requestId: buildIdeRequestId({ body, request: transformedRequest, credentials, model, requestType: "agent" }),
       request: transformedRequest
     };

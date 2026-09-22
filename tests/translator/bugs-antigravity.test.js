@@ -316,4 +316,37 @@ describe("Antigravity executor", () => {
       },
     });
   });
+
+  // Google buckets a chat request that carries requestType as exhausted (429
+  // RESOURCE_EXHAUSTED without detail) even with quota left, so the agent path
+  // must not send one.
+  it("omits requestType for Gemini and Claude Antigravity models", () => {
+    for (const model of ["gemini-3.5-flash-low", "claude-opus-4-6-thinking"]) {
+      const out = translateRequest(FORMATS.OPENAI, FORMATS.ANTIGRAVITY, model, {
+        messages: [{ role: "user", content: "hi" }],
+      }, true, { projectId: "p", connectionId: "c" });
+
+      expect(out.requestType, `model=${model}`).toBeUndefined();
+    }
+  });
+
+  it("drops requestType leaked from a translated envelope", () => {
+    const out = new AntigravityExecutor().transformRequest("gemini-3.5-flash-low", {
+      project: "project-1",
+      model: "gemini-3.5-flash-low",
+      userAgent: "antigravity",
+      requestType: "agent",
+      request: { contents: [{ role: "user", parts: [{ text: "hi" }] }], sessionId: "sess-1" },
+    }, true, { projectId: "project-1", connectionId: "conn-1" });
+
+    expect(out.requestType).toBeUndefined();
+  });
+
+  it("keeps requestType image_gen for image models", () => {
+    const out = new AntigravityExecutor().transformRequest("gemini-3.1-flash-image", {
+      request: { contents: [{ role: "user", parts: [{ text: "a cat" }] }] },
+    }, true, { projectId: "p", connectionId: "c" });
+
+    expect(out.requestType).toBe("image_gen");
+  });
 });
