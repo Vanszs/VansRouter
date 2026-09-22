@@ -23,7 +23,7 @@ export async function OPTIONS() {
 
 /**
  * POST /v1/responses - OpenAI Responses API format
- * 
+ *
  * AI SDKs (e.g. @ai-sdk/openai) omit `stream` field for non-streaming calls.
  * chatCore.js treats `body.stream !== false` as stream:true, causing SSE response.
  * Fix: inject stream:false default before passing to handleChat.

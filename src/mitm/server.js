@@ -96,10 +96,10 @@ function collectBodyRaw(req) {
 function extractModel(url, body) {
   const urlMatch = url.match(/\/models\/([^/:]+)/);
   if (urlMatch) return urlMatch[1];
-  
+
   // Skip parsing if body is binary (AWS EventStream, Protocol Buffers, etc.)
   if (isBinaryData(body)) return null;
-  
+
   try {
     const parsed = JSON.parse(body.toString());
     if (parsed.conversationState) {

@@ -67,7 +67,7 @@ export function hasValuableContent(chunk, format) {
     const hasText = chunk.delta?.text && chunk.delta.text !== "";
     const hasThinking = chunk.delta?.thinking && chunk.delta.thinking !== "";
     const hasInputJson = chunk.delta?.partial_json && chunk.delta.partial_json !== "";
-    
+
     if (isContentBlockDelta && !hasText && !hasThinking && !hasInputJson) {
       return false;
     }
@@ -80,8 +80,8 @@ export function hasValuableContent(chunk, format) {
 // Fix invalid id (generic or too short)
 export function fixInvalidId(parsed) {
   if (parsed.id && (parsed.id === "chat" || parsed.id === "completion" || parsed.id.length < 8)) {
-    const fallbackId = parsed.extend_fields?.requestId || 
-                      parsed.extend_fields?.traceId || 
+    const fallbackId = parsed.extend_fields?.requestId ||
+                      parsed.extend_fields?.traceId ||
                       Date.now().toString(36);
     parsed.id = `chatcmpl-${fallbackId}`;
     return true;
