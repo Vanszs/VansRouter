@@ -172,6 +172,17 @@ export async function handleChatCore({ body, modelInfo, credentials, log, onCred
     }
   }
 
+  // Per-request opt-out: client can bypass all token savers via header
+  const tokenSaverEnabled = clientRawRequest?.headers?.[TOKEN_SAVER_HEADER]?.toLowerCase() !== "off";
+
+  // Cursor's translator rewrites tool_result into user text, so RTK must run on
+  // the source body before translation. Every other pair translates the tool
+  // shapes 1:1 — keep the post-translate pass there so those providers are
+  // untouched (and a retry never re-compresses an already-compressed body).
+  const preTranslateRtk = provider === "cursor"
+    ? compressMessages(body, tokenSaverEnabled && rtkEnabled, clientBodyBytes)
+    : null;
+
   const clientRequestedStreaming = body.stream === true || sourceFormat === FORMATS.ANTIGRAVITY || sourceFormat === FORMATS.GEMINI || sourceFormat === FORMATS.GEMINI_CLI;
   const providerRequiresStreaming = PROVIDERS[provider]?.forceStream === true;
   let stream = providerRequiresStreaming ? true : (body.stream !== false);
@@ -301,11 +312,8 @@ export async function handleChatCore({ body, modelInfo, credentials, log, onCred
     translatedBody.tools = defaultClaudeToolType(translatedBody.tools);
   }
 
-  // Per-request opt-out: client can bypass all token savers via header
-  const tokenSaverEnabled = clientRawRequest?.headers?.[TOKEN_SAVER_HEADER]?.toLowerCase() !== "off";
-
-  // RTK: compress tool_result content
-  const rtkStats = compressMessages(translatedBody, tokenSaverEnabled && rtkEnabled, clientBodyBytes);
+  // RTK: compress tool_result content. Skipped when already done pre-translate.
+  const rtkStats = preTranslateRtk || compressMessages(translatedBody, tokenSaverEnabled && rtkEnabled, clientBodyBytes);
   const rtkLine = formatRtkLog(rtkStats);
   if (rtkLine) console.log(rtkLine);
 

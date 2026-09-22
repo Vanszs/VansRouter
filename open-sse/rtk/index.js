@@ -1,5 +1,6 @@
 // RTK port: compress tool_result content in LLM request bodies
-// Injected at the top of translateRequest (before any format translation)
+// Applied in chatCore: on the source-format body for Cursor (its translator folds
+// tool results into user XML), post-translate for every other provider.
 import { RAW_CAP, MIN_COMPRESS_SIZE } from "./constants.js";
 import { autoDetectFilter } from "./autodetect.js";
 import { safeApply } from "./applyFilter.js";
