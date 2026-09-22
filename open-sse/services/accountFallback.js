@@ -37,7 +37,7 @@ export function checkFallbackError(status, errorText, backoffLevel = 0) {
     // Text-based rule: match substring in error message
     if (rule.text && lowerError && lowerError.includes(rule.text)) {
       if (rule.shouldFallback === false) {
-        return { shouldFallback: false, cooldownMs: 0 };
+        return { shouldFallback: false, cooldownMs: 0, isContentFilter: rule.isContentFilter === true };
       }
       if (rule.backoff) {
         const newLevel = Math.min(backoffLevel + 1, BACKOFF_CONFIG.maxLevel);
