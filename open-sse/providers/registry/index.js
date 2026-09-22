@@ -143,6 +143,9 @@ import p141 from "./alitp-intl.js";
 import p142 from "./xquik.js";
 import p143 from "./ollama-search.js";
 import p144 from "./zed.js";
+import p145 from "./selfhosted-embedding.js";
+import p146 from "./selfhosted-stt.js";
+import p147 from "./selfhosted-tts.js";
 
 export default [
   p0,
@@ -289,5 +292,8 @@ export default [
   p141,
   p142,
   p143,
-  p144
+  p144,
+  p145,
+  p146,
+  p147
 ];
