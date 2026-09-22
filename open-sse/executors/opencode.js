@@ -2,6 +2,7 @@ import { BaseExecutor } from "./base.js";
 import { PROVIDERS } from "../config/providers.js";
 import { getThinkingLevels } from "../providers/thinkingLevels.js";
 import { injectReasoningContent } from "../utils/reasoningContentInjector.js";
+import { ANTHROPIC_API_VERSION } from "../providers/shared.js";
 import crypto from "node:crypto";
 import { resolveSessionId } from "../utils/sessionManager.js";
 
@@ -9,11 +10,17 @@ import { resolveSessionId } from "../utils/sessionManager.js";
 const IP_LIMIT_BODY = /limit|rate|quota|exhausted|capacity|too many|retry/i;
 
 // Models that use /zen/v1/messages (claude format)
-const MESSAGES_MODELS = new Set();
+const MESSAGES_MODELS = new Set(["union-alpha"]);
 
 const OPENCODE_UA = "opencode/1.18.31";
 // Models served by /zen/v1/responses; every other model stays on /chat/completions.
 const RESPONSES_MODELS = new Set(["muse-spark-1.2-contributor-free", "muse-spark-1.3-contributor-free"]);
+
+// The free tier gates on the lowercase file-search quartet: every request must
+// declare bash/glob/grep/read. Presence is matched case-insensitively so a
+// caller that already declares `Bash` is never sent a duplicate `bash`.
+const FINGERPRINT_TOOLS = ["bash", "glob", "grep", "read"];
+const DECOY_DESCRIPTION = "This tool is currently unavailable and must not be used.";
 
 // OpenCode's free tier rejects requests whose User-Agent has no version >= 1.17.0.
 function hasValidOpencodeVersion(ua) {
@@ -92,6 +99,50 @@ function isResponsesModel(model) {
   return RESPONSES_MODELS.has(baseModelId(model));
 }
 
+function isMessagesModel(model) {
+  return MESSAGES_MODELS.has(baseModelId(model));
+}
+
+function declaredToolName(tool) {
+  if (!tool || typeof tool !== "object" || Array.isArray(tool)) return "";
+  if (typeof tool.name === "string" && tool.name.trim()) return tool.name.trim();
+  const fn = tool.function;
+  return fn && typeof fn === "object" && !Array.isArray(fn) && typeof fn.name === "string"
+    ? fn.name.trim()
+    : "";
+}
+
+// Decoy shape follows the lane: Responses takes flat entries, Chat Completions
+// nests them under `function`, the Messages API uses Anthropic's input_schema form.
+function decoyTool(name, shape) {
+  if (shape === "claude") {
+    return { name, description: DECOY_DESCRIPTION, input_schema: { type: "object", properties: {} } };
+  }
+  if (shape === "chat") {
+    return {
+      type: "function",
+      function: { name, description: DECOY_DESCRIPTION, parameters: { type: "object", properties: {} } },
+    };
+  }
+  return { type: "function", name, description: DECOY_DESCRIPTION, parameters: { type: "object", properties: {} } };
+}
+
+function cloakFingerprintTools(body, shape) {
+  if (!body || typeof body !== "object") return;
+  const hadTools = Array.isArray(body.tools) && body.tools.length > 0;
+  const tools = Array.isArray(body.tools) ? body.tools : [];
+  const declared = new Set(tools.map((tool) => declaredToolName(tool).toLowerCase()));
+  // Copy instead of push: a passthrough body shares the caller's tools array,
+  // and combo fallbacks must not inherit the decoys.
+  const missing = FINGERPRINT_TOOLS.filter((name) => !declared.has(name));
+  if (missing.length) body.tools = [...tools, ...missing.map((name) => decoyTool(name, shape))];
+  // Responses uses auto once the quartet is supplied; chat requests with no
+  // caller tools use none so the injected decoys cannot be selected. Anthropic
+  // tool_choice shapes are left to the client.
+  if (shape === "responses" && !body.tool_choice) body.tool_choice = "auto";
+  else if (shape === "chat" && !hadTools && !body.tool_choice) body.tool_choice = "none";
+}
+
 function resolveOpencodeSession(body, credentials) {
   const headers = credentials?.rawHeaders || {};
   return resolveSessionId({
@@ -137,6 +188,12 @@ export class OpenCodeExecutor extends BaseExecutor {
     );
     if (credentials) credentials.runtimeOpencodeSession = this._currentSessionId;
     if (isResponsesModel(model)) {
+      // ponytail: only the model confirmed auto-only; widen the allowlist when
+      // there is evidence for another one.
+      if ("tool_choice" in body && body.tool_choice !== "auto"
+        && this.config.quirks?.forceAutoToolChoiceModels?.includes(baseModelId(model))) {
+        body.tool_choice = "auto";
+      }
       // Responses API names the output cap max_output_tokens and takes thinking
       // as reasoning:{effort,summary} — normalize the Chat fields at this boundary.
       if (body.max_output_tokens === undefined) {
@@ -147,17 +204,19 @@ export class OpenCodeExecutor extends BaseExecutor {
       delete body.max_completion_tokens;
       normalizeOpencodeReasoning(model, body);
     }
+    const lane = isResponsesModel(model) ? "responses" : isMessagesModel(model) ? "claude" : "chat";
+    cloakFingerprintTools(body, lane);
     return injectReasoningContent({ provider: this.provider, model, body });
   }
 
   buildUrl(model) {
     const base = this.config.baseUrl;
-    return isResponsesModel(model)
-      ? `${base}/zen/v1/responses`
-      : `${base}/zen/v1/chat/completions`;
+    if (isResponsesModel(model)) return `${base}/zen/v1/responses`;
+    if (isMessagesModel(model)) return `${base}/zen/v1/messages`;
+    return `${base}/zen/v1/chat/completions`;
   }
 
-  buildHeaders(credentials, stream = true) {
+  buildHeaders(credentials, stream = true, model) {
     const raw = Object.fromEntries(Object.entries(credentials?.rawHeaders || {}).map(([k, v]) => [k.toLowerCase(), v]));
     const rawSession = raw["x-opencode-session"];
     const storedSession = credentials?.runtimeOpencodeSession;
@@ -170,7 +229,7 @@ export class OpenCodeExecutor extends BaseExecutor {
     const request = clientRequestId(rawRequest)
       || (Object.hasOwn(raw, "x-opencode-request") ? translateRequestId(rawRequest) : "")
       || generateRequestId();
-    return {
+    const headers = {
       "Content-Type": "application/json",
       "Authorization": "Bearer public",
       "User-Agent": hasValidOpencodeVersion(raw["user-agent"]) ? raw["user-agent"] : OPENCODE_UA,
@@ -180,6 +239,8 @@ export class OpenCodeExecutor extends BaseExecutor {
       "x-opencode-project": raw["x-opencode-project"] || "global",
       "Accept": stream ? "text/event-stream" : "*/*"
     };
+    if (isMessagesModel(model)) headers["anthropic-version"] = ANTHROPIC_API_VERSION;
+    return headers;
   }
 
   parseError(response, bodyText) {

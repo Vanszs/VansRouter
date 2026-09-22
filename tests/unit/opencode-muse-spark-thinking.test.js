@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { getCapabilitiesForModel } from "../../open-sse/providers/capabilities.js";
-import { PROVIDER_MODELS } from "../../open-sse/config/providerModels.js";
+import { PROVIDER_MODELS, getModelTargetFormat } from "../../open-sse/config/providerModels.js";
 import { getThinkingLevels } from "../../open-sse/providers/thinkingLevels.js";
 import { FORMATS } from "../../open-sse/translator/formats.js";
 import { OpenCodeExecutor } from "../../open-sse/executors/opencode.js";
@@ -55,6 +55,33 @@ describe("OpenCode Free Muse Spark thinking", () => {
     expect(out.reasoning_effort).toBeUndefined();
     expect(out.max_output_tokens).toBe(131072);
     expect(out.max_tokens).toBeUndefined();
+  });
+
+  it("routes Union Alpha through the Messages API", () => {
+    expect(getModelTargetFormat("oc", "union-alpha")).toBe(FORMATS.CLAUDE);
+
+    const executor = new OpenCodeExecutor();
+    const url = executor.buildUrl("union-alpha");
+    expect(url).toBe("https://opencode.ai/zen/v1/messages");
+    expect(executor.buildHeaders({}, true, "union-alpha")).toMatchObject({
+      "anthropic-version": "2023-06-01",
+    });
+    expect(executor.buildHeaders({}, true, "big-pickle")).not.toHaveProperty("anthropic-version");
+
+    const translated = translateRequest(
+      FORMATS.OPENAI,
+      FORMATS.CLAUDE,
+      "union-alpha",
+      { messages: [{ role: "user", content: "ping" }], max_tokens: 1 },
+      false,
+      {},
+      PROVIDER,
+    );
+    expect(translated).toMatchObject({
+      model: "union-alpha",
+      messages: [{ role: "user", content: [{ type: "text", text: "ping" }] }],
+      max_tokens: 1,
+    });
   });
 
   it("leaves the other free models on Chat Completions", () => {
