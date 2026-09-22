@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 import REGISTRY from "../../open-sse/providers/registry/index.js";
+import { CLI_TOOLS } from "../../src/shared/constants/cliTools.js";
+import { isValidModel } from "../../src/shared/constants/models.js";
 
 const REQUIRED_ALIASES = ["gitlab", "mmf"];
 const PROTECTED = {
@@ -38,6 +40,24 @@ const PROTECTED = {
     authModes: ["apikey"],
     serviceKinds: ["llm"],
     modelIds: ["claude-opus-4-6", "claude-opus-4-8", "glm-5.2", "gpt-5.5", "gpt-5.6-sol", "kimi-k3"],
+  },
+  claude: {
+    category: "oauth",
+    alias: "cc",
+    uiAlias: "cc",
+    modelIds: [
+      "claude-opus-4-8",
+      "claude-opus-4-7",
+      "claude-opus-4-6",
+      "claude-sonnet-4-6",
+      "claude-opus-4-5-20251101",
+      "claude-sonnet-4-5-20250929",
+      "claude-haiku-4-5-20251001",
+      "claude-opus-5",
+      "claude-sonnet-5",
+      "claude-fable-5-1",
+      "claude-fable-5",
+    ],
   },
   kiro: {
     category: "free",
@@ -149,6 +169,24 @@ describe("provider catalog invariants", () => {
       if (expected.uiAlias) expect(entry.uiAlias, `${id}: uiAlias`).toBe(expected.uiAlias);
       expect((entry.models || []).map(({ id: modelId }) => modelId), `${id}: model IDs`).toEqual(expected.modelIds);
     }
+  });
+
+  // The CLI-tool cards write these defaults straight into the client config, so a
+  // default naming a model the catalog does not declare is a dead pointer: the id
+  // never shows up in the model list, and every lookup keyed on it falls back.
+  it("points every provider-qualified CLI-tool default at a declared model", () => {
+    const unresolved = [];
+
+    for (const tool of Object.values(CLI_TOOLS)) {
+      for (const model of tool.defaultModels || []) {
+        const value = model.defaultValue;
+        if (typeof value !== "string" || !value.includes("/")) continue;
+        const [alias, ...rest] = value.split("/");
+        if (!isValidModel(alias, rest.join("/"))) unresolved.push(`${tool.id}: ${value}`);
+      }
+    }
+
+    expect(unresolved).toEqual([]);
   });
 });
 

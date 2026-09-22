@@ -67,6 +67,12 @@ export default {
     { id: "claude-opus-4-5-20251101", name: "Claude 4.5 Opus" },
     { id: "claude-sonnet-4-5-20250929", name: "Claude 4.5 Sonnet" },
     { id: "claude-haiku-4-5-20251001", name: "Claude 4.5 Haiku" },
+    // Claude 5 generation (upstream parity). Appended rather than prepended so the
+    // provider default model (models[0]) keeps pointing at the same id.
+    { id: "claude-opus-5", name: "Claude Opus 5" },
+    { id: "claude-sonnet-5", name: "Claude Sonnet 5" },
+    { id: "claude-fable-5-1", name: "Claude Fable 5.1" },
+    { id: "claude-fable-5", name: "Claude Fable 5" },
   ],
   oauth: {
     clientId: "9d1c250a-e61b-44d9-88ed-5944d1962f5e",
