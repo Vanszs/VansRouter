@@ -7,6 +7,7 @@ import { DEFAULT_PLUGINS, LOCAL_STDIO_PLUGINS, ALLOWED_MCP_COMMANDS, buildManage
 import { UPDATER_CONFIG } from "@/shared/constants/config";
 import { DATA_DIR } from "@/lib/dataDir";
 import { getConsistentMachineId } from "@/shared/utils/machineId";
+import { readJsoncFile } from "../_shared/cliConfig.js";
 
 const APP_PORT = UPDATER_CONFIG.appPort;
 const CLI_TOKEN_HEADER = "x-9r-cli-token";
@@ -109,17 +110,7 @@ const get1pRoot = () => {
 
 const get1pConfigPath = () => path.join(get1pRoot(), "claude_desktop_config.json");
 
-const read1pConfig = async () => {
-  try {
-    const content = await fs.readFile(get1pConfigPath(), "utf-8");
-    // Tolerate JSONC (trailing commas) and treat unparseable files as empty config
-    // rather than throwing a 500 that the UI misreads as "tool not installed".
-    const stripped = content.replace(/,(\s*[}\]])/g, "$1");
-    return JSON.parse(stripped) || {};
-  } catch (error) {
-    return {};
-  }
-};
+const read1pConfig = async () => (await readJsoncFile(get1pConfigPath())) || {};
 
 const write1pConfig = async (cfg) => {
   await fs.mkdir(get1pRoot(), { recursive: true });
@@ -199,17 +190,7 @@ const checkInstalled = async () => {
   return results.some(Boolean);
 };
 
-const readJson = async (filePath) => {
-  try {
-    const content = await fs.readFile(filePath, "utf-8");
-    // Tolerate JSONC (trailing commas) and treat unparseable files as "no config"
-    // rather than throwing a 500 that the UI misreads as "tool not installed".
-    const stripped = content.replace(/,(\s*[}\]])/g, "$1");
-    return JSON.parse(stripped);
-  } catch (error) {
-    return null;
-  }
-};
+const readJson = readJsoncFile;
 
 const ensureMeta = async () => {
   const writeMetaPath = getWriteMetaPath();

@@ -1,48 +1,17 @@
 "use server";
 
 import { NextResponse } from "next/server";
-import { exec } from "child_process";
-import { promisify } from "util";
 import fs from "fs/promises";
+import { probeCliInstalled, readJsoncFile } from "../_shared/cliConfig.js";
 import path from "path";
 import os from "os";
-
-const execAsync = promisify(exec);
 
 const getDataDir = () => path.join(os.homedir(), ".cline", "data");
 const getGlobalStatePath = () => path.join(getDataDir(), "globalState.json");
 const getSecretsPath = () => path.join(getDataDir(), "secrets.json");
 
-const checkInstalled = async () => {
-  try {
-    const isWindows = os.platform() === "win32";
-    const command = isWindows ? "where cline" : "which cline";
-    const env = isWindows
-      ? { ...process.env, PATH: `${process.env.APPDATA}\\npm;${process.env.PATH}` }
-      : process.env;
-    await execAsync(command, { windowsHide: true, env });
-    return true;
-  } catch {
-    try {
-      await fs.access(getGlobalStatePath());
-      return true;
-    } catch {
-      return false;
-    }
-  }
-};
-
-const readJson = async (filePath) => {
-  try {
-    const content = await fs.readFile(filePath, "utf-8");
-    // Tolerate JSONC (trailing commas) and treat unparseable files as "no config"
-    // rather than throwing a 500 that the UI misreads as "tool not installed".
-    const stripped = content.replace(/,(\s*[}\]])/g, "$1");
-    return JSON.parse(stripped);
-  } catch (error) {
-    return null;
-  }
-};
+const checkInstalled = () => probeCliInstalled("cline", [getGlobalStatePath()], { injectNpmPath: true });
+const readJson = readJsoncFile;
 
 const has9RouterConfig = (globalState) => {
   if (!globalState) return false;

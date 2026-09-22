@@ -1,11 +1,8 @@
 import { NextResponse } from "next/server";
-import { exec } from "child_process";
-import { promisify } from "util";
 import fs from "fs/promises";
+import { probeCliInstalled, readJsoncFile } from "../_shared/cliConfig.js";
 import path from "path";
 import os from "os";
-
-const execAsync = promisify(exec);
 
 const getConfigDir = () => path.join(os.homedir(), ".config", "opencode");
 const getConfigPath = () => path.join(getConfigDir(), "opencode.json");
@@ -22,40 +19,8 @@ const writeConfig = async (configPath, config) => {
 };
 
 // Check if opencode CLI is installed (via which/where or config file exists)
-const checkOpenCodeInstalled = async () => {
-  try {
-    const isWindows = os.platform() === "win32";
-    const command = isWindows ? "where opencode" : "which opencode";
-    const env = isWindows
-      ? { ...process.env, PATH: `${process.env.APPDATA}\\npm;${process.env.PATH}` }
-      : process.env;
-    await execAsync(command, { windowsHide: true, env });
-    return true;
-  } catch {
-    try {
-      await fs.access(getConfigPath());
-      return true;
-    } catch {
-      return false;
-    }
-  }
-};
-
-const readConfig = async () => {
-  try {
-    const content = await fs.readFile(getConfigPath(), "utf-8");
-    // opencode config files may use JSONC format (trailing commas, comments).
-    // Strip trailing commas before parsing to avoid SyntaxError on valid JSONC.
-    const stripped = content.replace(/,(\s*[}\]])/g, "$1");
-    return JSON.parse(stripped);
-  } catch (error) {
-    if (error.code === "ENOENT") return null;
-    // If the config file exists but is unparseable (corrupted, exotic JSONC),
-    // treat it as "no config" rather than throwing a 500 that the UI
-    // misinterprets as "opencode not installed".
-    return null;
-  }
-};
+const checkOpenCodeInstalled = () => probeCliInstalled("opencode", [getConfigPath()], { injectNpmPath: true });
+const readConfig = () => readJsoncFile(getConfigPath());
 
 const getRouterProviderKey = (config) =>
   config?.provider?.VansRoute ? "VansRoute" : config?.provider?.["9router"] ? "9router" : null;

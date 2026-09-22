@@ -4,10 +4,7 @@ import { NextResponse } from "next/server";
 import fs from "fs/promises";
 import path from "path";
 import os from "os";
-import { exec } from "child_process";
-import { promisify } from "util";
-
-const execAsync = promisify(exec);
+import { probeCliInstalled, readJsoncFile } from "../_shared/cliConfig.js";
 
 const PROVIDER_ID = "9router";
 const DEFAULT_CONTEXT_WINDOW = 128000;
@@ -19,29 +16,8 @@ const getCrushConfigPath = () => {
 
 const getCrushDir = () => path.dirname(getCrushConfigPath());
 
-const checkCrushInstalled = async () => {
-  try {
-    const isWindows = os.platform() === "win32";
-    await execAsync(isWindows ? "where crush" : "which crush", { windowsHide: true });
-    return true;
-  } catch {
-    try {
-      await fs.access(getCrushConfigPath());
-      return true;
-    } catch {
-      return false;
-    }
-  }
-};
-
-const readConfig = async () => {
-  try {
-    const content = await fs.readFile(getCrushConfigPath(), "utf-8");
-    return JSON.parse(content.replace(/,(\s*[}\]])/g, "$1"));
-  } catch {
-    return null;
-  }
-};
+const checkCrushInstalled = () => probeCliInstalled("crush", [getCrushConfigPath()]);
+const readConfig = () => readJsoncFile(getCrushConfigPath());
 
 const has9RouterConfig = (config) => {
   const providers = config?.providers;

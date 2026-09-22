@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
-import { exec } from "child_process";
-import { promisify } from "util";
+import { probeCliInstalled } from "../_shared/cliConfig.js";
 import fs from "fs/promises";
 import path from "path";
 import os from "os";
@@ -12,27 +11,11 @@ import {
   resetGrokBuildConfig,
 } from "@/lib/grokBuildConfig";
 
-const execAsync = promisify(exec);
-
 const getGrokDir = () => path.join(os.homedir(), ".grok");
 const getGrokConfigPath = () => path.join(getGrokDir(), "config.toml");
 const getGrokBinPath = () => path.join(getGrokDir(), "bin", "grok");
 
-const checkGrokInstalled = async () => {
-  try {
-    const isWindows = os.platform() === "win32";
-    await execAsync(isWindows ? "where grok" : "which grok", { windowsHide: true });
-    return true;
-  } catch {
-    for (const candidate of [getGrokBinPath(), getGrokConfigPath()]) {
-      try {
-        await fs.access(candidate);
-        return true;
-      } catch { /* try next */ }
-    }
-    return false;
-  }
-};
+const checkGrokInstalled = () => probeCliInstalled("grok", [getGrokBinPath(), getGrokConfigPath()]);
 
 const readConfigToml = async () => {
   try {

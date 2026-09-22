@@ -4,11 +4,8 @@ import { NextResponse } from "next/server";
 import fs from "fs/promises";
 import path from "path";
 import os from "os";
-import { exec } from "child_process";
-import { promisify } from "util";
+import { probeCliInstalled } from "../_shared/cliConfig.js";
 import { parseTOML, stringifyTOML } from "confbox";
-
-const execAsync = promisify(exec);
 
 const getJcodeConfigDir = () => path.join(os.homedir(), ".jcode");
 const getConfigPath = () => path.join(getJcodeConfigDir(), "config.toml");
@@ -18,21 +15,7 @@ const getProviderEnvPath = () => {
   return path.join(configDir, "jcode", "provider-VansRoute.env");
 };
 
-const checkJcodeInstalled = async () => {
-  try {
-    const isWindows = os.platform() === "win32";
-    const command = isWindows ? "where jcode" : "which jcode";
-    await execAsync(command, { windowsHide: true });
-    return true;
-  } catch {
-    try {
-      await fs.access(getJcodeConfigDir());
-      return true;
-    } catch {
-      return false;
-    }
-  }
-};
+const checkJcodeInstalled = () => probeCliInstalled("jcode", [getJcodeConfigDir()]);
 
 const readConfig = async () => {
   try {

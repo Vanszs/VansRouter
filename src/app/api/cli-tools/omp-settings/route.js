@@ -4,10 +4,7 @@ import { NextResponse } from "next/server";
 import fs from "fs/promises";
 import path from "path";
 import os from "os";
-import { exec } from "child_process";
-import { promisify } from "util";
-
-const execAsync = promisify(exec);
+import { probeCliInstalled } from "../_shared/cliConfig.js";
 
 const PROVIDER_ID = "9router";
 
@@ -18,21 +15,7 @@ const getOmpModelsYmlPath = () => path.join(getOmpDir(), "models.yml");
 // Match a provider block: its header plus every line indented deeper than that header
 const providerBlockRe = () => new RegExp(`^([ \\t]*)${PROVIDER_ID}:[ \\t]*\\r?\\n(?:\\1[ \\t]+.*\\r?\\n?)*`, "gm");
 
-const checkOmpInstalled = async () => {
-  try {
-    const isWindows = os.platform() === "win32";
-    await execAsync(isWindows ? "where omp" : "which omp", { windowsHide: true });
-    return true;
-  } catch {
-    for (const candidate of [getOmpDbPath(), getOmpModelsYmlPath()]) {
-      try {
-        await fs.access(candidate);
-        return true;
-      } catch { /* try next */ }
-    }
-    return false;
-  }
-};
+const checkOmpInstalled = () => probeCliInstalled("omp", [getOmpDbPath(), getOmpModelsYmlPath()]);
 
 const readModelsYml = async () => {
   try {

@@ -1,14 +1,11 @@
 "use server";
 
 import { NextResponse } from "next/server";
-import { exec } from "child_process";
-import { promisify } from "util";
 import fs from "fs/promises";
+import { probeCliInstalled, readJsoncFile } from "../_shared/cliConfig.js";
 import path from "path";
 import os from "os";
 import { DEFAULT_PLUGINS } from "@/shared/constants/coworkPlugins";
-
-const execAsync = promisify(exec);
 
 // Exa MCP def — reuse from coworkPlugins (DRY).
 const EXA_PLUGIN = DEFAULT_PLUGINS.find((p) => p.name === "exa");
@@ -26,14 +23,7 @@ const getClaudeSettingsPath = () => {
 // Claude Code CLI reads mcpServers from ~/.claude.json (NOT settings.json).
 const getClaudeJsonPath = () => path.join(os.homedir(), ".claude.json");
 
-const readClaudeJson = async () => {
-  try {
-    const content = await fs.readFile(getClaudeJsonPath(), "utf-8");
-    return JSON.parse(content.replace(/,(\s*[}\]])/g, "$1"));
-  } catch {
-    return null;
-  }
-};
+const readClaudeJson = () => readJsoncFile(getClaudeJsonPath());
 
 const writeClaudeJsonMcp = async (mcpServers) => {
   const filePath = getClaudeJsonPath();
@@ -54,38 +44,10 @@ const writeClaudeJsonMcp = async (mcpServers) => {
 
 
 // Check if claude CLI is installed (via which/where or config file exists)
-const checkClaudeInstalled = async () => {
-  try {
-    const isWindows = os.platform() === "win32";
-    const command = isWindows ? "where claude" : "which claude";
-    const env = isWindows
-      ? { ...process.env, PATH: `${process.env.APPDATA}\\npm;${process.env.PATH}` }
-      : process.env;
-    await execAsync(command, { windowsHide: true, env });
-    return true;
-  } catch {
-    try {
-      await fs.access(getClaudeSettingsPath());
-      return true;
-    } catch {
-      return false;
-    }
-  }
-};
+const checkClaudeInstalled = () => probeCliInstalled("claude", [getClaudeSettingsPath()], { injectNpmPath: true });
 
 // Read current settings
-const readSettings = async () => {
-  try {
-    const settingsPath = getClaudeSettingsPath();
-    const content = await fs.readFile(settingsPath, "utf-8");
-    // Tolerate JSONC (trailing commas) and treat unparseable files as "no config"
-    // rather than throwing a 500 that the UI misreads as "tool not installed".
-    const stripped = content.replace(/,(\s*[}\]])/g, "$1");
-    return JSON.parse(stripped);
-  } catch (error) {
-    return null;
-  }
-};
+const readSettings = () => readJsoncFile(getClaudeSettingsPath());
 
 // GET - Check claude CLI and read current settings
 export async function GET() {

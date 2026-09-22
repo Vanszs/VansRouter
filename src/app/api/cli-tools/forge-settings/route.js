@@ -2,29 +2,13 @@ import { NextResponse } from "next/server";
 import fs from "fs/promises";
 import path from "path";
 import os from "os";
-import { exec } from "child_process";
-import { promisify } from "util";
+import { probeCliInstalled } from "../_shared/cliConfig.js";
 import { parseTOML, stringifyTOML } from "confbox";
-
-const execAsync = promisify(exec);
 
 const getForgeDir = () => path.join(os.homedir(), ".forge");
 const getForgeConfigPath = () => path.join(getForgeDir(), "config.toml");
 
-const checkForgeInstalled = async () => {
-  try {
-    const isWindows = os.platform() === "win32";
-    await execAsync(isWindows ? "where forge" : "which forge", { windowsHide: true });
-    return true;
-  } catch {
-    try {
-      await fs.access(getForgeConfigPath());
-      return true;
-    } catch {
-      return false;
-    }
-  }
-};
+const checkForgeInstalled = () => probeCliInstalled("forge", [getForgeConfigPath()]);
 
 const readConfigToml = async () => {
   try {

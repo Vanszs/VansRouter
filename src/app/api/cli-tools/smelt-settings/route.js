@@ -4,37 +4,13 @@ import { NextResponse } from "next/server";
 import fs from "fs/promises";
 import path from "path";
 import os from "os";
-import { exec } from "child_process";
-import { promisify } from "util";
-
-const execAsync = promisify(exec);
+import { probeCliInstalled, readJsoncFile } from "../_shared/cliConfig.js";
 
 const getSmeltConfigPath = () => path.join(os.homedir(), ".smelt", "config.json");
 const getSmeltDir = () => path.dirname(getSmeltConfigPath());
 
-const checkSmeltInstalled = async () => {
-  try {
-    const isWindows = os.platform() === "win32";
-    await execAsync(isWindows ? "where smelt" : "which smelt", { windowsHide: true });
-    return true;
-  } catch {
-    try {
-      await fs.access(getSmeltConfigPath());
-      return true;
-    } catch {
-      return false;
-    }
-  }
-};
-
-const readConfig = async () => {
-  try {
-    const content = await fs.readFile(getSmeltConfigPath(), "utf-8");
-    return JSON.parse(content.replace(/,(\s*[}\]])/g, "$1"));
-  } catch {
-    return null;
-  }
-};
+const checkSmeltInstalled = () => probeCliInstalled("smelt", [getSmeltConfigPath()]);
+const readConfig = () => readJsoncFile(getSmeltConfigPath());
 
 const has9RouterConfig = (config) =>
   config?._managedBy === "9router" || Boolean(config?.baseUrl?.includes("20128"));

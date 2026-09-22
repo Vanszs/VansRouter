@@ -1,13 +1,10 @@
 "use server";
 
 import { NextResponse } from "next/server";
-import { exec } from "child_process";
-import { promisify } from "util";
 import fs from "fs/promises";
+import { probeCliInstalled, readJsoncFile } from "../_shared/cliConfig.js";
 import path from "path";
 import os from "os";
-
-const execAsync = promisify(exec);
 
 // OpenClaw 2026.5.x writes agents[].model as either a plain string
 // (legacy) or as an object `{ primary, fallbacks }`. Normalize to the
@@ -22,39 +19,10 @@ const getOpenClawDir = () => path.join(os.homedir(), ".openclaw");
 const getOpenClawSettingsPath = () => path.join(getOpenClawDir(), "openclaw.json");
 
 // Check if openclaw CLI is installed (via which/where or config file exists)
-const checkOpenClawInstalled = async () => {
-  try {
-    const isWindows = os.platform() === "win32";
-    const command = isWindows ? "where openclaw" : "which openclaw";
-    // On Windows, inject %APPDATA%\npm into PATH so npm global packages are found
-    const env = isWindows
-      ? { ...process.env, PATH: `${process.env.APPDATA}\\npm;${process.env.PATH}` }
-      : process.env;
-    await execAsync(command, { windowsHide: true, env });
-    return true;
-  } catch {
-    try {
-      await fs.access(getOpenClawSettingsPath());
-      return true;
-    } catch {
-      return false;
-    }
-  }
-};
+const checkOpenClawInstalled = () => probeCliInstalled("openclaw", [getOpenClawSettingsPath()], { injectNpmPath: true });
 
 // Read current settings.json
-const readSettings = async () => {
-  try {
-    const settingsPath = getOpenClawSettingsPath();
-    const content = await fs.readFile(settingsPath, "utf-8");
-    // Tolerate JSONC (trailing commas) and treat unparseable files as "no config"
-    // rather than throwing a 500 that the UI misreads as "tool not installed".
-    const stripped = content.replace(/,(\s*[}\]])/g, "$1");
-    return JSON.parse(stripped);
-  } catch (error) {
-    return null;
-  }
-};
+const readSettings = () => readJsoncFile(getOpenClawSettingsPath());
 
 // Check if settings has 9Router config
 const has9RouterConfig = (settings) => {

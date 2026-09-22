@@ -4,29 +4,13 @@ import { NextResponse } from "next/server";
 import fs from "fs/promises";
 import path from "path";
 import os from "os";
-import { exec } from "child_process";
-import { promisify } from "util";
+import { probeCliInstalled } from "../_shared/cliConfig.js";
 import { parseTOML, stringifyTOML } from "confbox";
-
-const execAsync = promisify(exec);
 
 const getCodewhaleDir = () => path.join(os.homedir(), ".codewhale");
 const getCodewhaleConfigPath = () => path.join(getCodewhaleDir(), "config.toml");
 
-const checkCodewhaleInstalled = async () => {
-  try {
-    const isWindows = os.platform() === "win32";
-    await execAsync(isWindows ? "where codewhale" : "which codewhale", { windowsHide: true });
-    return true;
-  } catch {
-    try {
-      await fs.access(getCodewhaleConfigPath());
-      return true;
-    } catch {
-      return false;
-    }
-  }
-};
+const checkCodewhaleInstalled = () => probeCliInstalled("codewhale", [getCodewhaleConfigPath()]);
 
 const readConfigToml = async () => {
   try {

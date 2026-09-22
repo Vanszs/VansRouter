@@ -4,10 +4,7 @@ import { NextResponse } from "next/server";
 import fs from "fs/promises";
 import path from "path";
 import os from "os";
-import { exec } from "child_process";
-import { promisify } from "util";
-
-const execAsync = promisify(exec);
+import { probeCliInstalled, readJsoncFile } from "../_shared/cliConfig.js";
 
 const PROVIDER_ID = "9router";
 const DEFAULT_CONTEXT_WINDOW = 128000;
@@ -15,22 +12,7 @@ const DEFAULT_MAX_TOKENS = 16384;
 
 const getAgentModelsPath = () => path.join(os.homedir(), ".pi", "agent", "models.json");
 const getRootModelsPath = () => path.join(os.homedir(), ".pi", "models.json");
-
-const checkPiInstalled = async () => {
-  try {
-    const isWindows = os.platform() === "win32";
-    await execAsync(isWindows ? "where pi" : "which pi", { windowsHide: true });
-    return true;
-  } catch {
-    for (const candidate of [getAgentModelsPath(), getRootModelsPath()]) {
-      try {
-        await fs.access(candidate);
-        return true;
-      } catch { /* try next */ }
-    }
-    return false;
-  }
-};
+const checkPiInstalled = () => probeCliInstalled("pi", [getAgentModelsPath(), getRootModelsPath()]);
 
 // Prefer the nested path Pi actually reads, fall back to a flat ~/.pi/models.json
 const resolveModelsPath = async () => {
@@ -43,14 +25,7 @@ const resolveModelsPath = async () => {
   return getAgentModelsPath();
 };
 
-const readConfigAt = async (configPath) => {
-  try {
-    const content = await fs.readFile(configPath, "utf-8");
-    return JSON.parse(content.replace(/,(\s*[}\]])/g, "$1"));
-  } catch {
-    return null;
-  }
-};
+const readConfigAt = readJsoncFile;
 
 const has9RouterConfig = (config) => {
   const providers = config?.providers;
