@@ -3,6 +3,7 @@ import {
   PROVIDER_MODELS,
   getModelSupportedFormats,
   getModelTargetFormat,
+  getModelUpstreamId,
 } from "../../open-sse/config/providerModels.js";
 import { PROVIDERS } from "../../open-sse/config/providers.js";
 import { resolveTransport } from "../../open-sse/services/provider.js";
@@ -295,6 +296,63 @@ describe("OpenCode Go Muse Spark (responses-only model)", () => {
     expect(executor.buildUrl("muse-spark-1.2-contributor")).toBe(
       "https://opencode.ai/zen/go/v1/responses",
     );
+  });
+});
+
+describe("OpenCode Go responses-only routing (registry-driven)", () => {
+  // Config decides the list — no hardcoded model ids in the executor anymore.
+  const responsesOnlyModels = (PROVIDER_MODELS["opencode-go"] || []).filter(
+    (m) => m.targetFormat === "openai-responses",
+  );
+
+  it("resolves thinking suffixes to the base registry entry", () => {
+    for (const m of ["gpt-5.6-luna(high)", "grok-4.6(high)"]) {
+      expect(getModelSupportedFormats("opencode-go", m)).toEqual([
+        "openai-responses",
+      ]);
+      expect(getModelTargetFormat("opencode-go", m)).toBe("openai-responses");
+      expect(getModelUpstreamId("opencode-go", m)).toBe(m.replace("(high)", ""));
+    }
+  });
+
+  it("routes every registry responses-only model, with or without a thinking suffix", () => {
+    const executor = new OpenCodeGoExecutor();
+    expect(responsesOnlyModels.length).toBeGreaterThan(0);
+    for (const m of responsesOnlyModels) {
+      expect(executor.buildUrl(m.id)).toBe("https://opencode.ai/zen/go/v1/responses");
+      expect(executor.buildUrl(`${m.id}(high)`)).toBe(
+        "https://opencode.ai/zen/go/v1/responses",
+      );
+    }
+  });
+
+  it("keeps /responses when a stale chat/completions transport leaks in", () => {
+    const executor = new OpenCodeGoExecutor();
+    const runtimeTransport = resolveTransport("opencode-go", "openai");
+    for (const m of ["gpt-5.6-luna(high)", "grok-4.6(high)"]) {
+      expect(
+        executor.buildUrl(m, true, 0, { apiKey: "sk-go-test", runtimeTransport }),
+      ).toBe("https://opencode.ai/zen/go/v1/responses");
+    }
+  });
+
+  it("normalizes the Responses body even with a leaked transport", () => {
+    const executor = new OpenCodeGoExecutor();
+    const runtimeTransport = resolveTransport("opencode-go", "openai");
+    const body = {
+      messages: [{ role: "user", content: "hi" }],
+      max_tokens: 123,
+      reasoning_effort: "high",
+    };
+    const out = executor.transformRequest("grok-4.6(high)", body, true, {
+      apiKey: "sk-go-test",
+      runtimeTransport,
+    });
+    expect(out).toMatchObject({
+      max_output_tokens: 123,
+      reasoning: { effort: "high", summary: "auto" },
+    });
+    expect(out.max_tokens).toBeUndefined();
   });
 });
 

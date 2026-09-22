@@ -1,6 +1,7 @@
 import { BaseExecutor } from "./base.js";
 import { getThinkingLevels } from "../providers/thinkingLevels.js";
 import { PROVIDERS } from "../config/providers.js";
+import { getModelTargetFormat } from "../config/providerModels.js";
 import { injectReasoningContent } from "../utils/reasoningContentInjector.js";
 import { ANTHROPIC_API_VERSION } from "../providers/shared.js";
 import crypto from "node:crypto";
@@ -16,13 +17,6 @@ const MESSAGES_FORMAT_MODELS = new Set([
   "qwen3.7-max",
   "qwen3.7-plus",
   "qwen3.6-plus",
-]);
-
-const RESPONSES_MODELS = new Set([
-  "grok-4.6",
-  "gpt-5.6-luna",
-  "muse-spark-1.2-contributor",
-  "muse-spark-1.3-contributor",
 ]);
 
 const BASE = "https://opencode.ai/zen/go/v1";
@@ -62,8 +56,11 @@ function baseModelId(model) {
     .trim();
 }
 
+// Responses-only per the provider registry (grok-4.6, gpt-5.6-luna, muse-spark, …) —
+// never hardcode model ids here, config decides. getModelTargetFormat also strips the
+// thinking suffix, so "gpt-5.6-luna(high)" resolves to its base entry.
 function isResponsesModel(model) {
-  return RESPONSES_MODELS.has(baseModelId(model));
+  return getModelTargetFormat("opencode-go", model) === "openai-responses";
 }
 
 function normalizeOpencodeReasoning(model, body) {
@@ -116,6 +113,8 @@ export class OpenCodeGoExecutor extends BaseExecutor {
 
   buildUrl(model, stream, urlIndex = 0, credentials = null) {
     this._lastModel = model;
+    // Responses-only models keep /responses even when a stale runtimeTransport leaks in.
+    if (isResponsesModel(model)) return `${BASE}/responses`;
     const runtimeTransport = credentials?.runtimeTransport;
     if (runtimeTransport?.baseUrl) {
       return runtimeTransport.urlSuffix
@@ -173,7 +172,7 @@ export class OpenCodeGoExecutor extends BaseExecutor {
 
   transformRequest(model, body, stream, credentials) {
     const isResponses = credentials?.runtimeTransport?.format === "openai-responses"
-      || (!credentials?.runtimeTransport && isResponsesModel(model));
+      || isResponsesModel(model);
     if (isResponses) {
       // Responses API names the output cap max_output_tokens and takes thinking
       // as reasoning:{effort,summary} — normalize the Chat fields at this boundary.
