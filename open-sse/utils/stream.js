@@ -89,7 +89,8 @@ export function createSSEStream(options = {}) {
     body = null,
     onStreamComplete = null,
     apiKey = null,
-    normalizeKimiToolCalls = null
+    normalizeKimiToolCalls = null,
+    credentials = null
   } = options;
 
   let buffer = "";
@@ -111,6 +112,7 @@ export function createSSEStream(options = {}) {
         // means "unknown" → do not defer.
         targetFormat }
     : null;
+  if (state) state.sessionId = credentials?._clientSessionId || null;
 
   let totalContentLength = 0;
   let accumulatedContent = "";
@@ -683,7 +685,8 @@ export function createSSEStream(options = {}) {
   });
 }
 
-export function createSSETransformStreamWithLogger(targetFormat, sourceFormat, provider = null, reqLogger = null, toolNameMap = null, model = null, connectionId = null, body = null, onStreamComplete = null, apiKey = null, normalizeKimiToolCalls = null) {
+// responseModel sits in the positional list for existing callers; the transform itself ignores it.
+export function createSSETransformStreamWithLogger(targetFormat, sourceFormat, provider = null, reqLogger = null, toolNameMap = null, model = null, connectionId = null, body = null, onStreamComplete = null, apiKey = null, normalizeKimiToolCalls = null, responseModel = null, credentials = null) {
   return createSSEStream({
     mode: STREAM_MODE.TRANSLATE,
     targetFormat,
@@ -696,7 +699,8 @@ export function createSSETransformStreamWithLogger(targetFormat, sourceFormat, p
     body,
     onStreamComplete,
     apiKey,
-    normalizeKimiToolCalls
+    normalizeKimiToolCalls,
+    credentials
   });
 }
 

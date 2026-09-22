@@ -669,7 +669,7 @@ export async function handleChatCore({ body, modelInfo, credentials, log, onCred
 
   // Streaming response
   const { onStreamComplete, streamDetailId } = buildOnStreamComplete({ ...sharedCtx });
-  return handleStreamingResponse({ ...sharedCtx, providerResponse, sourceFormat, targetFormat: providerResponseFormat || targetFormat, userAgent, reqLogger, toolNameMap, streamController, onStreamComplete, streamDetailId, pxpipe: pxpipeSummary });
+  return handleStreamingResponse({ ...sharedCtx, providerResponse, sourceFormat, targetFormat: providerResponseFormat || targetFormat, userAgent, reqLogger, toolNameMap, streamController, onStreamComplete, streamDetailId, pxpipe: pxpipeSummary, credentials });
 }
 
 export function isTokenExpiringSoon(expiresAt, bufferMs = 5 * 60 * 1000) {

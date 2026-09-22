@@ -204,7 +204,8 @@ describe("Antigravity executor", () => {
     expect(req.contents).toBeDefined();
     expect(req.systemInstruction).toBeDefined();
     expect(req.generationConfig).toBeDefined();
-    expect(req.sessionId).toBe("sess-123");
+    // The client session id survives, normalized to Antigravity's numeric int64 format.
+    expect(req.sessionId).toMatch(/^-?\d+$/);
 
     // Unexpected fields stripped
     expect(req.max_tokens).toBeUndefined();
@@ -245,7 +246,8 @@ describe("Antigravity executor", () => {
     expect(out.request.contents).toEqual([{ role: "user", parts: [{ text: "hello" }] }]);
     expect(out.request.systemInstruction).toEqual({ role: "user", parts: [{ text: "You are helpful" }] });
     expect(out.request.generationConfig.maxOutputTokens).toBe(32);
-    expect(out.request.sessionId).toBe("sess-123");
+    // Normalized to Antigravity's numeric int64 format, not echoed verbatim.
+    expect(out.request.sessionId).toMatch(/^-?\d+$/);
   });
 
   // Issue #6: v1internal rejects content entries with empty parts[] (400 on all models)
