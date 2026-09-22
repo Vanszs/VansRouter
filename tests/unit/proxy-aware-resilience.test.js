@@ -158,6 +158,19 @@ describe("Proxy-aware resilience", () => {
       expect(isProviderInCooldown("test-cb-4", "proxy-a")).toBe(false);
       expect(isProviderInCooldown("test-cb-4", "proxy-b")).toBe(false);
     });
+
+    it("does not count a content-filter refusal as a provider failure", () => {
+      const refusal =
+        '{"error":{"message":"Upstream request failed: [invalid_request_error] Content Exists Risk"}}';
+
+      // 500 is failure-eligible and the threshold is 5 — without the policy-refusal
+      // guard these six refusals would open the breaker and block every account.
+      for (let i = 0; i < 6; i++) {
+        recordProviderFailure("test-cb-moderation", 500, refusal, null, `acc-${i}`);
+      }
+
+      expect(isProviderInCooldown("test-cb-moderation")).toBe(false);
+    });
   });
 
   describe("Integration: multi-proxy scenario", () => {

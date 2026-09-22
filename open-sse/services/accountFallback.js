@@ -443,6 +443,11 @@ export function recordProviderFailure(provider, statusCode, errorText, log, conn
   // Only count failure-eligible status codes
   if (statusCode && !PROVIDER_FAILURE_ERROR_CODES.has(statusCode)) return;
 
+  // A moderation refusal is an answer about the request, not a provider outage.
+  // Counting it would let a handful of content-filter hits open the breaker and
+  // block every account on that provider.
+  if (checkFallbackError(statusCode, errorText).isContentFilter) return;
+
   const profile = getProviderResilienceProfile(provider);
   const breakerKey = `${provider}:${proxyHash}`;
   const breaker = getCircuitBreaker(breakerKey, {
