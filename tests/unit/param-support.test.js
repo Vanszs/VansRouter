@@ -52,4 +52,39 @@ describe("stripUnsupportedParams", () => {
 
     expect(body.max_tokens).toBe(64000);
   });
+
+  describe("replayed reasoning fields", () => {
+    const body = () => ({
+      messages: [
+        { role: "user", content: "hi" },
+        { role: "assistant", content: "ok", reasoning_content: "because", reasoning: "why", reasoning_details: [{ type: "summary" }] },
+      ],
+    });
+
+    it.each(["groq", "mistral", "cerebras"])("drops assistant reasoning fields for %s", (provider) => {
+      const req = body();
+
+      stripUnsupportedParams(provider, "some-model", req);
+
+      expect(req.messages[1]).toEqual({ role: "assistant", content: "ok" });
+      expect(req.messages[0]).toEqual({ role: "user", content: "hi" });
+    });
+
+    it("leaves other providers' replayed reasoning alone", () => {
+      const req = body();
+
+      stripUnsupportedParams("deepseek", "deepseek-reasoner", req);
+
+      expect(req.messages[1].reasoning_content).toBe("because");
+    });
+
+    it("keeps the Kimchi reasoning rules untouched", () => {
+      const req = { ...body(), reasoning_effort: "high" };
+
+      stripUnsupportedParams("kimchi", "glm-4.6", req);
+
+      expect(req.reasoning_effort).toBeUndefined();
+      expect(req.messages[1].reasoning_content).toBe("because");
+    });
+  });
 });

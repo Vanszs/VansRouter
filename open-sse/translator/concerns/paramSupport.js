@@ -27,6 +27,14 @@ const STRIP_RULES = [
   // "integer above maximum value, expected <= 32768". Pin an explicit endpoint cap;
   // min() with the model ceiling still applies if a variant's own limit is lower.
   { provider: "volcengine-ark", match: /kimi/i, maxOutputCap: 32768, clampToModelMaxOutput: true },
+  // Strict OpenAI-compatible validators reject unknown assistant-message fields.
+  // Clients driving reasoning models echo the previous turn's reasoning_content
+  // back on every assistant message; Groq 400s ("property 'reasoning_content' is
+  // unsupported"), Mistral 422s ("extra_forbidden"), Cerebras 400s
+  // ("wrong_api_format"), which knocks them out of every multi-turn combo.
+  { provider: "groq", dropMessageFields: ["reasoning_content", "reasoning", "reasoning_details"] },
+  { provider: "mistral", dropMessageFields: ["reasoning_content", "reasoning", "reasoning_details"] },
+  { provider: "cerebras", dropMessageFields: ["reasoning_content", "reasoning", "reasoning_details"] },
 ];
 
 // Test a rule's match (regex or predicate) against the model id.
@@ -49,6 +57,15 @@ export function stripUnsupportedParams(provider, model, body) {
     if (!matches(rule, model)) continue;
     for (const key of rule.drop || []) {
       if (body[key] !== undefined) delete body[key];
+    }
+    // Per-message field drop (assistant turns only — that is where clients replay reasoning).
+    if (Array.isArray(rule.dropMessageFields) && Array.isArray(body.messages)) {
+      for (const msg of body.messages) {
+        if (!msg || msg.role !== "assistant") continue;
+        for (const key of rule.dropMessageFields) {
+          if (msg[key] !== undefined) delete msg[key];
+        }
+      }
     }
     // CF Workers AI oneOf root schema only accepts content as plain string (#1926)
     if (rule.flattenContent && Array.isArray(body.messages)) {
