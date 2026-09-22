@@ -33,5 +33,6 @@ export default {
   serviceKinds: ["llm"],
   features: {
     usage: true,
+    usageApikey: true,
   },
 };
