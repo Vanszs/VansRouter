@@ -235,11 +235,6 @@ export class AntigravityExecutor extends BaseExecutor {
         if (callSig) {
           return { ...p, thoughtSignature: callSig };
         }
-        if (p.thoughtSignature && !cachedSig) {
-          // Unsigned sibling call
-          const { thoughtSignature: _, ...rest } = p;
-          return rest;
-        }
         return p;
       });
 
