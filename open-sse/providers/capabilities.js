@@ -701,6 +701,28 @@ export const PROVIDER_CAPABILITIES = {
       maxOutput: 262144,
     },
   },
+  // DeepSeek V4.1 Flash reads images and takes the full low..max effort range
+  // (see PATTERN_THINKING); the shared *deepseek-v4* pattern carries neither flag.
+  deepseek: {
+    "deepseek-v4.1-flash": {
+      vision: true,
+      reasoning: true,
+      thinkingFormat: "deepseek",
+      thinkingEffortSupported: true,
+      contextWindow: 1000000,
+      maxOutput: 128000,
+    },
+  },
+  // Ollama Cloud serves the same model (mirrored tag) with image input.
+  ollama: {
+    "deepseek-v4.1-flash:cloud": {
+      vision: true,
+      reasoning: true,
+      thinkingFormat: "deepseek",
+      contextWindow: 1000000,
+      maxOutput: 384000,
+    },
+  },
 };
 
 /**
