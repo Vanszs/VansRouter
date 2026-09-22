@@ -7,7 +7,7 @@
 import { getProviderModels } from "open-sse/config/providerModels.js";
 import { CLI_TOOLS } from "@/shared/constants/cliTools";
 
-export const VALID_COMBO_NAME_REGEX = /^[a-zA-Z0-9_.\-]+$/;
+const VALID_COMBO_NAME_REGEX = /^[a-zA-Z0-9_.\-]+$/;
 export const PRESET_SOURCES = new Set(["cursor", "claude"]);
 
 const CURSOR_ALIAS = "cu";

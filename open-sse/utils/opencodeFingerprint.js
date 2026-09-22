@@ -78,7 +78,7 @@ export function concealFingerprintToolNames(tools) {
 }
 
 /** Point a forced tool_choice at the canonical name of a tool we renamed. */
-export function retargetToolChoice(body, map) {
+function retargetToolChoice(body, map) {
   if (!body || typeof body !== "object" || !map?.size) return;
   const choice = body.tool_choice;
   if (!choice || typeof choice !== "object" || Array.isArray(choice)) return;
@@ -120,7 +120,7 @@ export function applyFingerprintToolNames(body, decoy) {
 }
 
 /** Store the rename map against `body` so the response side can find it. */
-export function recordRenamedToolNames(body, map) {
+function recordRenamedToolNames(body, map) {
   if (body && typeof body === "object" && map?.size) renamedToolNames.set(body, map);
 }
 

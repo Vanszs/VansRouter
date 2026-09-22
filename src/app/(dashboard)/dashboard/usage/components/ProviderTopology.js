@@ -1,6 +1,5 @@
 "use client";
 
-import PropTypes from "prop-types";
 import { useMemo, useState, useEffect, useCallback, useRef } from "react";
 import Image from "next/image";
 
@@ -263,18 +262,6 @@ function TopologyEdge({
     </g>
   );
 }
-
-TopologyEdge.propTypes = {
-  id: PropTypes.string,
-  sourceX: PropTypes.number,
-  sourceY: PropTypes.number,
-  targetX: PropTypes.number,
-  targetY: PropTypes.number,
-  sourcePosition: PropTypes.string,
-  targetPosition: PropTypes.string,
-  style: PropTypes.object,
-  data: PropTypes.object,
-};
 
 const nodeTypes = { provider: ProviderNode, router: RouterNode };
 const edgeTypes = { topology: TopologyEdge };

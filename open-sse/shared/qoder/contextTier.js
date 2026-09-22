@@ -19,9 +19,9 @@
  * Pure functions, no I/O — the executor wires them into buildQoderRequestBody.
  */
 
-export const QODER_CONTEXT_TIER_HEADROOM = 0.15;
+const QODER_CONTEXT_TIER_HEADROOM = 0.15;
 export const QODER_CONTEXT_TIER_ENV = "QODER_CONTEXT_TIER";
-export const QODER_CONTEXT_TIER_MODES = Object.freeze({ AUTO: "auto", MAX: "max", DEFAULT: "default" });
+const QODER_CONTEXT_TIER_MODES = Object.freeze({ AUTO: "auto", MAX: "max", DEFAULT: "default" });
 
 const UNIT = { K: 1_000, M: 1_000_000 };
 

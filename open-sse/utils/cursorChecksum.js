@@ -5,8 +5,18 @@
  * Based on the JavaScript implementation from Cursor IDE.
  */
 
-import crypto from "crypto";
-import { v5 as uuidv5 } from "uuid";
+import crypto from "node:crypto";
+
+const UUID_DNS = "6ba7b810-9dad-11d1-80b4-00c04fd430c8";
+
+function uuidv5(name, namespace) {
+  const namespaceBytes = Buffer.from(namespace.replaceAll("-", ""), "hex");
+  const hash = crypto.createHash("sha1").update(namespaceBytes).update(name, "utf8").digest();
+  hash[6] = (hash[6] & 0x0f) | 0x50;
+  hash[8] = (hash[8] & 0x3f) | 0x80;
+  const hex = hash.subarray(0, 16).toString("hex");
+  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
+}
 
 /**
  * Generate SHA-256 hash like generateHashed64Hex
@@ -24,7 +34,7 @@ export function generateHashed64Hex(input, salt = "") {
  * @returns {string} - UUID string
  */
 export function generateSessionId(authToken) {
-  return uuidv5(authToken, uuidv5.DNS);
+  return uuidv5(authToken, UUID_DNS);
 }
 
 /**

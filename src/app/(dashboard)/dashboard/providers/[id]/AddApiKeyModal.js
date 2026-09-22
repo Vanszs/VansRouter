@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import PropTypes from "prop-types";
 import { Button, Badge, Input, Modal, Select } from "@/shared/components";
 import { AI_PROVIDERS } from "@/shared/constants/providers";
 import { planBulkAdd } from "@/shared/utils/bulkAdd";
@@ -369,23 +368,3 @@ export default function AddApiKeyModal({ isOpen, provider, providerName, isCompa
     </Modal>
   );
 }
-
-AddApiKeyModal.propTypes = {
-  isOpen: PropTypes.bool.isRequired,
-  provider: PropTypes.string,
-  providerName: PropTypes.string,
-  isCompatible: PropTypes.bool,
-  isAnthropic: PropTypes.bool,
-  authType: PropTypes.string,
-  authHint: PropTypes.string,
-  website: PropTypes.string,
-  proxyPools: PropTypes.arrayOf(PropTypes.shape({
-    id: PropTypes.string,
-    name: PropTypes.string,
-  })),
-  error: PropTypes.string,
-  existingNames: PropTypes.arrayOf(PropTypes.string),
-  onSave: PropTypes.func.isRequired,
-  onBulkDone: PropTypes.func,
-  onClose: PropTypes.func.isRequired,
-};
