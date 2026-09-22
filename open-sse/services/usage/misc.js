@@ -80,7 +80,7 @@ function nextMonthlyResetFromSignup(createdAt, now = new Date()) {
  * POST https://ollama.com/api/me — plan label + CreatedAt (fail-open).
  * Auth: Authorization: Bearer <apiKey>
  */
-export async function getOllamaUsage(apiKey, providerSpecificData, proxyOptions = null) {
+export async function getOllamaUsage(apiKey, proxyOptions = null) {
   if (!apiKey) {
     return { message: "Ollama Cloud API key not available." };
   }

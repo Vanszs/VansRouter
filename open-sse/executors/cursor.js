@@ -244,8 +244,6 @@ function isComposerModel(model) {
 // "default"/"auto" placeholders come back as an empty completion.
 const LEGACY_CURSOR_MODELS = {
   "claude-3-5-sonnet": "claude-4.5-sonnet",
-  "claude-3-5-sonnet-20241022": "claude-4.5-sonnet",
-  "claude-3-5-sonnet-20240620": "claude-4.5-sonnet",
   "claude-3-5-haiku": "claude-4.5-haiku",
   "gpt-4o": "gpt-5.2",
   "gpt-4o-mini": "gpt-5.2",

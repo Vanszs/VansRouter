@@ -6,7 +6,7 @@ import { HTTP_STATUS } from "open-sse/config/runtimeConfig.js";
 // the running byte count stops the bytes themselves from piling up in heap.
 const DEFAULT_MAX_BYTES = 8 * 1024 * 1024;
 
-export function maxBodyBytes(limit) {
+function maxBodyBytes(limit) {
   return limit || parseInt(process.env.NINEROUTER_MAX_BODY_BYTES || "", 10) || DEFAULT_MAX_BYTES;
 }
 
@@ -73,9 +73,4 @@ export async function readBoundedJson(request, limit) {
   } catch {
     return { error: errorResponse(HTTP_STATUS.BAD_REQUEST, "Invalid JSON body") };
   }
-}
-
-/** Byte size of a body already read as text, for callers that also need it downstream. */
-export function bodyBytes(raw) {
-  return Buffer.byteLength(raw || "", "utf8");
 }
