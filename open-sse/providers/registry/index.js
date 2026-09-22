@@ -83,6 +83,7 @@ import p81 from "./ollama.js";
 import p82 from "./openai.js";
 import p83 from "./opencode-go.js";
 import p84 from "./opencode.js";
+import p84z from "./opencode-zen.js";
 import p85 from "./openrouter.js";
 import p86 from "./ovhcloud.js";
 import p87 from "./perplexity-agent.js";
@@ -233,6 +234,7 @@ export default [
   p82,
   p83,
   p84,
+  p84z,
   p85,
   p86,
   p87,

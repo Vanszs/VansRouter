@@ -15,7 +15,7 @@ const load = () => import("../../open-sse/services/usage.js");
 const SUPPORTED = [
   "github", "gemini-cli", "antigravity", "claude", "codex", "kiro",
   "qoder", "qwen", "iflow", "ollama", "glm", "glm-cn",
-  "minimax", "minimax-cn", "vercel-ai-gateway", "grok-cli", "kimi", "deepseek", "opencode-go", "freebuff",
+  "minimax", "minimax-cn", "vercel-ai-gateway", "grok-cli", "kimi", "deepseek", "opencode-go", "opencode-zen", "freebuff",
 ];
 
 describe("usage dispatch", () => {
