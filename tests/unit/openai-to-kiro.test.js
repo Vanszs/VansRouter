@@ -8,6 +8,7 @@
 
 import { describe, it, expect } from "vitest";
 import { openaiToKiroRequest } from "../../open-sse/translator/request/openai-to-kiro.js";
+import { KIRO_TOOL_RESULTS_PLACEHOLDER } from "../../open-sse/translator/concerns/kiroConversation.js";
 
 const contentOf = (result) =>
   result.conversationState.currentMessage.userInputMessage.content;
@@ -282,6 +283,45 @@ describe("openaiToKiroRequest", () => {
       expect(allJson).not.toContain("orphan_call");
       // ...but the content is preserved as salvaged text, not discarded.
       expect(allJson).toContain("[Tool result: important orphaned output]");
+    });
+  });
+
+  describe("tool-result-only turns", () => {
+    // A user turn that carries nothing but tool results still needs content for
+    // Kiro; the placeholder must not read like a new user instruction.
+
+    it("should use a neutral placeholder when the turn has only tool results", () => {
+      const body = {
+        tools: [
+          {
+            type: "function",
+            function: {
+              name: "get_weather",
+              description: "Get weather",
+              parameters: { type: "object", properties: { city: { type: "string" } }, required: ["city"] }
+            }
+          }
+        ],
+        messages: [
+          { role: "user", content: "The secret word is PINEAPPLE. Weather in Jakarta?" },
+          {
+            role: "assistant",
+            content: null,
+            tool_calls: [
+              { id: "call_1", type: "function", function: { name: "get_weather", arguments: '{"city":"Jakarta"}' } }
+            ]
+          },
+          { role: "tool", tool_call_id: "call_1", content: "32C, humid" }
+        ]
+      };
+
+      const result = openaiToKiroRequest("claude-sonnet-4.6", body, true, {});
+      const current = result.conversationState.currentMessage.userInputMessage;
+
+      expect(current.content).toContain(KIRO_TOOL_RESULTS_PLACEHOLDER);
+      expect(current.content).not.toMatch(/\bcontinue\b/);
+      expect(current.userInputMessageContext.toolResults).toHaveLength(1);
+      expect(JSON.stringify(result.conversationState.history)).toContain("PINEAPPLE");
     });
   });
 

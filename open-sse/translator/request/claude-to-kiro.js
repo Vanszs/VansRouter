@@ -38,7 +38,11 @@ import {
 } from "../../config/kiroConstants.js";
 import { DEFAULT_IMAGE_MIME } from "../schema/index.js";
 import { ROLE, CLAUDE_BLOCK } from "../schema/index.js";
-import { canonicalizeKiroConversation, normalizeKiroToolSpecs } from "../concerns/kiroConversation.js";
+import {
+  canonicalizeKiroConversation,
+  normalizeKiroToolSpecs,
+  kiroEmptyUserContent,
+} from "../concerns/kiroConversation.js";
 
 /** Stringify a tool_use input as a readable line. */
 function toolUseToText(name, input) {
@@ -109,7 +113,8 @@ function convertClaudeMessagesToKiro(messages, tools, model) {
 
   const flushPending = () => {
     if (currentRole === ROLE.USER) {
-      const content = pendingUserContent.join("\n\n").trim() || "continue";
+      const content = pendingUserContent.join("\n\n").trim()
+        || kiroEmptyUserContent(pendingToolResults.length > 0);
       const userMsg = { userInputMessage: { content, modelId: model } };
 
       if (pendingImages.length > 0) {

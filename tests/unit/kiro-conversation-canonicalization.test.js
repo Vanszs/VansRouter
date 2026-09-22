@@ -3,6 +3,8 @@ import {
   canonicalizeKiroConversation,
   normalizeKiroToolSpecs,
   validateKiroConversation,
+  KIRO_TOOL_RESULTS_PLACEHOLDER,
+  KIRO_EMPTY_USER_PLACEHOLDER,
 } from "../../open-sse/translator/concerns/kiroConversation.js";
 import { clearKiroSessionReplayStore } from "../../open-sse/utils/kiroSessionReplay.js";
 import { clearSessionStore } from "../../open-sse/utils/sessionManager.js";
@@ -172,10 +174,41 @@ describe("Kiro conversation canonicalizer", () => {
       nameMap,
     });
 
-    expect(canonical.currentMessage.userInputMessage.content).toBe("continue");
+    expect(canonical.currentMessage.userInputMessage.content).toBe(KIRO_EMPTY_USER_PLACEHOLDER);
     expect(canonical.history[1].assistantResponseMessage.toolUses).toBeUndefined();
     expect(canonical.history[1].assistantResponseMessage.content).toContain("[Tool call:");
     expect(canonical.valid).toBe(true);
+  });
+
+  it("fills a tool-result-only turn with a neutral placeholder, not an instruction", () => {
+    const { specs, nameMap } = specState(["first"]);
+    const canonical = canonicalizeKiroConversation({
+      history: [
+        user("start"),
+        assistant("", [{ toolUseId: "t1", name: "first", input: {} }]),
+        user("", [result("t1", "one")]),
+      ],
+      currentMessage: user("what now?"),
+      modelId,
+      toolSpecs: specs,
+      nameMap,
+    });
+
+    expect(canonical.history[2].userInputMessage.content).toBe(KIRO_TOOL_RESULTS_PLACEHOLDER);
+    expect(canonical.valid).toBe(true);
+  });
+
+  it("keeps the plain fallback for an empty turn with no tool results", () => {
+    const canonical = canonicalizeKiroConversation({
+      history: [assistant("Hello")],
+      currentMessage: user(""),
+      modelId,
+      toolSpecs: [],
+      nameMap: new Map(),
+    });
+
+    expect(canonical.history[0].userInputMessage.content).toBe(KIRO_EMPTY_USER_PLACEHOLDER);
+    expect(canonical.currentMessage.userInputMessage.content).toBe(KIRO_EMPTY_USER_PLACEHOLDER);
   });
 
   it("flattens malformed input and tool uses missing from the current specs", () => {

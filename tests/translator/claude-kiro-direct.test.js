@@ -5,6 +5,7 @@ import { describe, it, expect } from "vitest";
 import "./registerAll.js";
 import { translateRequest, translateResponse } from "../../open-sse/translator/index.js";
 import { FORMATS } from "../../open-sse/translator/formats.js";
+import { KIRO_TOOL_RESULTS_PLACEHOLDER } from "../../open-sse/translator/concerns/kiroConversation.js";
 
 const C2K = (body, credentials = null, model = "claude-sonnet-4.5") =>
   translateRequest(FORMATS.CLAUDE, FORMATS.KIRO, model, body, true, credentials, "kiro");
@@ -69,6 +70,43 @@ describe("Claude → Kiro (direct route)", () => {
     // The orphan content survives as text, not as a dangling structured ref.
     expect(cur.content).toContain("salvage me");
     expect(cur.userInputMessageContext?.toolResults?.length ?? 0).toBe(0);
+  });
+
+  it("uses a neutral placeholder for a tool_result-only user turn", () => {
+    const out = C2K({
+      tools: [{ name: "get_weather", description: "fn", input_schema: { type: "object", properties: {} } }],
+      messages: [
+        { role: "user", content: "Weather in Jakarta?" },
+        { role: "assistant", content: [{ type: "tool_use", id: "toolu_1", name: "get_weather", input: { city: "Jakarta" } }] },
+        { role: "user", content: [{ type: "tool_result", tool_use_id: "toolu_1", content: "32C" }] },
+      ],
+    });
+    const cur = out.conversationState.currentMessage.userInputMessage;
+
+    expect(cur.content).toContain(KIRO_TOOL_RESULTS_PLACEHOLDER);
+    expect(cur.content).not.toMatch(/\bcontinue\b/);
+    expect(cur.userInputMessageContext.toolResults).toHaveLength(1);
+  });
+
+  it("keeps real user text when a turn carries both text and tool results", () => {
+    const out = C2K({
+      tools: [{ name: "get_weather", description: "fn", input_schema: { type: "object", properties: {} } }],
+      messages: [
+        { role: "user", content: "Weather in Jakarta?" },
+        { role: "assistant", content: [{ type: "tool_use", id: "toolu_1", name: "get_weather", input: { city: "Jakarta" } }] },
+        {
+          role: "user",
+          content: [
+            { type: "tool_result", tool_use_id: "toolu_1", content: "32C" },
+            { type: "text", text: "Now answer in one word." },
+          ],
+        },
+      ],
+    });
+    const cur = out.conversationState.currentMessage.userInputMessage;
+
+    expect(cur.content).toContain("Now answer in one word.");
+    expect(cur.content).not.toContain(KIRO_TOOL_RESULTS_PLACEHOLDER);
   });
 
   it("injects thinking_mode tag when model implies thinking", () => {
