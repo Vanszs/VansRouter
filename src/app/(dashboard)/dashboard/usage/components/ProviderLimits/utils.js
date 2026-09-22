@@ -515,6 +515,8 @@ export function parseQuotaData(provider, data) {
 
       case "kimi":
       case "deepseek":
+        // DeepSeek balances are prepaid credit, not a usage quota: forward the
+        // currency so the table renders the balance instead of a percentage.
         if (data.quotas) {
           Object.entries(data.quotas).forEach(([name, quota]) => {
             normalizedQuotas.push({
@@ -523,6 +525,9 @@ export function parseQuotaData(provider, data) {
               total: quota.total || 0,
               resetAt: quota.resetAt || null,
               remainingPercentage: quota.remainingPercentage,
+              ...(provider.toLowerCase() === "deepseek"
+                ? { isCreditBalance: quota.isCreditBalance === true, currency: quota.currency || "USD" }
+                : {}),
             });
           });
         }
