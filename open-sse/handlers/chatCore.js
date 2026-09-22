@@ -12,6 +12,7 @@ import { getModelTargetFormat, getModelSupportedFormats, getModelStrip, getModel
 import { PROVIDERS } from "../config/providers.js";
 import { createErrorResult, parseUpstreamError, formatProviderError } from "../utils/error.js";
 import { checkFallbackError } from "../services/accountFallback.js";
+import { classifyError, logGatewayError } from "../utils/errorLog.js";
 import { HTTP_STATUS, TOKEN_SAVER_HEADER } from "../config/runtimeConfig.js";
 import { handleBypassRequest } from "../utils/bypassHandler.js";
 import { trackPendingRequest, appendRequestLog, saveRequestDetail } from "@/lib/usageDb.js";
@@ -630,6 +631,14 @@ export async function handleChatCore({ body, modelInfo, credentials, log, onCred
     console.log(`${COLORS.red}[ERROR] ${errMsg}${COLORS.reset}`);
     reqLogger.logError(new Error(message), finalBody || translatedBody);
     const { isContentFilter } = checkFallbackError(statusCode, message);
+    logGatewayError({
+      class: classifyError({ status: statusCode, message, isPolicyError: isContentFilter }),
+      provider,
+      model,
+      message,
+      status: statusCode,
+      connectionId,
+    });
     return createErrorResult(statusCode, errMsg, resetsAtMs, isContentFilter);
   }
 
