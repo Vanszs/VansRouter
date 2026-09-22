@@ -33,7 +33,6 @@ import {
   QODER_CHAT_URL_ENCODED,
   QODER_CHAT_BASE_ALT,
   QODER_CHAT_SIG_PATH,
-  QODER_MODEL_MAP,
 } from "../shared/qoder/constants.js";
 import { getQoderModelConfig, resolveQoderModels, isQoderPat, resolveQoderCredentials } from "../services/qoderModels.js";
 import { resolveQoderContextTier, applyQoderContextTier, QODER_CONTEXT_TIER_ENV } from "../shared/qoder/contextTier.js";
