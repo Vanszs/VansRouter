@@ -6,16 +6,12 @@ import { ANTHROPIC_API_VERSION } from "../providers/shared.js";
 import crypto from "node:crypto";
 import { resolveSessionId } from "../utils/sessionManager.js";
 import { applyFingerprintToolNames } from "../utils/opencodeFingerprint.js";
+import { getModelTargetFormat } from "../config/providerModels.js";
 
 // OpenCode free tier limits requests per egress IP.
 const IP_LIMIT_BODY = /limit|rate|quota|exhausted|capacity|too many|retry/i;
 
-// Models that use /zen/v1/messages (claude format)
-const MESSAGES_MODELS = new Set(["union-alpha"]);
-
 const OPENCODE_UA = "opencode/1.18.31";
-// Models served by /zen/v1/responses; every other model stays on /chat/completions.
-const RESPONSES_MODELS = new Set(["muse-spark-1.2-contributor-free", "muse-spark-1.3-contributor-free"]);
 
 // The free tier gates on the lowercase file-search quartet: every request must
 // declare bash/glob/grep/read exactly once. See utils/opencodeFingerprint.js.
@@ -95,11 +91,11 @@ function baseModelId(model) {
 }
 
 function isResponsesModel(model) {
-  return RESPONSES_MODELS.has(baseModelId(model));
+  return getModelTargetFormat("oc", baseModelId(model)) === "openai-responses";
 }
 
 function isMessagesModel(model) {
-  return MESSAGES_MODELS.has(baseModelId(model));
+  return getModelTargetFormat("oc", baseModelId(model)) === "claude";
 }
 
 // Decoy shape follows the lane: Responses takes flat entries, Chat Completions
