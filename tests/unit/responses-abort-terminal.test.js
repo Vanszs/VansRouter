@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 
-import { createDisconnectAwareStream } from "../../open-sse/utils/streamHandler.js";
+import { createDisconnectAwareStream, pipeWithDisconnect } from "../../open-sse/utils/streamHandler.js";
 import { buildAbortedResponsesTerminalBytes } from "../../open-sse/utils/responsesStreamHelpers.js";
+import { buildStreamErrorBytes } from "../../open-sse/utils/streamHelpers.js";
+import { FORMATS } from "../../open-sse/translator/formats.js";
 
 // Minimal stream controller stub
 function makeController() {
@@ -67,6 +69,50 @@ describe("Responses abort terminal synthesis", () => {
 
     const text = await readAll(out);
     expect(text).not.toContain("response.failed");
+    expect(text).not.toContain("[DONE]");
+  });
+
+  it("emits an in-band error frame + [DONE] for an OpenAI client when the upstream aborts", async () => {
+    const upstream = new ReadableStream({
+      start(controller) {
+        controller.enqueue(new TextEncoder().encode('data: {"choices":[{"delta":{"content":"hi"}}]}\n\n'));
+        controller.error(new Error("socket hang up"));
+      },
+    });
+
+    const out = pipeWithDisconnect(
+      new Response(upstream, { status: 200 }),
+      new TransformStream(),
+      makeController(),
+      (message) => buildStreamErrorBytes(504, message, FORMATS.OPENAI),
+      60_000
+    );
+
+    const text = await readAll(out);
+    expect(text).toContain('"error"');
+    expect(text).toContain("upstream connection lost");
+    // Error frame first, [DONE] after — and never a synthetic clean finish_reason.
+    expect(text.indexOf('"error"')).toBeLessThan(text.indexOf("data: [DONE]"));
+    expect(text).not.toContain("finish_reason");
+  });
+
+  it("frames the abort as `event: error` for Claude clients", async () => {
+    const stream = createDisconnectAwareStream(
+      {
+        readable: new ReadableStream({
+          start(controller) {
+            controller.error(new Error("stream stall timeout"));
+          },
+        }),
+        writable: { getWriter: () => ({ abort: () => Promise.resolve() }) },
+      },
+      makeController(),
+      (message) => buildStreamErrorBytes(504, message, FORMATS.CLAUDE)
+    );
+
+    const text = await readAll(stream);
+    expect(text).toContain("event: error");
+    expect(text).toContain('"type":"server_error"');
     expect(text).not.toContain("[DONE]");
   });
 });
