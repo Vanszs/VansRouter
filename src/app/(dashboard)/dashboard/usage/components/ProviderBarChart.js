@@ -12,14 +12,9 @@ import {
   Cell,
 } from "recharts";
 import Card from "@/shared/components/Card";
+import { fmtTokens } from "./format";
 
 const COLORS = ["#6366f1", "#14b8a6", "#f59e0b", "#ef4444", "#8b5cf6", "#06b6d4", "#10b981", "#f97316"];
-
-const fmtTokens = (n) => {
-  if (n >= 1000000) return `${(n / 1000000).toFixed(1)}M`;
-  if (n >= 1000) return `${(n / 1000).toFixed(1)}K`;
-  return String(n || 0);
-};
 
 export default function ProviderBarChart({ byProvider }) {
   const [viewMode, setViewMode] = useState("tokens");

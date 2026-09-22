@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import dynamic from "next/dynamic";
 import Card from "@/shared/components/Card";
+import { fmtTokens } from "./format";
 
 const RechartsChart = dynamic(() => import("recharts").then(mod => {
   const { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } = mod;
@@ -64,12 +65,6 @@ const RechartsChart = dynamic(() => import("recharts").then(mod => {
   Chart.displayName = "RechartsChart";
   return { default: Chart };
 }), { ssr: false, loading: () => <div className="h-[220px] w-full rounded-lg border border-border bg-bg-subtle/30" aria-label="Loading chart" /> });
-
-const fmtTokens = (n) => {
-  if (n >= 1000000) return `${(n / 1000000).toFixed(1)}M`;
-  if (n >= 1000) return `${(n / 1000).toFixed(1)}K`;
-  return String(n || 0);
-};
 
 const fmtCost = (n) => `$${(n || 0).toFixed(4)}`;
 const fmtRequests = (n) => String(n || 0);
