@@ -39,6 +39,11 @@ export default {
     { id: "dmodel", name: "DeepSeek-V4-Pro" },
     { id: "dfmodel", name: "DeepSeek-V4-Flash" },
     { id: "mmodel", name: "MiniMax-M3" },
+    { id: "lite", name: "Lite" },
+    { id: "qmodel_38max", name: "Qwen3.8-Max" },
+    { id: "qfmodel", name: "Qwen3.8-Flash" },
+    { id: "gmodel", name: "GLM-5.3" },
+    { id: "gfmodel", name: "GLM-5.3-Flash" },
   ],
   oauth: {
     openApiBaseUrl: "https://openapi.qoder.sh",

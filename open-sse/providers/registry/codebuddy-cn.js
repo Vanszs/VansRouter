@@ -60,6 +60,11 @@ export default {
     { id: "deepseek-v4-pro", name: "DeepSeek-V4-Pro" },
     { id: "deepseek-v4.1-flash", name: "DeepSeek-V4.1-Flash" },
     { id: "deepseek-v3-2-volc", name: "DeepSeek-V3.2" },
+    { id: "hy3", name: "Hy3" },
+    { id: "hy4-preview", name: "Hy4-Preview" },
+    { id: "glm-5.3", name: "GLM-5.3" },
+    { id: "glm-5.3-flash", name: "GLM-5.3-Flash" },
+    { id: "kimi-k3-1", name: "Kimi-K3" },
   ],
   oauth: {
     baseUrl: "https://copilot.tencent.com",

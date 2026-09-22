@@ -147,6 +147,7 @@ import p144 from "./zed.js";
 import p145 from "./selfhosted-embedding.js";
 import p146 from "./selfhosted-stt.js";
 import p147 from "./selfhosted-tts.js";
+import p148 from "./qoder-cn.js";
 
 export default [
   p0,
@@ -297,5 +298,6 @@ export default [
   p144,
   p145,
   p146,
-  p147
+  p147,
+  p148
 ];

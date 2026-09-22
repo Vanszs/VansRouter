@@ -38,5 +38,12 @@ export default {
     { id: "ernie-speed-8k", name: "ERNIE Speed 8K" },
     { id: "ernie-lite-8k", name: "ERNIE Lite 8K" },
     { id: "ernie-tiny-8k", name: "ERNIE Tiny 8K" },
+    { id: "deepseek-v4-pro", name: "DeepSeek V4 Pro", contextLength: 1048576 },
+    { id: "deepseek-v4-flash", name: "DeepSeek V4 Flash", contextLength: 1048576 },
+    { id: "glm-5.2", name: "GLM 5.2", contextLength: 512000 },
+    { id: "glm-5.1", name: "GLM 5.1", contextLength: 198000 },
+    { id: "kimi-k2.6", name: "Kimi K2.6", contextLength: 262144 },
+    { id: "qwen3.5-397b-a17b", name: "Qwen 3.5 397B A17B", contextLength: 262144 },
+    { id: "qwen3.5-27b", name: "Qwen 3.5 27B", contextLength: 262144 },
   ],
 };
