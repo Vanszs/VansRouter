@@ -106,7 +106,7 @@ export default function LanguageSwitcher({ className = "", isOpen: controlledOpe
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ locale: nextLocale }),
       });
-      
+
       // Reload translations without full page reload
       await reloadTranslations();
       setLocale(nextLocale);
