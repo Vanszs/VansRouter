@@ -104,15 +104,16 @@ export async function parseUpstreamError(response, executor = null) {
  * @param {number} statusCode - HTTP status code
  * @param {string} message - Error message
  * @param {number} [resetsAtMs] - Optional precise cooldown expiry (ms epoch) for provider-specific quota errors
- * @returns {{ success: false, status: number, error: string, response: Response, resetsAtMs?: number }}
+ * @param {boolean} [isPolicyError] - True for provider policy refusals (content filter); classifyError() reads this
+ * @returns {{ success: false, status: number, error: string, response: Response, resetsAtMs?: number, isPolicyError: boolean }}
  */
-export function createErrorResult(statusCode, message, resetsAtMs, policyError = false) {
+export function createErrorResult(statusCode, message, resetsAtMs, isPolicyError = false) {
   return {
     success: false,
     status: statusCode,
     error: message,
     resetsAtMs,
-    policyError,
+    isPolicyError,
     response: errorResponse(statusCode, message)
   };
 }
