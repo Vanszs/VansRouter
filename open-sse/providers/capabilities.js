@@ -543,6 +543,21 @@ export const PROVIDER_CAPABILITIES = {
       maxOutput: 65536,
     },
   },
+  // glm-5.3-flash on OpenCode Go is served by a backend that rejects the z.ai
+  // `thinking` object (400: unknown field "thinking") and wants reasoning_effort.
+  // Overrides the global entry, whose z.ai shape is correct for z.ai itself.
+  "opencode-go": {
+    "glm-5.3-flash": {
+      vision: true,
+      videoInput: true,
+      pdf: true,
+      reasoning: true,
+      thinkingFormat: "openai",
+      thinkingCanDisable: false,
+      contextWindow: 1000000,
+      maxOutput: 131072,
+    },
+  },
   codex: {
     "gpt-5.6-sol": CODEX_GPT_56_SOL_CAPS,
     "gpt-5.6-sol-review": CODEX_GPT_56_SOL_CAPS,
@@ -682,6 +697,20 @@ export const PROVIDER_CAPABILITIES = {
       thinkingCanDisable: false,
       contextWindow: 96000,
       maxOutput: 32000,
+    },
+  },
+  // CodeBuddy intl — same gateway catalog as CN, so deepseek-v4.1-flash mirrors
+  // the codebuddy-cn entry (the openai-style reasoning_effort format matters:
+  // the generic *deepseek-v4* pattern would otherwise pick the vendor-native
+  // "deepseek" thinking shape, which the CodeBuddy gateway does not accept).
+  "codebuddy-intl": {
+    "deepseek-v4.1-flash": {
+      vision: true,
+      reasoning: true,
+      thinkingFormat: "openai",
+      thinkingCanDisable: true,
+      contextWindow: 1000000,
+      maxOutput: 128000,
     },
   },
   // ClinePass proxies through Vercel's OpenAI Chat Completions API, which only

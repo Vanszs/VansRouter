@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import REGISTRY from "../../open-sse/providers/registry/index.js";
 import { getCapabilitiesForModel } from "../../open-sse/providers/capabilities.js";
+import { getThinkingLevels } from "../../open-sse/providers/thinkingLevels.js";
 
 describe("CodeBuddy international registry parity", () => {
   it("matches CodeBuddy CN model coverage and transport capability", () => {
@@ -21,5 +22,16 @@ describe("CodeBuddy international registry parity", () => {
       expect(capabilities.reasoning, id).toBe(true);
       expect(capabilities.thinkingFormat, id).toBeDefined();
     }
+  });
+
+  it("keeps deepseek-v4.1-flash on the gateway's OpenAI reasoning_effort path", () => {
+    expect(getCapabilitiesForModel("codebuddy-intl", "deepseek-v4.1-flash")).toMatchObject({
+      vision: true,
+      reasoning: true,
+      thinkingFormat: "openai",
+      contextWindow: 1000000,
+      maxOutput: 128000,
+    });
+    expect(getThinkingLevels("codebuddy-intl", "deepseek-v4.1-flash")).toEqual(["low", "high", "xhigh"]);
   });
 });

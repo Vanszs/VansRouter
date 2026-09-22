@@ -46,6 +46,8 @@ const PATTERN_THINKING = [
   // only distinguishes high/max), so the picker exposes the full range.
   { provider: "deepseek", pattern: "*deepseek-v4.1-flash*", levels: ["none", "low", "medium", "high", "xhigh", "max"] },
   { provider: "ollama", pattern: "*deepseek-v4.1-flash*", levels: ["none", "low", "medium", "high", "xhigh", "max"] },
+  // codebuddy-intl rides the same gateway catalog, so its deepseek levels match.
+  { provider: "codebuddy-intl", pattern: "deepseek-v4*", levels: ["low", "high", "xhigh"] },
 ];
 
 // Returns valid thinking levels for a model, or null when the model has no reasoning.

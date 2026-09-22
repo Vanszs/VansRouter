@@ -114,3 +114,21 @@ describe("getThinkingLevels — CommandCode", () => {
     ]);
   });
 });
+
+describe("opencode-go glm-5.3-flash", () => {
+  it("sends reasoning_effort instead of the z.ai thinking object", () => {
+    expect(getCapabilitiesForModel("opencode-go", "glm-5.3-flash")).toMatchObject({
+      vision: true,
+      videoInput: true,
+      pdf: true,
+      reasoning: true,
+      thinkingFormat: "openai",
+      thinkingCanDisable: false,
+      contextWindow: 1000000,
+      maxOutput: 131072,
+    });
+    expect(getThinkingLevels("opencode-go", "glm-5.3-flash")).toEqual([
+      "minimal", "low", "medium", "high", "xhigh",
+    ]);
+  });
+});
