@@ -2,8 +2,9 @@ import { describe, expect, it } from "vitest";
 
 // Guardrails: oversized bodies are rejected before parse, and the synchronous
 // RTK pass is skipped above the size threshold.
-process.env.NINEROUTER_MAX_BODY_BYTES = "1000";
+process.env.NINEROUTER_MAX_BODY_BYTES = "508";
 const { handleChat } = await import("../../src/sse/handlers/chat.js");
+const { POST: responsesPost } = await import("../../src/app/api/v1/responses/route.js");
 const { compressMessages, RTK_MAX_BODY_BYTES } = await import("../../open-sse/rtk/index.js");
 
 describe("request body ceiling (#132)", () => {
@@ -17,6 +18,31 @@ describe("request body ceiling (#132)", () => {
     expect(response.status).toBe(413);
     const payload = await response.json();
     expect(payload.error.message).toContain("too large");
+  });
+
+  it("rejects a UTF-8 body whose bytes exceed the ceiling despite a shorter JS length", async () => {
+    const content = "é".repeat(450);
+    const body = JSON.stringify({ model: "x/y", messages: [{ role: "user", content }] });
+    expect(body.length).toBeLessThan(508);
+    expect(Buffer.byteLength(body, "utf8")).toBeGreaterThan(508);
+
+    const request = new Request("http://localhost:20128/v1/chat/completions", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body,
+    });
+    const response = await handleChat(request);
+    expect(response.status).toBe(413);
+  });
+
+  it("rejects an oversized body through the Responses wrapper route", async () => {
+    const request = new Request("http://localhost:20128/v1/responses", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ model: "x/y", input: "a".repeat(4000) }),
+    });
+    const response = await responsesPost(request);
+    expect(response.status).toBe(413);
   });
 
   it("lets a body under the ceiling reach normal handling", async () => {
