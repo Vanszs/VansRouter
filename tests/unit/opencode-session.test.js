@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { OpenCodeExecutor } from "../../open-sse/executors/opencode.js";
+import {
+  OpenCodeExecutor,
+  translateRequestId,
+  translateSessionId,
+} from "../../open-sse/executors/opencode.js";
 
 // OpenCode's free tier (403 FreeTierError) requires UA version >= 1.17.0 and
 // canonical ses_/msg_ id formats.
@@ -54,11 +58,46 @@ describe("OpenCode free-tier request identity", () => {
     }
   });
 
+  it("translates foreign ids deterministically and preserves canonical ids", () => {
+    const translated = translateSessionId("foreign-id", "desktop");
+    expect(translateSessionId("foreign-id", "desktop")).toBe(translated);
+    expect(translated).toMatch(CANONICAL_SESSION);
+    expect(translateSessionId("another-id", "desktop")).not.toBe(translated);
+    expect(translateSessionId("ses_001122334455ABCDEFGHIJKLMN", "desktop"))
+      .toBe("ses_001122334455ABCDEFGHIJKLMN");
+    expect(translateRequestId("foreign-id")).toMatch(CANONICAL_REQUEST);
+  });
+
+  it("stably translates non-canonical raw session and request headers", () => {
+    const credentials = {
+      rawHeaders: {
+        "x-opencode-session": "foreign-session",
+        "x-opencode-request": "foreign-request",
+        "x-opencode-client": "desktop",
+      },
+    };
+    const first = executor.buildHeaders(credentials, true);
+    const second = executor.buildHeaders(credentials, true);
+    expect(first["x-opencode-session"]).toMatch(CANONICAL_SESSION);
+    expect(first["x-opencode-session"]).toBe(second["x-opencode-session"]);
+    expect(first["x-opencode-request"]).toMatch(CANONICAL_REQUEST);
+    expect(first["x-opencode-request"]).toBe(second["x-opencode-request"]);
+  });
+
   it("still reuses the stored runtime session over a rejected client header", () => {
     const headers = executor.buildHeaders({
       runtimeOpencodeSession: "ses_abcdef012345ABCDEFGHIJKLMN",
       rawHeaders: { "x-opencode-session": "bogus" },
     }, true);
-    expect(headers["x-opencode-session"]).toBe("ses_abcdef012345ABCDEFGHIJKLMN");
+    expect(headers["x-opencode-session"]).not.toBe("ses_abcdef012345ABCDEFGHIJKLMN");
+    expect(headers["x-opencode-session"]).toMatch(CANONICAL_SESSION);
+  });
+
+  it("stores a canonical session during request transformation", () => {
+    const credentials = {
+      rawHeaders: { "x-opencode-session": "foreign-session", "x-opencode-client": "desktop" },
+    };
+    executor.transformRequest("big-pickle", { messages: [{ role: "user", content: "hi" }] }, true, credentials);
+    expect(credentials.runtimeOpencodeSession).toMatch(CANONICAL_SESSION);
   });
 });

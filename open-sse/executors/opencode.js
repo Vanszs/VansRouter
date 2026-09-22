@@ -45,6 +45,25 @@ function clientRequestId(requestId) {
 // Canonical id formats OpenCode validates: ses_<12 hex><14 base62> / msg_<12 hex><14 base62>.
 const BASE62 = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
 
+function translateCanonicalId(value, pattern, prefix, kind, clientTool = "") {
+  const trimmed = typeof value === "string" ? value.trim() : "";
+  if (pattern.test(trimmed)) return trimmed;
+  const digest = crypto
+    .createHash("sha256")
+    .update(`opencode\0${kind}\0${clientTool || "generic"}\0${value ?? ""}`)
+    .digest();
+  const randomPart = Array.from(digest.subarray(6, 20), (byte) => BASE62[byte % 62]).join("");
+  return `${prefix}${digest.subarray(0, 6).toString("hex")}${randomPart}`;
+}
+
+export function translateSessionId(value, clientTool) {
+  return translateCanonicalId(value, CANONICAL_SESSION, "ses_", "session", clientTool);
+}
+
+export function translateRequestId(value) {
+  return translateCanonicalId(value, CANONICAL_REQUEST, "msg_", "request");
+}
+
 function timeHex(value) {
   return Array.from({ length: 6 }, (_, i) =>
     Number((value >> BigInt(40 - 8 * i)) & 0xffn).toString(16).padStart(2, "0")
@@ -112,7 +131,10 @@ export class OpenCodeExecutor extends BaseExecutor {
   }
 
   transformRequest(model, body, stream, credentials) {
-    this._currentSessionId = resolveOpencodeSession(body, credentials);
+    this._currentSessionId = translateSessionId(
+      resolveOpencodeSession(body, credentials),
+      credentials?.rawHeaders?.["x-opencode-client"],
+    );
     if (credentials) credentials.runtimeOpencodeSession = this._currentSessionId;
     if (isResponsesModel(model)) {
       // Responses API names the output cap max_output_tokens and takes thinking
@@ -137,13 +159,24 @@ export class OpenCodeExecutor extends BaseExecutor {
 
   buildHeaders(credentials, stream = true) {
     const raw = Object.fromEntries(Object.entries(credentials?.rawHeaders || {}).map(([k, v]) => [k.toLowerCase(), v]));
+    const rawSession = raw["x-opencode-session"];
+    const storedSession = credentials?.runtimeOpencodeSession;
+    const session = clientSession(rawSession)
+      || (Object.hasOwn(raw, "x-opencode-session") ? translateSessionId(rawSession, raw["x-opencode-client"]) : "")
+      || clientSession(storedSession)
+      || (typeof storedSession === "string" ? translateSessionId(storedSession, raw["x-opencode-client"]) : "")
+      || generateSessionId();
+    const rawRequest = raw["x-opencode-request"];
+    const request = clientRequestId(rawRequest)
+      || (Object.hasOwn(raw, "x-opencode-request") ? translateRequestId(rawRequest) : "")
+      || generateRequestId();
     return {
       "Content-Type": "application/json",
       "Authorization": "Bearer public",
       "User-Agent": hasValidOpencodeVersion(raw["user-agent"]) ? raw["user-agent"] : OPENCODE_UA,
       "x-opencode-client": raw["x-opencode-client"] || "desktop",
-      "x-opencode-session": clientSession(raw["x-opencode-session"]) || clientSession(credentials?.runtimeOpencodeSession) || generateSessionId(),
-      "x-opencode-request": clientRequestId(raw["x-opencode-request"]) || generateRequestId(),
+      "x-opencode-session": session,
+      "x-opencode-request": request,
       "x-opencode-project": raw["x-opencode-project"] || "global",
       "Accept": stream ? "text/event-stream" : "*/*"
     };
