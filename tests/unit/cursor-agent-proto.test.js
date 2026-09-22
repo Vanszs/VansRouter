@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   decodeMessage,
   encodeField,
+  wrapConnectRPCFrame,
   encodeAgentValue,
   decodeAgentValue,
   encodeMcpToolDefinition,
@@ -12,6 +13,7 @@ import {
   encodeMcpResultToolNotFound,
 } from "../../open-sse/utils/cursorProtobuf.js";
 import {
+  CursorExecutor,
   isAgentCapableRequest,
   buildAgentRunFrame,
 } from "../../open-sse/executors/cursor.js";
@@ -236,7 +238,7 @@ describe("Cursor AgentService executor helpers (cursor.js)", () => {
     // buildAgentRunFrame returns a wrapped Connect-RPC frame (5-byte header + AgentClientMessage).
     const unwrap = (frame) => frame.subarray(5);
 
-    it("encodes a text-only run request with system + model", () => {
+    it("encodes a text-only run request with system folded into the user message", () => {
       const frame = unwrap(buildAgentRunFrame(
         [{ role: "system", content: "be brief" }, { role: "user", content: "hi" }],
         "gpt-5.2",
@@ -246,6 +248,16 @@ describe("Cursor AgentService executor helpers (cursor.js)", () => {
       const run = decodeMessage(clientMsg.get(1)[0].value);
       expect(run.has(2)).toBe(true); // action
       expect(run.has(9)).toBe(true); // requested_model
+      // custom_system_prompt (field 8) makes AgentService return an empty turn.
+      expect(run.has(8)).toBe(false);
+      expect(run.has(3)).toBe(true); // ModelDetails — required for thinking variants
+      const action = decodeMessage(run.get(2)[0].value);
+      const userAction = decodeMessage(action.get(1)[0].value);
+      const userMessage = decodeMessage(userAction.get(1)[0].value);
+      const userText = Buffer.from(userMessage.get(1)[0].value).toString("utf8");
+      expect(userText).toContain("be brief");
+      expect(userText).toContain("hi");
+      expect(userMessage.get(4)[0].value).toBe(1); // mode=1
     });
 
     it("encodes mcp_tools (field 4) when tools are provided", () => {
@@ -278,5 +290,191 @@ describe("Cursor AgentService executor helpers (cursor.js)", () => {
       const history = decodeMessage(userAction.get(7)[0].value);
       expect(history.get(1).length).toBeGreaterThanOrEqual(2); // prior turns
     });
+  });
+});
+
+// --- AgentService Run stream: exec requests, thinking deltas, MCP tool calls ---
+
+const VARINT = 0;
+
+// agent.v1.AgentServerMessage.exec_request (field 2) carrying one ExecServerMessage variant.
+function execRequestFrame(execField, payload = new Uint8Array()) {
+  const execServerMessage = Buffer.from(encodeField(execField, LEN, payload));
+  return Buffer.from(wrapConnectRPCFrame(encodeField(2, LEN, execServerMessage)));
+}
+
+// ExecServerMessage.id (1, varint) + .exec_id (15, string) + variant field.
+function identifiedExecRequestFrame(execField, payload = new Uint8Array()) {
+  const parts = Buffer.from(encodeField(1, VARINT, 7));
+  const execId = Buffer.from(encodeField(15, LEN, "exec-1"));
+  const variant = Buffer.from(encodeField(execField, LEN, payload));
+  return Buffer.from(wrapConnectRPCFrame(encodeField(2, LEN, Buffer.concat([parts, execId, variant]))));
+}
+
+// agent.v1.AgentServerMessage.interaction_update (field 1) → text_delta (1).
+function textFrame(text) {
+  const textPart = Buffer.from(encodeField(1, LEN, text));
+  const update = Buffer.from(encodeField(1, LEN, textPart));
+  return Buffer.from(wrapConnectRPCFrame(encodeField(1, LEN, update)));
+}
+
+// InteractionUpdate.thinking_delta (field 4) + turn_ended (field 14).
+function thinkingFrame(text) {
+  const thinkingPart = Buffer.from(encodeField(1, LEN, text));
+  const update = Buffer.from(encodeField(4, LEN, thinkingPart));
+  return Buffer.from(wrapConnectRPCFrame(encodeField(1, LEN, update)));
+}
+
+function turnEndedFrame() {
+  const update = Buffer.from(encodeField(14, LEN, new Uint8Array()));
+  return Buffer.from(wrapConnectRPCFrame(encodeField(1, LEN, update)));
+}
+
+function stubAgentSession(executor, frames) {
+  const written = [];
+  const queue = [...frames];
+  executor.openAgentHttp2Stream = () => ({
+    responseHeaders: Promise.resolve({ ":status": 200 }),
+    write: (frame) => written.push(Buffer.from(frame)),
+    end() {},
+    close() {},
+    async read() {
+      if (!queue.length) return { value: undefined, done: true };
+      return { value: queue.shift(), done: false };
+    },
+  });
+  return written;
+}
+
+const agentCredentials = {
+  accessToken: "test-token",
+  providerSpecificData: { machineId: "a".repeat(64) },
+};
+
+function parseAgentSSE(text) {
+  return text
+    .split("\n\n")
+    .filter((chunk) => chunk.startsWith("data: "))
+    .map((chunk) => chunk.slice("data: ".length))
+    .filter((data) => data !== "[DONE]")
+    .map((data) => JSON.parse(data));
+}
+
+async function runAgent({ frames, stream, model = "gpt-5.2", tools }) {
+  const executor = new CursorExecutor();
+  const written = stubAgentSession(executor, frames);
+  const result = await executor.executeAgent({
+    model,
+    body: { messages: [{ role: "user", content: "hi" }], ...(tools ? { tools } : {}) },
+    stream,
+    credentials: agentCredentials,
+  });
+  return { result, written };
+}
+
+describe("CursorExecutor AgentService exec_request handling", () => {
+  it("acks request_context with the exec ids and without echoing client tools", async () => {
+    const { written, result } = await runAgent({
+      tools: [{ function: { name: "read_file", parameters: { type: "object" } } }],
+      frames: [identifiedExecRequestFrame(10), textFrame("hello")],
+      stream: true,
+    });
+
+    expect(written.length).toBe(2); // run frame + request-context ack
+    expect(written[1].toString("utf8")).toContain("exec-1");
+    expect(written[1].toString("utf8")).not.toContain("read_file");
+    const content = parseAgentSSE(await result.response.text())
+      .map((e) => e.choices?.[0]?.delta?.content || "")
+      .join("");
+    expect(content).toBe("hello");
+  });
+
+  it("rejects an IDE builtin exec so the model can continue the turn", async () => {
+    const { result, written } = await runAgent({
+      frames: [textFrame("partial answer"), identifiedExecRequestFrame(2), textFrame(" more")],
+      stream: true,
+    });
+
+    const body = await result.response.text();
+    expect(body).not.toContain("unsupported IDE tool");
+    const events = parseAgentSSE(body);
+    const content = events.map((e) => e.choices?.[0]?.delta?.content || "").join("");
+    expect(content).toBe("partial answer more");
+    expect(events.some((e) => e.error)).toBe(false);
+    expect(written.length).toBe(2); // run frame + exec rejection
+
+    const clientMsg = decodeMessage(written[1].subarray(5));
+    const execClientMessage = decodeMessage(clientMsg.get(2)[0].value);
+    expect(execClientMessage.has(2)).toBe(true); // rejected shell_exec result
+    expect(Buffer.from(execClientMessage.get(15)[0].value).toString("utf8")).toBe("exec-1");
+  });
+
+  it("still emits later text batched behind a rejected IDE exec in the same read", async () => {
+    const { result } = await runAgent({
+      frames: [Buffer.concat([execRequestFrame(2), textFrame("late")])],
+      stream: true,
+    });
+
+    const body = await result.response.text();
+    expect(body).not.toContain("unsupported IDE tool");
+    expect(body).toContain("late");
+  });
+
+  it("returns a non-200 error body for a nameless MCP exec request when not streaming", async () => {
+    const { result } = await runAgent({
+      frames: [execRequestFrame(11)],
+      stream: false,
+    });
+
+    expect(result.response.status).not.toBe(200);
+    const payload = await result.response.json();
+    expect(payload.error.message).toContain("unsupported IDE tool");
+  });
+
+  it("emits an MCP tool_call with finish_reason tool_calls", async () => {
+    const mcpArgs = Buffer.concat([
+      Buffer.from(encodeField(1, LEN, "get_weather")),
+      Buffer.from(entry("city", "Hanoi")),
+      Buffer.from(encodeField(3, LEN, "call_abc")),
+      Buffer.from(encodeField(5, LEN, "get_weather")),
+    ]);
+    const { result } = await runAgent({
+      frames: [identifiedExecRequestFrame(11, mcpArgs)],
+      stream: true,
+    });
+
+    const events = parseAgentSSE(await result.response.text());
+    const toolCall = events.map((e) => e.choices?.[0]?.delta?.tool_calls?.[0]).find(Boolean);
+    expect(toolCall.function.name).toBe("get_weather");
+    expect(toolCall.function.arguments).toBe(JSON.stringify({ city: "Hanoi" }));
+    expect(events.at(-1).choices[0].finish_reason).toBe("tool_calls");
+  });
+
+  it("streams Composer visible content from thinking_delta after </think>", async () => {
+    const { result } = await runAgent({
+      model: "composer-2.5",
+      frames: [
+        thinkingFrame("private reasoning that must not leak</think>OK"),
+        turnEndedFrame(),
+      ],
+      stream: true,
+    });
+
+    const events = parseAgentSSE(await result.response.text());
+    const content = events.map((e) => e.choices?.[0]?.delta?.content || "").join("");
+    expect(content).toBe("OK");
+    expect(JSON.stringify(events)).not.toContain("private reasoning");
+  });
+
+  it("flushes Grok thinking as visible content when the turn has no text_delta", async () => {
+    const { result } = await runAgent({
+      model: "grok-4.5",
+      frames: [thinkingFrame("hello from grok"), turnEndedFrame()],
+      stream: true,
+    });
+
+    const events = parseAgentSSE(await result.response.text());
+    const content = events.map((e) => e.choices?.[0]?.delta?.content || "").join("");
+    expect(content).toBe("hello from grok");
   });
 });
