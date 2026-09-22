@@ -42,6 +42,7 @@ const getLocaleInfo = (locale) => {
     "hi": { name: "हिन्दी", flag: "🇮🇳" },
     "bn": { name: "বাংলা", flag: "🇧🇩" },
     "ur": { name: "اردو", flag: "🇵🇰" },
+    "fa": { name: "فارسی", flag: "🇮🇷" },
     "ro": { name: "Română", flag: "🇷🇴" },
     "sv": { name: "Svenska", flag: "🇸🇪" },
     "it": { name: "Italiano", flag: "🇮🇹" },
