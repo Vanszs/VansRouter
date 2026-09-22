@@ -105,6 +105,9 @@ export const captureThinking = extractThinking;
 
 // Resolve thinking format: provider override > capability > derive(targetFormat).
 function resolveFormat(targetFormat, model, provider) {
+  // CommandCode's /alpha/generate envelope carries effort in params; a family
+  // pattern (deepseek -> top-level reasoning_effort) must not win here.
+  if (targetFormat === "commandcode") return "commandcode";
   const providerFmt = provider ? PROVIDERS[provider]?.thinkingFormat : null;
   if (providerFmt) return providerFmt;
   const caps = getCapabilitiesForModel(provider, model);
@@ -210,6 +213,10 @@ function stripAll(body) {
   delete body.output_config;
   if (body.generationConfig) delete body.generationConfig.thinkingConfig;
   if (body.request?.generationConfig) delete body.request.generationConfig.thinkingConfig;
+  if (body.params && typeof body.params === "object") {
+    delete body.params.reasoning_effort;
+    delete body.params.thinking;
+  }
 }
 
 // Apply unified thinking config to body in the resolved provider-native format.
@@ -317,6 +324,17 @@ function applyFormat(fmt, body, cfg, caps) {
     case "kiro":
       // Kiro thinking handled via system-tag injection in openai-to-kiro.js; no body field here.
       break;
+    case "commandcode": {
+      // The CLI sends reasoning_effort inside params of the /alpha/generate envelope.
+      if (!body.params || typeof body.params !== "object") body.params = {};
+      if (none && canDisable) {
+        delete body.params.reasoning_effort;
+        break;
+      }
+      const level = toLevel(eff);
+      if (level) body.params.reasoning_effort = level;
+      break;
+    }
     default:
       break;
   }

@@ -33,10 +33,26 @@ export class CommandCodeExecutor extends BaseExecutor {
   }
 
   async execute(opts) {
-    const result = await super.execute(opts);
-    if (!result?.response?.ok || !result.response.body) return result;
-    result.response = await inspectAndWrapCommandCodeResponse(result.response, opts.model);
-    return result;
+    const maxRetries = 2;
+    for (let attempt = 0; attempt <= maxRetries; attempt++) {
+      const result = await super.execute(opts);
+      if (!result?.response?.ok || !result.response.body) return result;
+
+      const wrappedResponse = await inspectAndWrapCommandCodeResponse(result.response, opts.model);
+      // An in-band error event arrives as HTTP 200 + NDJSON error, so the base
+      // executor's status retry never sees it; retry the transient ones here.
+      if (!wrappedResponse.ok && attempt < maxRetries) {
+        const { status } = wrappedResponse;
+        if (status === 502 || status === 503 || status === 504) {
+          opts.log?.debug?.("RETRY", `CommandCode upstream returned status ${status}, retrying ${attempt + 1}/${maxRetries}...`);
+          await new Promise((r) => setTimeout(r, 1000 * (attempt + 1)));
+          continue;
+        }
+      }
+
+      result.response = wrappedResponse;
+      return result;
+    }
   }
 
   parseError(response, bodyText) {

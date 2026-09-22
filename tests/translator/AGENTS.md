@@ -117,6 +117,5 @@ Grouped per CLI/provider test file. Each row is an `it.fails` case.
 | Cursor drops image content | `request/openai-to-cursor.js:12-24` |
 | Cursor `max_tokens` hardcoded to 32000 | `request/openai-to-cursor.js:179` |
 | CommandCode bad JSON args → `{}` silently | `request/openai-to-commandcode.js:53-57` |
-| CommandCode image → `[image omitted]` | `request/openai-to-commandcode.js:41-42` |
 
 Fixing a bug → rerun; the matching `it.fails` test turns RED → switch it to a regular `it` and verify correct behavior.

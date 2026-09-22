@@ -26,6 +26,7 @@ const FORMAT_LEVELS = {
   qwen: L.base,
   kimi: L.levelMax,
   deepseek: L.hiMax,
+  commandcode: L.budgetX,
   minimax: L.onOff,
   hunyuan: L.base,
   step: L.base,

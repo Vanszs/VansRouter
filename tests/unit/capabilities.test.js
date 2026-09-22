@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { getCapabilitiesForModel } from "../../open-sse/providers/capabilities.js";
+import { getThinkingLevels } from "../../open-sse/providers/thinkingLevels.js";
 
 describe("getCapabilitiesForModel", () => {
   it("reports DeepSeek V4.1-Flash ids as vision-capable without dropping their thinking/context", () => {
@@ -88,5 +89,28 @@ describe("getCapabilitiesForModel", () => {
     expect(getCapabilitiesForModel("kiro", "gpt-5.6-terra-thinking")).toMatchObject(kiroGpt56Expected);
     expect(getCapabilitiesForModel("kiro", "gpt-5.6-luna-agentic")).toMatchObject(kiroGpt56Expected);
     expect(getCapabilitiesForModel("kiro", "gpt-5.6-sol-thinking-agentic")).toMatchObject(kiroGpt56Expected);
+  });
+
+  it("gives every CommandCode model the /alpha/generate thinking format", () => {
+    for (const provider of ["commandcode", "cmc"]) {
+      expect(getCapabilitiesForModel(provider, "deepseek/deepseek-v4.1-flash")).toMatchObject({
+        vision: true,
+        reasoning: true,
+        thinkingFormat: "commandcode",
+        thinkingEffortSupported: true,
+      });
+      // CLI text-only denylist wins over the default-to-vision rule
+      expect(getCapabilitiesForModel(provider, "deepseek/deepseek-v4-flash").vision).toBe(false);
+      expect(getCapabilitiesForModel(provider, "deepseek-v4-flash").vision).toBe(false);
+      expect(getCapabilitiesForModel(provider, "MiniMaxAI/MiniMax-M3").vision).toBe(true);
+    }
+  });
+});
+
+describe("getThinkingLevels — CommandCode", () => {
+  it("exposes the effort levels the CLI passes through unmapped", () => {
+    expect(getThinkingLevels("commandcode", "deepseek/deepseek-v4.1-flash")).toEqual([
+      "none", "low", "medium", "high", "xhigh", "max",
+    ]);
   });
 });

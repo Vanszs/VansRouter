@@ -1,9 +1,10 @@
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect, vi, afterEach } from "vitest";
 import {
   parseCommandCodeError,
   inspectAndWrapCommandCodeResponse,
   CommandCodeExecutor,
 } from "../../open-sse/executors/commandcode.js";
+import { BaseExecutor } from "../../open-sse/executors/base.js";
 import { handleComboChat } from "../../open-sse/services/combo.js";
 
 function createNdjsonStream(lines) {
@@ -131,6 +132,54 @@ describe("inspectAndWrapCommandCodeResponse", () => {
     const text = await result.text();
     expect(text).toContain("Hello from Laguna");
     expect(text).toContain("data: [DONE]");
+  });
+});
+
+describe("CommandCodeExecutor.execute — in-band error retry", () => {
+  const errorStream = (message, statusCode) => createNdjsonStream([
+    JSON.stringify({ type: "error", error: { type: "server_error", message, statusCode } }) + "\n",
+  ]);
+  const okStream = () => createNdjsonStream([
+    JSON.stringify({ type: "start" }) + "\n",
+    JSON.stringify({ type: "text-delta", text: "Recovered from lost connection" }) + "\n",
+    JSON.stringify({ type: "finish" }) + "\n",
+  ]);
+
+  afterEach(() => vi.restoreAllMocks());
+
+  it("retries a transient 503 and returns the retry's stream", async () => {
+    const superExecute = vi.spyOn(BaseExecutor.prototype, "execute")
+      .mockResolvedValueOnce({ response: new Response(errorStream("Service temporarily unavailable.", 503), { status: 200 }) })
+      .mockResolvedValueOnce({ response: new Response(okStream(), { status: 200 }) });
+    const log = { debug: vi.fn() };
+
+    const result = await new CommandCodeExecutor().execute({ model: "deepseek/deepseek-v4.1-flash", log });
+
+    expect(superExecute).toHaveBeenCalledTimes(2);
+    expect(log.debug).toHaveBeenCalledWith("RETRY", expect.stringContaining("503"));
+    expect(result.response.ok).toBe(true);
+    expect(await result.response.text()).toContain("Recovered from lost connection");
+  });
+
+  it("does not retry a non-transient in-band error", async () => {
+    const superExecute = vi.spyOn(BaseExecutor.prototype, "execute")
+      .mockResolvedValue({ response: new Response(errorStream("Unauthorized access", 401), { status: 200 }) });
+
+    const result = await new CommandCodeExecutor().execute({ model: "x", log: { debug: vi.fn() } });
+
+    expect(superExecute).toHaveBeenCalledTimes(1);
+    expect(result.response.status).toBe(401);
+  });
+
+  it("errors the wrapped stream when the error arrives after content started", async () => {
+    const raw = createNdjsonStream([
+      JSON.stringify({ type: "text-delta", text: "partial" }) + "\n",
+      JSON.stringify({ type: "error", error: { type: "server_error", message: "boom" } }) + "\n",
+    ]);
+
+    const wrapped = await inspectAndWrapCommandCodeResponse(new Response(raw, { status: 200 }), "m");
+
+    await expect(wrapped.text()).rejects.toThrow("boom");
   });
 });
 

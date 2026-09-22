@@ -179,3 +179,70 @@ describe("openaiToCommandCodeRequest — tools schema conversion", () => {
     expect(out.params.tools).toBeUndefined();
   });
 });
+
+describe("openaiToCommandCodeRequest — native image blocks", () => {
+  const PNG_B64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==";
+  const DATA_URI = `data:image/png;base64,${PNG_B64}`;
+
+  it("maps an OpenAI image_url data URI to a native image block", () => {
+    const out = openaiToCommandCodeRequest(MODEL, {
+      messages: [{
+        role: "user",
+        content: [
+          { type: "text", text: "what color?" },
+          { type: "image_url", image_url: { url: DATA_URI } },
+        ],
+      }],
+    }, true);
+
+    expect(out.params.messages[0].content).toEqual([
+      { type: "text", text: "what color?" },
+      { type: "image", image: DATA_URI, mimeType: "image/png" },
+    ]);
+  });
+
+  it("maps a Claude/OpenAI base64 image source to a data-URI image block", () => {
+    const out = openaiToCommandCodeRequest(MODEL, {
+      messages: [{
+        role: "user",
+        content: [
+          { type: "image", source: { type: "base64", media_type: "image/png", data: PNG_B64 } },
+        ],
+      }],
+    }, true);
+
+    expect(out.params.messages[0].content).toEqual([
+      { type: "image", image: DATA_URI, mimeType: "image/png" },
+    ]);
+  });
+
+  it("does not stub dropped images as [image omitted]", () => {
+    const out = openaiToCommandCodeRequest(MODEL, {
+      messages: [{
+        role: "user",
+        content: [
+          { type: "text", text: "see this" },
+          { type: "image_url", image_url: { url: DATA_URI } },
+        ],
+      }],
+    }, true);
+
+    const texts = out.params.messages[0].content
+      .filter((b) => b.type === "text")
+      .map((b) => b.text);
+    expect(texts).not.toContain("[image omitted]");
+  });
+});
+
+describe("openaiToCommandCodeRequest — assistant reasoning block", () => {
+  it("keeps reasoning_content as a reasoning block ahead of the text", () => {
+    const out = openaiToCommandCodeRequest(MODEL, {
+      messages: [{ role: "assistant", content: "done", reasoning_content: "thought it through" }],
+    }, true);
+
+    expect(out.params.messages[0].content).toEqual([
+      { type: "reasoning", text: "thought it through" },
+      { type: "text", text: "done" },
+    ]);
+  });
+});

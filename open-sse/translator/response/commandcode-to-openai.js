@@ -165,12 +165,11 @@ export function commandCodeToOpenAIResponse(chunk, state) {
       break;
     }
     case "error": {
-      state.finishReason = OPENAI_FINISH.STOP;
       const errVal = event.error ?? event.message ?? "unknown";
       const errStr = typeof errVal === "string" ? errVal : JSON.stringify(errVal);
-      out.push(makeChunk(state, { content: `\n\n[CommandCode error: ${errStr}]` }));
-      out.push(makeChunk(state, {}, OPENAI_FINISH.STOP));
-      break;
+      // Mid-stream error: throw instead of emitting fake content with finish_reason "stop",
+      // so the stream handler reports the stream as errored rather than as a clean finish.
+      throw new Error(`[CommandCode error: ${errStr}]`);
     }
     // Silently ignore: start, start-step, reasoning-start, reasoning-end, text-start, text-end,
     // provider-metadata, message-metadata, etc. They carry no client-visible content.
