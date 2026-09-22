@@ -224,14 +224,20 @@ export default function CombosPage() {
         setBulkBusy(true);
         try {
           const ids = selectedCombos.map((c) => c.id);
-          const names = selectedCombos.map((c) => c.name);
           const results = await Promise.all(
             ids.map((id) => fetch(`/api/combos/${id}`, { method: "DELETE" }))
           );
-          const failed = results.filter((r) => !r.ok).length;
-          await persistComboStrategies(pruneStrategiesForNames(names));
-          setCombos((prev) => prev.filter((c) => !ids.includes(c.id)));
-          clearSelection();
+          // Only combos the server really deleted may disappear locally. A failed
+          // DELETE leaves the row alive in the DB, so dropping it (and its strategy
+          // entry) here would silently diverge from the server.
+          const ok = selectedCombos.filter((_, i) => results[i]?.ok);
+          const okIds = new Set(ok.map((c) => c.id));
+          const failed = ids.length - ok.length;
+          if (ok.length > 0) {
+            await persistComboStrategies(pruneStrategiesForNames(ok.map((c) => c.name)));
+            setCombos((prev) => prev.filter((c) => !okIds.has(c.id)));
+            setSelectedIds((prev) => prev.filter((id) => !okIds.has(id)));
+          }
           setConfirmState(null);
           if (failed > 0) alert(`Deleted with ${failed} failure${failed === 1 ? "" : "s"}.`);
         } catch (error) {
