@@ -575,6 +575,14 @@ export function openaiToKiroRequest(model, body, stream, credentials) {
     enumerable: false
   });
 
+  // Kiro tool specs get sanitized names (`mcp.a.b` → `mcp_a_b`); keep the reverse
+  // map so tool calls come back under the client's own names.
+  const restoredToolNames = new Map();
+  for (const [original, sanitized] of nameMap) {
+    if (original !== sanitized) restoredToolNames.set(sanitized, original);
+  }
+  if (restoredToolNames.size) payload._toolNameMap = restoredToolNames;
+
   return payload;
 }
 
