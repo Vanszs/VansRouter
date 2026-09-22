@@ -8,10 +8,22 @@ import BaseUrlSelect from "./BaseUrlSelect";
 import { rememberEndpoint } from "./cliEndpointPresets";
 import ApiKeySelect from "./ApiKeySelect";
 import { matchKnownEndpoint } from "./cliEndpointMatch";
+import { stripModelContextMarker } from "open-sse/utils/modelMarkers.js";
 
 const CLOUD_URL = process.env.NEXT_PUBLIC_CLOUD_URL;
 
-function ClaudeExpandedSection({ applying, apiKeys, ccFilterNaming, checkingClaude, cloudEnabled, claudeStatus, customBaseUrl, getDisplayUrl, handleApplySettings, handleCcFilterNamingToggle, handleResetSettings, hasActiveProviders, message, modelMappings, onModelMappingChange, openModelSelector, restoring, selectedApiKey, setCustomBaseUrl, setSelectedApiKey, setShowInstallGuide, setShowManualConfigModal, showInstallGuide, tailscaleEnabled, tailscaleUrl, tool, tunnelEnabled, tunnelPublicUrl }) {
+// Auto-compact window presets (CLAUDE_CODE_AUTO_COMPACT_WINDOW, valid 100K–1M).
+// UI shows the round number; the value written is nudged down 2K to stay safely
+// under the upstream hard cap.
+const CONTEXT_OPTIONS = [
+  { label: "Default", value: "" },
+  { label: "200K", value: "198000" },
+  { label: "300K", value: "298000" },
+  { label: "500K", value: "498000" },
+  { label: "700K", value: "698000" },
+];
+
+function ClaudeExpandedSection({ applying, apiKeys, autoCompactWindow, ccFilterNaming, checkingClaude, cloudEnabled, claudeStatus, customBaseUrl, getDisplayUrl, handleApplySettings, handleCcFilterNamingToggle, handleOneMContextToggle, handleResetSettings, hasActiveProviders, message, modelMappings, onAutoCompactWindowChange, onModelMappingChange, oneMContext, openModelSelector, restoring, selectedApiKey, setCustomBaseUrl, setSelectedApiKey, setShowInstallGuide, setShowManualConfigModal, showInstallGuide, tailscaleEnabled, tailscaleUrl, tool, tunnelEnabled, tunnelPublicUrl }) {
   return (
         <div className="mt-4 pt-4 border-t border-border flex flex-col gap-4">
           {checkingClaude && (
@@ -105,6 +117,30 @@ function ClaudeExpandedSection({ applying, apiKeys, ccFilterNaming, checkingClau
                   </div>
                 ))}
 
+                {/* Auto-compact window */}
+                <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-[8rem_auto_1fr_auto] sm:items-center sm:gap-2">
+                  <span className="text-xs font-semibold text-text-main sm:text-right sm:text-sm">Auto-compact</span>
+                  <span className="material-symbols-outlined hidden text-text-muted text-[14px] sm:inline">arrow_forward</span>
+                  <select value={autoCompactWindow} onChange={(e) => onAutoCompactWindowChange(e.target.value)} className="w-full min-w-0 px-2 py-2 bg-surface rounded text-xs border border-border focus:outline-none focus:ring-1 focus:ring-primary/50 sm:py-1.5">
+                    {CONTEXT_OPTIONS.map((opt) => (
+                      <option key={opt.label} value={opt.value}>{opt.label}</option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* 1M context */}
+                <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-[8rem_auto_1fr_auto] sm:items-center sm:gap-2">
+                  <span className="text-xs font-semibold text-text-main sm:text-right sm:text-sm">1M context</span>
+                  <span className="material-symbols-outlined hidden text-text-muted text-[14px] sm:inline">arrow_forward</span>
+                  <label className="flex items-center gap-1.5 cursor-pointer select-none">
+                    <input type="checkbox" checked={oneMContext} onChange={handleOneMContextToggle} className="w-3.5 h-3.5 accent-primary cursor-pointer" />
+                    <span className="text-xs text-text-muted">Append [1m] to the model name</span>
+                    <Tooltip text="Claude Code otherwise assumes a 200K window, which clamps the auto-compact window above. Applied to every mapped model — only enable it for models that really accept 1M.">
+                      <span className="material-symbols-outlined text-text-muted text-[14px] cursor-help">info</span>
+                    </Tooltip>
+                  </label>
+                </div>
+
                 {/* CC Filter Naming */}
                 <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-[8rem_auto_1fr_auto] sm:items-center sm:gap-2">
                   <span className="text-xs font-semibold text-text-main sm:text-right sm:text-sm">Filter naming</span>
@@ -178,7 +214,13 @@ export default function ClaudeToolCard({
   const [currentEditingAlias, setCurrentEditingAlias] = useState(null);
   const [showManualConfigModal, setShowManualConfigModal] = useState(false);
   const [ccFilterNaming, setCcFilterNaming] = useState(false);
+  const [autoCompactWindowOverride, setAutoCompactWindowOverride] = useState(null);
   const hasInitializedModels = useRef(false);
+
+  // Derived, not synced into state: the select follows the settings file until the
+  // user picks a value, so a status refresh cannot overwrite a pending choice.
+  const autoCompactWindow = autoCompactWindowOverride ?? claudeStatus?.settings?.env?.CLAUDE_CODE_AUTO_COMPACT_WINDOW ?? "";
+  const oneMContext = tool.defaultModels.some((model) => modelMappings[model.alias]?.endsWith("[1m]"));
 
   const getConfigStatus = () => {
     if (!claudeStatus?.installed) return null;
@@ -204,6 +246,19 @@ export default function ClaudeToolCard({
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ ccFilterNaming: value }),
     }).catch(() => {});
+  };
+
+  // Claude Code only string-matches the marker against the model name, so it
+  // applies to any id — the user decides which models are worth declaring as 1M.
+  // Stripping first keeps repeated toggles from stacking `[1m][1m]`.
+  const handleOneMContextToggle = (e) => {
+    const enabled = e.target.checked;
+    tool.defaultModels.forEach((model) => {
+      const current = modelMappings[model.alias];
+      if (!current) return;
+      const { model: bare } = stripModelContextMarker(current);
+      onModelMappingChange(model.alias, enabled ? `${bare}[1m]` : bare);
+    });
   };
   useEffect(() => {
     if (claudeStatus?.installed && !hasInitializedModels.current) {
@@ -237,12 +292,17 @@ export default function ClaudeToolCard({
 
       tool.defaultModels.forEach((model) => {
         const targetModel = modelMappings[model.alias];
+        // Written verbatim — the input may hold a marker typed by hand, and the
+        // toggle already decided the marker when it was flipped.
         if (targetModel && model.envKey) env[model.envKey] = targetModel;
       });
+      if (autoCompactWindow) {
+        env.CLAUDE_CODE_AUTO_COMPACT_WINDOW = autoCompactWindow;
+      }
       const res = await fetch("/api/cli-tools/claude-settings", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ env }),
+        body: JSON.stringify({ env, autoCompactWindow }),
       });
       const data = await res.json();
       if (res.ok) {
@@ -265,6 +325,7 @@ export default function ClaudeToolCard({
         dispatch({ type: "RESTORE_DONE", message: { type: "success", text: "Settings reset successfully!" } });
         tool.defaultModels.forEach((model) => onModelMappingChange(model.alias, model.defaultValue || ""));
         setSelectedApiKey("");
+        setAutoCompactWindowOverride("");
       } else {
         dispatch({ type: "RESTORE_DONE", message: { type: "error", text: data.error || "Failed to reset settings" } });
       }
@@ -292,6 +353,9 @@ export default function ClaudeToolCard({
       const targetModel = modelMappings[model.alias];
       if (targetModel && model.envKey) env[model.envKey] = targetModel;
     });
+    if (autoCompactWindow) {
+      env.CLAUDE_CODE_AUTO_COMPACT_WINDOW = autoCompactWindow;
+    }
 
     return [
       {
@@ -324,6 +388,7 @@ export default function ClaudeToolCard({
       {isExpanded && <ClaudeExpandedSection
         applying={applying}
         apiKeys={apiKeys}
+        autoCompactWindow={autoCompactWindow}
         ccFilterNaming={ccFilterNaming}
         checkingClaude={checkingClaude}
         cloudEnabled={cloudEnabled}
@@ -332,11 +397,14 @@ export default function ClaudeToolCard({
         getDisplayUrl={getDisplayUrl}
         handleApplySettings={handleApplySettings}
         handleCcFilterNamingToggle={handleCcFilterNamingToggle}
+        handleOneMContextToggle={handleOneMContextToggle}
         handleResetSettings={handleResetSettings}
         hasActiveProviders={hasActiveProviders}
         message={message}
         modelMappings={modelMappings}
+        onAutoCompactWindowChange={setAutoCompactWindowOverride}
         onModelMappingChange={onModelMappingChange}
+        oneMContext={oneMContext}
         openModelSelector={openModelSelector}
         restoring={restoring}
         selectedApiKey={selectedApiKey}

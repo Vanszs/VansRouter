@@ -47,6 +47,7 @@ import * as log from "../utils/logger.js";
 import { updateProviderCredentials, checkAndRefreshToken } from "../services/tokenRefresh.js";
 import { getProjectIdForConnection } from "open-sse/services/projectId.js";
 import { maybeWaitForCooldown, MAX_COOLDOWN_RETRIES } from "open-sse/utils/cooldownRetry.js";
+import { stripModelContextMarker } from "open-sse/utils/modelMarkers.js";
 
 function checkCircuitBreaker(provider, proxyHash = null, enabled = true) {
   if (!enabled) return false;
@@ -88,7 +89,11 @@ export async function handleChat(request, clientRawRequest = null) {
 
   // Log request endpoint and model
   const url = new URL(request.url);
-  const modelStr = body.model;
+  // Claude Code marks a 1M-context request as `<model>[1m]`; the marker matches
+  // no combo, alias or provider/model pair, so it must not reach resolution.
+  // The capability travels in the anthropic-beta header, forwarded as-is.
+  const { model: modelStr, contextMarker } = stripModelContextMarker(body.model);
+  if (contextMarker) body.model = modelStr;
 
   // Count messages (support both messages[] and input[] formats)
   const msgCount = body.messages?.length || body.input?.length || 0;
