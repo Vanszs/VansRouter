@@ -677,7 +677,7 @@ export async function getChartData(period = "7d") {
     const startTime = startOfDay.getTime();
     const endTime = startTime + bucketCount * bucketMs;
     const labelFn = (ts) => new Date(ts).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: false });
-    const buckets = Array.from({ length: bucketCount }, (_, i) => ({ label: labelFn(startTime + i * bucketMs), tokens: 0, cost: 0 }));
+    const buckets = Array.from({ length: bucketCount }, (_, i) => ({ label: labelFn(startTime + i * bucketMs), tokens: 0, cost: 0, requests: 0 }));
 
     const rows = db.all(
       `SELECT timestamp, promptTokens, completionTokens, cost FROM usageHistory WHERE timestamp >= ?`,
@@ -690,6 +690,7 @@ export async function getChartData(period = "7d") {
       if (idx >= 0 && idx < bucketCount) {
         buckets[idx].tokens += (r.promptTokens || 0) + (r.completionTokens || 0);
         buckets[idx].cost += r.cost || 0;
+        buckets[idx].requests += 1;
       }
     }
     return buckets;
@@ -700,7 +701,7 @@ export async function getChartData(period = "7d") {
     const bucketMs = 3600000;
     const labelFn = (ts) => new Date(ts).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: false });
     const startTime = now - bucketCount * bucketMs;
-    const buckets = Array.from({ length: bucketCount }, (_, i) => ({ label: labelFn(startTime + i * bucketMs), tokens: 0, cost: 0 }));
+    const buckets = Array.from({ length: bucketCount }, (_, i) => ({ label: labelFn(startTime + i * bucketMs), tokens: 0, cost: 0, requests: 0 }));
 
     const rows = db.all(
       `SELECT timestamp, promptTokens, completionTokens, cost FROM usageHistory WHERE timestamp >= ?`,
@@ -712,28 +713,40 @@ export async function getChartData(period = "7d") {
       const idx = Math.min(Math.floor((t - startTime) / bucketMs), bucketCount - 1);
       buckets[idx].tokens += (r.promptTokens || 0) + (r.completionTokens || 0);
       buckets[idx].cost += r.cost || 0;
+      buckets[idx].requests += 1;
     }
     return buckets;
   }
 
-  const bucketCount = period === "7d" ? 7 : period === "30d" ? 30 : 60;
   const today = new Date();
+  today.setHours(0, 0, 0, 0);
   const labelFn = (d) => d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
 
+  const bucketCount = period === "7d" ? 7 : period === "30d" ? 30 : 60;
+
   // Build map of dateKey → day data
-  const dayRows = loadDaysInRange(db, bucketCount);
+  const dayRows = loadDaysInRange(db, period === "all" ? null : bucketCount);
   const dayMap = {};
   for (const r of dayRows) dayMap[r.dateKey] = parseJson(r.data, {});
 
-  return Array.from({ length: bucketCount }, (_, i) => {
-    const d = new Date(today);
-    d.setDate(d.getDate() - (bucketCount - 1 - i));
+  // "all" spans every recorded day; the rest use a fixed window of bucketCount days.
+  const firstKey = period === "all" ? Object.keys(dayMap).sort()[0] : null;
+  if (period === "all" && !firstKey) return [];
+
+  const startDate = period === "all" ? new Date(`${firstKey}T00:00:00`) : new Date(today);
+  if (period !== "all") startDate.setDate(startDate.getDate() - (bucketCount - 1));
+  const dayCount = Math.max(1, Math.round((today - startDate) / 86400000) + 1);
+
+  return Array.from({ length: dayCount }, (_, i) => {
+    const d = new Date(startDate);
+    d.setDate(d.getDate() + i);
     const dateKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
     const dayData = dayMap[dateKey];
     return {
       label: labelFn(d),
       tokens: dayData ? (dayData.promptTokens || 0) + (dayData.completionTokens || 0) : 0,
       cost: dayData ? (dayData.cost || 0) : 0,
+      requests: dayData ? (dayData.requests || 0) : 0,
     };
   });
 }
