@@ -9,6 +9,14 @@ export function fallbackToolCallId(index) {
   return index === undefined ? `call_${Date.now()}` : `call_${index}_${Date.now()}`;
 }
 
+// Kiro only accepts sanitized tool names; the request translator leaves the
+// reverse map on the stream state so calls come back under the client's names.
+export function restoreToolName(stateOrData, name) {
+  const raw = name || "";
+  const map = stateOrData?.toolNameMap || stateOrData?._toolNameMap;
+  return map && typeof map.get === "function" && map.has(raw) ? map.get(raw) : raw;
+}
+
 // Generate deterministic tool call ID from position + tool name (cache-friendly)
 export function generateToolCallId(msgIndex = 0, tcIndex = 0, toolName = "") {
   const name = toolName ? `_${toolName.replace(/[^a-zA-Z0-9_-]/g, "")}` : "";

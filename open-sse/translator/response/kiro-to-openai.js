@@ -7,21 +7,13 @@ import { FORMATS } from "../formats.js";
 import { ROLE, OPENAI_BLOCK } from "../schema/index.js";
 import { buildChunk } from "../concerns/chunk.js";
 import { toOpenAIUsage } from "../concerns/usage.js";
-import { fallbackToolCallId } from "../concerns/toolCall.js";
+import { fallbackToolCallId, restoreToolName } from "../concerns/toolCall.js";
 import { reasoningDelta } from "../concerns/reasoning.js";
 import { toOpenAIFinish } from "../concerns/finishReason.js";
 
 // Build chunk meta for current kiro state
 function chunkMeta(state) {
   return { id: state.responseId, created: state.created, model: state.model || "kiro" };
-}
-
-// Kiro only accepts sanitized tool names; the request translator leaves the
-// reverse map on the stream state so calls come back under the client's names.
-function restoreToolName(stateOrData, name) {
-  const raw = name || "";
-  const map = stateOrData?.toolNameMap || stateOrData?._toolNameMap;
-  return map && typeof map.get === "function" && map.has(raw) ? map.get(raw) : raw;
 }
 
 /**

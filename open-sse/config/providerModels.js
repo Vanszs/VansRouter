@@ -4,6 +4,7 @@ import REGISTRY from "../providers/registry/index.js";
 import { PROVIDER_MODELS } from "../providers/index.js";
 import { modelQuotaFamily, modelStrip, modelTargetFormat, modelSupportedFormats, normalizeModelId } from "../providers/models/schema.js";
 import { CODEX_REVIEW_SUFFIX } from "../providers/models/helpers.js";
+import { stripThinkingSuffix } from "../translator/concerns/thinkingUnified.js";
 
 export { PROVIDER_MODELS };
 
@@ -29,9 +30,7 @@ const DOT_VERSION_PROVIDERS = new Set(["kr", "kiro"]);
 // Other providers use exact match only.
 function findModel(models, modelId, aliasOrId) {
   if (!models) return undefined;
-  const baseModelId = typeof modelId === "string"
-    ? modelId.replace(/\([^()]+\)\s*$/, "").trim()
-    : modelId;
+  const baseModelId = stripThinkingSuffix(modelId);
   const found = models.find(m => m.id === modelId || m.id === baseModelId);
   if (found) return found;
   if (!DOT_VERSION_PROVIDERS.has(aliasOrId)) return undefined;

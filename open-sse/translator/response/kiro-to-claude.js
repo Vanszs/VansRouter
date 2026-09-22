@@ -15,6 +15,7 @@
  */
 import { register } from "../index.js";
 import { FORMATS } from "../formats.js";
+import { restoreToolName } from "../concerns/toolCall.js";
 
 function stopThinkingBlock(state, results) {
   if (!state.thinkingBlockStarted) return;
@@ -46,13 +47,6 @@ function convertFinishReason(reason) {
  * Convert one OpenAI-format chunk (from KiroExecutor) into Claude SSE events.
  * Returns an array of Claude events, or null when the chunk yields nothing.
  */
-// Kiro only accepts sanitized tool names; the request translator leaves the
-// reverse map on the stream state so calls come back under the client's names.
-function restoreToolName(stateOrData, name) {
-  const raw = name || "";
-  const map = stateOrData?.toolNameMap || stateOrData?._toolNameMap;
-  return map && typeof map.get === "function" && map.has(raw) ? map.get(raw) : raw;
-}
 
 export function kiroToClaudeResponse(chunk, state) {
   // KiroExecutor emits chat.completion.chunk objects; tolerate string chunks
