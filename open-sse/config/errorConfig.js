@@ -10,7 +10,9 @@ export const ERROR_TYPES = {
   500: { type: "server_error", code: "internal_server_error" },
   502: { type: "server_error", code: "bad_gateway" },
   503: { type: "server_error", code: "service_unavailable" },
-  504: { type: "server_error", code: "gateway_timeout" }
+  504: { type: "server_error", code: "gateway_timeout" },
+  520: { type: "server_error", code: "upstream_error" },
+  524: { type: "server_error", code: "upstream_timeout" },
 };
 
 // Default error messages per status code (client-facing)
@@ -25,7 +27,12 @@ export const DEFAULT_ERROR_MESSAGES = {
   500: "Internal server error",
   502: "Bad gateway - upstream provider error",
   503: "Service temporarily unavailable",
-  504: "Gateway timeout"
+  504: "Gateway timeout",
+  // Cloudflare edge codes: 520 = origin returned an unexpected response,
+  // 524 = origin timed out (no response within 100 s). Both mean the upstream
+  // provider is unreachable or overloaded; the client should retry later.
+  520: "Upstream provider returned an unexpected response",
+  524: "Upstream provider timed out — no response received",
 };
 
 // Exponential backoff config for rate limits
