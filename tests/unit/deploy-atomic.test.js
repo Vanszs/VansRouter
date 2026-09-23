@@ -57,9 +57,12 @@ describe("atomic deployment artifact", () => {
     const current = path.join(root, "current");
     const oldRelease = makeRelease(root, "old");
     const newRelease = makeRelease(root, "new");
+    const productionLink = readCurrentTarget();
 
     activate(oldRelease, current);
-    expect(readCurrentTarget()).toBe(null);
+    // Activating an explicit path must leave the default (production) link alone —
+    // asserting it is null only held on machines without a deployed release.
+    expect(readCurrentTarget()).toBe(productionLink);
 
     expect(readCurrentTarget(current)).toBe(oldRelease);
     activate(newRelease, current);
