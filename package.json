@@ -1,6 +1,6 @@
 {
   "name": "vansrouter-app",
-  "version": "0.91.23",
+  "version": "0.91.30",
   "description": "9Router web dashboard",
   "private": true,
   "engines": {
@@ -51,6 +51,7 @@
     "recharts": "^3.7.0",
     "sql.js": "^1.14.1",
     "undici": "^7.19.2",
+    "uuid": "^13.0.0",
     "zustand": "^5.0.10"
   },
   "optionalDependencies": {
