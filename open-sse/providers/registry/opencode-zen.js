@@ -18,6 +18,8 @@ export default {
   category: "apikey",
   transport: {
     baseUrl: "https://opencode.ai/zen/v1/chat/completions",
+    // Keyed lane mirrors the free lane: gateway answers SSE, chatCore aggregates.
+    forceStream: true,
     headers: {},
     usage: {
       url: "https://opencode.ai/zen/v1/usage",
@@ -47,9 +49,9 @@ export default {
       auth: { combined: true, header: "Authorization", scheme: "bearer" },
     },
   ],
-  // supportedFormats follow the endpoint table in https://opencode.ai/docs/zen/.
-  // Paid catalog only: the "-free" ids on this keyed lane need the official-client
-  // fingerprint (UA + tool quartet + forced stream) the free lane already sends.
+  // supportedFormats follow endpoint table in https://opencode.ai/docs/zen/.
+  // Paid catalog only: "-free" ids pass through (passthroughModels) and are sent
+  // with the official-client fingerprint + the user's key by OpenCodeExecutor.
   models: [
     // Claude (messages)
     { id: "claude-fable-5", name: "Claude Fable 5", supportedFormats: ["claude"] },

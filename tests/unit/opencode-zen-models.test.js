@@ -113,7 +113,7 @@ describe("OpenCode Zen model catalog", () => {
     );
   });
 
-  it("keeps the keyed-lane free-tier ids out until the fingerprint executor lands", () => {
+  it("keeps the paid catalog free of -free ids (passthroughModels serves them)", () => {
     const ids = (PROVIDER_MODELS["ocz"] || []).map((m) => m.id);
     expect(ids.filter((id) => id.endsWith("-free"))).toEqual([]);
   });

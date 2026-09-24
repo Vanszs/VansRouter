@@ -42,6 +42,8 @@ const executors = {
   "vertex-partner": new VertexExecutor("vertex-partner"),
   qwen: new QwenExecutor(),
   opencode: new OpenCodeExecutor(),
+  "opencode-zen": new OpenCodeExecutor("opencode-zen"),
+  ocz: new OpenCodeExecutor("opencode-zen"), // Alias for opencode-zen
   "opencode-go": new OpenCodeGoExecutor(),
   "grok-web": new GrokWebExecutor(),
   "grok-cli": new GrokCliExecutor(),

@@ -6,7 +6,7 @@ import { ANTHROPIC_API_VERSION } from "../providers/shared.js";
 import crypto from "node:crypto";
 import { resolveSessionId } from "../utils/sessionManager.js";
 import { applyFingerprintToolNames } from "../utils/opencodeFingerprint.js";
-import { getModelTargetFormat } from "../config/providerModels.js";
+import { getModelTargetFormat, PROVIDER_MODELS, PROVIDER_ID_TO_ALIAS } from "../config/providerModels.js";
 
 // OpenCode free tier limits requests per egress IP.
 const IP_LIMIT_BODY = /limit|rate|quota|exhausted|capacity|too many|retry/i;
@@ -90,12 +90,17 @@ function baseModelId(model) {
   return String(model || "").replace(/\([^()]+\)\s*$/, "").trim();
 }
 
-function isResponsesModel(model) {
-  return getModelTargetFormat("oc", baseModelId(model)) === "openai-responses";
-}
-
-function isMessagesModel(model) {
-  return getModelTargetFormat("oc", baseModelId(model)) === "claude";
+// Declared lane for a model: primary registry alias (oc free lane / ocz keyed
+// zen lane), then the oc registry for passthrough ids the keyed catalog doesn't
+// list ("-free" ids served on both lanes).
+function modelFormat(alias, model) {
+  const clean = baseModelId(model);
+  const fmt = getModelTargetFormat(alias, clean);
+  if (fmt) return fmt;
+  if (alias !== "oc" && !(PROVIDER_MODELS[alias] || []).some((m) => m.id === clean)) {
+    return getModelTargetFormat("oc", clean);
+  }
+  return null;
 }
 
 // Decoy shape follows the lane: Responses takes flat entries, Chat Completions
@@ -161,17 +166,37 @@ function normalizeOpencodeReasoning(model, body) {
   delete body.reasoning_effort;
 }
 export class OpenCodeExecutor extends BaseExecutor {
-  constructor() {
-    super("opencode", PROVIDERS.opencode);
+  constructor(provider = "opencode") {
+    super(provider, PROVIDERS[provider]);
+    this.modelAlias = PROVIDER_ID_TO_ALIAS[provider] || provider;
+    this.origin = new URL(this.config.baseUrl).origin;
+  }
+
+  // Request lane ("responses" | "claude" | "chat"): responses-only models never
+  // move (a stale runtimeTransport must not downgrade them — same rule as
+  // opencode-go), then the source-format transport chatCore picked, else the
+  // model's declared lane.
+  laneFor(model, credentials) {
+    if (modelFormat(this.modelAlias, model) === "openai-responses") return "responses";
+    const rtFormat = credentials?.runtimeTransport?.format;
+    if (rtFormat === "openai-responses") return "responses";
+    if (rtFormat === "claude") return "claude";
+    if (rtFormat === "openai") return "chat";
+    return modelFormat(this.modelAlias, model) === "claude" ? "claude" : "chat";
   }
 
   transformRequest(model, body, stream, credentials) {
+    // Zen's free tier 403s any non-streaming body; the identity
+    // openai-to-openai translator never writes body.stream — pin it here
+    // (same convention as codex/commandcode/grok-cli executors).
+    if (stream) body.stream = true;
     this._currentSessionId = translateSessionId(
       resolveOpencodeSession(body, credentials),
       credentials?.rawHeaders?.["x-opencode-client"],
     );
     if (credentials) credentials.runtimeOpencodeSession = this._currentSessionId;
-    if (isResponsesModel(model)) {
+    const lane = this.laneFor(model, credentials);
+    if (lane === "responses") {
       // ponytail: only the model confirmed auto-only; widen the allowlist when
       // there is evidence for another one.
       if ("tool_choice" in body && body.tool_choice !== "auto"
@@ -188,16 +213,15 @@ export class OpenCodeExecutor extends BaseExecutor {
       delete body.max_completion_tokens;
       normalizeOpencodeReasoning(model, body);
     }
-    const lane = isResponsesModel(model) ? "responses" : isMessagesModel(model) ? "claude" : "chat";
     cloakFingerprintTools(body, lane);
     return injectReasoningContent({ provider: this.provider, model, body });
   }
 
-  buildUrl(model) {
-    const base = this.config.baseUrl;
-    if (isResponsesModel(model)) return `${base}/zen/v1/responses`;
-    if (isMessagesModel(model)) return `${base}/zen/v1/messages`;
-    return `${base}/zen/v1/chat/completions`;
+  buildUrl(model, stream, urlIndex = 0, credentials = null) {
+    const lane = this.laneFor(model, credentials);
+    if (lane === "responses") return `${this.origin}/zen/v1/responses`;
+    if (lane === "claude") return `${this.origin}/zen/v1/messages`;
+    return `${this.origin}/zen/v1/chat/completions`;
   }
 
   buildHeaders(credentials, stream = true, model) {
@@ -215,7 +239,6 @@ export class OpenCodeExecutor extends BaseExecutor {
       || generateRequestId();
     const headers = {
       "Content-Type": "application/json",
-      "Authorization": "Bearer public",
       "User-Agent": hasValidOpencodeVersion(raw["user-agent"]) ? raw["user-agent"] : OPENCODE_UA,
       "x-opencode-client": raw["x-opencode-client"] || "desktop",
       "x-opencode-session": session,
@@ -223,14 +246,25 @@ export class OpenCodeExecutor extends BaseExecutor {
       "x-opencode-project": raw["x-opencode-project"] || "global",
       "Accept": stream ? "text/event-stream" : "*/*"
     };
-    if (isMessagesModel(model)) headers["anthropic-version"] = ANTHROPIC_API_VERSION;
+    const key = credentials?.apiKey || credentials?.accessToken;
+    const auth = credentials?.runtimeTransport?.auth;
+    if (auth?.header) {
+      // Per-transport contract (zen claude: x-api-key raw + version; else Bearer).
+      headers[auth.header] = auth.scheme === "bearer" ? `Bearer ${key}` : key;
+    } else {
+      // Free lane carries no key (Bearer public); the keyed lane sends the user's key.
+      headers["Authorization"] = key ? `Bearer ${key}` : "Bearer public";
+    }
+    if (auth?.anthropicVersion || this.laneFor(model, credentials) === "claude") {
+      headers["anthropic-version"] = ANTHROPIC_API_VERSION;
+    }
     return headers;
   }
 
   parseError(response, bodyText) {
     const status = response?.status || 0;
     const text = String(bodyText || "");
-    if ((status === 429 || status === 403) && IP_LIMIT_BODY.test(text)) {
+    if (this.provider === "opencode" && (status === 429 || status === 403) && IP_LIMIT_BODY.test(text)) {
       return {
         status,
         message: text.slice(0, 300) || `OpenCode free limit (${status})`,
