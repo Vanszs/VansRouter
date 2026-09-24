@@ -81,8 +81,8 @@ RUN node -e "const Database = require('better-sqlite3'); const db = new Database
 COPY --from=tailscale /out/tailscale /usr/local/bin/tailscale
 COPY --from=tailscale /out/tailscaled /usr/local/bin/tailscaled
 
-RUN mkdir -p /app/data && chown -R node:node /app && \
-  mkdir -p /app/data-home && chown node:node /app/data-home && \
+RUN mkdir -p /app/data /app/data-home && \
+  chown -R node:node /app/data /app/data-home /app/.next && \
   ln -sf /app/data-home /root/.9router 2>/dev/null || true
 
 # Fix permissions at runtime (handles mounted volumes). Migrate the historical
