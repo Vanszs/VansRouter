@@ -1,3 +1,26 @@
+# v0.91.34 (2026-09-25)
+
+## Reliability & Deployment Hardening
+
+- **Atomic deployment standalone symlink isolation** — In `scripts/deploy-atomic.cjs`, rewritten Next.js standalone pnpm symlinks whose targets resolve into the temporary build tree (`NEXT_DIST_DIR`) to relative intra-release links (`makeReleaseSelfContained`). Temporary build paths are cleaned *before* running production smoke checks, preventing `Cannot find module 'next'` runtime crashes when deploying via PM2.
+- **CLI package dependency closure** — Bundled Next.js server runtime and complete `open` package dependency closure into the published CLI package (`cli/scripts/build-cli.js`). Moved `better-sqlite3` native installation out of npm postinstall to lazy first-launch initialization (`cli.js`) with automatic fallback to Node's built-in `node:sqlite`, eliminating native C++ ABI compilation failures across Node 20/22/musl environments.
+- **Docker legacy volume migration deadlock fix** — Added process PID liveness detection (`isLockOwnerAlive`) in `docker/migrate-legacy-volume.cjs`. If a container terminates abruptly (OOMKilled, host restart) during migration, stale locks from dead processes are automatically reclaimed on subsequent boot instead of triggering a 6-hour entrypoint crash-loop under `set -eu`.
+- **Docker multi-arch native binary pinning** — Pinned `better-sqlite3` musl prebuilt binaries with sha256 checksums in `Dockerfile` and `docker/native-deps/package-lock.json`, eliminating fragile source compilation in emulated ARM64 QEMU builds.
+- **CI/CD promotion shell syntax fix** — Fixed bash regex condition syntax `[[ "$STAGING_DIGEST" =~ ^sha256:[0-9a-f]{64}$ ]]` in `.github/workflows/release.yml` under GitHub Actions runner environment.
+
+## Provider & Model Enhancements
+
+- **Free-tier model zero-pricing** — Registered wildcard patterns `*:free` and `*-free` in `open-sse/providers/pricing.js` to assign zero-rate cost ($0.00) across all input, output, cached, and reasoning tokens, preventing false quota deductions for free community models.
+- **DeepSeek V4.1 Flash Free multimodal vision** — Added explicit multimodal capability entry (`vision: true`, 1M contextWindow) for `tokenharbor/deepseek-v4.1-flash:free` in `open-sse/providers/capabilities.js`.
+- **OpenCode Free error translation** — In `open-sse/executors/opencode.js`, mapped upstream OpenCode `ModelError` (401) to HTTP 404 `model_not_found` and `Model is unavailable` (400) to HTTP 503 `service_unavailable`, preventing confusing `invalid_api_key` errors on public no-auth endpoints.
+
+## Tests
+
+- Added `tests/unit/legacy-volume-migration.test.js` covering lock recovery on dead PID owners, canonical DB preservation, and sidecar quarantine.
+- Added `tests/unit/release-hardening.test.js` validating package closure, tarball integrity, and standalone symlink containment.
+- Extended `tests/unit/tokenharbor-provider.test.js` asserting multimodal vision and zero-rate pricing for `deepseek-v4.1-flash:free`.
+- Verified test suite: 326 test files / 3,664 tests passing.
+
 # v0.91.33 (2026-09-25)
 
 ## Features
