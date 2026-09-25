@@ -39,6 +39,22 @@ function verifyBundledOpenClosure(appDir) {
   }
 }
 
+function getNpmInvocation({
+  platform = process.platform,
+  npmExecPath = process.env.npm_execpath,
+  execPath = process.execPath,
+} = {}) {
+  if (npmExecPath) {
+    return { command: execPath, args: [npmExecPath], shell: false };
+  }
+  if (platform === "win32") {
+    // `.cmd` files require the Windows command interpreter when launched
+    // through execFile/execFileSync; direct execFileSync("npm.cmd") fails.
+    return { command: "npm.cmd", args: [], shell: true };
+  }
+  return { command: "npm", args: [], shell: false };
+}
+
 function runInstallSmoke({ tarball, expectedVersion, runScripts = false }) {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "vansrouter-install-smoke-"));
   const installDir = path.join(root, "install");
@@ -54,10 +70,10 @@ function runInstallSmoke({ tarball, expectedVersion, runScripts = false }) {
     USERPROFILE: homeDir,
     DATA_DIR: dataDir,
   };
-  const npmExecPath = process.env.npm_execpath;
-  const npmCommand = npmExecPath ? process.execPath : (process.platform === "win32" ? "npm.cmd" : "npm");
+  const npmInvocation = getNpmInvocation();
+  const npmCommand = npmInvocation.command;
   const npmArgs = [
-    ...(npmExecPath ? [npmExecPath] : []),
+    ...npmInvocation.args,
     "install",
     "--prefix",
     installDir,
@@ -68,7 +84,7 @@ function runInstallSmoke({ tarball, expectedVersion, runScripts = false }) {
   ];
 
   try {
-    execFileSync(npmCommand, npmArgs, { env, stdio: "inherit" });
+    execFileSync(npmCommand, npmArgs, { env, stdio: "inherit", shell: npmInvocation.shell });
     const cliPath = path.join(installDir, "node_modules", "vansrouter", "cli.js");
     if (!fs.existsSync(cliPath)) throw new Error(`Installed CLI binary missing: ${cliPath}`);
     verifyBundledOpenClosure(path.join(installDir, "node_modules", "vansrouter", "app"));
@@ -88,7 +104,7 @@ function runInstallSmoke({ tarball, expectedVersion, runScripts = false }) {
   }
 }
 
-module.exports = { parseArgs, verifyBundledOpenClosure, verifyVersionOutput, runInstallSmoke };
+module.exports = { parseArgs, verifyBundledOpenClosure, verifyVersionOutput, getNpmInvocation, runInstallSmoke };
 
 if (require.main === module) {
   try {

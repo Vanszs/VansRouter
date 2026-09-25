@@ -6,7 +6,7 @@ import path from "node:path";
 import { execFileSync } from "node:child_process";
 import { createRequire } from "node:module";
 import { fileURLToPath } from "node:url";
-import { acquireLock, activate, finalizeReleaseSymlinks, getFreePort, makeReleaseSelfContained, pruneReleases, readCurrentTarget, removeRuntimeEnvFiles, selectRollbackRelease, staticDirOf, verifyRelease, verifyStandaloneLinks } from "../../scripts/deploy-atomic.cjs";
+import { acquireLock, activate, assertRuntimePathAlignment, finalizeReleaseSymlinks, getFreePort, makeReleaseSelfContained, pruneReleases, readCurrentTarget, removeRuntimeEnvFiles, resolveDeploymentEnvironment, selectRollbackRelease, staticDirOf, verifyRelease, verifyStandaloneLinks } from "../../scripts/deploy-atomic.cjs";
 
 const tempRoots = [];
 
@@ -85,7 +85,38 @@ describe("atomic deployment artifact", () => {
       cwd: path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../.."),
       env: { ...process.env, RELEASE_ROOT: process.cwd() },
       stdio: "pipe",
-    })).toThrow(/Refusing unsafe RELEASE_ROOT/);
+    })).toThrow(/Refusing (unsafe|ephemeral) RELEASE_ROOT/);
+  });
+
+  it("resolves PM2 data and release paths from one merged environment", () => {
+    const env = resolveDeploymentEnvironment({
+      shellEnv: { PORT: "3003" },
+      pm2Env: { DATA_DIR: "/var/lib/9router" },
+    });
+
+    expect(env.DATA_DIR).toBe("/var/lib/9router");
+    expect(env.RELEASE_ROOT).toBe("/var/lib/9router/releases");
+    expect(env.CURRENT_LINK).toBe("/var/lib/9router/current");
+    expect(env.RELEASE_SERVER).toBe("/var/lib/9router/current/server.js");
+  });
+
+  it("blocks a deploy when PM2 and the shell resolve different implicit data roots", () => {
+    expect(() => assertRuntimePathAlignment({
+      shellEnv: { HOME: "/home/tester" },
+      pm2Env: { DATA_DIR: "/var/lib/9router" },
+    })).toThrow(/DATA_DIR/);
+
+    expect(() => assertRuntimePathAlignment({
+      shellEnv: { DATA_DIR: "/var/lib/9router" },
+      pm2Env: { DATA_DIR: "/var/lib/9router" },
+    })).not.toThrow();
+  });
+
+  it("also compares paths when PM2 only declares a release root", () => {
+    expect(() => assertRuntimePathAlignment({
+      shellEnv: { HOME: "/home/tester" },
+      pm2Env: { RELEASE_ROOT: "/opt/9router/releases" },
+    })).toThrow(/RELEASE_ROOT/);
   });
 
   it("requires a server and JavaScript static chunk", () => {

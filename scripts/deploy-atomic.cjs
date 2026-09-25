@@ -10,7 +10,7 @@ const { resolveRuntimePaths } = require("./runtime-paths.cjs");
 const root = path.resolve(__dirname, "..");
 const appName = process.env.PM2_APP_NAME || "9router";
 const port = Number(process.env.PORT || 3003);
-const { dataDir: defaultDataDir, releaseRoot, currentLink } = resolveRuntimePaths();
+const { releaseRoot, currentLink } = resolveRuntimePaths();
 const smokeTimeoutMs = Number(process.env.SMOKE_TIMEOUT_MS || 30000);
 
 function isUnder(candidate, parent) {
@@ -441,21 +441,54 @@ function readPm2Environment({ failOnError = false, run = spawnSync } = {}) {
   return readPm2App({ failOnError, run })?.pm2_env?.env || {};
 }
 
+function resolveDeploymentEnvironment({ shellEnv = process.env, pm2Env = {} } = {}) {
+  const merged = { ...shellEnv, ...pm2Env };
+  const pathEnv = { ...pm2Env };
+  for (const key of ["DATA_DIR", "RELEASE_ROOT", "CURRENT_LINK"]) {
+    if (Object.prototype.hasOwnProperty.call(shellEnv, key)) pathEnv[key] = shellEnv[key];
+  }
+  const paths = resolveRuntimePaths({ env: pathEnv });
+  return {
+    ...merged,
+    DATA_DIR: paths.dataDir,
+    RELEASE_ROOT: paths.releaseRoot,
+    CURRENT_LINK: paths.currentLink,
+    RELEASE_SERVER: path.join(paths.currentLink, "server.js"),
+  };
+}
+
+const RUNTIME_PATH_KEYS = ["DATA_DIR", "RELEASE_ROOT", "CURRENT_LINK"];
+
+function assertRuntimePathAlignment({ shellEnv = process.env, pm2Env = readPm2Environment({ failOnError: false }) } = {}) {
+  // Only meaningful when PM2 holds a path of its own; RELEASE_ROOT/CURRENT_LINK
+  // count too, since a partial override still decides where releases live.
+  if (!RUNTIME_PATH_KEYS.some((key) => pm2Env?.[key])) return;
+  const hasShellPathOverride = RUNTIME_PATH_KEYS
+    .some((key) => Object.prototype.hasOwnProperty.call(shellEnv, key) && shellEnv[key]);
+  if (hasShellPathOverride) return;
+
+  const shellPaths = resolveRuntimePaths({ env: shellEnv });
+  const pm2Paths = resolveRuntimePaths({ env: { ...shellEnv, ...pm2Env } });
+  const mismatches = ["dataDir", "releaseRoot", "currentLink"]
+    .filter((key) => shellPaths[key] !== pm2Paths[key]);
+  if (mismatches.length) {
+    throw new Error(
+      `PM2 runtime paths differ from the shell (${mismatches.join(", ")}). ` +
+      "Set DATA_DIR (and RELEASE_ROOT/CURRENT_LINK if needed) explicitly before deploying.",
+    );
+  }
+}
+
 function switchPm2(buildId = null) {
   // Preserve credentials and DATA_DIR already held by PM2.  A deploy shell
   // often has only a subset of the production environment; blindly spreading
   // its environment with --update-env can silently remove provider secrets.
   const pm2Environment = readPm2Environment({ failOnError: true });
   const env = {
-    ...process.env,
-    ...pm2Environment,
+    ...resolveDeploymentEnvironment({ shellEnv: process.env, pm2Env: pm2Environment }),
     NODE_PATH: "",
     PORT: String(port),
     NODE_ENV: "production",
-    DATA_DIR: pm2Environment.DATA_DIR || process.env.DATA_DIR || defaultDataDir,
-    RELEASE_ROOT: releaseRoot,
-    CURRENT_LINK: currentLink,
-    RELEASE_SERVER: path.join(currentLink, "server.js"),
     RELEASE_BUILD_ID: buildId || "",
   };
   const ecosystem = path.join(root, "ecosystem.config.cjs");
@@ -626,6 +659,7 @@ async function smokeRelease(releasePath, distDir = null) {
 }
 
 async function deploy() {
+  assertRuntimePathAlignment();
   assertSafePaths();
   const releaseLock = acquireLock();
   const id = releaseId();
@@ -689,6 +723,7 @@ async function deploy() {
 }
 
 async function rollback() {
+  assertRuntimePathAlignment();
   assertSafePaths();
   const releaseLock = acquireLock();
   try {
@@ -736,6 +771,7 @@ if (require.main === module) {
 module.exports = {
   activate,
   acquireLock,
+  assertRuntimePathAlignment,
   finalizeReleaseSymlinks,
   getFreePort,
   makeReleaseSelfContained,
@@ -743,6 +779,7 @@ module.exports = {
   readPm2App,
   readPm2Environment,
   removeRuntimeEnvFiles,
+  resolveDeploymentEnvironment,
   rollback,
   selectRollbackRelease,
   smokeRelease,

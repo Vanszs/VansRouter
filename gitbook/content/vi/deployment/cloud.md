@@ -1,6 +1,6 @@
 # ☁️ Triển khai Cloud
 
-Triển khai 9Router trên VPS hoặc Docker để truy cập từ xa và dùng trong production.
+Triển khai VansRouter trên VPS hoặc Docker để truy cập từ xa và dùng trong production.
 
 ---
 
@@ -9,15 +9,15 @@ Triển khai 9Router trên VPS hoặc Docker để truy cập từ xa và dùng 
 ### Yêu cầu
 
 - Ubuntu 20.04+ hoặc distro Linux tương tự
-- Node.js 20+
+- Node.js 22.5+
 - Git
 - Quyền root hoặc sudo
 
 ### Bước 1: Clone Repository
 
 ```bash
-git clone https://github.com/decolua/9router.git
-cd 9router/app
+git clone https://github.com/Vanszs/VansRouter.git
+cd VansRouter
 ```
 
 ### Bước 2: Cài đặt Dependencies
@@ -38,7 +38,7 @@ Tạo file `.env` hoặc export biến:
 
 ```bash
 export JWT_SECRET="your-secure-secret-change-this-to-random-string"
-export INITIAL_PASSWORD="your-secure-password"
+export INITIAL_PASSWORD="$(openssl rand -base64 24)"
 export DATA_DIR="/var/lib/9router"
 export NODE_ENV="production"
 ```
@@ -48,7 +48,7 @@ export NODE_ENV="production"
 | Biến | Mặc định | Mô tả |
 |----------|---------|-------------|
 | `JWT_SECRET` | Auto-generated | **PHẢI đổi trong production!** Dùng để ký JWT token |
-| `INITIAL_PASSWORD` | `123456` | Mật khẩu đăng nhập Dashboard |
+| `INITIAL_PASSWORD` | `123456` cho bản cài mới | Đặt mật khẩu mạnh trước khi công khai |
 | `DATA_DIR` | `~/.9router` | Đường dẫn lưu database và data |
 | `NODE_ENV` | `development` | Đặt `production` cho deployment |
 | `ENABLE_REQUEST_LOGS` | `false` | Bật debug request/response logs |
@@ -74,8 +74,8 @@ PM2 giữ application chạy và tự khởi động lại khi crash:
 # Install PM2 globally
 npm install -g pm2
 
-# Start 9Router with PM2
-pm2 start npm --name 9router -- start
+# Start VansRouter with PM2
+pm2 start npm --name vansrouter -- start
 
 # Save PM2 configuration
 pm2 save
@@ -89,13 +89,13 @@ pm2 startup
 
 ```bash
 # View logs
-pm2 logs 9router
+pm2 logs vansrouter
 
 # Restart application
-pm2 restart 9router
+pm2 restart vansrouter
 
 # Stop application
-pm2 stop 9router
+pm2 stop vansrouter
 
 # View status
 pm2 status
@@ -113,7 +113,7 @@ pm2 monit
 Tạo `Dockerfile` trong thư mục `app`:
 
 ```dockerfile
-FROM node:20-alpine
+FROM node:22-alpine
 
 WORKDIR /app
 
@@ -151,13 +151,13 @@ docker build -t 9router .
 
 # Run container
 docker run -d \
-  --name 9router \
+  --name vansrouter \
   -p 3000:3000 \
   -p 20128:20128 \
   -e JWT_SECRET="your-secure-secret-change-this" \
-  -e INITIAL_PASSWORD="your-secure-password" \
+  -e INITIAL_PASSWORD="$(openssl rand -base64 24)" \
   -v 9router-data:/app/data \
-  9router
+  vansrouter
 ```
 
 ### Cách 2: Docker Compose
@@ -177,7 +177,7 @@ services:
     environment:
       - NODE_ENV=production
       - JWT_SECRET=your-secure-secret-change-this
-      - INITIAL_PASSWORD=your-secure-password
+      - INITIAL_PASSWORD=${INITIAL_PASSWORD:?set a strong password}
       - DATA_DIR=/app/data
     volumes:
       - 9router-data:/app/data
@@ -247,7 +247,7 @@ server {
     ssl_ciphers HIGH:!aNULL:!MD5;
     ssl_prefer_server_ciphers on;
 
-    # Proxy to 9Router
+    # Proxy to VansRouter
     location / {
         proxy_pass http://localhost:3000;
         proxy_http_version 1.1;
@@ -333,7 +333,7 @@ sudo ufw allow 22/tcp
 sudo ufw allow 80/tcp
 sudo ufw allow 443/tcp
 
-# If NOT using reverse proxy, allow 9Router ports
+# If NOT using reverse proxy, allow VansRouter ports
 sudo ufw allow 3000/tcp
 sudo ufw allow 20128/tcp
 
@@ -363,19 +363,19 @@ ssh -L 3000:localhost:3000 user@your-server.com
 # Update system packages
 sudo apt update && sudo apt upgrade -y
 
-# Update 9Router
+# Update VansRouter
 cd /path/to/9router/app
 git pull
 npm install
 npm run build
-pm2 restart 9router
+pm2 restart vansrouter
 ```
 
 ### 5. Chiến lược Backup
 
 ```bash
 # Backup data directory
-tar -czf 9router-backup-$(date +%Y%m%d).tar.gz /var/lib/9router
+tar -czf vansrouter-backup-$(date +%Y%m%d).tar.gz /var/lib/9router
 
 # Automated daily backup (add to crontab)
 0 2 * * * tar -czf /backups/9router-$(date +\%Y\%m\%d).tar.gz /var/lib/9router
@@ -392,7 +392,7 @@ tar -czf 9router-backup-$(date +%Y%m%d).tar.gz /var/lib/9router
 pm2 status
 
 # View logs
-pm2 logs 9router --lines 100
+pm2 logs vansrouter --lines 100
 
 # Monitor resources
 pm2 monit
@@ -429,20 +429,20 @@ netstat -tulpn | grep -E '3000|20128'
 
 ```bash
 # Check logs
-pm2 logs 9router
+pm2 logs vansrouter
 
 # Check if ports are in use
 sudo lsof -i :3000
 sudo lsof -i :20128
 
 # Check environment variables
-pm2 env 9router
+pm2 env vansrouter
 ```
 
 ### Nginx 502 Bad Gateway
 
 ```bash
-# Check if 9Router is running
+# Check if VansRouter is running
 pm2 status
 
 # Check Nginx error logs

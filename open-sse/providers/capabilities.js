@@ -290,6 +290,13 @@ export const MODEL_CAPABILITIES = {
     contextWindow: 1000000,
     maxOutput: 384000,
   },
+  "deepseek-v4.1-flash:free": {
+    vision: true,
+    reasoning: true,
+    thinkingFormat: "deepseek",
+    contextWindow: 1000000,
+    maxOutput: 384000,
+  },
   "deepseek-flash": {
     vision: true,
     reasoning: true,

@@ -4,7 +4,7 @@ import os from "node:os";
 import path from "node:path";
 
 const require = createRequire(import.meta.url);
-const { parseArgs, verifyBundledOpenClosure, verifyVersionOutput } = require("../../cli/scripts/smoke-installed-package.cjs");
+const { parseArgs, verifyBundledOpenClosure, verifyVersionOutput, getNpmInvocation } = require("../../cli/scripts/smoke-installed-package.cjs");
 
 describe("installed CLI package smoke test", () => {
   it("parses the tarball, version, and script mode", () => {
@@ -36,5 +36,23 @@ describe("installed CLI package smoke test", () => {
   it("rejects a CLI that reports the wrong version", () => {
     expect(() => verifyVersionOutput("1.2.4\n", "1.2.3")).toThrow(/version mismatch/i);
     expect(verifyVersionOutput("1.2.3\n", "1.2.3")).toBe("1.2.3");
+  });
+
+  it("uses a shell for Windows npm.cmd invocations", () => {
+    expect(getNpmInvocation({ platform: "win32", npmExecPath: "" })).toEqual({
+      command: "npm.cmd",
+      args: [],
+      shell: true,
+    });
+    expect(getNpmInvocation({ platform: "linux", npmExecPath: "" })).toEqual({
+      command: "npm",
+      args: [],
+      shell: false,
+    });
+    expect(getNpmInvocation({ platform: "win32", npmExecPath: "C:/npm/cli.js" })).toEqual({
+      command: process.execPath,
+      args: ["C:/npm/cli.js"],
+      shell: false,
+    });
   });
 });

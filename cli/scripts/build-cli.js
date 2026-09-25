@@ -253,6 +253,7 @@ if (require.main === module) {
   const customServerSrc = path.join(appDir, "custom-server.js");
   if (fs.existsSync(customServerSrc)) {
     fs.copyFileSync(customServerSrc, path.join(cliAppDir, "custom-server.js"));
+    fs.copyFileSync(path.join(appDir, "runtime-secrets.cjs"), path.join(cliAppDir, "runtime-secrets.cjs"));
     console.log("✅ Copied custom-server.js\n");
   } else {
     throw new Error("custom-server.js not found — refusing to build an incomplete CLI package");

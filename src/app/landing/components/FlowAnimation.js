@@ -57,7 +57,7 @@ export default function FlowAnimation() {
           <circle cx="16" cy="9" r="2" fill="#6366f1"/>
         </svg>
         <span className="text-xs font-bold text-white tracking-widest uppercase">
-          VansAI
+          VansRouter
         </span>
         <div className="absolute inset-0 rounded-full border border-[#6366f1]/30 animate-ping opacity-20"></div>
       </div>

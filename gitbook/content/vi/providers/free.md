@@ -31,7 +31,7 @@ Provider free tier là **fallback** khi hết quota subscription và cheap:
 **Bước 1: Kết nối qua Dashboard**
 
 ```bash
-9router
+vansrouter
 # Dashboard → Providers → Connect iFlow
 ```
 
@@ -91,7 +91,7 @@ Model: if/kimi-k2-thinking
 **Bước 1: Kết nối qua Dashboard**
 
 ```bash
-9router
+vansrouter
 # Dashboard → Providers → Connect Qwen
 ```
 
@@ -144,7 +144,7 @@ Model: qw/qwen3-coder-plus
 **Bước 1: Kết nối qua Dashboard**
 
 ```bash
-9router
+vansrouter
 # Dashboard → Providers → Connect Kiro
 ```
 
@@ -376,13 +376,13 @@ Perfect for:
 100M × $20/1M = $2,000/month
 ```
 
-**Phương án 2: Chỉ 9Router Free Tier**
+**Phương án 2: Chỉ VansRouter Free Tier**
 ```
 100M via free tier = $0/month
 Savings: $2,000/month (100%)
 ```
 
-**Phương án 3: Chiến lược Hoàn chỉnh 9Router**
+**Phương án 3: Chiến lược Hoàn chỉnh VansRouter**
 ```
 60M via Gemini CLI (FREE): $0
 30M via Claude Code (subscription): $0 extra

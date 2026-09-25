@@ -10,9 +10,8 @@
 [![GHCR](https://img.shields.io/badge/GHCR-Vanszs%2FVansRouter-blue?logo=github)](https://github.com/Vanszs/VansRouter/pkgs/container/VansRouter)
 [![License](https://img.shields.io/npm/l/vansrouter.svg)](https://github.com/Vanszs/VansRouter/blob/main/LICENSE)
 
-<a href="https://trendshift.io/repositories/22628" target="_blank"><img src="https://trendshift.io/api/badge/repositories/22628" alt="decolua%2F9router | Trendshift" style="width: 250px; height: 55px;" width="250" height="55"/></a>
 
-[🌐 Website](https://vansrouter.com) • [📖 Full Docs](https://github.com/Vanszs/VansRouter)
+[🌐 Website](http://localhost:20128) • [📖 Full Docs](https://github.com/Vanszs/VansRouter)
 
 ---
 
@@ -51,13 +50,15 @@ npx vansrouter
 
 ```bash
 docker run -d --name vansrouter -p 20128:20128 \
-  -v "$HOME/.9router:/app/data" -e DATA_DIR=/app/data \
+  -v "$HOME/.9router:/app/data" \
+  -e DATA_DIR=/app/data \
+  -e INITIAL_PASSWORD="$(openssl rand -base64 24)" \
   ghcr.io/vanszs/vansrouter:X.Y.Z
 ```
 
-Published images: [Docker Hub](https://hub.docker.com/r/vanszs/vansrouter) • [GHCR](https://github.com/Vanszs/VansRouter/pkgs/container/VansRouter) (multi-platform amd64/arm64).
+Save the generated `INITIAL_PASSWORD` securely. If omitted, a new installation uses the compatibility default `123456`; change it before public exposure. Published images: [Docker Hub](https://hub.docker.com/r/vanszs/vansrouter) • [GHCR](https://github.com/Vanszs/VansRouter/pkgs/container/VansRouter) (multi-platform amd64/arm64).
 
-🎉 Dashboard opens at `http://localhost:20128`
+🎉 Dashboard opens at `http://localhost:20128/masuk`
 
 **2. Connect a FREE provider (no signup needed):**
 
@@ -86,7 +87,7 @@ vansrouter --skip-update      # Skip auto-update check
 vansrouter --help             # Show all options
 ```
 
-**Dashboard**: `http://localhost:20128/dashboard`
+**Dashboard**: `http://localhost:20128/masuk` (after login, `/dashboard`)
 
 ---
 
@@ -101,7 +102,7 @@ Any tool supporting OpenAI/Claude-compatible API works.
 ## 💾 Data Location
 
 - **macOS/Linux**: `~/.9router/db/data.sqlite`
-- **Windows**: `%APPDATA%/9router/db/data.sqlite`
+- **Windows**: `%APPDATA%\9router\db\data.sqlite`
 - **Docker**: `/app/data/db/data.sqlite` (mount `$HOME/.9router` to persist)
 
 ---
@@ -112,7 +113,7 @@ Full docs, advanced setup, video tutorials & development guide:
 
 - **GitHub**: https://github.com/Vanszs/VansRouter
 - **Full README**: https://github.com/Vanszs/VansRouter/blob/main/README.md
-- **Website**: https://vansrouter.com
+- **Website**: http://localhost:20128
 
 ---
 

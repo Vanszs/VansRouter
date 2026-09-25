@@ -1,8 +1,11 @@
 import { NextResponse } from "next/server";
+import { cookies } from "next/headers";
 import { getSettings, updateSettings } from "@/lib/localDb";
 import { applyOutboundProxyEnv } from "@/lib/network/outboundProxy";
 import { resetComboRotation } from "open-sse/services/combo.js";
 import bcrypt from "bcryptjs";
+import { getInitialPassword, isStrongInitialPassword } from "@/lib/auth/password";
+import { verifyDashboardAuthToken, verifyPasswordChangeToken } from "@/lib/auth/dashboardSession";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -13,6 +16,9 @@ const SETTINGS_RESPONSE_HEADERS = {
 
 // Secrets must never be mass-assigned from request body (CWE-915)
 const PROTECTED_SETTING_KEYS = ["password", "mitmSudoEncrypted"];
+
+// The password-change grant may touch these keys and nothing else.
+const GRANT_ALLOWED_KEYS = new Set(["newPassword", "currentPassword"]);
 
 export async function GET() {
   try {
@@ -39,10 +45,37 @@ export async function PATCH(request) {
   try {
     const body = await request.json();
 
+    // A password-change grant (fresh install, remote, default password) is not a
+    // dashboard session: it exists only so the operator can replace that
+    // password. Anything else in the body is refused before it reaches the DB.
+    const cookieStore = await cookies();
+    const hasSession = await verifyDashboardAuthToken(cookieStore.get("auth_token")?.value);
+    if (!hasSession && await verifyPasswordChangeToken(cookieStore.get("password_change")?.value)) {
+      const keys = Object.keys(body).filter((key) => !PROTECTED_SETTING_KEYS.includes(key));
+      const onlyPassword = keys.length > 0 && keys.every((key) => GRANT_ALLOWED_KEYS.has(key));
+      if (!onlyPassword || !body.currentPassword) {
+        return NextResponse.json(
+          { error: "Password change required: set only newPassword and currentPassword" },
+          { status: 403, headers: SETTINGS_RESPONSE_HEADERS },
+        );
+      }
+      const initialPassword = getInitialPassword();
+      if (!initialPassword || body.currentPassword !== initialPassword) {
+        return NextResponse.json(
+          { error: "Invalid current password" },
+          { status: 401, headers: SETTINGS_RESPONSE_HEADERS },
+        );
+      }
+    }
+
     // Strip protected secrets before any internal handling sets them
     for (const key of PROTECTED_SETTING_KEYS) delete body[key];
 
-    // If updating password, hash it
+    // If updating password, enforce the production strength policy before hashing it.
+    if (body.newPassword && !isStrongInitialPassword(body.newPassword)) {
+      return NextResponse.json({ error: "New password must be at least 12 characters and not a placeholder" }, { status: 400 });
+    }
+
     if (body.newPassword) {
       const settings = await getSettings();
       const currentHash = settings.password;
@@ -57,8 +90,8 @@ export async function PATCH(request) {
           return NextResponse.json({ error: "Invalid current password" }, { status: 401 });
         }
       } else {
-        // First time setting password, no current password needed
-        // Allow empty currentPassword or default "123456"
+        // First time setting password, no current password is needed. Any
+        // supplied legacy value must still be accepted for local development.
         if (body.currentPassword && body.currentPassword !== "123456") {
            return NextResponse.json({ error: "Invalid current password" }, { status: 401 });
         }

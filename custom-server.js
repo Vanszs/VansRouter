@@ -2,6 +2,9 @@ const http = require("http");
 const path = require("path");
 const fs = require("fs");
 const crypto = require("crypto");
+const { assertProductionSecrets } = require("./runtime-secrets.cjs");
+
+assertProductionSecrets();
 
 const MAX_H2C_BODY_BYTES = 64 * 1024 * 1024;
 const H2C_CRLF = Buffer.from("\r\n");

@@ -129,3 +129,6 @@ next-env.d.ts
 .graphifyignore
 graphify-out/*
 .next-analyze/*
+
+# CLI package smoke scratch dir (CI + local `npm pack` verification)
+.ci-cli-smoke/

@@ -1,5 +1,5 @@
 const api = require("../api/client");
-const { confirm, pause } = require("../utils/input");
+const { confirm, pause, promptSecret } = require("../utils/input");
 const { showStatus } = require("../utils/display");
 const { showMenuWithBack } = require("../utils/menuHelper");
 
@@ -12,8 +12,6 @@ const COLORS = {
   dim: "\x1b[2m",
   cyan: "\x1b[36m"
 };
-
-const DEFAULT_PASSWORD = "123456";
 
 /**
  * Show settings menu (tunnel + RTK + reset password)
@@ -83,7 +81,7 @@ async function showSettingsMenu(breadcrumb = []) {
         action: async (d) => { await toggleHeadroom(d?.settings?.headroomEnabled === true); return true; }
       },
       {
-        label: "🔑 Reset Password to Default",
+        label: "🔑 Set/Replace Dashboard Password",
         action: async () => { await resetPassword(); return true; }
       },
       {
@@ -181,22 +179,22 @@ async function toggleHeadroom(currentlyOn) {
 }
 
 /**
- * Reset dashboard password to default via server API (writes the live SQLite DB).
- * After reset, user can log in with the default password "123456".
+ * Set a strong replacement dashboard password via the local server API.
  */
 async function resetPassword() {
-  const ok = await confirm(`Reset dashboard password to default "${DEFAULT_PASSWORD}"?`);
-  if (!ok) {
-    showStatus("Cancelled", "info");
+  const newPassword = await promptSecret("New dashboard password (12+ characters): ");
+  const confirmation = await promptSecret("Confirm new password: ");
+  if (!newPassword || newPassword !== confirmation) {
+    showStatus("Passwords do not match or password is empty", "error");
     await pause();
     return;
   }
 
-  const result = await api.resetPassword();
+  const result = await api.resetPassword(newPassword);
   if (result.success) {
-    showStatus(`Password reset. Default: ${DEFAULT_PASSWORD}`, "success");
+    showStatus("Dashboard password updated", "success");
   } else {
-    showStatus(`Failed to reset password: ${result.error}`, "error");
+    showStatus(`Failed to update password: ${result.error}`, "error");
   }
   await pause();
 }

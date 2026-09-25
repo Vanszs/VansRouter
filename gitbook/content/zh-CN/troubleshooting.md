@@ -1,6 +1,6 @@
 # 故障排除
 
-使用 9Router 时常见的问题与解决方案。
+使用 VansRouter 时常见的问题与解决方案。
 
 ---
 
@@ -78,7 +78,7 @@
 **解决方案:**
 
 1. **自动刷新(默认):**
-   9Router 会自动刷新 token。等待 30 秒后重试。
+   VansRouter 会自动刷新 token。等待 30 秒后重试。
 
 2. **手动重连:**
    ```
@@ -135,15 +135,15 @@
 **问题:** 出现 "ECONNREFUSED" 或 "Cannot connect to localhost:20128"。
 
 **原因:**
-- 9Router 未运行
+- VansRouter 未运行
 - 端口 20128 被阻止
 - 防火墙拦截连接
 
 **解决方案:**
 
-1. **启动 9Router:**
+1. **启动 VansRouter:**
    ```bash
-   9router
+   vansrouter
    ```
    仪表盘应该在 http://localhost:3000 打开。
 
@@ -164,7 +164,7 @@
 4. **使用云端 endpoint:**
    如果 localhost 不行(例如 Cursor IDE):
    ```
-   Endpoint: https://9router.com/v1
+   Endpoint: http://localhost:20128/v1
    ```
 
 ---
@@ -175,12 +175,12 @@
 
 **原因:**
 - 端口 3000 被占用
-- 9Router 崩溃
+- VansRouter 崩溃
 - 浏览器缓存问题
 
 **解决方案:**
 
-1. **确认 9Router 是否运行:**
+1. **确认 VansRouter 是否运行:**
    ```bash
    # 检查进程
    ps aux | grep 9router
@@ -199,13 +199,13 @@
    taskkill /PID <PID> /F
    ```
 
-3. **重启 9Router:**
+3. **重启 VansRouter:**
    ```bash
    # 停止
    pkill -f 9router
    
    # 启动
-   9router
+   vansrouter
    ```
 
 4. **清除浏览器缓存:**
@@ -346,6 +346,6 @@
 
 ## 需要更多帮助?
 
-- **GitHub Issues:** [github.com/decolua/9router/issues](https://github.com/decolua/9router/issues)
-- **文档:** [9router.com/docs](https://9router.com/docs)
+- **GitHub Issues:** [github.com/Vanszs/VansRouter/issues](https://github.com/Vanszs/VansRouter/issues)
+- **文档:** [VansRouter docs](https://github.com/Vanszs/VansRouter/blob/main/README.md)
 - **常见问题:** [faq.md](faq.md)

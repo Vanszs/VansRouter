@@ -1,15 +1,15 @@
 # 🏠 本地部署
 
-在本机运行 9Router,用于开发和个人使用。
+在本机运行 VansRouter,用于开发和个人使用。
 
 ---
 
 ## 📦 安装
 
-通过 npm 全局安装 9Router:
+通过 npm 全局安装 VansRouter:
 
 ```bash
-npm install -g 9router
+npm install -g vansrouter
 ```
 
 **要求:**
@@ -20,10 +20,10 @@ npm install -g 9router
 
 ## 🚀 启动服务器
 
-一条命令启动 9Router:
+一条命令启动 VansRouter:
 
 ```bash
-9router
+vansrouter
 ```
 
 仪表盘会自动在浏览器中打开,地址为 `http://localhost:3000`
@@ -53,7 +53,7 @@ API 端口(20128)和仪表盘端口(3000)在应用中配置。如需修改,你�
 
 ## 🛑 停止服务器
 
-在运行 9Router 的终端中按 `Ctrl+C`。
+在运行 VansRouter 的终端中按 `Ctrl+C`。
 
 ```bash
 # 在运行 9router 的终端中
@@ -69,25 +69,25 @@ API 端口(20128)和仪表盘端口(3000)在应用中配置。如需修改,你�
 再次运行启动命令即可:
 
 ```bash
-9router
+vansrouter
 ```
 
 所有配置、API keys 和组合都保存在数据目录中。
 
 ---
 
-## 📊 更新 9Router
+## 📊 更新 VansRouter
 
 更新到最新版本:
 
 ```bash
-npm update -g 9router
+npm update -g vansrouter
 ```
 
 查看当前版本:
 
 ```bash
-npm list -g 9router
+npm list -g vansrouter
 ```
 
 ---
@@ -113,7 +113,7 @@ kill -9 <PID>
 
 ```bash
 # 使用 sudo(不推荐)
-sudo npm install -g 9router
+sudo npm install -g vansrouter
 
 # 或修复 npm 权限(推荐)
 mkdir ~/.npm-global

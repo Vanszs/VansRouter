@@ -103,6 +103,7 @@ COPY --from=builder /app/.next/standalone ./
 RUN rm -rf /app/node_modules/open
 COPY --from=builder /app/runtime-deps/ ./node_modules/
 COPY --from=builder /app/custom-server.js ./custom-server.js
+COPY runtime-secrets.cjs ./runtime-secrets.cjs
 COPY --from=builder /app/open-sse ./open-sse
 # Next file tracing can omit sibling files; MITM runs server.js as a separate process.
 COPY --from=builder /app/src/mitm ./src/mitm

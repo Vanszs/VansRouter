@@ -1,4 +1,5 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import fs from "node:fs";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 
 const mocks = vi.hoisted(() => ({
   nextResponse: Symbol("next"),
@@ -53,6 +54,21 @@ function request(pathname, headers = {}) {
     url: `http://localhost${pathname}`,
   };
 }
+
+describe("dashboard guard root route", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mocks.verifyDashboardAuthToken.mockResolvedValue(false);
+  });
+
+  it("redirects an unauthenticated root visit to the login page", async () => {
+    const response = await proxy(request("/"));
+
+    expect(response.status).toBe(307);
+    expect(response.url).toBeInstanceOf(URL);
+    expect(response.url.href).toBe("http://localhost/masuk");
+  });
+});
 
 describe("dashboard guard public LLM API access", () => {
   beforeEach(() => {
@@ -372,5 +388,40 @@ describe("dashboard guard helpers", () => {
     });
 
     expect(__test__.extractApiKey(apiRequest)).toBe("header-key");
+  });
+});
+
+describe("dashboard guard docker host-gateway peer", () => {
+  const GATEWAY = "172.17.0.1";
+
+  afterEach(() => {
+    delete process.env.VANSROUTER_HOST_GATEWAY;
+  });
+
+  // Docker NATs host traffic to the container gateway, but on Docker Desktop /
+  // rootless / userland-proxy the LAN is masqueraded to the same address. So no
+  // peer address beyond loopback may confer locality, and there is no env knob.
+  it("never treats the container gateway peer as a local request", () => {
+    const fromGateway = request("/v1/chat/completions", { host: "localhost:20128", "x-9r-real-ip": GATEWAY });
+
+    expect(__test__.isLocalRequest(fromGateway)).toBe(false);
+  });
+
+  it("keeps ignoring VANSROUTER_HOST_GATEWAY even when it is set", async () => {
+    process.env.VANSROUTER_HOST_GATEWAY = GATEWAY;
+    mocks.getSettings.mockResolvedValue({ requireLogin: true, requireApiKey: true });
+    mocks.validateApiKey.mockResolvedValue(false);
+
+    const response = await proxy(request("/v1/chat/completions", {
+      host: "localhost:20128",
+      "x-9r-real-ip": GATEWAY,
+    }));
+
+    expect(response.status).toBe(401);
+  });
+
+  it("ships no gateway locality knob in the entrypoint", () => {
+    const entrypoint = fs.readFileSync("docker/entrypoint.sh", "utf8");
+    expect(entrypoint).not.toContain("VANSROUTER_HOST_GATEWAY");
   });
 });

@@ -18,6 +18,8 @@ const ADAPTERS = {
   minimax: createOpenAIAdapter("minimax"),
   openrouter: createOpenAIAdapter("openrouter"),
   recraft: createOpenAIAdapter("recraft"),
+  meta: createOpenAIAdapter("meta"),
+  tokenharbor: createOpenAIAdapter("tokenharbor"),
   "vercel-ai-gateway": createOpenAIAdapter("vercel-ai-gateway"),
   xai: createOpenAIAdapter("xai"),
   gemini,

@@ -15,6 +15,8 @@ function loginReducer(state, action) {
     case "SUBMIT": return { ...state, loading: true, error: "", resetHint: "" };
     case "ERROR": return { ...state, loading: false, error: action.error, resetHint: action.resetHint || "", retryAfter: action.retryAfter || 0 };
     case "DONE": return { ...state, loading: false };
+    case "MUST_CHANGE": return { ...state, loading: false, mustChangePassword: true, error: "" };
+    case "RESET": return { ...state, loading: false, mustChangePassword: false, error: "", resetHint: "" };
     case "TICK": return { ...state, retryAfter: state.retryAfter > 0 ? state.retryAfter - 1 : 0 };
     default: return state;
   }
@@ -22,8 +24,9 @@ function loginReducer(state, action) {
 
 export default function MasukClient({ initialAuth }) {
   const [password, setPassword] = useState("");
-  const [state, dispatch] = useReducer(loginReducer, { error: "", resetHint: "", retryAfter: 0, loading: false });
-  const { error, resetHint, retryAfter, loading } = state;
+  const [state, dispatch] = useReducer(loginReducer, { error: "", resetHint: "", retryAfter: 0, loading: false, mustChangePassword: false });
+  const { error, resetHint, retryAfter, loading, mustChangePassword } = state;
+  const [newPassword, setNewPassword] = useState("");
   const hasPassword = initialAuth?.hasPassword ?? null;
   const authMode = initialAuth?.authMode || "password";
   const oidcConfigured = initialAuth?.oidcConfigured || false;
@@ -52,13 +55,41 @@ export default function MasukClient({ initialAuth }) {
         body: JSON.stringify({ password }),
       });
 
+      const data = await res.json().catch(() => ({}));
+      if (data.mustChangePassword) {
+        // Remote login with the new-installation default: the server handed us a
+        // password-change-only grant, so the operator can replace it here.
+        dispatch({ type: "MUST_CHANGE" });
+        return;
+      }
       if (res.ok) {
         router.push("/dashboard");
         router.refresh();
       } else {
-        const data = await res.json();
         dispatch({ type: "ERROR", error: data.error || "Password salah", resetHint: data.resetHint, retryAfter: data.retryAfter ? Number(data.retryAfter) : 0 });
       }
+    } catch (err) {
+      dispatch({ type: "ERROR", error: "Terjadi kesalahan. Silakan coba lagi." });
+    }
+  };
+
+  const handleChangePassword = async (e) => {
+    e.preventDefault();
+    dispatch({ type: "SUBMIT" });
+    try {
+      const res = await fetch("/api/settings", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ currentPassword: password, newPassword }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok) {
+        dispatch({ type: "RESET" });
+        router.push("/dashboard");
+        router.refresh();
+        return;
+      }
+      dispatch({ type: "ERROR", error: data.error || "Gagal mengganti password" });
     } catch (err) {
       dispatch({ type: "ERROR", error: "Terjadi kesalahan. Silakan coba lagi." });
     }
@@ -109,7 +140,7 @@ export default function MasukClient({ initialAuth }) {
 
             {oidcAvailable && passwordAvailable && <div className="h-px bg-border/60" />}
 
-            {passwordAvailable ? (
+            {passwordAvailable && !mustChangePassword ? (
               <form onSubmit={handleLogin} className="flex flex-col gap-4">
                 {((authMode === "oidc" && !oidcConfigured) || (authMode === "both" && !oidcConfigured)) && (
                   <p className="text-xs text-amber-600 dark:text-amber-400 text-center">
@@ -142,7 +173,7 @@ export default function MasukClient({ initialAuth }) {
                   )}
                   {resetHint && (
                     <p className="text-xs text-text-muted">
-                      Lupa password? Buka <code className="bg-sidebar px-1 rounded">vansrouter</code> CLI di host → <b>Settings</b> → <b>Reset Password to Default</b>.
+                      Lupa password? Buka <code className="bg-sidebar px-1 rounded">vansrouter</code> CLI di host → <b>Settings</b> → <b>Set/Replace Dashboard Password</b>.
                     </p>
                   )}
                 </div>
@@ -157,18 +188,38 @@ export default function MasukClient({ initialAuth }) {
                   {retryAfter > 0 ? `Tunggu ${retryAfter}s` : "Masuk"}
                 </Button>
 
-                <p className="text-xs text-center text-text-muted mt-2">
-                  Password default adalah <code className="bg-sidebar px-1 rounded">123456</code>
-                </p>
                 {hasPassword === false && (
-                  <p className="text-xs text-center text-text-muted">
-                    Custom password belum diset. Password default di atas akan berfungsi sampai diganti.
+                  <p className="text-xs text-center text-amber-600 dark:text-amber-400">
+                    Password default instalasi baru: <code className="bg-sidebar px-1 rounded">123456</code>. Ganti sebelum dashboard dipublikasikan.
                   </p>
                 )}
               </form>
-            ) : (
-              error && <p className="text-xs text-red-500">{error}</p>
-            )}
+            ) : null}
+
+            {mustChangePassword ? (
+              <form onSubmit={handleChangePassword} className="flex flex-col gap-4">
+                <div className="flex flex-col gap-2">
+                  <label htmlFor="ganti-password-baru" className="text-sm font-semibold text-text-main">Password baru</label>
+                  <Input
+                    id="ganti-password-baru"
+                    type="password"
+                    placeholder="Minimal 12 karakter"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    required
+                    minLength={12}
+                    autoFocus
+                  />
+                  <p className="text-xs text-text-muted">
+                    Password default hanya berlaku di komputer ini. Ganti dengan password strong (minimal 12 karakter) sebelum melanjutkan.
+                  </p>
+                  {error && <p className="text-xs text-red-500">{error}</p>}
+                </div>
+                <Button type="submit" variant="primary" className="w-full" loading={loading} disabled={newPassword.length < 12}>
+                  Simpan &amp; Lanjutkan
+                </Button>
+              </form>
+            ) : null}
           </div>
         </Card>
       </div>

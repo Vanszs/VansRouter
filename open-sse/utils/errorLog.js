@@ -3,7 +3,7 @@
  *
  * All gateway-level errors are written to:
  *   - stderr (console.error) for PM2/systemd capture
- *   - /var/lib/9router/logs/gateway-errors.jsonl  (newline-delimited JSON)
+ *   - `${DATA_DIR}/logs/gateway-errors.jsonl` (newline-delimited JSON)
  *
  * Error classes tracked:
  *   POLICY       - unsupported model/mode (e.g. Kimi tool mode on NIM)
@@ -19,8 +19,9 @@
 
 import fs from "fs";
 import path from "path";
+import { getRuntimeLogsDir } from "./runtimePaths.js";
 
-const LOG_DIR = "/var/lib/9router/logs";
+const LOG_DIR = getRuntimeLogsDir();
 const LOG_FILE = path.join(LOG_DIR, "gateway-errors.jsonl");
 const MAX_FILE_BYTES = 20 * 1024 * 1024; // 20 MB – rotate on exceed
 

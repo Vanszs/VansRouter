@@ -2,7 +2,7 @@
 # Usage:
 #   1. cp .env.example .env && nano .env
 #   2. docker compose up -d
-#   3. Open http://localhost:20128
+#   3. Open http://localhost:20128/masuk
 
 services:
   vansrouter:
@@ -10,6 +10,8 @@ services:
     container_name: vansrouter
     restart: unless-stopped
     ports:
+      # Published on all interfaces. Use "127.0.0.1:20128:20128" instead to keep the
+      # dashboard reachable only from the Docker host.
       - "${PORT:-20128}:20128"
     volumes:
       - 9router-data:/app/data

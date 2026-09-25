@@ -4,6 +4,9 @@
 // Use PORT=20127 for `pnpm dev` (development server).
 const fs = require('node:fs');
 const path = require('node:path');
+const { assertProductionSecrets } = require('./runtime-secrets.cjs');
+
+assertProductionSecrets();
 process.env.PORT ||= '3003';
 
 function isFile(filePath) {

@@ -2,7 +2,7 @@ import { createRequire } from "node:module";
 import fs from "node:fs";
 import path from "node:path";
 import os from "node:os";
-import { execFileSync } from "node:child_process";
+import { execFileSync, spawnSync } from "node:child_process";
 
 const require = createRequire(import.meta.url);
 const { buildEnvWithRuntime, getRuntimeNodeModules } = require("../../cli/hooks/sqliteRuntime.js");
@@ -52,5 +52,24 @@ describe("CLI SQLite runtime packaging", () => {
   it("publishes the sql.js WASM asset through the CLI allowlist", () => {
     const npmignore = fs.readFileSync(path.resolve("cli/.npmignore"), "utf8");
     expect(npmignore).toContain("!app/_nm/sql.js/**");
+  });
+
+  it("keeps postinstall non-fatal when the runtime directory cannot be created", () => {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), "cli-postinstall-runtime-"));
+    const dataFile = path.join(root, "data-file");
+    fs.writeFileSync(dataFile, "not a directory");
+
+    const result = spawnSync(process.execPath, [path.resolve("cli/hooks/postinstall.js")], {
+      env: {
+        ...process.env,
+        HOME: path.join(root, "home"),
+        DATA_DIR: dataFile,
+      },
+      encoding: "utf8",
+    });
+
+    expect(result.status).toBe(0);
+    expect(`${result.stdout}\n${result.stderr}`).toContain("SQLite runtime setup failed");
+    fs.rmSync(root, { recursive: true, force: true });
   });
 });

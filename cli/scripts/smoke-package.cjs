@@ -24,6 +24,8 @@ const appDir = path.join(root, "package", "app");
 const bundledModules = path.join(appDir, "_nm");
 const serverPath = path.join(appDir, "custom-server.js");
 if (!fs.existsSync(serverPath)) throw new Error(`Bundled custom server missing: ${serverPath}`);
+const runtimeSecretsPath = path.join(appDir, "runtime-secrets.cjs");
+if (!fs.existsSync(runtimeSecretsPath)) throw new Error(`Bundled runtime secret validator missing: ${runtimeSecretsPath}`);
 const nextPackage = path.join(bundledModules, "next", "package.json");
 if (!fs.existsSync(nextPackage)) {
   throw new Error(`Bundled Next.js dependency missing: ${nextPackage}`);

@@ -32,7 +32,7 @@ Los proveedores del nivel de suscripción son tu opción **principal** - ya est�
 **Paso 1: Conectar vía Dashboard**
 
 ```bash
-9router
+vansrouter
 # Se abre el dashboard → Providers → Connect Claude Code
 ```
 
@@ -82,7 +82,7 @@ Model: cc/claude-opus-4-5-20251101
 **Paso 1: Conectar vía Dashboard**
 
 ```bash
-9router
+vansrouter
 # Dashboard → Providers → Connect Codex
 ```
 
@@ -134,7 +134,7 @@ Model: cx/gpt-5.2-codex
 **Paso 1: Conectar vía Dashboard**
 
 ```bash
-9router
+vansrouter
 # Dashboard → Providers → Connect Gemini CLI
 ```
 
@@ -186,7 +186,7 @@ Model: gc/gemini-3-flash-preview
 **Paso 1: Conectar vía Dashboard**
 
 ```bash
-9router
+vansrouter
 # Dashboard → Providers → Connect GitHub
 ```
 
@@ -236,7 +236,7 @@ Model: gh/gpt-5
 **Paso 1: Conectar vía Dashboard**
 
 ```bash
-9router
+vansrouter
 # Dashboard → Providers → Connect Antigravity
 ```
 
@@ -316,7 +316,7 @@ Usar en CLI: premium-coding
 
 ## Seguimiento de cuota
 
-9Router rastrea la cuota en tiempo real:
+VansRouter rastrea la cuota en tiempo real:
 
 - **Consumo de tokens** - Tokens de entrada/salida por solicitud
 - **Cuenta regresiva de reinicio** - Tiempo hasta el próximo reinicio de cuota
@@ -385,7 +385,7 @@ Madrugada: Nivel barato/gratis
 ### "Token OAuth expirado"
 
 **Solución:**
-- Auto-refresh por 9Router
+- Auto-refresh por VansRouter
 - Si hay problemas: Dashboard → Provider → Reconnect
 
 ### "Rate limiting"

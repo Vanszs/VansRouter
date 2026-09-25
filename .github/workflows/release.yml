@@ -328,7 +328,7 @@ jobs:
           LATEST_IMAGE: ${{ env.GHCR_IMAGE }}:latest
         run: |
           set -euo pipefail
-          test "$STAGING_DIGEST" =~ ^sha256:[0-9a-f]{64}$
+          [[ "$STAGING_DIGEST" =~ ^sha256:[0-9a-f]{64}$ ]]
           source_image="${GHCR_IMAGE}@${STAGING_DIGEST}"
           release_digest="$(node scripts/inspect-image-digest.cjs "$RELEASE_IMAGE")"
           if [ "$release_digest" = "MISSING" ]; then

@@ -14,7 +14,8 @@ async function ensureNodeModules() {
   try {
     fs = await import("fs");
     path = await import("path");
-    LOGS_DIR = path.join(typeof process !== "undefined" && process.cwd ? process.cwd() : ".", "logs");
+    const { getRuntimeLogsDir } = await import("./runtimePaths.js");
+    LOGS_DIR = getRuntimeLogsDir();
   } catch {
     // Running in non-Node environment (Worker, Browser, etc.)
   }

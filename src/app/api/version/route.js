@@ -6,14 +6,18 @@ const NPM_PACKAGE_NAME = "vansrouter";
 const VERSION_CACHE_TTL_MS = 300000; // cache npm latest lookup for 5m
 const VERSION_FAILURE_BACKOFF_MS = 30000; // avoid a request storm when npm is down
 
+export function isVersionFetchBackedOff(cache, now = Date.now()) {
+  return Boolean(cache?.lastFailureAt && now - cache.lastFailureAt < VERSION_FAILURE_BACKOFF_MS);
+}
+
 // Survive hot reload; one cache per process
 const versionCache = (global.__npmVersionCache ??= {
   value: null,
   fetchedAt: 0,
-  attemptedAt: 0,
+  lastFailureAt: 0,
   inFlight: null,
 });
-versionCache.attemptedAt ??= 0;
+versionCache.lastFailureAt ??= 0;
 versionCache.inFlight ??= null;
 
 // Fetch latest version from npm registry
@@ -55,16 +59,18 @@ async function getLatestVersionCached() {
     return versionCache.value;
   }
   if (versionCache.inFlight) return versionCache.inFlight;
-  if (!versionCache.value && now - versionCache.attemptedAt < VERSION_FAILURE_BACKOFF_MS) {
-    return null;
+  if (isVersionFetchBackedOff(versionCache, now)) {
+    return versionCache.value;
   }
 
-  versionCache.attemptedAt = now;
   versionCache.inFlight = fetchLatestVersion()
     .then((latest) => {
       if (latest) {
         versionCache.value = latest;
         versionCache.fetchedAt = Date.now();
+        versionCache.lastFailureAt = 0;
+      } else {
+        versionCache.lastFailureAt = Date.now();
       }
       return latest;
     })

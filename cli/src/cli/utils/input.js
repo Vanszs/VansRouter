@@ -56,6 +56,52 @@ async function prompt(question) {
   }));
 }
 
+async function promptSecret(question) {
+  // In non-TTY contexts readline has no terminal echo to suppress.
+  if (!process.stdin.isTTY) return prompt(question);
+
+  return suspendRawFor(() => new Promise((resolve) => {
+    const input = process.stdin;
+    const output = process.stdout;
+    let value = "";
+    readline.emitKeypressEvents(input);
+    input.setRawMode(true);
+    input.resume();
+    input.setEncoding("utf8");
+    output.write(question);
+
+    const cleanup = () => {
+      input.removeListener("keypress", onKeypress);
+      input.setRawMode(false);
+      input.pause();
+    };
+    const onKeypress = (text, key = {}) => {
+      if (key.ctrl && key.name === "c") {
+        cleanup();
+        process.exit(130);
+      }
+      if (key.name === "return" || key.name === "enter") {
+        output.write("\n");
+        cleanup();
+        resolve(value);
+        return;
+      }
+      if (key.name === "backspace") {
+        if (value.length) {
+          value = value.slice(0, -1);
+          output.write("\b \b");
+        }
+        return;
+      }
+      if (!key.ctrl && !key.meta && text) {
+        value += text;
+        output.write("*".repeat([...text].length));
+      }
+    };
+    input.on("keypress", onKeypress);
+  }));
+}
+
 async function select(question, options) {
   console.log(question);
   options.forEach((opt, i) => console.log(`  ${i + 1}. ${opt}`));
@@ -148,6 +194,7 @@ async function selectMenu(title, items, defaultIndex = 0, subtitle = "", headerC
 
 module.exports = {
   prompt,
+  promptSecret,
   select,
   confirm,
   pause,

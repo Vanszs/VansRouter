@@ -1,6 +1,6 @@
 # ☁️ Cloud Deployment
 
-Deploy 9Router on VPS or Docker for remote access and production use.
+Deploy VansRouter on VPS or Docker for remote access and production use.
 
 ---
 
@@ -9,15 +9,15 @@ Deploy 9Router on VPS or Docker for remote access and production use.
 ### Prerequisites
 
 - Ubuntu 20.04+ or similar Linux distribution
-- Node.js 20+
+- Node.js 22.5+
 - Git
 - Root or sudo access
 
 ### Step 1: Clone Repository
 
 ```bash
-git clone https://github.com/decolua/9router.git
-cd 9router/app
+git clone https://github.com/Vanszs/VansRouter.git
+cd VansRouter
 ```
 
 ### Step 2: Install Dependencies
@@ -37,8 +37,8 @@ npm run build
 Create a `.env` file or export variables:
 
 ```bash
-export JWT_SECRET="your-secure-secret-change-this-to-random-string"
-export INITIAL_PASSWORD="your-secure-password"
+export JWT_SECRET="$(openssl rand -base64 32)"
+export INITIAL_PASSWORD="$(openssl rand -base64 24)"
 export DATA_DIR="/var/lib/9router"
 export NODE_ENV="production"
 ```
@@ -48,7 +48,7 @@ export NODE_ENV="production"
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `JWT_SECRET` | Auto-generated | **MUST change in production!** Used for JWT token signing |
-| `INITIAL_PASSWORD` | none in production | Strong dashboard login password; required before first login |
+| `INITIAL_PASSWORD` | `123456` for a new installation | Initial dashboard password; set a strong value before public exposure |
 | `DATA_DIR` | `~/.9router` | Database and data storage path |
 | `NODE_ENV` | `development` | Set to `production` for deployment |
 | `ENABLE_REQUEST_LOGS` | `false` | Enable debug request/response logs |
@@ -74,8 +74,8 @@ PM2 keeps your application running and restarts it on crashes:
 # Install PM2 globally
 npm install -g pm2
 
-# Start 9Router with PM2
-pm2 start npm --name 9router -- start
+# Start VansRouter with PM2
+pm2 start npm --name vansrouter -- start
 
 # Save PM2 configuration
 pm2 save
@@ -89,13 +89,13 @@ pm2 startup
 
 ```bash
 # View logs
-pm2 logs 9router
+pm2 logs vansrouter
 
 # Restart application
-pm2 restart 9router
+pm2 restart vansrouter
 
 # Stop application
-pm2 stop 9router
+pm2 stop vansrouter
 
 # View status
 pm2 status
@@ -113,7 +113,7 @@ pm2 monit
 Create a `Dockerfile` in the `app` directory:
 
 ```dockerfile
-FROM node:20-alpine
+FROM node:22-alpine
 
 WORKDIR /app
 
@@ -129,8 +129,8 @@ COPY . .
 # Build application
 RUN npm run build
 
-# Expose ports
-EXPOSE 3000 20128
+# Expose the VansRouter application port
+EXPOSE 20128
 
 # Set environment variables
 ENV NODE_ENV=production
@@ -147,17 +147,17 @@ CMD ["npm", "run", "start"]
 
 ```bash
 # Build image
-docker build -t 9router .
+docker build -t vansrouter .
 
 # Run container
 docker run -d \
-  --name 9router \
-  -p 3000:3000 \
+  --name vansrouter \
   -p 20128:20128 \
-  -e JWT_SECRET="your-secure-secret-change-this" \
-  -e INITIAL_PASSWORD="your-secure-password" \
+  -e JWT_SECRET="$(openssl rand -base64 32)" \
+  -e INITIAL_PASSWORD="$(openssl rand -base64 24)" \
+  -e DATA_DIR=/app/data \
   -v 9router-data:/app/data \
-  9router
+  vansrouter
 ```
 
 ### Option 2: Docker Compose
@@ -168,39 +168,47 @@ Create `docker-compose.yml`:
 version: '3.8'
 
 services:
-  9router:
-    build: .
-    container_name: 9router
+  vansrouter:
+    image: ghcr.io/vanszs/vansrouter:X.Y.Z
+    container_name: vansrouter
     ports:
-      - "3000:3000"
       - "20128:20128"
     environment:
-      - NODE_ENV=production
-      - JWT_SECRET=your-secure-secret-change-this
-      - INITIAL_PASSWORD=your-secure-password
-      - DATA_DIR=/app/data
+      NODE_ENV: production
+      VANSROUTER_VERSION: X.Y.Z
+      JWT_SECRET: ${JWT_SECRET:?set a strong secret}
+      INITIAL_PASSWORD: ${INITIAL_PASSWORD:?set a strong password}
+      DATA_DIR: /app/data
     volumes:
       - 9router-data:/app/data
+      - vansrouter-data:/migration-data:ro
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:20128/api/ready"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
     restart: unless-stopped
 
 volumes:
   9router-data:
+    name: 9router-data
+  vansrouter-data:
 ```
 
 **Run with Docker Compose:**
 
 ```bash
 # Start services
-docker-compose up -d
+docker compose up -d
 
 # View logs
-docker-compose logs -f
+docker compose logs -f
 
 # Stop services
-docker-compose down
+docker compose down
 
 # Rebuild and restart
-docker-compose up -d --build
+docker compose up -d
 ```
 
 ---
@@ -223,7 +231,7 @@ sudo apt install nginx
 
 ### Step 2: Configure Nginx
 
-Create `/etc/nginx/sites-available/9router`:
+Create `/etc/nginx/sites-available/vansrouter`:
 
 ```nginx
 server {
@@ -247,9 +255,9 @@ server {
     ssl_ciphers HIGH:!aNULL:!MD5;
     ssl_prefer_server_ciphers on;
 
-    # Proxy to 9Router
+    # Proxy to VansRouter
     location / {
-        proxy_pass http://localhost:3000;
+        proxy_pass http://localhost:20128;
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection 'upgrade';
@@ -284,7 +292,7 @@ server {
 
 ```bash
 # Create symbolic link
-sudo ln -s /etc/nginx/sites-available/9router /etc/nginx/sites-enabled/
+sudo ln -s /etc/nginx/sites-available/vansrouter /etc/nginx/sites-enabled/
 
 # Test configuration
 sudo nginx -t
@@ -333,7 +341,7 @@ sudo ufw allow 22/tcp
 sudo ufw allow 80/tcp
 sudo ufw allow 443/tcp
 
-# If NOT using reverse proxy, allow 9Router ports
+# If NOT using reverse proxy, allow VansRouter ports
 sudo ufw allow 3000/tcp
 sudo ufw allow 20128/tcp
 
@@ -353,8 +361,8 @@ sudo ufw deny 3000/tcp
 Access dashboard via SSH tunnel:
 
 ```bash
-ssh -L 3000:localhost:3000 user@your-server.com
-# Then open http://localhost:3000 in your browser
+ssh -L 20128:localhost:20128 user@your-server.com
+# Then open http://localhost:20128/masuk in your browser
 ```
 
 ### 4. Regular Updates
@@ -363,19 +371,19 @@ ssh -L 3000:localhost:3000 user@your-server.com
 # Update system packages
 sudo apt update && sudo apt upgrade -y
 
-# Update 9Router
-cd /path/to/9router/app
+# Update VansRouter
+cd /path/to/VansRouter
 git pull
 npm install
 npm run build
-pm2 restart 9router
+pm2 restart vansrouter
 ```
 
 ### 5. Backup Strategy
 
 ```bash
 # Backup data directory
-tar -czf 9router-backup-$(date +%Y%m%d).tar.gz /var/lib/9router
+tar -czf vansrouter-backup-$(date +%Y%m%d).tar.gz /var/lib/9router
 
 # Automated daily backup (add to crontab)
 0 2 * * * tar -czf /backups/9router-$(date +\%Y\%m\%d).tar.gz /var/lib/9router
@@ -392,7 +400,7 @@ tar -czf 9router-backup-$(date +%Y%m%d).tar.gz /var/lib/9router
 pm2 status
 
 # View logs
-pm2 logs 9router --lines 100
+pm2 logs vansrouter --lines 100
 
 # Monitor resources
 pm2 monit
@@ -429,20 +437,20 @@ netstat -tulpn | grep -E '3000|20128'
 
 ```bash
 # Check logs
-pm2 logs 9router
+pm2 logs vansrouter
 
 # Check if ports are in use
 sudo lsof -i :3000
 sudo lsof -i :20128
 
 # Check environment variables
-pm2 env 9router
+pm2 env vansrouter
 ```
 
 ### Nginx 502 Bad Gateway
 
 ```bash
-# Check if 9Router is running
+# Check if VansRouter is running
 pm2 status
 
 # Check Nginx error logs

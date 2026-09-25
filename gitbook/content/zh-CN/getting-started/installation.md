@@ -1,6 +1,6 @@
 # 安装
 
-9Router 的详细安装指南,附故障排除技巧。
+VansRouter 的详细安装指南,附故障排除技巧。
 
 ---
 
@@ -34,19 +34,19 @@ npm --version
 全局安装,任何位置都能使用:
 
 ```bash
-npm install -g 9router
+npm install -g vansrouter
 ```
 
-**启动 9Router:**
+**启动 VansRouter:**
 
 ```bash
-9router
+vansrouter
 ```
 
 **优势:**
 - ✅ 任意目录均可运行
 - ✅ 命令简单:`9router`
-- ✅ 通过 `npm update -g 9router` 自动更新
+- ✅ 通过 `npm update -g vansrouter` 自动更新
 
 ### 方式 2:本地安装
 
@@ -58,10 +58,10 @@ cd my-9router
 npm install 9router
 ```
 
-**启动 9Router:**
+**启动 VansRouter:**
 
 ```bash
-npx 9router
+npx vansrouter
 ```
 
 **优势:**
@@ -74,8 +74,8 @@ npx 9router
 从 GitHub 克隆并构建:
 
 ```bash
-git clone https://github.com/decolua/9router.git
-cd 9router/app
+git clone https://github.com/Vanszs/VansRouter.git
+cd VansRouter
 npm install
 npm run build
 npm start
@@ -93,7 +93,7 @@ npm start
 ### 启动服务器
 
 ```bash
-9router
+vansrouter
 ```
 
 **发生了什么:**
@@ -105,7 +105,7 @@ npm start
 ### 仪表盘登录
 
 **默认凭据:**
-- 密码:`123456`
+- 初始密码：设置随机强密码 `INITIAL_PASSWORD`
 
 **⚠️ 立即修改密码:**
 1. 登录仪表盘
@@ -190,7 +190,7 @@ curl http://localhost:20128/v1/chat/completions \
 ```bash
 # Security (REQUIRED in production)
 export JWT_SECRET="your-secure-secret-change-this"
-export INITIAL_PASSWORD="your-password"
+export INITIAL_PASSWORD="$(openssl rand -base64 24)"
 
 # Storage
 export DATA_DIR="~/.9router"
@@ -219,7 +219,7 @@ export ENABLE_REQUEST_LOGS="false"
 
 ```bash
 export DATA_DIR="/custom/path"
-9router
+vansrouter
 ```
 
 ### 端口配置
@@ -230,13 +230,13 @@ export DATA_DIR="/custom/path"
 
 ```bash
 export PORT="3000"
-9router
+vansrouter
 ```
 
 **或用命令行:**
 
 ```bash
-9router --port 3000
+vansrouter --port 3000
 ```
 
 ---
@@ -263,7 +263,7 @@ kill -9 <PID>
 **方案 2:使用其他端口**
 
 ```bash
-9router --port 3000
+vansrouter --port 3000
 ```
 
 ### 权限被拒绝
@@ -283,7 +283,7 @@ echo 'export PATH=~/.npm-global/bin:$PATH' >> ~/.bashrc
 source ~/.bashrc
 
 # 然后重新安装
-npm install -g 9router
+npm install -g vansrouter
 ```
 
 ### Node.js 版本过低
@@ -345,7 +345,7 @@ ping google.com
 
 ### 内存占用过高
 
-**问题:** 9Router 占用过多 RAM
+**问题:** VansRouter 占用过多 RAM
 
 **方案:重启服务器**
 
@@ -354,14 +354,14 @@ ping google.com
 pkill -f 9router
 
 # 启动
-9router
+vansrouter
 ```
 
 **或用 PM2 自动重启:**
 
 ```bash
 npm install -g pm2
-pm2 start 9router --name 9router
+pm2 start vansrouter --name vansrouter
 pm2 save
 ```
 
@@ -372,8 +372,8 @@ pm2 save
 ### 本地开发
 
 ```bash
-npm install -g 9router
-9router
+npm install -g vansrouter
+vansrouter
 ```
 
 **适用场景:** 个人编码、测试
@@ -382,16 +382,16 @@ npm install -g 9router
 
 ```bash
 # 安装
-npm install -g 9router
+npm install -g vansrouter
 
 # 配置
 export JWT_SECRET="your-secure-secret"
-export INITIAL_PASSWORD="your-password"
+export INITIAL_PASSWORD="$(openssl rand -base64 24)"
 export NODE_ENV="production"
 
 # 用 PM2 启动
 npm install -g pm2
-pm2 start 9router --name 9router
+pm2 start vansrouter --name vansrouter
 pm2 save
 pm2 startup
 ```
@@ -401,15 +401,15 @@ pm2 startup
 ### Docker
 
 ```bash
-docker pull 9router/9router:latest
+docker pull ghcr.io/vanszs/vansrouter:X.Y.Z
 
 docker run -d \
   -p 20128:20128 \
   -e JWT_SECRET="your-secure-secret" \
-  -e INITIAL_PASSWORD="your-password" \
+  -e INITIAL_PASSWORD="$(openssl rand -base64 24)" \
   -v 9router-data:/root/.9router \
-  --name 9router \
-  9router/9router:latest
+  --name vansrouter \
+  ghcr.io/vanszs/vansrouter:X.Y.Z
 ```
 
 **适用场景:** 容器化部署、Kubernetes
@@ -444,7 +444,7 @@ server {
 ### 移除全局安装
 
 ```bash
-npm uninstall -g 9router
+npm uninstall -g vansrouter
 ```
 
 ### 移除数据目录
@@ -473,6 +473,6 @@ nano ~/.bashrc  # 或 ~/.zshrc
 
 ## 需要帮助?
 
-- **网站**: [9router.com](https://9router.com)
-- **GitHub**: [github.com/decolua/9router](https://github.com/decolua/9router)
-- **Issues**: [github.com/decolua/9router/issues](https://github.com/decolua/9router/issues)
+- **网站**: [VansRouter dashboard](http://localhost:20128)
+- **GitHub**: [github.com/Vanszs/VansRouter](https://github.com/Vanszs/VansRouter)
+- **Issues**: [github.com/Vanszs/VansRouter/issues](https://github.com/Vanszs/VansRouter/issues)

@@ -8,12 +8,11 @@ const { ensureSqliteRuntime } = require("./sqliteRuntime");
 try {
   const result = ensureSqliteRuntime({ silent: false });
   if (!result?.sqlJs) {
-    console.error("[9router] required sql.js runtime is unavailable");
-    process.exitCode = 1;
+    console.warn("[9router] SQLite runtime is not ready; the CLI will retry on first launch");
   } else {
     console.log("[9router] bundled SQLite fallback is ready");
   }
 } catch (error) {
-  console.error(`[9router] SQLite runtime setup failed: ${error.message}`);
-  process.exitCode = 1;
+  console.warn(`[9router] SQLite runtime setup failed: ${error.message}`);
+  console.warn("[9router] continuing installation; the CLI will retry on first launch");
 }

@@ -8,13 +8,12 @@
   
   **将所有 AI 编程工具（Claude Code、Cursor、Antigravity、Copilot、Codex、Gemini、OpenCode、Cline、OpenClaw...）连接到 40+ AI 提供商和 100+ 模型。**
   
-  [![npm](https://img.shields.io/npm/v/9router.svg)](https://www.npmjs.com/package/9router)
-  [![Downloads](https://img.shields.io/npm/dm/9router.svg)](https://www.npmjs.com/package/9router)
-  [![License](https://img.shields.io/npm/l/9router.svg)](https://github.com/decolua/9router/blob/main/LICENSE)
+  [![npm](https://img.shields.io/npm/v/vansrouter.svg)](https://www.npmjs.com/package/9router)
+  [![Downloads](https://img.shields.io/npm/dm/vansrouter.svg)](https://www.npmjs.com/package/9router)
+  [![License](https://img.shields.io/npm/l/vansrouter.svg)](https://github.com/Vanszs/VansRouter/blob/main/LICENSE)
 
-  <a href="https://trendshift.io/repositories/22628" target="_blank"><img src="https://trendshift.io/api/badge/repositories/22628" alt="decolua%2F9router | Trendshift" style="width: 250px; height: 55px;" width="250" height="55"/></a>
   
-  [🚀 快速开始](#-快速开始) • [💡 功能特点](#-主要功能) • [📖 设置指南](#-设置指南) • [🌐 网站](https://9router.com)
+  [🚀 快速开始](#-快速开始) • [💡 功能特点](#-主要功能) • [📖 设置指南](#-设置指南) • [🌐 网站](http://localhost:20128)
 
   [🇻🇳 Tiếng Việt](./i18n/README.vi.md) • [🇨🇳 中文](./i18n/README.zh-CN.md) • [🇯🇵 日本語](./i18n/README.ja-JP.md)
 </div>
@@ -74,11 +73,11 @@
 **1. 全局安装：**
 
 ```bash
-npm install -g 9router
-9router
+npm install -g vansrouter
+vansrouter
 ```
 
-🎉 控制面板在 `http://localhost:20128` 打开
+🎉 控制面板在 `http://localhost:20128/masuk` 打开
 
 **2. 连接免费提供商（无需注册）：**
 
@@ -113,7 +112,7 @@ PORT=20128 HOSTNAME=0.0.0.0 NEXT_PUBLIC_BASE_URL=http://localhost:20128 npm run 
 ```
 
 默认 URL：
-- 控制面板：`http://localhost:20128/dashboard`
+- 控制面板：`http://localhost:20128/masuk`
 - OpenAI 兼容 API：`http://localhost:20128/v1`
 
 ---
@@ -173,7 +172,7 @@ PORT=20128 HOSTNAME=0.0.0.0 NEXT_PUBLIC_BASE_URL=http://localhost:20128 npm run 
 
 </div>
 
-> 🎬 **制作了关于 9Router 的视频？** 提交 [Pull Request](https://github.com/decolua/9router/pulls)，将你的视频添加到此部分 — 我们会合并它！
+> 🎬 **制作了关于 9Router 的视频？** 提交 [Pull Request](https://github.com/Vanszs/VansRouter/pulls)，将你的视频添加到此部分 — 我们会合并它！
 
 ---
 
@@ -1018,7 +1017,7 @@ Model：cc/claude-opus-4-7
 
 ```bash
 # 克隆并安装
-git clone https://github.com/decolua/9router.git
+git clone https://github.com/Vanszs/VansRouter.git
 cd 9router
 npm install
 npm run build
@@ -1031,7 +1030,7 @@ export PORT="20128"
 export HOSTNAME="0.0.0.0"
 export NODE_ENV="production"
 export NEXT_PUBLIC_BASE_URL="http://localhost:20128"
-export NEXT_PUBLIC_CLOUD_URL="https://9router.com"
+export NEXT_PUBLIC_CLOUD_URL="https://vansrouter.example"
 export API_KEY_SECRET="endpoint-proxy-api-key-secret"
 export MACHINE_ID_SALT="endpoint-proxy-salt"
 
@@ -1096,9 +1095,9 @@ docker stop 9router && docker rm 9router
 | `HOSTNAME` | 框架默认值 | 绑定主机（Docker 默认为 `0.0.0.0`） |
 | `NODE_ENV` | 运行时默认值 | 设置 `production` 用于部署 |
 | `BASE_URL` | `http://localhost:20128` | 云同步任务使用的服务端内部基础 URL |
-| `CLOUD_URL` | `https://9router.com` | 服务端云同步端点基础 URL |
+| `CLOUD_URL` | `https://vansrouter.example` | 服务端云同步端点基础 URL |
 | `NEXT_PUBLIC_BASE_URL` | `http://localhost:3000` | 向后兼容/公开基础 URL（服务端运行时优先使用 `BASE_URL`） |
-| `NEXT_PUBLIC_CLOUD_URL` | `https://9router.com` | 向后兼容/公开云 URL（服务端运行时优先使用 `CLOUD_URL`） |
+| `NEXT_PUBLIC_CLOUD_URL` | `https://vansrouter.example` | 向后兼容/公开云 URL（服务端运行时优先使用 `CLOUD_URL`） |
 | `API_KEY_SECRET` | `endpoint-proxy-api-key-secret` | 生成 API key 的 HMAC 密钥 |
 | `MACHINE_ID_SALT` | `endpoint-proxy-salt` | 稳定机器 ID 哈希的盐值 |
 | `ENABLE_REQUEST_LOGS` | `false` | 在 `logs/` 下启用请求/响应日志 |
@@ -1215,7 +1214,7 @@ docker stop 9router && docker rm 9router
 
 **首次登录不工作**
 - 检查 `.env` 中的 `INITIAL_PASSWORD`
-- 如果未设置，回退密码是 `123456`
+- 如果未设置，新安装会使用兼容默认密码 `123456`；公开前请更换。
 
 **`logs/` 下没有请求日志**
 - 设置 `ENABLE_REQUEST_LOGS=true`
@@ -1224,7 +1223,7 @@ docker stop 9router && docker rm 9router
 
 ## 🛠️ 技术栈
 
-- **运行时**：Node.js 20+
+- **运行时**：Node.js 22.5+
 - **框架**：Next.js 16
 - **UI**：React 19 + Tailwind CSS 4
 - **数据库**：LowDB（基于 JSON 文件）
@@ -1262,9 +1261,9 @@ Authorization: Bearer your-api-key
 
 ## 📧 支持
 
-- **网站**：[9router.com](https://9router.com)
-- **GitHub**：[github.com/decolua/9router](https://github.com/decolua/9router)
-- **问题**：[github.com/decolua/9router/issues](https://github.com/decolua/9router/issues)
+- **网站**：[VansRouter dashboard](http://localhost:20128)
+- **GitHub**：[github.com/Vanszs/VansRouter](https://github.com/Vanszs/VansRouter)
+- **问题**：[github.com/Vanszs/VansRouter/issues](https://github.com/Vanszs/VansRouter/issues)
 
 ---
 
@@ -1272,13 +1271,13 @@ Authorization: Bearer your-api-key
 
 感谢所有帮助改进 9Router 的贡献者！
 
-[![Contributors](https://contrib.rocks/image?repo=decolua/9router&max=150&columns=15&anon=1&v=20260309)](https://github.com/decolua/9router/graphs/contributors)
+[![Contributors](https://contrib.rocks/image?repo=Vanszs/VansRouter&max=150&columns=15&anon=1&v=20260309)](https://github.com/Vanszs/VansRouter/graphs/contributors)
 
 ---
 
 ## 📊 Star 图表
 
-[![Star Chart](https://starchart.cc/decolua/9router.svg?variant=adaptive)](https://starchart.cc/decolua/9router)
+[![Star Chart](https://starchart.cc/Vanszs/VansRouter.svg?variant=adaptive)](https://starchart.cc/Vanszs/VansRouter)
 
 
 

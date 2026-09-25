@@ -156,6 +156,7 @@ fs.cpSync(path.join(appDir, distDir, "static"), path.join(standaloneDir, distDir
 
 fixStandaloneSymlinks(path.resolve(standaloneDir));
 fs.copyFileSync(path.join(appDir, "custom-server.js"), path.join(standaloneDir, "custom-server.js"));
+fs.copyFileSync(path.join(appDir, "runtime-secrets.cjs"), path.join(standaloneDir, "runtime-secrets.cjs"));
 
 // ─── Fix standalone instrumentation import ───────────────────────────────────
 // kimchiQuotaReactivation.js uses `import(/* webpackIgnore: true */ "../../lib/localDb.js")`

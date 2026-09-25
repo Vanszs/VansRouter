@@ -192,6 +192,8 @@ function compareVersions(a, b) {
 
 // Get app data dir (matches app/src/lib/dataDir.js convention)
 function getAppDataDir() {
+  const configured = (process.env.DATA_DIR || "").trim();
+  if (configured && !(process.platform === "win32" && /^\//.test(configured))) return configured;
   return process.platform === "win32"
     ? path.join(process.env.APPDATA || "", "9router")
     : path.join(os.homedir(), ".9router");

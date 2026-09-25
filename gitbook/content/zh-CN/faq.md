@@ -1,12 +1,12 @@
 # 常见问题
 
-关于 9Router 的常见问题。
+关于 VansRouter 的常见问题。
 
 ---
 
-## 什么是 9Router?
+## 什么是 VansRouter?
 
-**9Router 是一款 AI 模型路由工具,能够最大化你的订阅价值并最小化成本。**
+**VansRouter 是一款 AI 模型路由工具,能够最大化你的订阅价值并最小化成本。**
 
 它使用 3 层回退系统在多个 AI 提供商之间智能路由请求:
 1. **订阅层** - 充分利用你已付费的 Claude Code、Codex、Gemini 配额
@@ -23,7 +23,7 @@
 
 ## 价格是如何计算的?
 
-**9Router 采用三层定价策略:**
+**VansRouter 采用三层定价策略:**
 
 ### 第 1 层:订阅(优先使用)
 - **Claude Code**(Pro/Max):$20-100/月 - 5 小时 + 每周配额
@@ -50,9 +50,9 @@
 
 ---
 
-## 9Router 是免费的吗?
+## VansRouter 是免费的吗?
 
-**是的,9Router 本身 100% 免费且开源。**
+**是的,VansRouter 本身 100% 免费且开源。**
 
 **可用的免费层提供商:**
 - **Gemini CLI** - 每月 180K 次补全(免费 Google 账户)
@@ -96,7 +96,7 @@
 
 ## 可以同时使用多个提供商吗?
 
-**可以!这正是 9Router 的核心功能。**
+**可以!这正是 VansRouter 的核心功能。**
 
 **通过组合(Combos),你可以把多个提供商串联起来实现自动回退:**
 
@@ -129,7 +129,7 @@
 
 ## 配额跟踪是如何工作的?
 
-**9Router 为所有提供商提供实时配额跟踪:**
+**VansRouter 为所有提供商提供实时配额跟踪:**
 
 **功能:**
 - **Token 消耗** - 每次请求的输入/输出 tokens
@@ -154,17 +154,17 @@
 
 ---
 
-## 9Router 能配合 Cursor 使用吗?
+## VansRouter 能配合 Cursor 使用吗?
 
 **可以,但 Cursor 需要使用云端 endpoint。**
 
 **问题:** Cursor IDE 不支持 localhost endpoint。
 
-**解决方案:** 使用 9Router 云端部署:
+**解决方案:** 使用 VansRouter 云端部署:
 
 ```
 Cursor Settings → Models → Advanced:
-  OpenAI API Base URL: https://9router.com/v1
+  OpenAI API Base URL: http://localhost:20128/v1
   OpenAI API Key: [从仪表盘获取]
   Model: cc/claude-opus-4-5-20251101
 ```
@@ -172,8 +172,8 @@ Cursor Settings → Models → Advanced:
 **替代方案:** 在 VPS 上自托管,使用公开域名:
 ```bash
 # 部署到 VPS
-git clone https://github.com/decolua/9router.git
-cd 9router/app
+git clone https://github.com/Vanszs/VansRouter.git
+cd VansRouter
 npm install && npm run build
 npm start
 
@@ -192,26 +192,26 @@ npm start
 
 ---
 
-## 可以自托管 9Router 吗?
+## 可以自托管 VansRouter 吗?
 
-**可以!9Router 支持多种部署方式:**
+**可以!VansRouter 支持多种部署方式:**
 
 ### Localhost(默认)
 ```bash
-npm install -g 9router
-9router
+npm install -g vansrouter
+vansrouter
 → 仪表盘: http://localhost:3000
 → API: http://localhost:20128/v1
 ```
 
 ### VPS/云
 ```bash
-git clone https://github.com/decolua/9router.git
-cd 9router/app
+git clone https://github.com/Vanszs/VansRouter.git
+cd VansRouter
 npm install && npm run build
 
 export JWT_SECRET="your-secure-secret"
-export INITIAL_PASSWORD="your-password"
+export INITIAL_PASSWORD="$(openssl rand -base64 24)"
 export NODE_ENV="production"
 
 npm start
@@ -224,19 +224,19 @@ docker run -d \
   -p 3000:3000 \
   -e JWT_SECRET="your-secret" \
   -v 9router-data:/app/data \
-  9router
+  vansrouter
 ```
 
 ### Cloudflare Workers
 ```bash
-cd 9router/app
+cd VansRouter
 npm run deploy:cloudflare
 ```
 
 **环境变量:**
 - `JWT_SECRET` - **生产环境必须修改!**
 - `DATA_DIR` - 数据库存储路径(默认:`~/.9router`)
-- `INITIAL_PASSWORD` - 仪表盘登录(默认:`123456`)
+- `INITIAL_PASSWORD` - 仪表盘登录（新安装默认 `123456`；公开前请设置随机强密码）
 - `NODE_ENV` - 部署时设为 `production`
 
 详情见 [部署指南](getting-started/installation.md#deployment)。
@@ -245,11 +245,11 @@ npm run deploy:cloudflare
 
 ## 我的数据安全吗?
 
-**是的,9Router 优先考虑安全和隐私:**
+**是的,VansRouter 优先考虑安全和隐私:**
 
 **本地存储:**
 - 所有数据存储在本地 `~/.9router`(或自定义 `DATA_DIR`)
-- 不会发送数据到 9Router 服务器
+- 不会发送数据到 VansRouter 服务器
 - OAuth tokens 使用 JWT 加密
 
 **无遥测:**
@@ -268,31 +268,31 @@ npm run deploy:cloudflare
 - 云端部署启用 HTTPS
 - 定期轮换 API keys
 
-**9Router 存储的内容:**
+**VansRouter 存储的内容:**
 - 提供商 OAuth tokens(加密)
 - API keys(加密)
 - 使用统计(仅本地)
 - 组合配置
 
-**9Router 不存储的内容:**
+**VansRouter 不存储的内容:**
 - 你的 prompt 或响应
 - 你生成的代码
 - 个人信息
 
 ---
 
-## 如何更新 9Router?
+## 如何更新 VansRouter?
 
 **更新方式取决于安装类型:**
 
 ### 全局 NPM 安装
 ```bash
-npm update -g 9router
+npm update -g vansrouter
 ```
 
 ### 本地安装
 ```bash
-cd 9router/app
+cd VansRouter
 git pull origin main
 npm install
 npm run build
@@ -301,22 +301,22 @@ npm start
 
 ### Docker
 ```bash
-docker pull 9router:latest
+docker pull ghcr.io/vanszs/vansrouter:X.Y.Z
 docker stop 9router
 docker rm 9router
 docker run -d \
   -p 3000:3000 \
   -v 9router-data:/app/data \
-  9router:latest
+  ghcr.io/vanszs/vansrouter:X.Y.Z
 ```
 
 **查看版本:**
 ```bash
-9router --version
+vansrouter --version
 ```
 
 **破坏性变更:**
-- 查看 [CHANGELOG.md](https://github.com/decolua/9router/blob/main/CHANGELOG.md)
+- 查看 [CHANGELOG.md](https://github.com/Vanszs/VansRouter/blob/main/CHANGELOG.md)
 - 大版本更新前备份 `~/.9router`
 - 阅读大版本的迁移指南
 
@@ -329,18 +329,18 @@ docker run -d \
 ### 贡献方式:
 
 1. **报告 bug:**
-   - [GitHub Issues](https://github.com/decolua/9router/issues)
+   - [GitHub Issues](https://github.com/Vanszs/VansRouter/issues)
    - 附上错误日志、复现步骤
 
 2. **功能请求:**
-   - [GitHub Discussions](https://github.com/decolua/9router/discussions)
+   - [GitHub Discussions](https://github.com/Vanszs/VansRouter/discussions)
    - 描述使用场景和价值
 
 3. **提交代码:**
    ```bash
    # Fork 仓库
    git clone https://github.com/YOUR_USERNAME/9router.git
-   cd 9router
+   cd VansRouter
    
    # 创建分支
    git checkout -b feature/your-feature
@@ -375,13 +375,13 @@ docker run -d \
 - 更新文档
 - 提交保持原子化、描述清晰
 
-详情见 [CONTRIBUTING.md](https://github.com/decolua/9router/blob/main/CONTRIBUTING.md)。
+详情见 [CONTRIBUTING.md](https://github.com/Vanszs/VansRouter/blob/main/CONTRIBUTING.md)。
 
 ---
 
 ## 需要更多帮助?
 
-- **文档:** [9router.com/docs](https://9router.com/docs)
-- **GitHub:** [github.com/decolua/9router](https://github.com/decolua/9router)
-- **Issues:** [github.com/decolua/9router/issues](https://github.com/decolua/9router/issues)
+- **文档:** [VansRouter docs](https://github.com/Vanszs/VansRouter/blob/main/README.md)
+- **GitHub:** [github.com/Vanszs/VansRouter](https://github.com/Vanszs/VansRouter)
+- **Issues:** [github.com/Vanszs/VansRouter/issues](https://github.com/Vanszs/VansRouter/issues)
 - **故障排除:** [troubleshooting.md](troubleshooting.md)

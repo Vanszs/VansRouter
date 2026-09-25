@@ -12,7 +12,10 @@ const BETTER_SQLITE3_VERSION = USE_NAPI_BUILD ? "13.0.3" : "12.6.2";
 const SQL_JS_VERSION = "1.14.1";
 
 function getDataDir() {
-  if (process.env.DATA_DIR) return process.env.DATA_DIR;
+  const configured = (process.env.DATA_DIR || "").trim();
+  // A Docker/Linux DATA_DIR copied into a Windows .env is not valid here; fall
+  // back to the platform default instead of provisioning into a phantom root.
+  if (configured && !(process.platform === "win32" && /^\//.test(configured))) return configured;
   return process.platform === "win32"
     ? path.join(process.env.APPDATA || os.homedir(), "9router")
     : path.join(os.homedir(), ".9router");

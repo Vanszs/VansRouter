@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import fs from "fs";
 import path from "path";
+import { DATA_DIR } from "@/lib/dataDir";
 
 const ALLOWED_FILES = [
   "1_req_client.json",
@@ -25,7 +26,7 @@ export async function POST(request) {
       return NextResponse.json({ success: false, error: "Invalid file name" }, { status: 400 });
     }
 
-    const logsDir = path.join(process.cwd(), "logs", "translator");
+    const logsDir = path.join(DATA_DIR, "logs", "translator");
     
     // Create directory if not exists
     if (!fs.existsSync(logsDir)) {

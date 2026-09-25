@@ -7,15 +7,14 @@
   
   **همه ابزارهای کدنویسی مبتنی بر هوش مصنوعی (Claude Code، Cursor، Antigravity، Copilot، Codex، Gemini، OpenCode، Cline، OpenClaw...) را به بیش از ۴۰ ارائه‌دهنده و ۱۰۰+ مدل متصل کنید.**
   
-  [![npm](https://img.shields.io/npm/v/9router.svg)](https://www.npmjs.com/package/9router)
-  [![Downloads](https://img.shields.io/npm/dm/9router.svg)](https://www.npmjs.com/package/9router)
-  [![Docker Pulls](https://img.shields.io/docker/pulls/decolua/9router.svg?logo=docker&label=Docker%20pulls)](https://hub.docker.com/r/decolua/9router)
-  [![GHCR](https://img.shields.io/badge/GHCR-decolua%2F9router-blue?logo=github)](https://github.com/decolua/9router/pkgs/container/9router)
-  [![License](https://img.shields.io/npm/l/9router.svg)](https://github.com/decolua/9router/blob/main/LICENSE)
+  [![npm](https://img.shields.io/npm/v/vansrouter.svg)](https://www.npmjs.com/package/9router)
+  [![Downloads](https://img.shields.io/npm/dm/vansrouter.svg)](https://www.npmjs.com/package/9router)
+  [![Docker Pulls](https://img.shields.io/docker/pulls/Vanszs/VansRouter.svg?logo=docker&label=Docker%20pulls)](https://hub.docker.com/r/Vanszs/VansRouter)
+  [![GHCR](https://img.shields.io/badge/GHCR-vanszs%2Fvansrouter-blue?logo=github)](https://github.com/Vanszs/VansRouter/pkgs/container/vansrouter)
+  [![License](https://img.shields.io/npm/l/vansrouter.svg)](https://github.com/Vanszs/VansRouter/blob/main/LICENSE)
 
-<a href="https://trendshift.io/repositories/22628" target="_blank"><img src="https://trendshift.io/api/badge/repositories/22628" alt="decolua%2F9router | Trendshift" style="width: 250px; height: 55px;" width="250" height="55"/></a>
 
-[🚀 شروع سریع](#-شروع-سریع) • [💡 ویژگی‌ها](#-ویژگی‌های-کلیدی) • [📖 راه‌اندازی](#-راهنمای-راه‌اندازی) • [🌐 وب‌سایت](https://9router.com)
+[🚀 شروع سریع](#-شروع-سریع) • [💡 ویژگی‌ها](#-ویژگی‌های-کلیدی) • [📖 راه‌اندازی](#-راهنمای-راه‌اندازی) • [🌐 وب‌سایت](http://localhost:20128)
 
 [🇻🇳 Tiếng Việt](./i18n/README.vi.md) • [🇨🇳 中文](./i18n/README.zh-CN.md) • [🇯🇵 日本語](./i18n/README.ja-JP.md) • [🇷🇺 Русский](./i18n/README.ru.md) • [🇮🇷 فارسی](./i18n/README.fa_IR.md)
 
@@ -213,7 +212,7 @@ PORT=20128 HOSTNAME=0.0.0.0 NEXT_PUBLIC_BASE_URL=http://localhost:20128 npm run 
 
 </div>
 
-> 🎬 **درباره 9Router ویدیو ساخته‌اید؟** یک [درخواست Pull](https://github.com/decolua/9router/pulls) برای افزودن ویدیوی خود به این بخش ارسال کنید — ما آن را ادغام خواهیم کرد!
+> 🎬 **درباره 9Router ویدیو ساخته‌اید؟** یک [درخواست Pull](https://github.com/Vanszs/VansRouter/pulls) برای افزودن ویدیوی خود به این بخش ارسال کنید — ما آن را ادغام خواهیم کرد!
 
 ---
 
@@ -1125,7 +1124,7 @@ codex "your prompt"
 
 ```bash
 # کلون و نصب
-git clone https://github.com/decolua/9router.git
+git clone https://github.com/Vanszs/VansRouter.git
 cd 9router
 npm install
 npm run build
@@ -1138,7 +1137,7 @@ export PORT="20128"
 export HOSTNAME="0.0.0.0"
 export NODE_ENV="production"
 export NEXT_PUBLIC_BASE_URL="http://localhost:20128"
-export NEXT_PUBLIC_CLOUD_URL="https://9router.com"
+export NEXT_PUBLIC_CLOUD_URL="https://vansrouter.example"
 export API_KEY_SECRET="endpoint-proxy-api-key-secret"
 export MACHINE_ID_SALT="endpoint-proxy-salt"
 
@@ -1156,8 +1155,8 @@ pm2 startup
 
 تصاویر منتشر شده (چند پلتفرم `linux/amd64` + `linux/arm64`):
 
-- Docker Hub: [`decolua/9router`](https://hub.docker.com/r/decolua/9router)
-- GHCR: [`ghcr.io/decolua/9router`](https://github.com/decolua/9router/pkgs/container/9router)
+- Docker Hub: [`Vanszs/VansRouter`](https://hub.docker.com/r/Vanszs/VansRouter)
+- GHCR: [`ghcr.io/Vanszs/VansRouter`](https://github.com/Vanszs/VansRouter/pkgs/container/vansrouter)
 
 **شروع سریع (استفاده از تصویر منتشر شده):**
 
@@ -1167,7 +1166,7 @@ docker run -d \
   -p 20128:20128 \
   -v "$HOME/.9router:/app/data" \
   -e DATA_DIR=/app/data \
-  decolua/9router:latest
+  Vanszs/VansRouter:latest
 ```
 
 → باز کردن http://localhost:20128
@@ -1175,7 +1174,7 @@ docker run -d \
 **ساخت از سورس (توسعه):**
 
 ```bash
-git clone https://github.com/decolua/9router.git
+git clone https://github.com/Vanszs/VansRouter.git
 cd 9router/app
 docker build -t 9router .
 docker run -d --name 9router -p 20128:20128 \
@@ -1193,7 +1192,7 @@ docker run -d --name 9router -p 20128:20128 \
 docker logs -f 9router
 docker restart 9router
 docker stop 9router && docker rm 9router
-docker pull decolua/9router:latest   # به‌روزرسانی به آخرین نسخه
+docker pull Vanszs/VansRouter:latest   # به‌روزرسانی به آخرین نسخه
 ```
 
 **ماندگاری داده:** `$HOME/.9router/db/data.sqlite` در میزبان ↔ `/app/data/db/data.sqlite` در کانتینر.
@@ -1209,9 +1208,9 @@ docker pull decolua/9router:latest   # به‌روزرسانی به آخرین �
 | `HOSTNAME`                                           | پیش‌فرض فریم‌ورک                        | هاست بایند (داکر پیش‌فرض `۰.۰.۰.۰` است)                                            |
 | `NODE_ENV`                                           | پیش‌فرض زمان اجرا                          | برای استقرار `production` را تنظیم کنید                                                         |
 | `BASE_URL`                                           | `http://localhost:20128`                 | آدرس پایه داخلی سمت سرور که توسط کارهای همگام‌سازی ابری استفاده می‌شود                               |
-| `CLOUD_URL`                                          | `https://9router.com`                    | آدرس پایه نقطه پایانی همگام‌سازی ابری سمت سرور                                            |
+| `CLOUD_URL`                                          | `https://vansrouter.example`                    | آدرس پایه نقطه پایانی همگام‌سازی ابری سمت سرور                                            |
 | `NEXT_PUBLIC_BASE_URL`                               | `http://localhost:3000`                  | آدرس پایه عمومی/سازگار با گذشته (برای زمان اجرای سرور `BASE_URL` را ترجیح دهید)          |
-| `NEXT_PUBLIC_CLOUD_URL`                              | `https://9router.com`                    | آدرس ابری عمومی/سازگار با گذشته (برای زمان اجرای سرور `CLOUD_URL` را ترجیح دهید)        |
+| `NEXT_PUBLIC_CLOUD_URL`                              | `https://vansrouter.example`                    | آدرس ابری عمومی/سازگار با گذشته (برای زمان اجرای سرور `CLOUD_URL` را ترجیح دهید)        |
 | `API_KEY_SECRET`                                     | `endpoint-proxy-api-key-secret`          | راز HMAC برای کلیدهای API تولید شده                                                  |
 | `MACHINE_ID_SALT`                                    | `endpoint-proxy-salt`                    | نمک برای هش کردن شناسه ماشین پایدار                                                  |
 | `ENABLE_REQUEST_LOGS`                                | `false`                                  | لاگ‌های درخواست/پاسخ را در `logs/` فعال می‌کند                                         |
@@ -1394,9 +1393,9 @@ Authorization: Bearer your-api-key
 
 ## 📧 پشتیبانی
 
-- **وب‌سایت**: [9router.com](https://9router.com)
-- **GitHub**: [github.com/decolua/9router](https://github.com/decolua/9router)
-- **مسائل**: [github.com/decolua/9router/issues](https://github.com/decolua/9router/issues)
+- **وب‌سایت**: [VansRouter dashboard](http://localhost:20128)
+- **GitHub**: [github.com/Vanszs/VansRouter](https://github.com/Vanszs/VansRouter)
+- **مسائل**: [github.com/Vanszs/VansRouter/issues](https://github.com/Vanszs/VansRouter/issues)
 
 ---
 
@@ -1404,13 +1403,13 @@ Authorization: Bearer your-api-key
 
 با تشکر از همه مشارکت‌کنندگانی که به بهتر شدن 9Router کمک کردند!
 
-[![Contributors](https://contrib.rocks/image?repo=decolua/9router&max=150&columns=15&anon=1&v=20260309)](https://github.com/decolua/9router/graphs/contributors)
+[![Contributors](https://contrib.rocks/image?repo=Vanszs/VansRouter&max=150&columns=15&anon=1&v=20260309)](https://github.com/Vanszs/VansRouter/graphs/contributors)
 
 ---
 
 ## 📊 نمودار ستاره
 
-[![Star Chart](https://starchart.cc/decolua/9router.svg?variant=adaptive)](https://starchart.cc/decolua/9router)
+[![Star Chart](https://starchart.cc/Vanszs/VansRouter.svg?variant=adaptive)](https://starchart.cc/Vanszs/VansRouter)
 
 ## 🔀 فورک‌ها
 

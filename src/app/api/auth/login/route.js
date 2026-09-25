@@ -1,14 +1,14 @@
 import { NextResponse } from "next/server";
-import { getInitialPassword } from "@/lib/auth/password";
+import { getInitialPassword, isPlaceholderPassword } from "@/lib/auth/password";
 import { getSettings } from "@/lib/localDb";
 import bcrypt from "bcryptjs";
 import { cookies } from "next/headers";
-import { setDashboardAuthCookie } from "@/lib/auth/dashboardSession";
+import { setDashboardAuthCookie, setPasswordChangeCookie } from "@/lib/auth/dashboardSession";
 import { isOidcConfigured } from "@/lib/auth/oidc";
 import { checkLock, recordFail, recordSuccess, getClientIp } from "@/lib/auth/loginLimiter";
 import { isLocalRequest } from "@/dashboardGuard";
 
-const RESET_HINT = "Forgot password? Reset to default via 9Router CLI → Settings → Reset Password to Default.";
+const RESET_HINT = "Forgot password? Use the VansRouter CLI on the host to set a new dashboard password.";
 const NO_STORE_HEADERS = { "Cache-Control": "no-store" };
 
 function isTunnelRequest(request, settings) {
@@ -38,6 +38,7 @@ export async function POST(request) {
     }
 
     const storedHash = settings.password;
+    const initialPassword = getInitialPassword();
 
     if (settings.authMode === "oidc" && isOidcConfigured(settings)) {
       return NextResponse.json({ error: "Password login is disabled. Use OIDC sign in." }, { status: 403 });
@@ -47,10 +48,9 @@ export async function POST(request) {
     if (storedHash) {
       isValid = await bcrypt.compare(password, storedHash);
     } else {
-      const initialPassword = getInitialPassword();
       if (!initialPassword) {
         return Response.json(
-          { error: "INITIAL_PASSWORD must be configured with a strong value before login" },
+          { error: "INITIAL_PASSWORD must be 123456 or a strong value before login" },
           { status: 503, headers: NO_STORE_HEADERS },
         );
       }
@@ -58,24 +58,27 @@ export async function POST(request) {
     }
 
     if (isValid) {
-      // Default password still in use on a remote client → force a password
-      // change before the dashboard is exposed remotely (keeps local UX intact).
+      // A non-local client must replace the compatibility default before it gets
+      // any dashboard access. It still receives a short-lived, password-change-only
+      // grant so a web-only operator is never locked out with no local shell.
+      // This deliberately needs no "is this the Docker host?" signal: the grant
+      // can change the password and nothing else, and the caller still had to
+      // present the correct current password — which is strictly tighter than
+      // handing out a full session on a known default.
       const mustChangePassword =
-        !storedHash && !process.env.INITIAL_PASSWORD && !isLocalRequest(request);
-
-      if (mustChangePassword) {
-        return NextResponse.json(
-          {
-            success: false,
-            error: "Default password must be changed before remote access. Change it from the local machine (or set INITIAL_PASSWORD).",
-            mustChangePassword,
-          },
-          { status: 403, headers: NO_STORE_HEADERS },
-        );
-      }
+        !storedHash && isPlaceholderPassword(initialPassword) && !isLocalRequest(request);
 
       recordSuccess(ip);
       const cookieStore = await cookies();
+
+      if (mustChangePassword) {
+        await setPasswordChangeCookie(cookieStore, request);
+        return NextResponse.json(
+          { success: true, mustChangePassword: true },
+          { headers: NO_STORE_HEADERS },
+        );
+      }
+
       await setDashboardAuthCookie(cookieStore, request);
 
       return NextResponse.json({ success: true, mustChangePassword: false }, { headers: NO_STORE_HEADERS });

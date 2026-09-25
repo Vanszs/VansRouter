@@ -73,6 +73,41 @@ async function waitForJson(url, predicate, {
   throw new Error(`Timed out waiting for ${url}: ${lastError}`);
 }
 
+async function verifyProductionLogin(baseUrl, password, requestFn = fetch) {
+  const response = await requestFn(`${baseUrl}/api/auth/login`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ password }),
+  });
+  let body = null;
+  try {
+    body = await response.json();
+  } catch {}
+  if (response.status !== 200 || body?.success !== true) {
+    throw new Error(`Production login smoke failed: HTTP ${response.status}`);
+  }
+  return body;
+}
+
+// The compatibility default password must stay local-only. X-Forwarded-For makes
+// custom-server.js stamp x-9r-via-proxy, so the app treats the request as
+// arriving from somewhere other than the operator's own machine.
+async function verifyRemoteDefaultPasswordRejected(baseUrl, password, requestFn = fetch) {
+  const response = await requestFn(`${baseUrl}/api/auth/login`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "X-Forwarded-For": "203.0.113.10" },
+    body: JSON.stringify({ password }),
+  });
+  let body = null;
+  try {
+    body = await response.json();
+  } catch {}
+  if (response.status !== 403 || body?.mustChangePassword !== true) {
+    throw new Error(`Remote default-password gate smoke failed: HTTP ${response.status}`);
+  }
+  return body;
+}
+
 function getFreePort() {
   return new Promise((resolve, reject) => {
     const server = net.createServer();
@@ -158,6 +193,7 @@ async function runContainerSmoke({ image, expectedVersion, platform = "linux/amd
       "-e", "PORT=20128",
       "-e", "HOSTNAME=0.0.0.0",
       "-e", "NODE_ENV=production",
+      "-e", "INITIAL_PASSWORD=123456",
       "-e", "NEXT_TELEMETRY_DISABLED=1",
       "-e", "VANROUTER_SKIP_UPDATE_CHECK=1",
       "-v", `${dataDir}:/app/data`,
@@ -169,6 +205,8 @@ async function runContainerSmoke({ image, expectedVersion, platform = "linux/amd
     verifyContainerOpenClosure(name);
     const health = await requestJson(`${baseUrl}/api/health`);
     if (health.status !== 200) throw new Error(`Health check failed: ${health.status}`);
+    await verifyProductionLogin(baseUrl, "123456");
+    await verifyRemoteDefaultPasswordRejected(baseUrl, "123456");
     const version = await waitForJson(
       `${baseUrl}/api/version`,
       (body) => body?.currentVersion === expectedVersion,
@@ -196,6 +234,8 @@ module.exports = {
   inspectLocalPlatform,
   ensureImageForPlatform,
   verifyContainerOpenClosure,
+  verifyProductionLogin,
+  verifyRemoteDefaultPasswordRejected,
   runContainerSmoke,
 };
 

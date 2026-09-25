@@ -712,7 +712,7 @@ export default function ProfilePage() {
                 {/* {!settings.hasPassword && (
                   <div className="p-3 rounded-lg bg-blue-500/10 border border-blue-500/20">
                     <p className="text-sm text-blue-600 dark:text-blue-400">
-                      Setting password for the first time. Leave current password empty or use default: <code className="bg-blue-500/20 px-1 rounded">123456</code>
+                      Setting password for the first time. Leave current password empty and use a strong new password.
                     </p>
                   </div>
                 )} */}

@@ -1,3 +1,4 @@
+import fs from "node:fs";
 import { createRequire } from "node:module";
 
 const require = createRequire(import.meta.url);
@@ -7,6 +8,8 @@ const {
   platformPair,
   ensureImageForPlatform,
   verifyContainerOpenClosure,
+  verifyProductionLogin,
+  verifyRemoteDefaultPasswordRejected,
 } = require("../../scripts/smoke-container.cjs");
 
 describe("container release smoke test", () => {
@@ -34,6 +37,40 @@ describe("container release smoke test", () => {
       ["image", "rm", "example/image"],
       ["pull", "--platform", "linux/arm64", "example/image"],
     ]);
+  });
+
+  it("smoke-tests the production password bootstrap", async () => {
+    const calls = [];
+    await verifyProductionLogin("http://127.0.0.1:20128", "strong-smoke-password", async (url, init) => {
+      calls.push({ url, init });
+      return { status: 200, json: async () => ({ success: true }) };
+    });
+
+    expect(calls[0].url).toBe("http://127.0.0.1:20128/api/auth/login");
+    expect(calls[0].init.method).toBe("POST");
+    const source = fs.readFileSync("scripts/smoke-container.cjs", "utf8");
+    expect(source).toContain("INITIAL_PASSWORD=123456");
+  });
+
+  it("rejects the default password when the request is not host-local", async () => {
+    const calls = [];
+    await verifyRemoteDefaultPasswordRejected("http://127.0.0.1:20128", "123456", async (url, init) => {
+      calls.push({ url, init });
+      return { status: 403, json: async () => ({ success: false, mustChangePassword: true }) };
+    });
+
+    expect(calls[0].init.headers["X-Forwarded-For"]).toBe("203.0.113.10");
+    await expect(
+      verifyRemoteDefaultPasswordRejected("http://127.0.0.1:20128", "123456", async () => ({
+        status: 200,
+        json: async () => ({ success: true }),
+      })),
+    ).rejects.toThrow(/Remote default-password gate smoke failed/);
+  });
+
+  it("ships no locality knob in the entrypoint", () => {
+    const entrypoint = fs.readFileSync("docker/entrypoint.sh", "utf8");
+    expect(entrypoint).not.toContain("VANSROUTER_HOST_GATEWAY");
   });
 
   it("checks the bundled open dependency closure inside the container", () => {

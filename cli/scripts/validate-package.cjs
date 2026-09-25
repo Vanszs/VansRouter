@@ -13,7 +13,10 @@ if (!fs.existsSync(tarball)) {
   throw new Error(`Tarball does not exist: ${tarball}`);
 }
 
-const entries = execFileSync("tar", ["-tzf", tarball], { encoding: "utf8" })
+const entries = execFileSync("tar", ["-tzf", tarball], {
+  encoding: "utf8",
+  maxBuffer: 64 * 1024 * 1024,
+})
   .trim()
   .split("\n")
   .filter(Boolean);
@@ -22,11 +25,12 @@ const requiredNext = "package/app/_nm/next/package.json";
 const requiredOpen = "package/app/_nm/open/package.json";
 const requiredServer = "package/app/server.js";
 const requiredCustomServer = "package/app/custom-server.js";
+const requiredRuntimeSecrets = "package/app/runtime-secrets.cjs";
 const requiredPagesManifest = "package/app/.next-cli-build/server/pages-manifest.json";
 const requiredServerFiles = "package/app/.next-cli-build/required-server-files.json";
 const requiredLocalDbShim = "package/app/.next-cli-build/lib/localDb.js";
 
-for (const required of [requiredWasm, requiredNext, requiredOpen, requiredServer, requiredCustomServer, requiredPagesManifest, requiredServerFiles, requiredLocalDbShim]) {
+for (const required of [requiredWasm, requiredNext, requiredOpen, requiredServer, requiredCustomServer, requiredRuntimeSecrets, requiredPagesManifest, requiredServerFiles, requiredLocalDbShim]) {
   if (!entries.includes(required)) {
     throw new Error(`Required CLI artifact missing: ${required}`);
   }

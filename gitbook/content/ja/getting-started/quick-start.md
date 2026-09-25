@@ -1,6 +1,6 @@
 # はじめに
 
-9Routerを5分で起動し、AIリクエストをインテリジェントにルーティングし始めましょう。
+VansRouterを5分で起動し、AIリクエストをインテリジェントにルーティングし始めましょう。
 
 ---
 
@@ -9,20 +9,20 @@
 ### 1. インストール
 
 ```bash
-npm install -g 9router
+npm install -g vansrouter
 ```
 
-**要件:** Node.js 20+ ([インストール詳細](getting-started/installation.md))
+**要件:** Node.js 22.5+ ([インストール詳細](getting-started/installation.md))
 
 ### 2. 起動
 
 ```bash
-9router
+vansrouter
 ```
 
 🎉 **ダッシュボードが自動的に開きます** (`http://localhost:20128`)
 
-- デフォルトパスワード: `123456` (ダッシュボードで変更)
+- 新規インストール時のデフォルトは `123456` です。公開前にランダムな `INITIAL_PASSWORD` を設定してください。
 - APIキーは自動生成
 - プロバイダー接続の準備完了
 
@@ -43,7 +43,7 @@ Dashboard → Providers → Connect [Provider]
 **例: Claude Code**
 1. 「Connect Claude Code」をクリック
 2. Claudeアカウントでログイン
-3. 9Routerを認可
+3. VansRouterを認可
 4. ✅ 完了! モデルを使用: `cc/claude-opus-4-5-20251101`
 
 #### オプションB: APIキー(低価格プロバイダー)
@@ -83,7 +83,7 @@ Dashboard → Providers → Connect [Free Provider]
 
 ## 4. CLIツールで使用
 
-コーディングツールを9Routerに向けます:
+コーディングツールをVansRouterに向けます:
 
 ### Cursor IDE
 
@@ -101,7 +101,7 @@ Settings → Models → Advanced:
 ```json
 {
   "anthropic_api_base": "http://localhost:20128/v1",
-  "anthropic_api_key": "your-9router-api-key"
+  "anthropic_api_key": "your-vansrouter-api-key"
 }
 ```
 
@@ -118,7 +118,7 @@ Model: cc/claude-opus-4-5-20251101
 
 ```bash
 export OPENAI_BASE_URL="http://localhost:20128"
-export OPENAI_API_KEY="your-9router-api-key"
+export OPENAI_API_KEY="your-vansrouter-api-key"
 
 codex "your prompt"
 ```
@@ -242,6 +242,6 @@ CLIで使用: premium-coding
 
 ## ヘルプが必要?
 
-- **ウェブサイト**: [9router.com](https://9router.com)
-- **GitHub**: [github.com/decolua/9router](https://github.com/decolua/9router)
-- **Issues**: [github.com/decolua/9router/issues](https://github.com/decolua/9router/issues)
+- **ウェブサイト**: [VansRouter dashboard](http://localhost:20128)
+- **GitHub**: [github.com/Vanszs/VansRouter](https://github.com/Vanszs/VansRouter)
+- **Issues**: [github.com/Vanszs/VansRouter/issues](https://github.com/Vanszs/VansRouter/issues)

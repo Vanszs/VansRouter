@@ -93,6 +93,28 @@ describe("release hardening contracts", () => {
     expect(read(".env.example")).toMatch(/VANSROUTER_VERSION=\d+\.\d+\.\d+/);
   });
 
+  it("keeps executable shell entrypoints LF across Windows checkouts", () => {
+    const attributes = read(".gitattributes");
+    expect(attributes).toMatch(/\*\.sh text eol=lf/);
+    expect(attributes).toMatch(/docker\/entrypoint\.sh text eol=lf/);
+  });
+
+  it("uses the documented application port for the production start script", () => {
+    const packageJson = JSON.parse(read("package.json"));
+    expect(packageJson.scripts.start).toContain("--port 20128");
+    expect(packageJson.scripts["preflight:upgrade"]).toContain("preflight-upgrade.cjs");
+  });
+
+  it("packages the production secret validator beside both launchers", () => {
+    expect(read("Dockerfile")).toContain("COPY runtime-secrets.cjs");
+    expect(read("cli/scripts/build-cli.js")).toContain("runtime-secrets.cjs");
+    expect(read("cli/scripts/build-cli.js")).toContain('path.join(appDir, "runtime-secrets.cjs")');
+    expect(read("cli/scripts/build-cli.js")).not.toContain('path.join(rootDir, "runtime-secrets.cjs")');
+    expect(read("scripts/build.js")).toContain("runtime-secrets.cjs");
+    expect(read("cli/scripts/validate-package.cjs")).toContain("runtime-secrets.cjs");
+    expect(read("cli/scripts/smoke-package.cjs")).toContain("runtime-secrets.cjs");
+  });
+
   it("keeps the native and documentation dependency lockfiles in the release graph", () => {
     const gitignore = read(".gitignore");
     const gitbookWorkflow = read(".github/workflows/gitbook-pages.yml");
@@ -103,5 +125,24 @@ describe("release hardening contracts", () => {
     expect(gitbookWorkflow).toContain("npm ci --no-audit --no-fund --ignore-scripts");
     expect(read("scripts/smoke-container.cjs")).toContain("VANROUTER_SKIP_UPDATE_CHECK");
     expect(read("cli/scripts/smoke-package.cjs")).toContain("VANROUTER_SKIP_UPDATE_CHECK");
+  });
+
+  it("keeps the root package and the published CLI tarball on one version", () => {
+    const root = JSON.parse(fs.readFileSync("package.json", "utf8"));
+    const cli = JSON.parse(fs.readFileSync("cli/package.json", "utf8"));
+    // The container reports package.json and the npm tarball reports the cli one.
+    // A one-sided bump stays green until a tag is pushed, and the tag is immutable.
+    expect(cli.version).toBe(root.version);
+  });
+
+  it("keeps landing onboarding copy on VansRouter, the current port, and the Windows data path", () => {
+    const getStarted = read("src/app/landing/components/GetStarted.js");
+    const navigation = read("src/app/landing/components/Navigation.js");
+    expect(getStarted).toContain("npx vansrouter");
+    expect(getStarted).toContain("http://localhost:20128/masuk");
+    expect(getStarted).toContain("%APPDATA%\\9router\\db\\data.sqlite");
+    expect(getStarted).not.toMatch(/\bVansAI\b/);
+    expect(getStarted).not.toContain("npx VansRoute");
+    expect(navigation).toContain("VansRouter");
   });
 });

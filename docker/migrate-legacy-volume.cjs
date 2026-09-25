@@ -86,7 +86,74 @@ function cleanStagingDirectories(dataDir) {
   }
 }
 
-function migrateLegacyVolume({
+// true = owner alive, false = owner gone, null = cannot tell (no/unreadable pid).
+// Without this a container killed mid-migration leaves a fresh lock behind and
+// `set -eu` crash-loops the entrypoint until the 6h stale window elapses.
+function isLockOwnerAlive(lockPath) {
+  try {
+    const owner = JSON.parse(fs.readFileSync(path.join(lockPath, "owner.json"), "utf8"));
+    if (!Number.isInteger(owner.pid) || owner.pid <= 0) return null;
+    process.kill(owner.pid, 0);
+    return true;
+  } catch (error) {
+    return error?.code === "ESRCH" ? false : null;
+  }
+}
+
+function acquireMigrationLock(dataDir, { staleMs = 6 * 60 * 60 * 1000 } = {}) {
+  const lockPath = path.join(dataDir, ".legacy-migration.lock");
+  const token = `${process.pid}-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  const tryCreate = () => {
+    fs.mkdirSync(lockPath);
+    fs.writeFileSync(path.join(lockPath, "owner.json"), JSON.stringify({ pid: process.pid, token, startedAt: new Date().toISOString() }));
+    return true;
+  };
+
+  try {
+    tryCreate();
+  } catch (error) {
+    if (error.code !== "EEXIST") throw error;
+    let stale = false;
+    try {
+      stale = Date.now() - fs.statSync(lockPath).mtimeMs > staleMs;
+    } catch {
+      stale = false;
+    }
+    if (!stale && isLockOwnerAlive(lockPath) === false) {
+      // Owner is gone (OOM-kill / force stop): reclaim now, no stale wait.
+      stale = true;
+    }
+    if (stale) {
+      fs.rmSync(lockPath, { recursive: true, force: true });
+      tryCreate();
+    } else {
+      throw new Error(`Legacy migration is already running for ${dataDir}`);
+    }
+  }
+
+  return () => {
+    try {
+      const owner = JSON.parse(fs.readFileSync(path.join(lockPath, "owner.json"), "utf8"));
+      if (owner.token !== token) return;
+    } catch {
+      return;
+    }
+    fs.rmSync(lockPath, { recursive: true, force: true });
+  };
+}
+
+function migrateLegacyVolume(options = {}) {
+  const dataDir = path.resolve(options.dataDir || process.env.DATA_DIR || "/app/data");
+  fs.mkdirSync(dataDir, { recursive: true });
+  const release = acquireMigrationLock(dataDir);
+  try {
+    return migrateLegacyVolumeUnlocked({ ...options, dataDir });
+  } finally {
+    release();
+  }
+}
+
+function migrateLegacyVolumeUnlocked({
   dataDir = process.env.DATA_DIR || "/app/data",
   migrationDir = process.env.MIGRATION_DATA_DIR || "/migration-data",
   Database = loadDatabaseConstructor(),
@@ -100,11 +167,16 @@ function migrateLegacyVolume({
   cleanStagingDirectories(resolvedDataDir);
 
   const destinationExists = fs.existsSync(destinationDb);
-  const destinationValid = destinationExists && validateSqlite(destinationDb, Database);
-  if (fs.existsSync(markerPath) && destinationValid) {
+  const markerExists = fs.existsSync(markerPath);
+  if (markerExists && destinationExists) {
+    if (fs.existsSync(resolvedMigrationDir)) {
+      copyMissing(resolvedMigrationDir, resolvedDataDir);
+    }
     return { status: "already-migrated", destinationDb };
   }
-  if (fs.existsSync(markerPath) && !destinationValid) {
+
+  const destinationValid = destinationExists && validateSqlite(destinationDb, Database);
+  if (markerExists && !destinationValid) {
     fs.rmSync(markerPath, { force: true });
   }
   if (!fs.existsSync(resolvedMigrationDir)) {
@@ -126,13 +198,15 @@ function migrateLegacyVolume({
   try {
     const stagedDb = path.join(stagingDir, "db", "data.sqlite");
     const stagedDbExists = fs.existsSync(stagedDb);
-    for (const suffix of ["-wal", "-shm"]) {
-      if (fs.existsSync(`${stagedDb}${suffix}`)) {
-        throw new Error(`Migration source contains an active SQLite sidecar (${path.basename(stagedDb + suffix)}); checkpoint it before migration`);
+    if (!destinationValid) {
+      for (const suffix of ["-wal", "-shm"]) {
+        if (fs.existsSync(`${stagedDb}${suffix}`)) {
+          throw new Error(`Migration source contains an active SQLite sidecar (${path.basename(stagedDb + suffix)}); checkpoint it before migration`);
+        }
       }
-    }
-    if (stagedDbExists && !validateSqlite(stagedDb, Database)) {
-      throw new Error(`Migration source contains an invalid SQLite database: ${stagedDb}`);
+      if (stagedDbExists && !validateSqlite(stagedDb, Database)) {
+        throw new Error(`Migration source contains an invalid SQLite database: ${stagedDb}`);
+      }
     }
 
     copyMissing(stagingDir, resolvedDataDir);
@@ -179,4 +253,4 @@ if (require.main === module) {
   }
 }
 
-module.exports = { copyMissing, migrateLegacyVolume, validateSqlite };
+module.exports = { acquireMigrationLock, copyMissing, migrateLegacyVolume, validateSqlite };

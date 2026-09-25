@@ -216,7 +216,7 @@ export default function LoginPage() {
                   )}
                   {resetHint && (
                     <p className="text-xs text-text-muted">
-                      Forgot password? Open <code className="bg-sidebar px-1 rounded">vansrouter</code> CLI on the host → <b>Settings</b> → <b>Reset Password to Default</b>.
+                      Forgot password? Open <code className="bg-sidebar px-1 rounded">vansrouter</code> CLI on the host → <b>Settings</b> → <b>Set/Replace Dashboard Password</b>.
                     </p>
                   )}
                 </div>
@@ -231,12 +231,9 @@ export default function LoginPage() {
                   {retryAfter > 0 ? `Wait ${retryAfter}s` : "Login"}
                 </Button>
 
-                <p className="text-xs text-center text-text-muted mt-2">
-                  Default password is <code className="bg-sidebar px-1 rounded">123456</code>
-                </p>
                 {hasPassword === false && (
                   <p className="text-xs text-center text-amber-600 dark:text-amber-400">
-                    Security risk: no password set. You will be asked to set one when logging in remotely.
+                    New installation default: <code className="bg-sidebar px-1 rounded">123456</code>. Change it before exposing the dashboard.
                   </p>
                 )}
               </form>

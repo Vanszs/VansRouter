@@ -45,10 +45,10 @@ Dashboard → API Keys → Create New
 → Copia la API key (comienza con "zhipu-")
 ```
 
-**Paso 3: Agregar a 9Router**
+**Paso 3: Agregar a VansRouter**
 
 ```bash
-9router
+vansrouter
 # Dashboard → Providers → Add API Key
 
 Provider: glm
@@ -117,10 +117,10 @@ Dashboard → API Management → Create Key
 → Copia la API key
 ```
 
-**Paso 3: Agregar a 9Router**
+**Paso 3: Agregar a VansRouter**
 
 ```bash
-9router
+vansrouter
 # Dashboard → Providers → Add API Key
 
 Provider: minimax
@@ -190,10 +190,10 @@ Dashboard → API Keys → Create New
 → Copia la API key
 ```
 
-**Paso 3: Agregar a 9Router**
+**Paso 3: Agregar a VansRouter**
 
 ```bash
-9router
+vansrouter
 # Dashboard → Providers → Add API Key
 
 Provider: kimi

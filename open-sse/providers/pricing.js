@@ -163,6 +163,10 @@ export const PATTERN_PRICING = [
   { pattern: "codex-*",         pricing: { input: 1.75,  output: 14.00, cached: 0.175, reasoning: 14.00,  cache_creation: 1.75  } },
   { pattern: "*-codex",         pricing: { input: 1.75,  output: 14.00, cached: 0.175, reasoning: 14.00,  cache_creation: 1.75  } },
 
+  // --- Free Tier Models (*:free, *-free) ---
+  { pattern: "*:free",          pricing: { input: 0, output: 0, cached: 0, reasoning: 0, cache_creation: 0 } },
+  { pattern: "*-free",          pricing: { input: 0, output: 0, cached: 0, reasoning: 0, cache_creation: 0 } },
+
   // --- Claude ---
   { pattern: "claude-opus-*",   pricing: { input: 5.00,  output: 25.00, cached: 0.50,  reasoning: 25.00,  cache_creation: 6.25  } },
   { pattern: "claude-sonnet-*", pricing: { input: 3.00,  output: 15.00, cached: 0.30,  reasoning: 15.00,  cache_creation: 3.75  } },

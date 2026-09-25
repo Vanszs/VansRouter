@@ -19,6 +19,32 @@ describe("detectFormat", () => {
       }],
     })).toBe("claude");
   });
+
+  it("keeps Claude image priority when a later message contains an OpenAI image", () => {
+    expect(detectFormat({
+      model: "claude-opus-4-6-thinking",
+      messages: [
+        {
+          role: "user",
+          content: [{ type: "image_url", image_url: { url: "https://example.test/image.png" } }],
+        },
+        {
+          role: "user",
+          content: [{ type: "image", source: { type: "base64", media_type: "image/png", data: "x" } }],
+        },
+      ],
+    })).toBe("claude");
+  });
+
+  it("detects Claude blocks in later turns after a text first turn", () => {
+    expect(detectFormat({
+      model: "claude-opus-4-6-thinking",
+      messages: [
+        { role: "user", content: "Start with text" },
+        { role: "assistant", content: [{ type: "tool_use", id: "tool-1", name: "read", input: {} }] },
+      ],
+    })).toBe("claude");
+  });
 });
 
 describe("normalizeThinkingConfig", () => {

@@ -86,6 +86,28 @@ describe("handleImageGenerationCore", () => {
     expect(responseBody.data[0].url).toBe("https://example.com/image.png");
   });
 
+  it.each([
+    ["meta", "muse-image-1.0", "https://api.meta.ai/v1/images/generations"],
+    ["tokenharbor", "th-image", "https://tokenharbor.ai/v1/images/generations"],
+  ])("generates images for the %s provider", async (provider, model, url) => {
+    global.fetch.mockResolvedValueOnce(
+      new Response(
+        JSON.stringify({ created: 1234567890, data: [{ url: "https://example.com/provider-image.png" }] }),
+        { status: 200, headers: { "Content-Type": "application/json" } },
+      ),
+    );
+
+    const result = await handleImageGenerationCore({
+      body: { prompt: "A test image", n: 1 },
+      modelInfo: { provider, model },
+      credentials: { apiKey: "test-key" },
+      log: null,
+    });
+
+    expect(result.success).toBe(true);
+    expect(global.fetch).toHaveBeenCalledWith(url, expect.objectContaining({ method: "POST" }));
+  });
+
   it("generates image with Gemini format", async () => {
     global.fetch.mockResolvedValueOnce(
       new Response(

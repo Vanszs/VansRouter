@@ -14,7 +14,7 @@ export default function Navigation() {
           type="button"
           className="flex items-center gap-3 cursor-pointer bg-transparent border-none p-0"
           onClick={() => router.push("/")}
-          aria-label="VansAI Home"
+          aria-label="VansRouter Home"
         >
           <div className="size-8 rounded bg-linear-to-br from-[#6366f1] to-[#8b5cf6] flex items-center justify-center text-white">
             <svg viewBox="0 0 32 32" className="w-5 h-5" fill="none">
@@ -24,7 +24,7 @@ export default function Navigation() {
               <circle cx="16" cy="9" r="2" fill="white"/>
             </svg>
           </div>
-          <span className="text-white text-xl font-bold tracking-tight">VansAI</span>
+          <span className="text-white text-xl font-bold tracking-tight">VansRouter</span>
         </button>
 
         {/* Desktop menu */}

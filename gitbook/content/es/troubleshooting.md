@@ -1,6 +1,6 @@
 # Solución de problemas
 
-Problemas comunes y soluciones al usar 9Router.
+Problemas comunes y soluciones al usar VansRouter.
 
 ---
 
@@ -78,7 +78,7 @@ Problemas comunes y soluciones al usar 9Router.
 **Soluciones:**
 
 1. **Refresh automático (por defecto):**
-   9Router refresca automáticamente los tokens. Espera 30 segundos y reintenta.
+   VansRouter refresca automáticamente los tokens. Espera 30 segundos y reintenta.
 
 2. **Reconexión manual:**
    ```
@@ -135,15 +135,15 @@ Problemas comunes y soluciones al usar 9Router.
 **Problema:** "ECONNREFUSED" o "Cannot connect to localhost:20128".
 
 **Causas:**
-- 9Router no está ejecutándose
+- VansRouter no está ejecutándose
 - Puerto 20128 bloqueado
 - Firewall bloqueando la conexión
 
 **Soluciones:**
 
-1. **Inicia 9Router:**
+1. **Inicia VansRouter:**
    ```bash
-   9router
+   vansrouter
    ```
    El dashboard debe abrir en http://localhost:3000
 
@@ -164,7 +164,7 @@ Problemas comunes y soluciones al usar 9Router.
 4. **Usa el endpoint en la nube:**
    Si localhost no funciona (ej. Cursor IDE):
    ```
-   Endpoint: https://9router.com/v1
+   Endpoint: http://localhost:20128/v1
    ```
 
 ---
@@ -175,12 +175,12 @@ Problemas comunes y soluciones al usar 9Router.
 
 **Causas:**
 - Puerto 3000 ya en uso
-- 9Router crasheó
+- VansRouter crasheó
 - Problemas de caché del navegador
 
 **Soluciones:**
 
-1. **Verifica si 9Router está ejecutándose:**
+1. **Verifica si VansRouter está ejecutándose:**
    ```bash
    # Verifica el proceso
    ps aux | grep 9router
@@ -199,13 +199,13 @@ Problemas comunes y soluciones al usar 9Router.
    taskkill /PID <PID> /F
    ```
 
-3. **Reinicia 9Router:**
+3. **Reinicia VansRouter:**
    ```bash
    # Detener
    pkill -f 9router
    
    # Iniciar
-   9router
+   vansrouter
    ```
 
 4. **Limpia la caché del navegador:**
@@ -346,6 +346,6 @@ Problemas comunes y soluciones al usar 9Router.
 
 ## ¿Necesitas más ayuda?
 
-- **GitHub Issues:** [github.com/decolua/9router/issues](https://github.com/decolua/9router/issues)
-- **Documentación:** [9router.com/docs](https://9router.com/docs)
+- **GitHub Issues:** [github.com/Vanszs/VansRouter/issues](https://github.com/Vanszs/VansRouter/issues)
+- **Documentación:** [VansRouter docs](https://github.com/Vanszs/VansRouter/blob/main/README.md)
 - **FAQ:** [faq.md](faq.md)

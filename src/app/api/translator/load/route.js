@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
 import fs from "fs/promises";
 import path from "path";
+import { DATA_DIR } from "@/lib/dataDir";
 
-const logsDir = path.join(process.cwd(), "logs", "translator");
+const logsDir = path.join(DATA_DIR, "logs", "translator");
 
 const ALLOWED_FILES = [
   "1_req_client.json",

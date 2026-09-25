@@ -1,6 +1,6 @@
 # Installation
 
-Detailed installation guide for 9Router with troubleshooting tips.
+Detailed installation guide for VansRouter with troubleshooting tips.
 
 ---
 
@@ -8,7 +8,7 @@ Detailed installation guide for 9Router with troubleshooting tips.
 
 ### System Requirements
 
-- **Node.js**: Version 20.0.0 or higher
+- **Node.js**: Version 22.5.0 or higher
 - **npm**: Version 10.0.0 or higher (comes with Node.js)
 - **OS**: macOS, Linux, Windows (WSL recommended)
 - **Disk Space**: ~200MB for installation
@@ -17,7 +17,7 @@ Detailed installation guide for 9Router with troubleshooting tips.
 
 ```bash
 node --version
-# Should show v20.x.x or higher
+# Should show v22.5.x or higher
 
 npm --version
 # Should show 10.x.x or higher
@@ -31,37 +31,37 @@ npm --version
 
 ### Method 1: Global Installation (Recommended)
 
-Install 9Router globally to use from anywhere:
+Install VansRouter globally to use from anywhere:
 
 ```bash
-npm install -g 9router
+npm install -g vansrouter
 ```
 
-**Start 9Router:**
+**Start VansRouter:**
 
 ```bash
-9router
+vansrouter
 ```
 
 **Benefits:**
 - ✅ Run from any directory
-- ✅ Simple command: `9router`
-- ✅ Auto-updates with `npm update -g 9router`
+- ✅ Simple command: `vansrouter`
+- ✅ Auto-updates with `npm update -g vansrouter`
 
 ### Method 2: Local Installation
 
 Install in a specific project:
 
 ```bash
-mkdir my-9router
-cd my-9router
-npm install 9router
+mkdir my-vansrouter
+cd my-vansrouter
+npm install vansrouter
 ```
 
-**Start 9Router:**
+**Start VansRouter:**
 
 ```bash
-npx 9router
+npx vansrouter
 ```
 
 **Benefits:**
@@ -74,8 +74,8 @@ npx 9router
 Clone and build from GitHub:
 
 ```bash
-git clone https://github.com/decolua/9router.git
-cd 9router/app
+git clone https://github.com/Vanszs/VansRouter.git
+cd VansRouter
 npm install
 npm run build
 npm start
@@ -93,24 +93,24 @@ npm start
 ### Start the Server
 
 ```bash
-9router
+vansrouter
 ```
 
 **What happens:**
-1. Server starts on `http://localhost:20128`
+1. Server starts on `http://localhost:20128` (the root redirects to `/masuk`)
 2. Dashboard opens automatically in browser
 3. Data directory created at `~/.9router`
 4. API key generated automatically
 
 ### Dashboard Login
 
-**Default credentials:**
-- Password: `123456`
+**Production login:**
+- New installations default to `123456`; set a strong `INITIAL_PASSWORD` before public exposure.
 
-**⚠️ Change password immediately:**
-1. Login to dashboard
-2. Settings → Change Password
-3. Use strong password
+**⚠️ Set a strong password before exposing the dashboard:**
+1. Set `INITIAL_PASSWORD` in `.env` (for example, generate one with `openssl rand -base64 24`).
+2. Login to the dashboard.
+3. Change it from **Settings → Set/Replace Dashboard Password** if desired.
 
 ### Get Your API Key
 
@@ -190,10 +190,10 @@ Create `.env` file or set environment variables:
 ```bash
 # Security (REQUIRED in production)
 export JWT_SECRET="your-secure-secret-change-this"
-export INITIAL_PASSWORD="your-password"
+export INITIAL_PASSWORD="$(openssl rand -base64 24)"
 
 # Storage
-export DATA_DIR="~/.9router"
+export DATA_DIR="$HOME/.9router"
 
 # Server
 export PORT="20128"
@@ -205,7 +205,7 @@ export ENABLE_REQUEST_LOGS="false"
 
 ### Data Directory
 
-**Default location:** `~/.9router`
+**Default location:** `~/.9router` on macOS/Linux; `%APPDATA%\9router` on Windows.
 
 **Contents:**
 ```
@@ -219,7 +219,7 @@ export ENABLE_REQUEST_LOGS="false"
 
 ```bash
 export DATA_DIR="/custom/path"
-9router
+vansrouter
 ```
 
 ### Port Configuration
@@ -230,13 +230,13 @@ export DATA_DIR="/custom/path"
 
 ```bash
 export PORT="3000"
-9router
+vansrouter
 ```
 
 **Or use command line:**
 
 ```bash
-9router --port 3000
+vansrouter --port 3000
 ```
 
 ---
@@ -263,14 +263,14 @@ kill -9 <PID>
 **Solution 2: Use different port**
 
 ```bash
-9router --port 3000
+vansrouter --port 3000
 ```
 
 ### Permission Denied
 
 **Error:**
 ```
-Error: EACCES: permission denied, mkdir '/usr/local/lib/node_modules/9router'
+Error: EACCES: permission denied, mkdir '/usr/local/lib/node_modules/vansrouter'
 ```
 
 **Solution: Use sudo (not recommended) or fix npm permissions**
@@ -283,7 +283,7 @@ echo 'export PATH=~/.npm-global/bin:$PATH' >> ~/.bashrc
 source ~/.bashrc
 
 # Then install again
-npm install -g 9router
+npm install -g vansrouter
 ```
 
 ### Node.js Version Too Old
@@ -345,23 +345,23 @@ Dashboard → Provider → Disconnect → Reconnect
 
 ### High Memory Usage
 
-**Issue:** 9Router using too much RAM
+**Issue:** VansRouter using too much RAM
 
 **Solution: Restart server**
 
 ```bash
 # Stop
-pkill -f 9router
+pkill -f vansrouter
 
 # Start
-9router
+vansrouter
 ```
 
 **Or use PM2 for auto-restart:**
 
 ```bash
 npm install -g pm2
-pm2 start 9router --name 9router
+pm2 start vansrouter --name vansrouter
 pm2 save
 ```
 
@@ -372,8 +372,8 @@ pm2 save
 ### Local Development
 
 ```bash
-npm install -g 9router
-9router
+npm install -g vansrouter
+vansrouter
 ```
 
 **Use case:** Personal coding, testing
@@ -382,16 +382,16 @@ npm install -g 9router
 
 ```bash
 # Install
-npm install -g 9router
+npm install -g vansrouter
 
 # Configure
 export JWT_SECRET="your-secure-secret"
-export INITIAL_PASSWORD="your-password"
+export INITIAL_PASSWORD="$(openssl rand -base64 24)"
 export NODE_ENV="production"
 
 # Start with PM2
 npm install -g pm2
-pm2 start 9router --name 9router
+pm2 start vansrouter --name vansrouter
 pm2 save
 pm2 startup
 ```
@@ -401,15 +401,16 @@ pm2 startup
 ### Docker
 
 ```bash
-docker pull 9router/9router:latest
+docker pull ghcr.io/vanszs/vansrouter:X.Y.Z
 
 docker run -d \
   -p 20128:20128 \
   -e JWT_SECRET="your-secure-secret" \
-  -e INITIAL_PASSWORD="your-password" \
-  -v 9router-data:/root/.9router \
-  --name 9router \
-  9router/9router:latest
+  -e INITIAL_PASSWORD="$(openssl rand -base64 24)" \
+  -e DATA_DIR=/app/data \
+  -v 9router-data:/app/data \
+  --name vansrouter \
+  ghcr.io/vanszs/vansrouter:X.Y.Z
 ```
 
 **Use case:** Containerized deployment, Kubernetes
@@ -444,7 +445,7 @@ server {
 ### Remove Global Installation
 
 ```bash
-npm uninstall -g 9router
+npm uninstall -g vansrouter
 ```
 
 ### Remove Data Directory
@@ -458,7 +459,7 @@ rm -rf ~/.9router
 ```bash
 # Remove environment variables from shell config
 nano ~/.bashrc  # or ~/.zshrc
-# Delete 9router-related exports
+# Delete VansRouter-related exports
 ```
 
 ---
@@ -473,6 +474,6 @@ nano ~/.bashrc  # or ~/.zshrc
 
 ## Need Help?
 
-- **Website**: [9router.com](https://9router.com)
-- **GitHub**: [github.com/decolua/9router](https://github.com/decolua/9router)
-- **Issues**: [github.com/decolua/9router/issues](https://github.com/decolua/9router/issues)
+- **Website**: [VansRouter dashboard](http://localhost:20128)
+- **GitHub**: [github.com/Vanszs/VansRouter](https://github.com/Vanszs/VansRouter)
+- **Issues**: [github.com/Vanszs/VansRouter/issues](https://github.com/Vanszs/VansRouter/issues)

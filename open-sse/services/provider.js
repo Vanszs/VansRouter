@@ -61,23 +61,27 @@ export function detectFormat(body) {
   // Claude format: messages with content as array of objects with type
   // Claude requires content to be array with specific structure
   if (body.messages && Array.isArray(body.messages)) {
-    const firstMsg = body.messages[0];
-    
-    // If content is array, check blocks with early exit (avoids O(N) allocation on huge sessions).
-    if (firstMsg?.content && Array.isArray(firstMsg.content) && !body.model?.includes("/")) {
+    // Inspect every turn: later messages may contain Claude tools/images even
+    // when the first turn is plain text.
+    if (body.messages.length && !body.model?.includes("/")) {
       if (body.system || body.anthropic_version) {
         return "claude";
       }
 
+      let hasClaudeImage = false;
+      let hasOpenAIImage = false;
+      let hasClaudeTool = false;
       for (const message of body.messages) {
         if (!Array.isArray(message?.content)) continue;
         for (const content of message.content) {
           if (!content || typeof content !== "object") continue;
-          if (content.type === "image" && content.source?.type === "base64") return "claude";
-          if (content.type === "image_url" && content.image_url?.url) return "openai";
-          if (content.type === "tool_use" || content.type === "tool_result") return "claude";
+          if (content.type === "image" && content.source?.type === "base64") hasClaudeImage = true;
+          else if (content.type === "image_url" && content.image_url?.url) hasOpenAIImage = true;
+          else if (content.type === "tool_use" || content.type === "tool_result") hasClaudeTool = true;
         }
       }
+      if (hasClaudeImage || hasClaudeTool) return "claude";
+      if (hasOpenAIImage) return "openai";
     }
     
     // If content is string, it's likely OpenAI (Claude also supports this)

@@ -37,6 +37,11 @@ describe("OpenCode free-tier request identity", () => {
     }
   });
 
+  it("uses the public bearer token for the no-auth free lane", () => {
+    const headers = executor.buildHeaders({ connectionId: "opencode-free-test" }, true, "big-pickle");
+    expect(headers.Authorization).toBe("Bearer public");
+  });
+
   it("generates a fresh canonical session when credentials carry none", () => {
     const first = executor.buildHeaders({}, true)["x-opencode-session"];
     const second = executor.buildHeaders({}, true)["x-opencode-session"];

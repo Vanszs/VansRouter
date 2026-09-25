@@ -84,6 +84,111 @@ jobs:
       - name: Validate Dockerfile syntax
         run: docker buildx build --check .
 
+      # The release pipeline only builds the image on a tag push, and a pushed
+      # tag is immutable — so a broken Dockerfile used to burn a version number.
+      # Build and boot the real image here, on every PR.
+      - name: Build release image (amd64)
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: .
+          platforms: linux/amd64
+          load: true
+          tags: vansrouter:ci
+          build-args: |
+            APP_VERSION=${{ github.run_id }}
+
+      - name: Smoke-test the built image
+        run: node scripts/smoke-container.cjs vansrouter:ci "$(node -p "require('./package.json').version")"
+
+      - name: Validate compose file
+        env:
+          VANSROUTER_VERSION: 0.0.0-ci
+        run: docker compose config -q
+
+      # actionlint alone never lints shell inside `run:` blocks; a
+      # `test "$X" =~ re` shipped once and aborted every promotion.
+      - name: Install shellcheck
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends shellcheck
+
+      - name: Lint workflows
+        run: go run github.com/rhysd/actionlint/cmd/actionlint@latest
+
+  cross-platform-smoke:
+    name: Cross-platform smoke (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 60
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+        with:
+          version: 9.15.9
+
+      - name: Setup Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 22
+
+      - name: Resolve pnpm store
+        id: pnpm-store
+        shell: bash
+        run: echo "path=$(pnpm store path --silent)" >> "$GITHUB_OUTPUT"
+
+      - name: Cache pnpm store
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ steps.pnpm-store.outputs.path }}
+          key: ${{ runner.os }}-node-22-pnpm-${{ hashFiles('pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-node-22-pnpm-
+
+      - name: Configure pnpm hoisting config
+        shell: bash
+        run: |
+          echo "public-hoist-pattern=*" >> .npmrc
+          echo "shamefully-hoist=true" >> .npmrc
+
+      - name: Install dependencies
+        shell: bash
+        run: pnpm install --frozen-lockfile
+
+      - name: Install CLI package dependencies
+        shell: bash
+        run: npm ci --prefix cli --ignore-scripts --no-audit --no-fund
+
+      - name: Run cross-platform runtime regressions
+        shell: bash
+        run: pnpm exec vitest run -c tests/vitest.config.js tests/unit/deploy-atomic.test.js tests/unit/fix-standalone-symlinks.test.js tests/unit/smoke-installed-package.test.js tests/unit/smoke-container.test.js
+
+      - name: Build and cold-start standalone release
+        shell: bash
+        run: |
+          NEXT_DIST_DIR=.next-cross-platform pnpm run build
+          NEXT_DIST_DIR=.next-cross-platform node scripts/verify-release-artifact.cjs
+
+      - name: Build, pack, and smoke-test CLI artifact
+        shell: bash
+        run: |
+          npm run build --prefix cli
+          version="$(node -p "require('./cli/package.json').version")"
+          tarball_dir=".ci-cli-smoke"
+          rm -rf "$tarball_dir"
+          mkdir -p "$tarball_dir"
+          npm pack ./cli --pack-destination "$tarball_dir" >/dev/null
+          tarball="$tarball_dir/vansrouter-${version}.tgz"
+          test -f "$tarball"
+          node cli/scripts/validate-package.cjs "$tarball" "$version"
+          node cli/scripts/smoke-package.cjs "$tarball" "$version"
+          node cli/scripts/smoke-installed-package.cjs "$tarball" "$version" --run-scripts
+
   release-artifact:
     name: Release artifact (isolated pnpm)
     runs-on: ubuntu-latest

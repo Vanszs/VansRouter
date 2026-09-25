@@ -1,6 +1,6 @@
 # インストール
 
-トラブルシューティングのヒント付きの9Router詳細インストールガイド。
+トラブルシューティングのヒント付きのVansRouter詳細インストールガイド。
 
 ---
 
@@ -31,22 +31,22 @@ npm --version
 
 ### 方法1: グローバルインストール (推奨)
 
-どこからでも使用できるように9Routerをグローバルインストール:
+どこからでも使用できるようにVansRouterをグローバルインストール:
 
 ```bash
-npm install -g 9router
+npm install -g vansrouter
 ```
 
-**9Routerを起動:**
+**VansRouterを起動:**
 
 ```bash
-9router
+vansrouter
 ```
 
 **利点:**
 - ✅ どのディレクトリからでも実行
 - ✅ シンプルなコマンド: `9router`
-- ✅ `npm update -g 9router` で自動更新
+- ✅ `npm update -g vansrouter` で自動更新
 
 ### 方法2: ローカルインストール
 
@@ -58,10 +58,10 @@ cd my-9router
 npm install 9router
 ```
 
-**9Routerを起動:**
+**VansRouterを起動:**
 
 ```bash
-npx 9router
+npx vansrouter
 ```
 
 **利点:**
@@ -74,8 +74,8 @@ npx 9router
 GitHubからクローンしてビルド:
 
 ```bash
-git clone https://github.com/decolua/9router.git
-cd 9router/app
+git clone https://github.com/Vanszs/VansRouter.git
+cd VansRouter
 npm install
 npm run build
 npm start
@@ -93,7 +93,7 @@ npm start
 ### サーバーを起動
 
 ```bash
-9router
+vansrouter
 ```
 
 **何が起こるか:**
@@ -105,7 +105,7 @@ npm start
 ### ダッシュボードログイン
 
 **デフォルト認証情報:**
-- パスワード: `123456`
+- 本番ログイン前にランダムで生成した `INITIAL_PASSWORD` を設定
 
 **⚠️ パスワードをすぐに変更:**
 1. ダッシュボードにログイン
@@ -190,7 +190,7 @@ curl http://localhost:20128/v1/chat/completions \
 ```bash
 # セキュリティ (本番環境では必須)
 export JWT_SECRET="your-secure-secret-change-this"
-export INITIAL_PASSWORD="your-password"
+export INITIAL_PASSWORD="$(openssl rand -base64 24)"
 
 # ストレージ
 export DATA_DIR="~/.9router"
@@ -219,7 +219,7 @@ export ENABLE_REQUEST_LOGS="false"
 
 ```bash
 export DATA_DIR="/custom/path"
-9router
+vansrouter
 ```
 
 ### ポート設定
@@ -230,13 +230,13 @@ export DATA_DIR="/custom/path"
 
 ```bash
 export PORT="3000"
-9router
+vansrouter
 ```
 
 **またはコマンドラインで:**
 
 ```bash
-9router --port 3000
+vansrouter --port 3000
 ```
 
 ---
@@ -263,7 +263,7 @@ kill -9 <PID>
 **解決策2: 別のポートを使用**
 
 ```bash
-9router --port 3000
+vansrouter --port 3000
 ```
 
 ### Permission Denied
@@ -283,7 +283,7 @@ echo 'export PATH=~/.npm-global/bin:$PATH' >> ~/.bashrc
 source ~/.bashrc
 
 # 再度インストール
-npm install -g 9router
+npm install -g vansrouter
 ```
 
 ### Node.jsバージョンが古すぎる
@@ -345,7 +345,7 @@ Dashboard → Provider → Disconnect → Reconnect
 
 ### 高メモリ使用量
 
-**問題:** 9RouterがRAMを使いすぎている
+**問題:** VansRouterがRAMを使いすぎている
 
 **解決策: サーバーを再起動**
 
@@ -354,14 +354,14 @@ Dashboard → Provider → Disconnect → Reconnect
 pkill -f 9router
 
 # 起動
-9router
+vansrouter
 ```
 
 **または自動再起動にPM2を使用:**
 
 ```bash
 npm install -g pm2
-pm2 start 9router --name 9router
+pm2 start vansrouter --name vansrouter
 pm2 save
 ```
 
@@ -372,8 +372,8 @@ pm2 save
 ### ローカル開発
 
 ```bash
-npm install -g 9router
-9router
+npm install -g vansrouter
+vansrouter
 ```
 
 **ユースケース:** 個人コーディング、テスト
@@ -382,16 +382,16 @@ npm install -g 9router
 
 ```bash
 # インストール
-npm install -g 9router
+npm install -g vansrouter
 
 # 設定
 export JWT_SECRET="your-secure-secret"
-export INITIAL_PASSWORD="your-password"
+export INITIAL_PASSWORD="$(openssl rand -base64 24)"
 export NODE_ENV="production"
 
 # PM2で起動
 npm install -g pm2
-pm2 start 9router --name 9router
+pm2 start vansrouter --name vansrouter
 pm2 save
 pm2 startup
 ```
@@ -401,15 +401,15 @@ pm2 startup
 ### Docker
 
 ```bash
-docker pull 9router/9router:latest
+docker pull ghcr.io/vanszs/vansrouter:X.Y.Z
 
 docker run -d \
   -p 20128:20128 \
   -e JWT_SECRET="your-secure-secret" \
-  -e INITIAL_PASSWORD="your-password" \
+  -e INITIAL_PASSWORD="$(openssl rand -base64 24)" \
   -v 9router-data:/root/.9router \
-  --name 9router \
-  9router/9router:latest
+  --name vansrouter \
+  ghcr.io/vanszs/vansrouter:X.Y.Z
 ```
 
 **ユースケース:** コンテナデプロイ、Kubernetes
@@ -444,7 +444,7 @@ server {
 ### グローバルインストールを削除
 
 ```bash
-npm uninstall -g 9router
+npm uninstall -g vansrouter
 ```
 
 ### データディレクトリを削除
@@ -473,6 +473,6 @@ nano ~/.bashrc  # または ~/.zshrc
 
 ## ヘルプが必要?
 
-- **ウェブサイト**: [9router.com](https://9router.com)
-- **GitHub**: [github.com/decolua/9router](https://github.com/decolua/9router)
-- **Issues**: [github.com/decolua/9router/issues](https://github.com/decolua/9router/issues)
+- **ウェブサイト**: [VansRouter dashboard](http://localhost:20128)
+- **GitHub**: [github.com/Vanszs/VansRouter](https://github.com/Vanszs/VansRouter)
+- **Issues**: [github.com/Vanszs/VansRouter/issues](https://github.com/Vanszs/VansRouter/issues)

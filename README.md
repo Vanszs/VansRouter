@@ -54,7 +54,7 @@ npm install -g vansrouter
 vansrouter
 ```
 
-The Web Dashboard will launch at `http://localhost:20128`.
+The Web Dashboard will launch at `http://localhost:20128/masuk`.
 
 *(On macOS without NVM, run `sudo npm install -g vansrouter --prefer-online` if your global node_modules directory requires root permissions).*
 
@@ -65,11 +65,12 @@ docker run -d \
   --name vansrouter \
   -p 20128:20128 \
   -v 9router-data:/app/data \
+  -e INITIAL_PASSWORD="$(openssl rand -base64 24)" \
   --restart always \
   ghcr.io/vanszs/vansrouter:X.Y.Z
 ```
 
-Open `http://localhost:20128` to set up your dashboard credentials.
+Save the generated `INITIAL_PASSWORD` securely. If you omit `INITIAL_PASSWORD`, a new installation uses the compatibility default `123456`; change it before public exposure. Open `http://localhost:20128/masuk` and log in.
 
 ### Option 3: Run from Source
 
@@ -126,7 +127,7 @@ Configure your favorite AI agent by pointing its base URL to VansRouter:
   "provider": {
     "vansrouter": {
       "name": "VansRouter",
-      "api": "https://api.meta.ai/v1", // or http://localhost:20128/v1
+      "api": "http://localhost:20128/v1"
       "type": "openai",
       "key": "your-vansrouter-api-key"
     }
@@ -168,10 +169,10 @@ VansRouter is configured via environment variables:
 |---|---|---|
 | `PORT` | `20128` (or `3003`) | Port to listen on. |
 | `HOSTNAME` | `0.0.0.0` | Bind host address. |
-| `DATA_DIR` | `~/.9router` | Root directory for persistent SQLite database and backups. |
+| `DATA_DIR` | `~/.9router` (macOS/Linux) or `%APPDATA%\9router` (Windows) | Root directory for persistent SQLite database and backups. |
 | `REQUIRE_API_KEY` | `false` | Enforce valid Bearer API key on all `/v1/*` routes. |
 | `JWT_SECRET` | Auto-generated | Secret for signing dashboard session cookies. |
-| `INITIAL_PASSWORD` | none in production | Strong first-login password; required until a password hash is stored. |
+| `INITIAL_PASSWORD` | `123456` for a new installation | Initial dashboard password; set a strong value before public exposure. |
 | `HTTP_PROXY`, `HTTPS_PROXY` | `""` | Outbound proxy for upstream provider requests. |
 | `SEARXNG_URL` | `http://127.0.0.1:8888/search` | Endpoint for the local SearXNG search provider. |
 

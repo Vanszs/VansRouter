@@ -1,6 +1,6 @@
 # Cài đặt
 
-Hướng dẫn cài đặt chi tiết cho 9Router với mẹo troubleshooting.
+Hướng dẫn cài đặt chi tiết cho VansRouter với mẹo troubleshooting.
 
 ---
 
@@ -31,22 +31,22 @@ npm --version
 
 ### Cách 1: Cài Global (Khuyên dùng)
 
-Cài 9Router toàn cục để dùng ở bất kỳ đâu:
+Cài VansRouter toàn cục để dùng ở bất kỳ đâu:
 
 ```bash
-npm install -g 9router
+npm install -g vansrouter
 ```
 
-**Khởi động 9Router:**
+**Khởi động VansRouter:**
 
 ```bash
-9router
+vansrouter
 ```
 
 **Lợi ích:**
 - ✅ Chạy từ mọi thư mục
 - ✅ Lệnh đơn giản: `9router`
-- ✅ Auto-update với `npm update -g 9router`
+- ✅ Auto-update với `npm update -g vansrouter`
 
 ### Cách 2: Cài Local
 
@@ -58,10 +58,10 @@ cd my-9router
 npm install 9router
 ```
 
-**Khởi động 9Router:**
+**Khởi động VansRouter:**
 
 ```bash
-npx 9router
+npx vansrouter
 ```
 
 **Lợi ích:**
@@ -74,8 +74,8 @@ npx 9router
 Clone và build từ GitHub:
 
 ```bash
-git clone https://github.com/decolua/9router.git
-cd 9router/app
+git clone https://github.com/Vanszs/VansRouter.git
+cd VansRouter
 npm install
 npm run build
 npm start
@@ -93,7 +93,7 @@ npm start
 ### Khởi động Server
 
 ```bash
-9router
+vansrouter
 ```
 
 **Điều gì xảy ra:**
@@ -105,7 +105,7 @@ npm start
 ### Đăng nhập Dashboard
 
 **Credentials mặc định:**
-- Mật khẩu: `123456`
+- Mật khẩu ban đầu: đặt giá trị ngẫu nhiên mạnh trong `INITIAL_PASSWORD`
 
 **⚠️ Đổi mật khẩu ngay:**
 1. Đăng nhập dashboard
@@ -190,7 +190,7 @@ Tạo file `.env` hoặc set biến môi trường:
 ```bash
 # Security (REQUIRED in production)
 export JWT_SECRET="your-secure-secret-change-this"
-export INITIAL_PASSWORD="your-password"
+export INITIAL_PASSWORD="$(openssl rand -base64 24)"
 
 # Storage
 export DATA_DIR="~/.9router"
@@ -219,7 +219,7 @@ export ENABLE_REQUEST_LOGS="false"
 
 ```bash
 export DATA_DIR="/custom/path"
-9router
+vansrouter
 ```
 
 ### Cấu hình Port
@@ -230,13 +230,13 @@ export DATA_DIR="/custom/path"
 
 ```bash
 export PORT="3000"
-9router
+vansrouter
 ```
 
 **Hoặc dùng command line:**
 
 ```bash
-9router --port 3000
+vansrouter --port 3000
 ```
 
 ---
@@ -263,7 +263,7 @@ kill -9 <PID>
 **Giải pháp 2: Dùng port khác**
 
 ```bash
-9router --port 3000
+vansrouter --port 3000
 ```
 
 ### Permission Denied
@@ -283,7 +283,7 @@ echo 'export PATH=~/.npm-global/bin:$PATH' >> ~/.bashrc
 source ~/.bashrc
 
 # Then install again
-npm install -g 9router
+npm install -g vansrouter
 ```
 
 ### Node.js Phiên bản quá cũ
@@ -345,7 +345,7 @@ Dashboard → Provider → Disconnect → Reconnect
 
 ### Sử dụng RAM cao
 
-**Vấn đề:** 9Router dùng quá nhiều RAM
+**Vấn đề:** VansRouter dùng quá nhiều RAM
 
 **Giải pháp: Khởi động lại server**
 
@@ -354,14 +354,14 @@ Dashboard → Provider → Disconnect → Reconnect
 pkill -f 9router
 
 # Start
-9router
+vansrouter
 ```
 
 **Hoặc dùng PM2 để auto-restart:**
 
 ```bash
 npm install -g pm2
-pm2 start 9router --name 9router
+pm2 start vansrouter --name vansrouter
 pm2 save
 ```
 
@@ -372,8 +372,8 @@ pm2 save
 ### Phát triển cục bộ
 
 ```bash
-npm install -g 9router
-9router
+npm install -g vansrouter
+vansrouter
 ```
 
 **Use case:** Code cá nhân, testing
@@ -382,16 +382,16 @@ npm install -g 9router
 
 ```bash
 # Install
-npm install -g 9router
+npm install -g vansrouter
 
 # Configure
 export JWT_SECRET="your-secure-secret"
-export INITIAL_PASSWORD="your-password"
+export INITIAL_PASSWORD="$(openssl rand -base64 24)"
 export NODE_ENV="production"
 
 # Start with PM2
 npm install -g pm2
-pm2 start 9router --name 9router
+pm2 start vansrouter --name vansrouter
 pm2 save
 pm2 startup
 ```
@@ -401,15 +401,15 @@ pm2 startup
 ### Docker
 
 ```bash
-docker pull 9router/9router:latest
+docker pull ghcr.io/vanszs/vansrouter:X.Y.Z
 
 docker run -d \
   -p 20128:20128 \
   -e JWT_SECRET="your-secure-secret" \
-  -e INITIAL_PASSWORD="your-password" \
+  -e INITIAL_PASSWORD="$(openssl rand -base64 24)" \
   -v 9router-data:/root/.9router \
-  --name 9router \
-  9router/9router:latest
+  --name vansrouter \
+  ghcr.io/vanszs/vansrouter:X.Y.Z
 ```
 
 **Use case:** Containerized deployment, Kubernetes
@@ -444,7 +444,7 @@ server {
 ### Gỡ Global Installation
 
 ```bash
-npm uninstall -g 9router
+npm uninstall -g vansrouter
 ```
 
 ### Xóa Data Directory
@@ -458,7 +458,7 @@ rm -rf ~/.9router
 ```bash
 # Remove environment variables from shell config
 nano ~/.bashrc  # or ~/.zshrc
-# Delete 9router-related exports
+# Delete VansRouter-related exports
 ```
 
 ---
@@ -473,6 +473,6 @@ nano ~/.bashrc  # or ~/.zshrc
 
 ## Cần trợ giúp?
 
-- **Website**: [9router.com](https://9router.com)
-- **GitHub**: [github.com/decolua/9router](https://github.com/decolua/9router)
-- **Issues**: [github.com/decolua/9router/issues](https://github.com/decolua/9router/issues)
+- **Website**: [VansRouter dashboard](http://localhost:20128)
+- **GitHub**: [github.com/Vanszs/VansRouter](https://github.com/Vanszs/VansRouter)
+- **Issues**: [github.com/Vanszs/VansRouter/issues](https://github.com/Vanszs/VansRouter/issues)

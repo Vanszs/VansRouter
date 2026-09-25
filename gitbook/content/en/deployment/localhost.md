@@ -1,37 +1,37 @@
 # 🏠 Localhost Deployment
 
-Run 9Router on your local machine for development and personal use.
+Run VansRouter on your local machine for development and personal use.
 
 ---
 
 ## 📦 Installation
 
-Install 9Router globally via npm:
+Install VansRouter globally via npm:
 
 ```bash
-npm install -g 9router
+npm install -g vansrouter
 ```
 
 **Requirements:**
-- Node.js 20 or higher
+- Node.js 22.5 or higher
 - npm 9 or higher
 
 ---
 
 ## 🚀 Starting the Server
 
-Start 9Router with a single command:
+Start VansRouter with a single command:
 
 ```bash
-9router
+vansrouter
 ```
 
-The dashboard will automatically open in your browser at `http://localhost:3000`
+The dashboard will automatically open in your browser at `http://localhost:20128/masuk`
 
 **Default Configuration:**
-- **Dashboard**: `http://localhost:3000`
+- **Dashboard**: `http://localhost:20128/masuk`
 - **API Endpoint**: `http://localhost:20128/v1`
-- **Data Directory**: `~/.9router`
+- **Data Directory**: `~/.9router` (macOS/Linux) or `%APPDATA%\9router` (Windows)
 
 ---
 
@@ -42,21 +42,21 @@ The dashboard will automatically open in your browser at `http://localhost:3000`
 Set a custom data directory using environment variable:
 
 ```bash
-DATA_DIR=/path/to/data 9router
+DATA_DIR=/path/to/data vansrouter
 ```
 
 ### Custom Port
 
-The API port (20128) and dashboard port (3000) are configured in the application. To change them, you'll need to modify the source code or use environment variables if supported.
+The application port is `20128` by default. Use `--port` or `PORT` to override it.
 
 ---
 
 ## 🛑 Stopping the Server
 
-Press `Ctrl+C` in the terminal where 9Router is running.
+Press `Ctrl+C` in the terminal where VansRouter is running.
 
 ```bash
-# In the terminal running 9router
+# In the terminal running vansrouter
 ^C  # Press Ctrl+C
 ```
 
@@ -69,25 +69,25 @@ The server will gracefully shut down and save all data.
 Simply run the start command again:
 
 ```bash
-9router
+vansrouter
 ```
 
 All your configurations, API keys, and combos are preserved in the data directory.
 
 ---
 
-## 📊 Updating 9Router
+## 📊 Updating VansRouter
 
 Update to the latest version:
 
 ```bash
-npm update -g 9router
+npm update -g vansrouter
 ```
 
 Check your current version:
 
 ```bash
-npm list -g 9router
+npm list -g vansrouter
 ```
 
 ---
@@ -113,7 +113,7 @@ If you encounter permission errors during installation:
 
 ```bash
 # Use sudo (not recommended)
-sudo npm install -g 9router
+sudo npm install -g vansrouter
 
 # Or fix npm permissions (recommended)
 mkdir ~/.npm-global

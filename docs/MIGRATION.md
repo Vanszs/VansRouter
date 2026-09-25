@@ -1,6 +1,6 @@
 # Migration Guide: 9Router → VansRouter
 
-This guide covers migrating an existing **9Router** (decolua/9router) installation to **VansRouter** with zero downtime and full data preservation.
+This guide covers migrating an existing **9Router** (Vanszs/VansRouter) installation to **VansRouter** with zero downtime and full data preservation.
 
 ## What migrates
 
@@ -58,11 +58,26 @@ mkdir -p ~/.9router/
 ```bash
 # Copy environment template
 cp .env.example .env
-nano .env  # Set JWT_SECRET to match ~/.9router/jwt-secret
+nano .env  # Set VANSROUTER_VERSION; INITIAL_PASSWORD may use the 123456 default
+
+# Compose uses the canonical named volume by default. To reuse ~/.9router,
+# create this override before starting so the host data is actually mounted:
+cat > docker-compose.override.yml <<'YAML'
+services:
+  vansrouter:
+    volumes:
+      - ${HOME}/.9router:/app/data
+YAML
+
+# Check legacy image references and data-root assumptions
+pnpm preflight:upgrade -- --env-file .env --compose-file docker-compose.yml
 
 # Start
 docker compose up -d
 ```
+
+Do not remove the read-only `vansrouter-data:/migration-data` mount until the
+new container has been verified.
 
 ### Option B: Docker run
 
@@ -79,8 +94,18 @@ docker run -d --name vansrouter --restart unless-stopped \
   -e DATA_DIR=/app/data \
   -e JWT_SECRET="$JWT_SECRET" \
   -e API_KEY_SECRET="$JWT_SECRET" \
+  -e INITIAL_PASSWORD="$(openssl rand -base64 24)" \
   -e REQUIRE_API_KEY=false \
   ghcr.io/vanszs/vansrouter:X.Y.Z
+```
+
+If the existing native/PM2 deployment uses `/var/lib/9router`, keep that root
+and make it explicit in the shell before deployment; the preflight refuses an
+implicit shell/PM2 mismatch:
+
+```bash
+DATA_DIR=/var/lib/9router node scripts/preflight-upgrade.cjs \
+  --env-file .env --compose-file docker-compose.yml --pm2
 ```
 
 ## Step 5: Verify
@@ -89,8 +114,8 @@ docker run -d --name vansrouter --restart unless-stopped \
 # Container running?
 docker ps --filter name=vansrouter
 
-# Dashboard accessible?
-curl -s -o /dev/null -w "%{http_code}" http://localhost:20128/
+# Dashboard login page?
+curl -s -o /dev/null -w "%{http_code}" http://localhost:20128/masuk
 # Expected: 200
 
 # Check migration logs
@@ -102,7 +127,7 @@ API_KEY=$(sqlite3 ~/.9router/db/data.sqlite "SELECT key FROM apiKeys WHERE isAct
 curl -s -H "Authorization: Bearer $API_KEY" http://localhost:20128/v1/models | python3 -c "import sys,json; d=json.load(sys.stdin); print(f'Models: {len(d.get(\"data\",[]))}')"
 ```
 
-Open the dashboard at `http://localhost:20128` and verify:
+Open the dashboard at `http://localhost:20128/masuk` and verify:
 - All combos appear with correct model lists
 - Provider connections show correct status
 - Usage history is intact
@@ -153,7 +178,7 @@ A backup is automatically created at `~/.9router/db/backups/` before migration r
 
 ## Differences from 9Router
 
-- **Image**: `ghcr.io/vanszs/vansrouter` (not `decolua/9router`)
+- **Image**: `ghcr.io/vanszs/vansrouter` (not `Vanszs/VansRouter`)
 - **Data dir**: `~/.9router/` remains canonical for compatibility
 - **Headroom**: Optional sidecar for tool-history safety (not bundled)
 - **Circuit breaker**: Built-in provider failure tracking (inspired by OmniRoute)

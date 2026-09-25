@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getSettings, validateApiKey } from "@/lib/localDb";
 import { getConsistentMachineId } from "@/shared/utils/machineId";
-import { verifyDashboardAuthToken } from "@/lib/auth/dashboardSession";
+import { verifyDashboardAuthToken, verifyPasswordChangeToken } from "@/lib/auth/dashboardSession";
 import { hasTrustedPeerHeaders } from "@/lib/auth/trustedPeer";
 
 const CLI_TOKEN_HEADER = "x-9r-cli-token";
@@ -44,26 +44,6 @@ const ALWAYS_PROTECTED = [
   "/api/version/update",
   "/api/oauth/cursor/auto-import",
   "/api/oauth/kiro/auto-import",
-];
-
-const PROTECTED_API_PATHS = [
-  "/api/settings",
-  "/api/keys",
-  "/api/providers",
-  "/api/provider-nodes",
-  "/api/proxy-pools",
-  "/api/combos",
-  "/api/models",
-  "/api/usage",
-  "/api/oauth",
-  "/api/cloud",
-  "/api/media-providers",
-  "/api/pricing",
-  "/api/tags",
-  "/api/cli-tools",
-  "/api/mcp",
-  "/api/translator",
-  "/api/tunnel",
 ];
 
 // Routes that spawn child processes or read host secrets — restrict to localhost.
@@ -118,7 +98,7 @@ function isLoopbackHostname(h) {
   return LOOPBACK_HOSTS.has(name);
 }
 
-function isLoopbackPeer(request) {
+function isLocalPeer(request) {
   if (hasTrustedPeerHeaders(request)) return isLoopbackHostname(request.headers.get("x-9r-real-ip"));
   return process.env.NODE_ENV === "development" && isLoopbackHostname(request.headers.get("host"));
 }
@@ -134,7 +114,7 @@ export function isLocalRequest(request) {
   // a reverse proxy, so the loopback socket is the proxy hop, not the end-user.
   if (request.headers.get("x-9r-via-proxy")) return false;
   // Trusted peer IP from TCP socket (custom-server.js); unspoofable. Primary anchor for "local".
-  if (!isLoopbackPeer(request)) return false;
+  if (!isLocalPeer(request)) return false;
   const origin = request.headers.get("origin");
   if (origin) {
     try {
@@ -282,6 +262,15 @@ export async function proxy(request) {
     if (isPublicApi(pathname)) return NextResponse.next();
     if (await hasValidCliToken(request) || await isAuthenticated(request))
       return NextResponse.next();
+    // Password-change grant: a remote operator on a fresh install may swap the
+    // compatibility default and nothing else. The settings route enforces that.
+    if (
+      request.method === "PATCH" &&
+      pathname === "/api/settings" &&
+      await verifyPasswordChangeToken(request.cookies.get("password_change")?.value)
+    ) {
+      return NextResponse.next();
+    }
     console.log(`[dashboardGuard] ${pathname} blocked: not authenticated (host=${request.headers.get("host") || ""})`);
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
@@ -299,28 +288,12 @@ export async function proxy(request) {
     return NextResponse.redirect(new URL("/masuk", request.url));
   }
 
-  // / - redirect to dashboard if authenticated, otherwise return JSON welcome
+  // / - redirect to the login page for unauthenticated dashboard users.
   if (pathname === "/") {
     if (await isAuthenticated(request)) {
       return NextResponse.redirect(new URL("/dashboard", request.url));
     }
-
-    const host = request.headers.get("host") || "localhost:3000";
-    const protocol = request.headers.get("x-forwarded-proto") || "https";
-    const baseUrl = `${protocol}://${host}`;
-
-    return new NextResponse(
-      JSON.stringify({
-        message: `Welcome to VansAI! Use ${baseUrl}/v1 as your API endpoint.`,
-      }),
-      {
-        status: 200,
-        headers: {
-          "Content-Type": "application/json",
-          "Access-Control-Allow-Origin": "*",
-        },
-      }
-    );
+    return NextResponse.redirect(new URL("/masuk", request.url));
   }
 
   // Protect all dashboard routes

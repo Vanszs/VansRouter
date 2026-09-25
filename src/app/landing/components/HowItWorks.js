@@ -5,7 +5,7 @@ export default function HowItWorks() {
     <section className="py-24 border-y border-[#3a2f27] bg-[#1a1433]/30" id="how-it-works">
       <div className="max-w-7xl mx-auto px-6">
         <div className="mb-16">
-          <h2 className="text-3xl md:text-4xl font-bold mb-4">How VansAI Works</h2>
+          <h2 className="text-3xl md:text-4xl font-bold mb-4">How VansRouter Works</h2>
           <p className="text-gray-400 max-w-xl text-lg">
             Data flows seamlessly from your application through our intelligent routing layer to the best provider for the job.
           </p>
@@ -39,7 +39,7 @@ export default function HowItWorks() {
               </svg>
             </div>
             <div>
-              <h3 className="text-xl font-bold mb-2 text-[#6366f1]">2. VansAI Hub</h3>
+              <h3 className="text-xl font-bold mb-2 text-[#6366f1]">2. VansRouter Hub</h3>
               <p className="text-sm text-gray-400">
                 Our engine analyzes the prompt, checks provider health, and routes for lowest latency or cost.
               </p>

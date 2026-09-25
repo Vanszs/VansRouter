@@ -1,6 +1,6 @@
 # ☁️ 云端部署
 
-将 9Router 部署到 VPS 或 Docker,实现远程访问和生产使用。
+将 VansRouter 部署到 VPS 或 Docker,实现远程访问和生产使用。
 
 ---
 
@@ -9,15 +9,15 @@
 ### 前置要求
 
 - Ubuntu 20.04+ 或类似 Linux 发行版
-- Node.js 20+
+- Node.js 22.5+
 - Git
 - root 或 sudo 权限
 
 ### 步骤 1:克隆仓库
 
 ```bash
-git clone https://github.com/decolua/9router.git
-cd 9router/app
+git clone https://github.com/Vanszs/VansRouter.git
+cd VansRouter
 ```
 
 ### 步骤 2:安装依赖
@@ -38,7 +38,7 @@ npm run build
 
 ```bash
 export JWT_SECRET="your-secure-secret-change-this-to-random-string"
-export INITIAL_PASSWORD="your-secure-password"
+export INITIAL_PASSWORD="$(openssl rand -base64 24)"
 export DATA_DIR="/var/lib/9router"
 export NODE_ENV="production"
 ```
@@ -48,7 +48,7 @@ export NODE_ENV="production"
 | 变量 | 默认值 | 说明 |
 |----------|---------|-------------|
 | `JWT_SECRET` | 自动生成 | **生产环境必须修改!** 用于 JWT token 签名 |
-| `INITIAL_PASSWORD` | `123456` | 仪表盘登录密码 |
+| `INITIAL_PASSWORD` | 新安装默认 `123456` | 公开前设置随机强密码 |
 | `DATA_DIR` | `~/.9router` | 数据库与数据存储路径 |
 | `NODE_ENV` | `development` | 部署时设为 `production` |
 | `ENABLE_REQUEST_LOGS` | `false` | 启用 debug 请求/响应日志 |
@@ -74,8 +74,8 @@ PM2 让应用持续运行,崩溃时自动重启:
 # 全局安装 PM2
 npm install -g pm2
 
-# 用 PM2 启动 9Router
-pm2 start npm --name 9router -- start
+# 用 PM2 启动 VansRouter
+pm2 start npm --name vansrouter -- start
 
 # 保存 PM2 配置
 pm2 save
@@ -89,13 +89,13 @@ pm2 startup
 
 ```bash
 # 查看日志
-pm2 logs 9router
+pm2 logs vansrouter
 
 # 重启应用
-pm2 restart 9router
+pm2 restart vansrouter
 
 # 停止应用
-pm2 stop 9router
+pm2 stop vansrouter
 
 # 查看状态
 pm2 status
@@ -113,7 +113,7 @@ pm2 monit
 在 `app` 目录中创建 `Dockerfile`:
 
 ```dockerfile
-FROM node:20-alpine
+FROM node:22-alpine
 
 WORKDIR /app
 
@@ -151,13 +151,13 @@ docker build -t 9router .
 
 # 运行容器
 docker run -d \
-  --name 9router \
+  --name vansrouter \
   -p 3000:3000 \
   -p 20128:20128 \
   -e JWT_SECRET="your-secure-secret-change-this" \
-  -e INITIAL_PASSWORD="your-secure-password" \
+  -e INITIAL_PASSWORD="$(openssl rand -base64 24)" \
   -v 9router-data:/app/data \
-  9router
+  vansrouter
 ```
 
 ### 方式 2:Docker Compose
@@ -177,7 +177,7 @@ services:
     environment:
       - NODE_ENV=production
       - JWT_SECRET=your-secure-secret-change-this
-      - INITIAL_PASSWORD=your-secure-password
+      - INITIAL_PASSWORD=${INITIAL_PASSWORD:?set a strong password}
       - DATA_DIR=/app/data
     volumes:
       - 9router-data:/app/data
@@ -247,7 +247,7 @@ server {
     ssl_ciphers HIGH:!aNULL:!MD5;
     ssl_prefer_server_ciphers on;
 
-    # Proxy to 9Router
+    # Proxy to VansRouter
     location / {
         proxy_pass http://localhost:3000;
         proxy_http_version 1.1;
@@ -333,7 +333,7 @@ sudo ufw allow 22/tcp
 sudo ufw allow 80/tcp
 sudo ufw allow 443/tcp
 
-# 若不使用反向代理,放开 9Router 端口
+# 若不使用反向代理,放开 VansRouter 端口
 sudo ufw allow 3000/tcp
 sudo ufw allow 20128/tcp
 
@@ -363,19 +363,19 @@ ssh -L 3000:localhost:3000 user@your-server.com
 # 更新系统包
 sudo apt update && sudo apt upgrade -y
 
-# 更新 9Router
+# 更新 VansRouter
 cd /path/to/9router/app
 git pull
 npm install
 npm run build
-pm2 restart 9router
+pm2 restart vansrouter
 ```
 
 ### 5. 备份策略
 
 ```bash
 # 备份数据目录
-tar -czf 9router-backup-$(date +%Y%m%d).tar.gz /var/lib/9router
+tar -czf vansrouter-backup-$(date +%Y%m%d).tar.gz /var/lib/9router
 
 # 每日自动备份(加入 crontab)
 0 2 * * * tar -czf /backups/9router-$(date +\%Y\%m\%d).tar.gz /var/lib/9router
@@ -392,7 +392,7 @@ tar -czf 9router-backup-$(date +%Y%m%d).tar.gz /var/lib/9router
 pm2 status
 
 # 查看日志
-pm2 logs 9router --lines 100
+pm2 logs vansrouter --lines 100
 
 # 监控资源
 pm2 monit
@@ -429,20 +429,20 @@ netstat -tulpn | grep -E '3000|20128'
 
 ```bash
 # 查看日志
-pm2 logs 9router
+pm2 logs vansrouter
 
 # 检查端口是否被占用
 sudo lsof -i :3000
 sudo lsof -i :20128
 
 # 检查环境变量
-pm2 env 9router
+pm2 env vansrouter
 ```
 
 ### Nginx 502 Bad Gateway
 
 ```bash
-# 检查 9Router 是否运行
+# 检查 VansRouter 是否运行
 pm2 status
 
 # 查看 Nginx 错误日志

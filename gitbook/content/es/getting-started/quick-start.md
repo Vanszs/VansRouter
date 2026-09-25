@@ -1,6 +1,6 @@
 # Empezar
 
-Pon en marcha 9Router en 5 minutos y comienza a enrutar solicitudes de IA de forma inteligente.
+Pon en marcha VansRouter en 5 minutos y comienza a enrutar solicitudes de IA de forma inteligente.
 
 ---
 
@@ -9,20 +9,20 @@ Pon en marcha 9Router en 5 minutos y comienza a enrutar solicitudes de IA de for
 ### 1. Instalar
 
 ```bash
-npm install -g 9router
+npm install -g vansrouter
 ```
 
-**Requisitos:** Node.js 20+ ([Detalles de instalación](getting-started/installation.md))
+**Requisitos:** Node.js 22.5+ ([Detalles de instalación](getting-started/installation.md))
 
 ### 2. Iniciar
 
 ```bash
-9router
+vansrouter
 ```
 
 🎉 **El dashboard se abre automáticamente** en `http://localhost:20128`
 
-- Contraseña por defecto: `123456` (cámbiala en el dashboard)
+- Las instalaciones nuevas usan `123456` por defecto; configura un `INITIAL_PASSWORD` aleatorio antes de exponerlas.
 - API key generada automáticamente
 - Listo para conectar proveedores
 
@@ -43,7 +43,7 @@ Dashboard → Providers → Connect [Provider]
 **Ejemplo: Claude Code**
 1. Clic en "Connect Claude Code"
 2. Inicia sesión con tu cuenta de Claude
-3. Autoriza 9Router
+3. Autoriza VansRouter
 4. ✅ ¡Listo! Usa el modelo: `cc/claude-opus-4-5-20251101`
 
 #### Opción B: API Key (Proveedores baratos)
@@ -83,7 +83,7 @@ Dashboard → Providers → Connect [Free Provider]
 
 ## 4. Usar en herramientas CLI
 
-Apunta tu herramienta de codificación a 9Router:
+Apunta tu herramienta de codificación a VansRouter:
 
 ### Cursor IDE
 
@@ -101,7 +101,7 @@ Edita `~/.claude/config.json`:
 ```json
 {
   "anthropic_api_base": "http://localhost:20128/v1",
-  "anthropic_api_key": "your-9router-api-key"
+  "anthropic_api_key": "your-vansrouter-api-key"
 }
 ```
 
@@ -118,7 +118,7 @@ Model: cc/claude-opus-4-5-20251101
 
 ```bash
 export OPENAI_BASE_URL="http://localhost:20128"
-export OPENAI_API_KEY="your-9router-api-key"
+export OPENAI_API_KEY="your-vansrouter-api-key"
 
 codex "your prompt"
 ```
@@ -242,6 +242,6 @@ Rutina diaria:
 
 ## ¿Necesitas ayuda?
 
-- **Sitio web**: [9router.com](https://9router.com)
-- **GitHub**: [github.com/decolua/9router](https://github.com/decolua/9router)
-- **Issues**: [github.com/decolua/9router/issues](https://github.com/decolua/9router/issues)
+- **Sitio web**: [VansRouter dashboard](http://localhost:20128)
+- **GitHub**: [github.com/Vanszs/VansRouter](https://github.com/Vanszs/VansRouter)
+- **Issues**: [github.com/Vanszs/VansRouter/issues](https://github.com/Vanszs/VansRouter/issues)

@@ -1,4 +1,4 @@
-const DEVELOPMENT_DEFAULT_PASSWORD = "123456";
+const DEFAULT_INITIAL_PASSWORD = "123456";
 const PLACEHOLDER_PASSWORDS = new Set([
   "123456",
   "change-me",
@@ -8,11 +8,16 @@ const PLACEHOLDER_PASSWORDS = new Set([
   "changeme",
 ]);
 
+export function isStrongInitialPassword(value) {
+  const normalized = typeof value === "string" ? value.trim() : "";
+  return normalized.length >= 12 && !PLACEHOLDER_PASSWORDS.has(normalized.toLowerCase());
+}
+
 export function getInitialPassword(env = process.env) {
   const configured = typeof env.INITIAL_PASSWORD === "string" ? env.INITIAL_PASSWORD.trim() : "";
-  if (env.NODE_ENV !== "production") return configured || DEVELOPMENT_DEFAULT_PASSWORD;
-  if (configured.length < 12 || PLACEHOLDER_PASSWORDS.has(configured.toLowerCase())) return null;
-  return configured;
+  if (!configured) return DEFAULT_INITIAL_PASSWORD;
+  if (env.NODE_ENV !== "production" || configured === DEFAULT_INITIAL_PASSWORD) return configured;
+  return isStrongInitialPassword(configured) ? configured : null;
 }
 
 export function isPlaceholderPassword(value) {

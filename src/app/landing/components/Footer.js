@@ -18,7 +18,7 @@ export default function Footer() {
                   <circle cx="16" cy="9" r="2" fill="white"/>
                 </svg>
               </div>
-              <h3 className="text-white text-lg font-bold">VansAI</h3>
+              <h3 className="text-white text-lg font-bold">VansRouter</h3>
             </div>
             <p className="text-gray-500 text-sm max-w-xs mb-6">
               The unified endpoint for AI generation. Connect, route, and manage your AI providers with ease.
@@ -55,7 +55,7 @@ export default function Footer() {
         
         {/* Bottom */}
         <div className="border-t border-[#3a2f27] pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
-          <p className="text-gray-600 text-sm">© 2025 VansAI. All rights reserved.</p>
+          <p className="text-gray-600 text-sm">© 2025 VansRouter. All rights reserved.</p>
           <div className="flex gap-6">
             <a className="text-gray-600 hover:text-white text-sm transition-colors" href="https://github.com/Vanszs/VansRouter" target="_blank" rel="noopener noreferrer">GitHub</a>
             <a className="text-gray-600 hover:text-white text-sm transition-colors" href="https://www.npmjs.com/package/vansrouter" target="_blank" rel="noopener noreferrer">NPM</a>

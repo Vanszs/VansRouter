@@ -1,6 +1,6 @@
 // Zen keyed lane: OpenCodeExecutor carries the official-client fingerprint
 // (UA, RE-shape ids, tool quartet, SSE) with the user's key instead of
-// "Bearer public" (issue decolua/9router#2507).
+// "Bearer public" (issue Vanszs/VansRouter#2507).
 import { describe, expect, it } from "vitest";
 import { OpenCodeExecutor } from "../../open-sse/executors/opencode.js";
 import { getExecutor, hasSpecializedExecutor } from "../../open-sse/executors/index.js";

@@ -9,7 +9,7 @@ const path = require("path");
 const fs = require("fs");
 const os = require("os");
 
-const packageName = process.env.UPDATER_PKG_NAME || "VansRoute";
+const packageName = process.env.UPDATER_PKG_NAME || "vansrouter";
 const port = parseInt(process.env.UPDATER_PORT || "20129", 10);
 const tailLines = parseInt(process.env.UPDATER_TAIL_LINES || "8", 10);
 const maxRetries = parseInt(process.env.UPDATER_RETRIES || "3", 10);
@@ -24,7 +24,7 @@ const appPort = parseInt(process.env.UPDATER_APP_PORT || "20128", 10);
 function getDataDir() {
   if (process.env.DATA_DIR) return process.env.DATA_DIR;
   if (process.platform === "win32") {
-    return path.join(process.env.APPDATA || path.join(os.homedir(), "AppData", "Roaming"), "VansRoute");
+    return path.join(process.env.APPDATA || path.join(os.homedir(), "AppData", "Roaming"), "9router");
   }
   return path.join(os.homedir(), ".9router");
 }

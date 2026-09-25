@@ -1,13 +1,13 @@
 # Integración con la extensión Continue de VSCode
 
-Integra 9Router con la extensión Continue para llevar la asistencia de IA directamente a Visual Studio Code.
+Integra VansRouter con la extensión Continue para llevar la asistencia de IA directamente a Visual Studio Code.
 
 ## Requisitos previos
 
 - Visual Studio Code instalado
 - Extensión Continue instalada desde el marketplace de VSCode
-- API key de 9Router desde el [dashboard](https://9router.com/dashboard)
-- 9Router ejecutándose (local o en la nube)
+- API key de VansRouter desde el [dashboard](http://localhost:20128/dashboard)
+- VansRouter ejecutándose (local o en la nube)
 
 ## Pasos de configuración
 
@@ -18,7 +18,7 @@ Integra 9Router con la extensión Continue para llevar la asistencia de IA direc
 3. Escribe "Continue: Open Config" y selecciónalo
 4. Esto abre `~/.continue/config.json`
 
-### 2. Agregar configuración de modelo de 9Router
+### 2. Agregar configuración de modelo de VansRouter
 
 Agrega la siguiente configuración a tu `config.json`:
 
@@ -27,7 +27,7 @@ Agrega la siguiente configuración a tu `config.json`:
 {
   "models": [
     {
-      "title": "9Router - Claude Opus",
+      "title": "VansRouter - Claude Opus",
       "provider": "openai",
       "model": "cc/claude-opus-4-5-20251101",
       "apiKey": "your-api-key-from-dashboard",
@@ -42,28 +42,28 @@ Agrega la siguiente configuración a tu `config.json`:
 {
   "models": [
     {
-      "title": "9Router - Claude Opus (Best)",
+      "title": "VansRouter - Claude Opus (Best)",
       "provider": "openai",
       "model": "cc/claude-opus-4-5-20251101",
       "apiKey": "your-api-key-from-dashboard",
       "apiBase": "http://localhost:20128/v1"
     },
     {
-      "title": "9Router - Claude Sonnet (Balanced)",
+      "title": "VansRouter - Claude Sonnet (Balanced)",
       "provider": "openai",
       "model": "cc/claude-sonnet-4-20250514",
       "apiKey": "your-api-key-from-dashboard",
       "apiBase": "http://localhost:20128/v1"
     },
     {
-      "title": "9Router - DeepSeek Chat (Code)",
+      "title": "VansRouter - DeepSeek Chat (Code)",
       "provider": "openai",
       "model": "cx/deepseek-chat",
       "apiKey": "your-api-key-from-dashboard",
       "apiBase": "http://localhost:20128/v1"
     },
     {
-      "title": "9Router - Claude Haiku (Fast)",
+      "title": "VansRouter - Claude Haiku (Fast)",
       "provider": "openai",
       "model": "cc/claude-haiku-4-20250514",
       "apiKey": "your-api-key-from-dashboard",
@@ -73,10 +73,10 @@ Agrega la siguiente configuración a tu `config.json`:
 }
 ```
 
-**Para 9Router en la nube:**
+**Para VansRouter en la nube:**
 Reemplaza `apiBase` con:
 ```json
-"apiBase": "https://9router.com/v1"
+"apiBase": "http://localhost:20128/v1"
 ```
 
 ### 3. Guardar y recargar
@@ -89,7 +89,7 @@ Reemplaza `apiBase` con:
 
 1. Abre la barra lateral de Continue (clic en el ícono de Continue en el panel izquierdo)
 2. Clic en el dropdown selector de modelo en la parte superior
-3. Elige tu modelo preferido de 9Router
+3. Elige tu modelo preferido de VansRouter
 
 ## Modelos disponibles
 
@@ -139,7 +139,7 @@ Agrega prompts de sistema personalizados para comportamientos específicos:
 {
   "models": [
     {
-      "title": "9Router - Code Expert",
+      "title": "VansRouter - Code Expert",
       "provider": "openai",
       "model": "cx/deepseek-chat",
       "apiKey": "your-api-key",
@@ -158,7 +158,7 @@ Ajusta el comportamiento del modelo con parámetros:
 {
   "models": [
     {
-      "title": "9Router - Creative Writer",
+      "title": "VansRouter - Creative Writer",
       "provider": "openai",
       "model": "cc/claude-opus-4-5-20251101",
       "apiKey": "your-api-key",
@@ -204,13 +204,13 @@ Configura qué contexto envía Continue al modelo:
 ## Solución de problemas
 
 ### El modelo no responde
-- Verifica que 9Router esté corriendo: `curl http://localhost:20128/health`
+- Verifica que VansRouter esté corriendo: `curl http://localhost:20128/health`
 - Verifica la API key en config.json
 - Revisa la consola de desarrollador de VSCode por errores: `Help` → `Toggle Developer Tools`
 
 ### Modelo incorrecto seleccionado
 - Clic en el dropdown de modelo en la barra lateral de Continue
-- Selecciona el modelo correcto de 9Router
+- Selecciona el modelo correcto de VansRouter
 - El nombre del modelo debe coincidir exactamente (sensible a mayúsculas)
 
 ### La configuración no se carga
@@ -221,7 +221,7 @@ Configura qué contexto envía Continue al modelo:
 ### Rendimiento lento
 - Cambia a modelos más rápidos (haiku, flash)
 - Reduce el tamaño del contexto en contextProviders
-- Verifica la latencia de red hacia 9Router
+- Verifica la latencia de red hacia VansRouter
 
 ## Mejores prácticas
 

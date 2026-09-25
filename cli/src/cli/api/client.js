@@ -18,7 +18,10 @@ const CLI_TOKEN_SALT = "9r-cli-auth";
 const APP_NAME = "9router";
 
 function getDataDir() {
-  if (process.env.DATA_DIR) return process.env.DATA_DIR;
+  const configured = (process.env.DATA_DIR || "").trim();
+  // A Docker/Linux DATA_DIR copied into a Windows .env is not valid here; fall
+  // back to the platform default instead of writing to a phantom root.
+  if (configured && !(process.platform === "win32" && /^\//.test(configured))) return configured;
   if (process.platform === "win32") {
     return path.join(process.env.APPDATA || path.join(os.homedir(), "AppData", "Roaming"), APP_NAME);
   }
@@ -411,11 +414,12 @@ async function updateSettings(data) {
 }
 
 /**
- * Reset dashboard password to default (clears stored hash server-side)
+ * Set a strong replacement dashboard password.
+ * @param {string} newPassword
  * @returns {Promise<Object>} { success }
  */
-async function resetPassword() {
-  return makeRequest("POST", "/api/auth/reset-password");
+async function resetPassword(newPassword) {
+  return makeRequest("POST", "/api/auth/reset-password", { newPassword });
 }
 
 // ============================================================================

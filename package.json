@@ -1,6 +1,6 @@
 {
   "name": "vansrouter-app",
-  "version": "0.91.33",
+  "version": "0.91.34",
   "description": "9Router web dashboard",
   "private": true,
   "packageManager": "pnpm@9.15.9",
@@ -17,7 +17,8 @@
     "test:server": "node --test tests/unit/custom-server-h2c.test.cjs",
     "test:watch": "npx vitest -c tests/vitest.config.js",
     "build": "node scripts/build.js",
-    "start": "node custom-server.js --port 20127",
+    "start": "node custom-server.js --port 20128",
+    "preflight:upgrade": "node scripts/preflight-upgrade.cjs",
     "dev:bun": "bun --bun next dev --webpack --port 20127",
     "build:bun": "bun --bun next build --webpack",
     "start:bun": "bun ./.next/standalone/custom-server.js",
