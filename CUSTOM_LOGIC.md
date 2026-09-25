@@ -271,6 +271,8 @@ Request to /v1/*
 | `combo.js` | web_search not detected in tools | Added scanning for `type === "web_search"` |
 | `combo.js` | reorderByCapabilities no early return | Added early return for empty/single/no-match cases |
 | `embeddings.js` | Double-prefix normalization (`nvidia/nvidia/model`) | Build candidates array checking multiple forms |
+| `chat.js` | Double-prefix normalization for chat ACL (`nvidia/nvidia/model`) | Build candidates array checking multiple forms (mirrors embeddings.js) |
+| `providerModels.js` | `findModel` missed self-prefixed registry ids (`nvidia/nemotron-*`, `poolside/laguna-*`, `fal-ai/flux/*`): `parseModel` splits at the first slash, so the advertised single form looked up bare and sent a bare id upstream (NVIDIA → 404) | Retry lookup as `${aliasOrId}/${modelId}` before giving up |
 | `message.js` | collapseTextParts only handled single text part | Now joins ALL text parts with `\n` |
 | `reasoningContentInjector.js` | Regex pattern incorrect | Fixed regex for provider/model matching |
 
