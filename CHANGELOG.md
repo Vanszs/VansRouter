@@ -19,6 +19,9 @@
 - **Free-tier model zero-pricing** — Registered wildcard patterns `*:free` and `*-free` in `open-sse/providers/pricing.js` to assign zero-rate cost ($0.00) across all input, output, cached, and reasoning tokens, preventing false quota deductions for free community models.
 - **DeepSeek V4.1 Flash Free multimodal vision** — Added explicit multimodal capability entry (`vision: true`, 1M contextWindow) for `tokenharbor/deepseek-v4.1-flash:free` in `open-sse/providers/capabilities.js`.
 - **OpenCode Free error translation** — In `open-sse/executors/opencode.js`, mapped upstream OpenCode `ModelError` (401) to HTTP 404 `model_not_found` and `Model is unavailable` (400) to HTTP 503 `service_unavailable`, preventing confusing `invalid_api_key` errors on public no-auth endpoints.
+- **OpenCode zen-lane auth fallback** — A keyed `opencode-zen` connection that lost its key could send `Authorization: Bearer undefined`, which the upstream reads as no credential at all. The `public` fallback now applies to every lane this executor serves; a real key still takes precedence.
+- **OpenCode dead-model list widened** — `suggested-models/filters.js` now excludes six ids measured as rejected by the upstream free tier on 2026-09-25 (`deepseek-v4-flash-free`, `hy3-free`, `jev-1.13-free`, both `muse-spark-*-contributor-free`, `deepseek-v4.1-flash:free`), with the observed status of each recorded next to it. `space-bunny-free` answers and stays offered.
+- **Build-time OOM misreporting** — The no-undef pre-step inside `scripts/build.js` peaks around 1.2 GB and took 91 s; when the kernel OOM-killed it the build reported `Next.js build failed` even though Next never started. The pre-step is now skippable with `SKIP_PREBUILD_LINT=1` (CI already runs it as its own step), and static-generation worker count can be capped with `NEXT_BUILD_CPUS`. Both default to the previous behaviour, so release and CI builds are unchanged.
 
 ## Tests
 
