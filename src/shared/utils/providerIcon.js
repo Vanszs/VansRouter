@@ -10,6 +10,7 @@ const ICON_ALIASES = {
   "kilo-gateway": "kilocode",
   "codebuddy-intl": "codebuddy-cn",
   "alims-intl": "alicode-intl",
+  "qoder-cn": "qoder",
 };
 
 // Runtime only — first 404 remembers id for the whole session

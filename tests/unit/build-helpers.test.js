@@ -4,7 +4,7 @@ import path from "path";
 import os from "os";
 
 const require = createRequire(import.meta.url);
-const { ensureModuleInBundle, stripBundledPackage, copyRecursive } = require("../../cli/scripts/build-cli.js");
+const { ensureModuleInBundle, stripBundledPackage, copyRecursive, shouldExclude, pruneVirtualStore } = require("../../cli/scripts/build-cli.js");
 
 /**
  * Creates a directory symbolic link in a Windows-safe way.
@@ -25,6 +25,13 @@ describe("build-helpers", () => {
 
   afterEach(() => {
     fs.rmSync(tmpDir, { recursive: true, force: true });
+  });
+
+  it("excludes all environment files from the CLI bundle", () => {
+    expect(shouldExclude(".env")).toBe(true);
+    expect(shouldExclude(".env.production")).toBe(true);
+    expect(shouldExclude(".env.local")).toBe(true);
+    expect(shouldExclude("server.js")).toBe(false);
   });
 
   it("declares @swc/helpers in root package.json dependencies", () => {
@@ -177,18 +184,27 @@ describe("build-helpers", () => {
     expect(fs.existsSync(renamedVirtual)).toBe(false);
   });
 
-  it("warns when the package cannot be resolved", () => {
+  it("removes the materialized pnpm virtual store after dependencies are flattened", () => {
+    const cliAppDir = path.join(tmpDir, "cli", "app");
+    const virtualStore = path.join(cliAppDir, "_nm", ".pnpm", "next@1", "node_modules", "next");
+    const flattened = path.join(cliAppDir, "_nm", "next");
+    fs.mkdirSync(virtualStore, { recursive: true });
+    fs.mkdirSync(flattened, { recursive: true });
+    fs.writeFileSync(path.join(virtualStore, "package.json"), "{}");
+    fs.writeFileSync(path.join(flattened, "package.json"), "{}");
+
+    expect(pruneVirtualStore(cliAppDir)).toBe(1);
+    expect(fs.existsSync(path.join(cliAppDir, "_nm", ".pnpm"))).toBe(false);
+    expect(fs.existsSync(path.join(flattened, "package.json"))).toBe(true);
+  });
+
+  it("fails closed when a required package cannot be resolved", () => {
     const appDir = path.join(tmpDir, "app");
     const rootDir = path.join(tmpDir, "root");
     const cliAppDir = path.join(tmpDir, "cli", "app");
     const missingPkg = "@swc/helpers-does-not-exist-xyz123";
 
-    const originalWarn = console.warn;
-    const warnSpy = vi.fn();
-    console.warn = warnSpy;
-    ensureModuleInBundle(missingPkg, { cliAppDir, appDir, rootDir, copyRecursive });
-    console.warn = originalWarn;
-
-    expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining(`${missingPkg} not found locally`));
+    expect(() => ensureModuleInBundle(missingPkg, { cliAppDir, appDir, rootDir, copyRecursive }))
+      .toThrow(`${missingPkg} not found locally`);
   });
 });

@@ -137,11 +137,25 @@ execFileSync(process.execPath, [nextBin, "build", "--webpack"], {
 // Copy static assets into the standalone output.
 // Respect NEXT_DIST_DIR like next.config.mjs does (used by CLI builds).
 const distDir = process.env.NEXT_DIST_DIR || ".next";
-console.log(`▶ copying public/ + ${distDir}/static into ${distDir}/standalone`);
-fs.cpSync(path.join(appDir, "public"), path.join(appDir, distDir, "standalone", "public"), { recursive: true });
-fs.cpSync(path.join(appDir, distDir, "static"), path.join(appDir, distDir, "standalone", distDir, "static"), { recursive: true });
+const standaloneBaseDir = path.join(appDir, distDir, "standalone");
 
-fixStandaloneSymlinks(path.resolve(appDir, distDir, "standalone"));
+function resolveStandaloneRoot(baseDir) {
+  if (fs.existsSync(path.join(baseDir, "server.js"))) return baseDir;
+  for (const entry of fs.readdirSync(baseDir, { withFileTypes: true })) {
+    if (!entry.isDirectory()) continue;
+    const candidate = path.join(baseDir, entry.name);
+    if (fs.existsSync(path.join(candidate, "server.js"))) return candidate;
+  }
+  throw new Error(`Next standalone server not found under ${baseDir}`);
+}
+
+const standaloneDir = resolveStandaloneRoot(standaloneBaseDir);
+console.log(`▶ copying public/ + ${distDir}/static into ${standaloneDir}`);
+fs.cpSync(path.join(appDir, "public"), path.join(standaloneDir, "public"), { recursive: true });
+fs.cpSync(path.join(appDir, distDir, "static"), path.join(standaloneDir, distDir, "static"), { recursive: true });
+
+fixStandaloneSymlinks(path.resolve(standaloneDir));
+fs.copyFileSync(path.join(appDir, "custom-server.js"), path.join(standaloneDir, "custom-server.js"));
 
 // ─── Fix standalone instrumentation import ───────────────────────────────────
 // kimchiQuotaReactivation.js uses `import(/* webpackIgnore: true */ "../../lib/localDb.js")`
@@ -150,7 +164,6 @@ fixStandaloneSymlinks(path.resolve(appDir, distDir, "standalone"));
 // that doesn't exist because webpack bundles localDb + its deps into server chunks
 // for normal routes, but the webpackIgnore prevents bundling for the instrumentation path.
 // Fix: copy src/lib/ into standalone and create a @/ alias shim so the runtime import resolves.
-const standaloneDir = path.join(appDir, distDir, "standalone");
 const srcLibDir = path.join(appDir, "src", "lib");
 const standaloneSrcLibDir = path.join(standaloneDir, "src", "lib");
 const standaloneNextLibDir = path.join(standaloneDir, distDir, "lib");

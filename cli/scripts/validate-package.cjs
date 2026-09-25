@@ -18,9 +18,27 @@ const entries = execFileSync("tar", ["-tzf", tarball], { encoding: "utf8" })
   .split("\n")
   .filter(Boolean);
 const requiredWasm = "package/app/_nm/sql.js/dist/sql-wasm.wasm";
+const requiredNext = "package/app/_nm/next/package.json";
+const requiredOpen = "package/app/_nm/open/package.json";
+const requiredServer = "package/app/server.js";
+const requiredCustomServer = "package/app/custom-server.js";
+const requiredPagesManifest = "package/app/.next-cli-build/server/pages-manifest.json";
+const requiredServerFiles = "package/app/.next-cli-build/required-server-files.json";
+const requiredLocalDbShim = "package/app/.next-cli-build/lib/localDb.js";
 
-if (!entries.includes(requiredWasm)) {
-  throw new Error(`sql.js WASM missing from final CLI package: ${requiredWasm}`);
+for (const required of [requiredWasm, requiredNext, requiredOpen, requiredServer, requiredCustomServer, requiredPagesManifest, requiredServerFiles, requiredLocalDbShim]) {
+  if (!entries.includes(required)) {
+    throw new Error(`Required CLI artifact missing: ${required}`);
+  }
+}
+if (!entries.some((entry) => entry.startsWith("package/app/.next-cli-build/static/") && !entry.endsWith("/"))) {
+  throw new Error("CLI static assets missing from final package");
+}
+if (!entries.some((entry) => entry.startsWith("package/app/public/") && !entry.endsWith("/"))) {
+  throw new Error("CLI public assets missing from final package");
+}
+if (entries.some((entry) => /(^|\/)\.env(?:\.|$)/.test(entry))) {
+  throw new Error("Environment file leaked into final CLI package");
 }
 if (entries.some((entry) => /(^|\/)better_sqlite3\.node$/.test(entry))) {
   throw new Error("native better-sqlite3 leaked into final CLI package");

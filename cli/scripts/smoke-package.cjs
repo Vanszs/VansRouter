@@ -22,10 +22,12 @@ execFileSync("tar", ["-xzf", tarball, "-C", root]);
 
 const appDir = path.join(root, "package", "app");
 const bundledModules = path.join(appDir, "_nm");
-const serverPath = fs.existsSync(path.join(appDir, "custom-server.js"))
-  ? path.join(appDir, "custom-server.js")
-  : path.join(appDir, "server.js");
-if (!fs.existsSync(serverPath)) throw new Error(`Bundled server missing: ${serverPath}`);
+const serverPath = path.join(appDir, "custom-server.js");
+if (!fs.existsSync(serverPath)) throw new Error(`Bundled custom server missing: ${serverPath}`);
+const nextPackage = path.join(bundledModules, "next", "package.json");
+if (!fs.existsSync(nextPackage)) {
+  throw new Error(`Bundled Next.js dependency missing: ${nextPackage}`);
+}
 
 let output = "";
 const child = spawn(process.execPath, [serverPath], {
@@ -35,8 +37,9 @@ const child = spawn(process.execPath, [serverPath], {
     DATA_DIR: dataDir,
     HOSTNAME: "127.0.0.1",
     NODE_ENV: "production",
-    NODE_PATH: [bundledModules, process.env.NODE_PATH].filter(Boolean).join(path.delimiter),
+    NODE_PATH: bundledModules,
     NEXT_TELEMETRY_DISABLED: "1",
+    VANROUTER_SKIP_UPDATE_CHECK: "1",
     PORT: String(port),
   },
   stdio: ["ignore", "pipe", "pipe"],
@@ -75,6 +78,13 @@ async function main() {
     const settings = JSON.parse(response.body);
     if (settings.requireLogin !== false) {
       throw new Error(`Legacy db.json was not migrated: ${response.body}`);
+    }
+    const health = await request("/api/health");
+    if (health.status !== 200) throw new Error(`Health check failed: ${health.status}`);
+    const version = await request("/api/version");
+    const versionBody = JSON.parse(version.body);
+    if (version.status !== 200 || versionBody.currentVersion !== expectedVersion) {
+      throw new Error(`Version check failed: ${version.status} ${version.body}`);
     }
 
     // sql.js persists on a short debounce after writes; observe the durable file,

@@ -3,6 +3,7 @@
   "version": "0.91.33",
   "description": "9Router web dashboard",
   "private": true,
+  "packageManager": "pnpm@9.15.9",
   "engines": {
     "node": ">=22.5.0"
   },
@@ -13,6 +14,7 @@
     "lint:reacthooks": "node scripts/lint-reacthooks.cjs",
     "lint": "eslint . --no-warn-ignored",
     "test": "npx vitest run -c tests/vitest.config.js",
+    "test:server": "node --test tests/unit/custom-server-h2c.test.cjs",
     "test:watch": "npx vitest -c tests/vitest.config.js",
     "build": "node scripts/build.js",
     "start": "node custom-server.js --port 20127",
@@ -64,6 +66,7 @@
     "postcss": "^8.5.6",
     "tailwindcss": "^4",
     "eslint-plugin-react-hooks": "^7.1.1",
+    "esbuild": "^0.28.1",
     "js-yaml": "^4.2.0",
     "vitest": "^3.2.4"
   }

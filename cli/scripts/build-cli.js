@@ -10,9 +10,7 @@ const EXCLUDE_PATTERNS = [
   "@img",           // Sharp image processing (not needed with unoptimized images)
   "sharp",          // Sharp core lib (not needed with unoptimized images)
   "detect-libc",    // Sharp dependency
-  ".env",           // Environment files
-  ".env.local",
-  ".env.*.local",
+  ".env*",          // Environment files (including .env.production)
   "*.log",          // Log files
   "tmp",            // Temp files
   ".DS_Store",      // macOS files
@@ -79,7 +77,7 @@ function ensureModuleInBundle(pkg, options = {}) {
   const appDir = options.appDir;
   const rootDir = options.rootDir;
   const copyRecursiveFn = options.copyRecursive || copyRecursive;
-  const requiredFiles = options.requiredFiles || [];
+  const requiredFiles = options.requiredFiles || ["package.json"];
 
   const dest = path.join(cliAppDir, "node_modules", pkg);
   if (fs.existsSync(dest) && requiredFiles.every((file) => fs.existsSync(path.join(dest, file)))) {
@@ -103,11 +101,13 @@ function ensureModuleInBundle(pkg, options = {}) {
     }
   }
   if (!src) {
-    console.warn(`⚠️  ${pkg} not found locally — it may be missing at runtime`);
-    return;
+    throw new Error(`${pkg} not found locally — refusing to build an incomplete CLI package`);
   }
   fs.mkdirSync(path.dirname(dest), { recursive: true });
   copyRecursiveFn(src, dest);
+  if (!fs.existsSync(dest) || !requiredFiles.every((file) => fs.existsSync(path.join(dest, file)))) {
+    throw new Error(`${pkg} was not copied completely into the CLI package`);
+  }
   console.log(`✅ Bundled ${pkg}`);
 }
 
@@ -136,7 +136,18 @@ function stripBundledPackage(cliAppDir, pkg) {
   return removed;
 }
 
-module.exports = { ensureModuleInBundle, stripBundledPackage, copyRecursive, shouldExclude, EXCLUDE_PATTERNS };
+function pruneVirtualStore(cliAppDir) {
+  let removed = 0;
+  for (const nodeModules of ["node_modules", "_nm"]) {
+    const virtualStore = path.join(cliAppDir, nodeModules, ".pnpm");
+    if (!fs.existsSync(virtualStore)) continue;
+    fs.rmSync(virtualStore, { recursive: true, force: true });
+    removed += 1;
+  }
+  return removed;
+}
+
+module.exports = { ensureModuleInBundle, stripBundledPackage, pruneVirtualStore, copyRecursive, shouldExclude, EXCLUDE_PATTERNS };
 
 if (require.main === module) {
   const cliDir = path.resolve(__dirname, "..");
@@ -234,7 +245,7 @@ if (require.main === module) {
     fs.copyFileSync(customServerSrc, path.join(cliAppDir, "custom-server.js"));
     console.log("✅ Copied custom-server.js\n");
   } else {
-    console.warn("⚠️  custom-server.js not found — server will run without real-IP injection\n");
+    throw new Error("custom-server.js not found — refusing to build an incomplete CLI package");
   }
 
   // Step 3b: Ensure sql.js (pure JS fallback) bundled in app/cli/app/node_modules.
@@ -255,8 +266,17 @@ if (require.main === module) {
   ensureModuleInBundle("react-dom", { cliAppDir, appDir, rootDir, copyRecursive });
   ensureModuleInBundle("@swc/helpers", { cliAppDir, appDir, rootDir, copyRecursive });
   ensureModuleInBundle("@next/env", { cliAppDir, appDir, rootDir, copyRecursive });
+  ensureModuleInBundle("next", { cliAppDir, appDir, rootDir, copyRecursive });
+  // `open` stays external in the Next config and must also be present in the
+  // published app's private NODE_PATH; otherwise OAuth launchers fail only
+  // after installation, when the host node_modules are no longer visible.
+  ensureModuleInBundle("open", { cliAppDir, appDir, rootDir, copyRecursive });
   if (stripBundledPackage(cliAppDir, "better-sqlite3")) {
     console.log("✅ Stripped better-sqlite3 (lives in ~/.9router/runtime)");
+  }
+  const prunedVirtualStores = pruneVirtualStore(cliAppDir);
+  if (prunedVirtualStores > 0) {
+    console.log(`✅ Pruned ${prunedVirtualStores} materialized pnpm virtual store(s)`);
   }
   console.log("");
 

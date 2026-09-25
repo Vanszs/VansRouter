@@ -195,6 +195,15 @@ export function trackPendingRequest(model, provider, connectionId, started, erro
   scheduleStatsEvent("pending");
 }
 
+function getPendingSnapshot() {
+  return {
+    byModel: { ...pendingRequests.byModel },
+    byAccount: Object.fromEntries(
+      Object.entries(pendingRequests.byAccount).map(([connectionId, models]) => [connectionId, { ...models }]),
+    ),
+  };
+}
+
 export async function getActiveRequests() {
   const activeRequests = [];
   const connectionMap = await getConnectionMapCached();
@@ -237,7 +246,7 @@ export async function getActiveRequests() {
     .slice(0, 20);
 
   const errorProvider = (Date.now() - lastErrorProvider.ts < 10000) ? lastErrorProvider.provider : "";
-  return { activeRequests, recentRequests, errorProvider };
+  return { activeRequests, recentRequests, errorProvider, pending: getPendingSnapshot() };
 }
 
 export async function saveRequestUsage(entry) {

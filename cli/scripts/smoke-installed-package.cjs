@@ -1,0 +1,87 @@
+#!/usr/bin/env node
+
+const fs = require("fs");
+const os = require("os");
+const path = require("path");
+const { execFileSync, spawnSync } = require("child_process");
+
+function parseArgs(args) {
+  const unknown = args.filter((arg) => arg.startsWith("--") && arg !== "--run-scripts");
+  if (unknown.length) throw new Error(`Unknown option: ${unknown[0]}`);
+
+  const positional = args.filter((arg) => !arg.startsWith("--"));
+  if (positional.length !== 2) {
+    throw new Error("Usage: smoke-installed-package.cjs <tarball> <version> [--run-scripts]");
+  }
+
+  const [tarball, expectedVersion] = positional;
+  if (!fs.existsSync(tarball)) throw new Error(`Tarball does not exist: ${tarball}`);
+  return { tarball, expectedVersion, runScripts: args.includes("--run-scripts") };
+}
+
+function verifyVersionOutput(output, expectedVersion) {
+  const actualVersion = String(output).trim().split(/\r?\n/).filter(Boolean).at(-1);
+  if (actualVersion !== expectedVersion) {
+    throw new Error(`Installed CLI version mismatch: ${actualVersion || "<empty>"} !== ${expectedVersion}`);
+  }
+  return actualVersion;
+}
+
+function runInstallSmoke({ tarball, expectedVersion, runScripts = false }) {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "vansrouter-install-smoke-"));
+  const installDir = path.join(root, "install");
+  const homeDir = path.join(root, "home");
+  const dataDir = path.join(root, "data");
+  fs.mkdirSync(installDir, { recursive: true });
+  fs.mkdirSync(homeDir, { recursive: true });
+  fs.mkdirSync(dataDir, { recursive: true });
+
+  const env = {
+    ...process.env,
+    HOME: homeDir,
+    USERPROFILE: homeDir,
+    DATA_DIR: dataDir,
+  };
+  const npmExecPath = process.env.npm_execpath;
+  const npmCommand = npmExecPath ? process.execPath : (process.platform === "win32" ? "npm.cmd" : "npm");
+  const npmArgs = [
+    ...(npmExecPath ? [npmExecPath] : []),
+    "install",
+    "--prefix",
+    installDir,
+    tarball,
+    "--no-audit",
+    "--no-fund",
+    ...(runScripts ? [] : ["--ignore-scripts"]),
+  ];
+
+  try {
+    execFileSync(npmCommand, npmArgs, { env, stdio: "inherit" });
+    const cliPath = path.join(installDir, "node_modules", "vansrouter", "cli.js");
+    if (!fs.existsSync(cliPath)) throw new Error(`Installed CLI binary missing: ${cliPath}`);
+    const result = spawnSync(process.execPath, [cliPath, "--version"], {
+      env,
+      encoding: "utf8",
+      stdio: ["ignore", "pipe", "pipe"],
+    });
+    if (result.error) throw result.error;
+    if (result.status !== 0) {
+      throw new Error(`Installed CLI --version failed (${result.status}): ${result.stderr || result.stdout}`);
+    }
+    const version = verifyVersionOutput(result.stdout, expectedVersion);
+    console.log(`Smoke-tested installed vansrouter@${version}${runScripts ? " with lifecycle scripts" : " without lifecycle scripts"}`);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+}
+
+module.exports = { parseArgs, verifyVersionOutput, runInstallSmoke };
+
+if (require.main === module) {
+  try {
+    runInstallSmoke(parseArgs(process.argv.slice(2)));
+  } catch (error) {
+    console.error(error.stack || error.message);
+    process.exitCode = 1;
+  }
+}

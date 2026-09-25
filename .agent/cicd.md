@@ -76,8 +76,12 @@ The `--pretag` command checks the changelog-only commit before the tag exists. A
 
 ## Docker Multi-Arch Build Contract
 
-- `docker/setup-qemu-action@v3` is **MANDATORY** and must run immediately before `docker/setup-buildx-action@v3` in the `build-and-verify-ghcr` job.
-- Reason: The GitHub Actions `ubuntu-latest` runner is x86_64 (`amd64`). Multi-platform builds (`linux/amd64,linux/arm64`) require QEMU binfmt registration to compile C++ native modules (e.g. `better-sqlite3`) and run Next.js compilation for ARM64. Omission causes instruction stalls/illegal instruction core dumps and 60m+ timeouts.
+- All GitHub Actions are pinned to reviewed full commit SHAs. Dependabot updates the pins; tags alone are not release security.
+- `docker/setup-qemu-action` is **MANDATORY** and must run immediately before `docker/setup-buildx-action` in the `build-and-verify-ghcr` job.
+- The build must use `pnpm install --frozen-lockfile` with the repository lockfile. The native dependency stage must use its committed `docker/native-deps/package-lock.json` and `npm ci --ignore-scripts`; the target-specific `better-sqlite3` musl binary is downloaded separately for the pinned Node ABI and SHA-256 verified before use.
+- Node/Alpine base images and external Tailscale archives are digest/checksum pinned; the bundled Tailscale release is kept current.
+- The image must retain provenance and SBOM attestations, and the release workflow must promote the exact Buildx digest rather than a mutable staging tag. Registry inspection errors are fatal; only an explicit not-found result permits tag creation.
+- The image smoke test must force a platform-specific pull, start the published image, and verify `/api/ready`, `/api/health`, and `/api/version` on both `linux/amd64` and `linux/arm64`.
 
 ## CI Gates
 
@@ -96,15 +100,27 @@ Required evidence:
 
 - `check-branch`: tag points to `main`, versions match, changelog is final commit, tag is annotated.
 - `check-branch` must validate the original annotated tag object, not the dereferenced checkout ref.
-- `package-npm`: actual tarball contains `app/_nm/sql.js/dist/sql-wasm.wasm`; no `better_sqlite3.node`.
-- Artifact smoke test: extracted CLI starts with a temporary `DATA_DIR`, responds to `/api/settings`, creates `db/data.sqlite`, and migrates legacy `db.json` without network.
-- `build-and-verify-ghcr`: staging image contains `linux/amd64` and `linux/arm64`; native SQLite query succeeds.
-- `publish-npm`: publishes the validated artifact, never rebuilds it.
-- `promote-ghcr`: promotes staging image to `X.Y.Z` and `latest` only after npm succeeds.
+- `package-npm`: actual tarball contains `app/_nm/sql.js/dist/sql-wasm.wasm`; no `better_sqlite3.node`; the package installs and reports the expected version through the real npm installation path, including lifecycle scripts.
+- Artifact smoke test: extracted CLI starts with a temporary `DATA_DIR`, responds to `/api/settings`, creates `db/data.sqlite`, and migrates legacy `db.json`; `VANROUTER_SKIP_UPDATE_CHECK=1` makes the version assertion independent of the public npm registry.
+- `build-and-verify-ghcr`: the pushed digest contains `linux/amd64` and `linux/arm64`; native SQLite and container health/version smoke tests pass; the digest is attested.
+- `publish-npm`: publishes the exact validated artifact, treats only an explicit npm `E404` as unpublished, fails closed on other registry errors, verifies its SHA-512 integrity, and is safe to rerun only when the registry already contains the same artifact.
+- `promote-ghcr`: promotes the verified digest to `X.Y.Z` and `latest` only after npm succeeds; it refuses to overwrite a different version digest.
+
+## Repository Controls Required
+
+Before the next release, repository administrators must enable and verify:
+
+- a tag ruleset protecting `v*` tags from deletion and force updates;
+- a protected `release` Environment with required reviewer approval for npm/GHCR publishing;
+- repository-level Actions SHA pinning enforcement;
+- Dependabot updates for GitHub Actions, Docker, and the CLI npm lockfile.
+
+These are host settings, not repository files. CI must not be considered release-hardened until the settings are verified through the GitHub API.
 
 ## Deployment Rules
 
-- Deploy immutable image tag `ghcr.io/vanszs/vansrouter:X.Y.Z`, not `latest`.
+- Deploy immutable image tag `ghcr.io/vanszs/vansrouter:X.Y.Z` (or its recorded digest), not `latest`.
+- Docker Compose must receive an explicit SemVer `VANSROUTER_VERSION` (never `latest`; a recorded digest is preferred); the canonical `9router-data` volume name remains unchanged.
 - Keep Docker volume name `9router-data`; never rename it without explicit DB migration and verification.
 - PM2 deployments must set the production port explicitly and use `--update-env` on restart.
 - Preserve `server.js`, `custom-server.js`, peer-token handling, proxy IP handling, and persistent `DATA_DIR`.
@@ -122,14 +138,14 @@ curl -fsS http://127.0.0.1:3003/api/health
 
 - `check-branch` or package failure: fix the branch and create a new version/tag.
 - Once a tag is pushed, it is immutable even if CI fails. Never delete, move, force-push, or rerun under the same tag after a release-gate bug; fix the workflow and use the next version.
-- `v0.91.3` and `v0.91.4` are historical failed tags (release-validation ref bug). `v0.91.11` failed due to missing QEMU in multi-arch GHCR build. Do not reuse them; `v0.91.12` resolved multi-arch with `setup-qemu-action@v3`.
+- `v0.91.3` and `v0.91.4` are historical failed tags (release-validation ref bug). `v0.91.11` failed due to missing QEMU in multi-arch GHCR build. Do not reuse them; `v0.91.12` resolved multi-arch with the QEMU action.
 - GHCR staging failure: do not promote its staging tag.
-- npm publish timeout: query npm first; never retry blindly:
+- npm publish timeout: query npm first; never retry blindly. If the published integrity matches the package job output, a rerun is safe; if it differs, stop and investigate:
 
 ```bash
-npm view vansrouter@X.Y.Z version
+npm view vansrouter@X.Y.Z dist.integrity --json
 ```
 
-- npm already published but GHCR promotion failed: promote/recover the exact staging image; do not republish npm.
+- npm already published but GHCR promotion failed: rerun the failed promotion job or the idempotent release workflow. It must use the recorded Buildx digest and must never republish or overwrite a different version digest.
 - Production health failure: rollback to the previous immutable image tag; preserve the DB volume and inspect migration backups.
 - Never use `git reset --hard`, force-push, or delete published tags as recovery.

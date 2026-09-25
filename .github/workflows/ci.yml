@@ -7,6 +7,9 @@ on:
     branches: [main, master, dev]
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
@@ -18,15 +21,17 @@ jobs:
     timeout-minutes: 30
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
       - name: Install pnpm
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
         with:
-          version: 9
+          version: 9.15.9
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: 22
 
@@ -36,7 +41,7 @@ jobs:
         run: echo "path=$(pnpm store path --silent)" >> "$GITHUB_OUTPUT"
 
       - name: Cache pnpm store
-        uses: actions/cache@v4
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ${{ steps.pnpm-store.outputs.path }}
           key: ${{ runner.os }}-node-22-pnpm-${{ hashFiles('pnpm-lock.yaml') }}
@@ -55,6 +60,9 @@ jobs:
       - name: Run tests
         run: pnpm test
 
+      - name: Run custom-server regression tests
+        run: pnpm run test:server
+
       - name: Run no-undef lint
         run: pnpm lint:undef
 
@@ -70,5 +78,43 @@ jobs:
           test -d .next/standalone
           test -f .next/standalone/server.js
 
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+
       - name: Validate Dockerfile syntax
-        run: docker build --check .
+        run: docker buildx build --check .
+
+  release-artifact:
+    name: Release artifact (isolated pnpm)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+        with:
+          version: 9.15.9
+
+      - name: Setup Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 22
+
+      - name: Install without hoisting overrides
+        run: pnpm install --frozen-lockfile
+
+      - name: Run release regression tests
+        run: pnpm exec vitest run -c tests/vitest.config.js tests/unit/deploy-atomic.test.js tests/unit/fix-standalone-symlinks.test.js
+
+      - name: Run no-undef lint
+        run: pnpm lint:undef
+
+      - name: Build isolated standalone artifact
+        run: NEXT_DIST_DIR=.next-ci pnpm run build
+
+      - name: Delete build source and cold-start final release
+        run: NEXT_DIST_DIR=.next-ci node scripts/verify-release-artifact.cjs

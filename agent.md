@@ -13,7 +13,22 @@ Gunakan deployment atomik dari root proyek:
 PORT=3003 node scripts/deploy-atomic.cjs
 ```
 
-Script membangun release terisolasi, memverifikasi `server.js` dan static chunks, menjalankan smoke check pada port sementara dengan `DATA_DIR` sementara, lalu mengganti symlink `/var/lib/9router/current` secara atomik. PM2 tetap menunjuk ke launcher persisten `server.js` melalui `ecosystem.config.cjs` dan `RELEASE_SERVER`; PM2 tidak boleh menunjuk langsung ke release di `/tmp`.
+Script membangun release terisolasi, menormalisasi symlink pnpm, menghapus build source, memverifikasi manifest/static/HTML, lalu menjalankan smoke check dengan `DATA_DIR` dan `HOME` terisolasi. PM2 menunjuk ke launcher persisten `custom-server.js` (dengan `server.js` mengikuti `RELEASE_SERVER`) melalui `ecosystem.config.cjs`; PM2 tidak boleh menunjuk langsung ke release di `/tmp`. Smoke check juga memverifikasi `/api/ready`, `/api/version`, dan aset HTML; PM2 state disimpan hanya setelah semua gate lulus.
+
+## 2a. Fresh-installer verification
+ sebelum deploy, gunakan layout pnpm default (tanpa `shamefully-hoist`):
+```bash
+pnpm install --frozen-lockfile
+NEXT_DIST_DIR=.next-ci pnpm run build
+NEXT_DIST_DIR=.next-ci node scripts/verify-release-artifact.cjs
+```
+CLI consumer juga harus dibuild dan diuji dari tarball:
+```bash
+pnpm run cli:pack
+VERSION=$(node -p "require('./package.json').version")
+node cli/scripts/validate-package.cjs "../vansrouter-${VERSION}.tgz" "$VERSION"
+node cli/scripts/smoke-package.cjs "../vansrouter-${VERSION}.tgz" "$VERSION"
+```
 
 ## 3. Rollback
 Release sebelumnya tetap disimpan agar rollback tidak perlu rebuild:
@@ -77,8 +92,8 @@ git diff <v0.9.0-commit> dev --stat  # pastikan tidak ada file custom hilang
 Hybrid **tidak boleh** cherry-pick file penuh dari upstream. Port hanya blok perilaku yang dibutuhkan, lalu pertahankan kontrak lokal berikut:
 
 - `agent.md` tetap ada dan command production di atas tetap valid.
-- PM2 memakai `server.js`; jangan menggantinya dengan `.next/standalone/server.js` tanpa mempertahankan default port `3003`.
-- `custom-server.js` tetap menjadi entrypoint Docker; jangan menghapus trusted peer header dan proxy-IP handling.
+- PM2 memakai `custom-server.js` yang membungkus launcher `server.js`; jangan menggantinya dengan `.next/standalone/server.js` tanpa mempertahankan default port `3003`.
+- `custom-server.js` juga tetap menjadi entrypoint Docker; jangan menghapus trusted peer header dan proxy-IP handling.
 - `pnpm run build` tetap menyalin `public`, `.next/static`, `src/`, serta shim/runtime yang dibuat `scripts/build.js`.
 - Jangan mengubah nama volume Docker `9router-data`; perubahan memerlukan migrasi dan verifikasi database eksplisit.
 - Fitur VansRouter pada tabel ini harus tetap aktif; verifikasi handler, bukan sekadar import atau nama simbol.

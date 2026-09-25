@@ -80,13 +80,8 @@ if (args[0] === "xai" && args[1] === "video") {
   return;
 }
 
-// Self-heal SQLite runtime deps (sql.js + better-sqlite3) into ~/.9router/runtime
-// so the server can resolve them via NODE_PATH. Best-effort — sql.js is required,
-// better-sqlite3 is optional. Logs to stderr only on failure.
-try { ensureSqliteRuntime({ silent: true }); } catch {}
-
-// Self-heal tray runtime (systray for macOS/Linux only). Windows skipped.
-try { ensureTrayRuntime({ silent: true }); } catch {}
+// Runtime provisioning is deliberately deferred until after argument parsing.
+// `--help` and `--version` must remain side-effect free and must not invoke npm.
 
 // Configuration constants
 const APP_NAME = pkg.name; // Use from package.json
@@ -169,6 +164,16 @@ Commands:
 if (skipUpdate && !trayMode && !process.stdin.isTTY) {
   trayMode = true;
   process.env.TRAY_MODE = "1";
+}
+
+// Self-heal SQLite runtime deps into the user-writable runtime directory.
+// Native better-sqlite3 is optional; the bundled sql.js fallback is required.
+try { ensureSqliteRuntime({ silent: true }); } catch {}
+
+// The tray is an optional feature. Do not install its native runtime for
+// ordinary headless/server launches.
+if (trayMode) {
+  try { ensureTrayRuntime({ silent: true }); } catch {}
 }
 
 // Always use Node.js runtime with absolute path

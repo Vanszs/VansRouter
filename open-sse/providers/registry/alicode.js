@@ -3,7 +3,7 @@ export default {
   priority: 20,
   alias: "alicode",
   display: {
-    name: "Alibaba",
+    name: "Alibaba Coding (CN)",
     icon: "cloud",
     color: "#FF6A00",
     textIcon: "ALi",

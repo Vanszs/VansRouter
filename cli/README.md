@@ -52,7 +52,7 @@ npx vansrouter
 ```bash
 docker run -d --name vansrouter -p 20128:20128 \
   -v "$HOME/.9router:/app/data" -e DATA_DIR=/app/data \
-  ghcr.io/vanszs/vansrouter:latest
+  ghcr.io/vanszs/vansrouter:X.Y.Z
 ```
 
 Published images: [Docker Hub](https://hub.docker.com/r/vanszs/vansrouter) • [GHCR](https://github.com/Vanszs/VansRouter/pkgs/container/VansRouter) (multi-platform amd64/arm64).

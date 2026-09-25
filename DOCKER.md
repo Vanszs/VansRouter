@@ -19,8 +19,10 @@ docker run -d \
   -v vansrouter-data:/migration-data:ro \
   -e DATA_DIR=/app/data \
   --name vansrouter \
-  ghcr.io/vanszs/vansrouter:latest
+  ghcr.io/vanszs/vansrouter:X.Y.Z
 ```
+
+Replace `X.Y.Z` with the exact published release tag; do not run the placeholder or `latest`.
 
 The `vansrouter-data` mount is read-only compatibility input for pre-v0.91.22 named-volume installs. It is copied automatically into the canonical `9router-data` volume only when that volume has no database. If the old install used `$HOME/.9router:/app/data`, keep using that bind mount or migrate its contents into `9router-data` first.
 
@@ -97,7 +99,7 @@ Create your own `docker-compose.yml`:
 ```yaml
 services:
   vansrouter:
-    image: ghcr.io/vanszs/vansrouter:latest
+    image: ghcr.io/vanszs/vansrouter:X.Y.Z
     container_name: vansrouter
     restart: always
     ports:
@@ -116,7 +118,7 @@ services:
       - headroom
 
   headroom:
-    image: ghcr.io/chopratejas/headroom:latest
+    image: ghcr.io/chopratejas/headroom@sha256:50b85d8e320cfcdf1b38919bb7ae067b93ff7a8de0a93f05b2c1246370200d1c
     container_name: headroom
     restart: always
     ports:
@@ -144,7 +146,7 @@ docker compose pull vansrouter
 docker compose up -d --no-deps vansrouter
 ```
 
-For a pinned release, replace `latest` in the compose file with `X.Y.Z` before pulling. Do not copy `.next`, delete either volume, or run application migrations manually. After a successful upgrade, remove the `vansrouter-data:/migration-data:ro` mount only after confirming the new container reports the expected version and data.
+For Compose, set `VANSROUTER_VERSION` in `.env` to an immutable SemVer release tag (never `latest`; prefer the recorded digest) before pulling. Do not copy `.next`, delete either volume, or run application migrations manually. After a successful upgrade, remove the `vansrouter-data:/migration-data:ro` mount only after confirming the new container reports the expected version and data.
 
 ---
 

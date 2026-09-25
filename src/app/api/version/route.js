@@ -4,9 +4,17 @@ import pkg from "../../../../package.json" with { type: "json" };
 // Keep aligned with the published package. Do not revert to legacy `9router`: it reports obsolete versions.
 const NPM_PACKAGE_NAME = "vansrouter";
 const VERSION_CACHE_TTL_MS = 300000; // cache npm latest lookup for 5m
+const VERSION_FAILURE_BACKOFF_MS = 30000; // avoid a request storm when npm is down
 
 // Survive hot reload; one cache per process
-const versionCache = (global.__npmVersionCache ??= { value: null, fetchedAt: 0 });
+const versionCache = (global.__npmVersionCache ??= {
+  value: null,
+  fetchedAt: 0,
+  attemptedAt: 0,
+  inFlight: null,
+});
+versionCache.attemptedAt ??= 0;
+versionCache.inFlight ??= null;
 
 // Fetch latest version from npm registry
 function fetchLatestVersion() {
@@ -42,19 +50,36 @@ function compareVersions(a, b) {
 }
 
 async function getLatestVersionCached() {
-  if (versionCache.value && Date.now() - versionCache.fetchedAt < VERSION_CACHE_TTL_MS) {
+  const now = Date.now();
+  if (versionCache.value && now - versionCache.fetchedAt < VERSION_CACHE_TTL_MS) {
     return versionCache.value;
   }
-  const latest = await fetchLatestVersion();
-  if (latest) {
-    versionCache.value = latest;
-    versionCache.fetchedAt = Date.now();
+  if (versionCache.inFlight) return versionCache.inFlight;
+  if (!versionCache.value && now - versionCache.attemptedAt < VERSION_FAILURE_BACKOFF_MS) {
+    return null;
   }
-  return latest;
+
+  versionCache.attemptedAt = now;
+  versionCache.inFlight = fetchLatestVersion()
+    .then((latest) => {
+      if (latest) {
+        versionCache.value = latest;
+        versionCache.fetchedAt = Date.now();
+      }
+      return latest;
+    })
+    .finally(() => {
+      versionCache.inFlight = null;
+    });
+  return versionCache.inFlight;
 }
 
 export async function GET() {
-  const latestVersion = await getLatestVersionCached();
+  // Release smoke tests set this flag so version verification never depends on
+  // the public npm registry. Normal server requests retain update checks.
+  const latestVersion = process.env.VANROUTER_SKIP_UPDATE_CHECK === "1"
+    ? null
+    : await getLatestVersionCached();
   const currentVersion = pkg.version;
   const hasUpdate = latestVersion ? compareVersions(latestVersion, currentVersion) > 0 : false;
 

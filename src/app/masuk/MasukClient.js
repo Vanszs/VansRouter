@@ -1,7 +1,9 @@
 "use client";
 
 import { useState, useEffect, useReducer } from "react";
-import { Card, Button, Input } from "@/shared/components";
+import Card from "@/shared/components/Card";
+import Button from "@/shared/components/Button";
+import Input from "@/shared/components/Input";
 import { useRouter } from "next/navigation";
 
 function handleOidcLogin() {

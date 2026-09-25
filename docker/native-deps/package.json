@@ -1,0 +1,11 @@
+{
+  "name": "vansrouter-native-deps",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Locked native runtime dependencies for the VansRouter container image",
+  "dependencies": {
+    "better-sqlite3": "12.10.0",
+    "bindings": "1.5.0",
+    "file-uri-to-path": "2.0.0"
+  }
+}

@@ -5,7 +5,7 @@ export default {
   priority: 11,
   alias: "alims-intl",
   display: {
-    name: "Alibaba Studio",
+    name: "Alibaba Model Studio (Intl)",
     icon: "cloud",
     color: "#FF6A00",
     textIcon: "ALi",

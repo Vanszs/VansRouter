@@ -3,7 +3,7 @@ export default {
   priority: 50,
   alias: "ali",
   display: {
-    name: "Alibaba",
+    name: "Alibaba DashScope",
     icon: "cloud_queue",
     color: "#FF6600",
     textIcon: "AL",

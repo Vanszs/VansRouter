@@ -13,7 +13,10 @@ const proxyClientMaxBodySize = process.env.NINEROUTER_PROXY_CLIENT_MAX_BODY_SIZE
 const nextConfig = {
   distDir: process.env.NEXT_DIST_DIR || ".next",
   output: "standalone",
-  serverExternalPackages: ["better-sqlite3", "sql.js", "node:sqlite", "bun:sqlite", "dompurify", "chalk"],
+  // Keep `open` external: it derives its own directory from import.meta.url.
+  // Bundling it rewrites that URL to the build machine's path and breaks
+  // Windows/macOS OAuth flows at module load time.
+  serverExternalPackages: ["better-sqlite3", "sql.js", "node:sqlite", "bun:sqlite", "open", "dompurify", "chalk"],
   turbopack: {
     root: tracingRoot
   },
@@ -105,11 +108,38 @@ const nextConfig = {
   async headers() {
     return [
       {
-        // Provider icons (webp), favicons, logos — immutable, hash-stable files.
-        // Browser caches for 1 year; revalidation via Last-Modified/ETag.
+        // Provider icon URLs are stable names, not content hashes. Bound the
+        // cache so replacing an icon does not require a year-long purge.
         source: "/providers/:path*",
         headers: [
-          { key: "Cache-Control", value: "public, max-age=31536000, immutable" },
+          { key: "Cache-Control", value: "public, max-age=86400, stale-while-revalidate=604800" },
+        ],
+      },
+      {
+        // Authenticated HTML must never enter a shared/CDN cache.
+        source: "/dashboard/:path*",
+        headers: [
+          { key: "Cache-Control", value: "private, no-store" },
+        ],
+      },
+      {
+        source: "/masuk",
+        headers: [
+          { key: "Cache-Control", value: "private, no-store" },
+        ],
+      },
+      {
+        // Keep the public landing document short-lived because it references
+        // release-specific hashed chunks.
+        source: "/landing",
+        headers: [
+          { key: "Cache-Control", value: "public, max-age=0, s-maxage=300, stale-while-revalidate=3600" },
+        ],
+      },
+      {
+        source: "/i18n/:path*",
+        headers: [
+          { key: "Cache-Control", value: "public, max-age=300, stale-while-revalidate=3600" },
         ],
       },
       {

@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
 import { useNotificationStore } from "@/store/notificationStore";
-import { preloadProviderIcons } from "@/shared/utils/providerIcon";
 import Sidebar from "../Sidebar";
 import Header from "../Header";
 
@@ -38,10 +37,6 @@ export default function DashboardLayout({ children }) {
   const pathname = usePathname();
   const notifications = useNotificationStore((state) => state.notifications);
   const removeNotification = useNotificationStore((state) => state.removeNotification);
-
-  useEffect(() => {
-    preloadProviderIcons();
-  }, []);
 
   useEffect(() => {
     if (!sidebarOpen) return;
@@ -91,14 +86,9 @@ export default function DashboardLayout({ children }) {
         />
       )}
 
-      {/* Sidebar - Desktop */}
-      <div className="hidden lg:flex">
-        <Sidebar />
-      </div>
-
-      {/* Sidebar - Mobile */}
+      {/* One responsive sidebar avoids duplicate settings/version requests. */}
       <div
-        className={`fixed inset-y-0 left-0 z-50 transform lg:hidden transition-transform duration-300 ease-in-out ${
+        className={`fixed inset-y-0 left-0 z-50 transform transition-transform duration-300 ease-in-out lg:static lg:z-auto lg:flex lg:h-full lg:translate-x-0 ${
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >

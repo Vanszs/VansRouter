@@ -42,6 +42,10 @@ describe("TokenHarbor provider", () => {
     expect(modelIds).toContain("th-orchestra");
     expect(modelIds).toContain("claude-opus-5");
     expect(modelIds).toContain("deepseek-v4-flash");
+    expect(modelIds).toContain("mimo-v2.6-flash:free");
+    expect(modelIds).toContain("qwen3.8-flash:free");
+    expect(modelIds).toContain("deepseek-v4.1-flash:free");
+    expect(modelIds).toContain("glm-5.3-flash");
   });
 
   it("resolves alias 'th' to 'tokenharbor'", () => {

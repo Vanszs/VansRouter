@@ -1,5 +1,5 @@
 import { Inter } from "next/font/google";
-import "material-symbols/outlined.css";
+import localFont from "next/font/local";
 import "./globals.css";
 import { ThemeProvider } from "@/shared/components/ThemeProvider";
 import "@/lib/network/initOutboundProxy"; // Auto-initialize outbound proxy env
@@ -7,13 +7,18 @@ import "@/shared/services/bootstrap"; // Auto-run initializeApp (watchdog, auto-
 import { initConsoleLogCapture } from "@/lib/consoleLogBuffer";
 import { RuntimeI18nProvider } from "@/i18n/RuntimeI18nProvider";
 
-
 // Hook console immediately at module load time (server-side only, runs once)
 initConsoleLogCapture();
 
 const inter = Inter({
   subsets: ["latin"],
   variable: "--font-inter",
+});
+
+const materialSymbols = localFont({
+  src: "./fonts/material-symbols-outlined-subset.woff2",
+  variable: "--font-material-symbols",
+  display: "swap",
 });
 
 export const metadata = {
@@ -31,11 +36,7 @@ export const viewport = {
 export default function RootLayout({ children }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-      </head>
-      <body className={`${inter.variable} font-sans antialiased`}>
+      <body className={`${inter.variable} ${materialSymbols.variable} font-sans antialiased`}>
         <ThemeProvider>
           <RuntimeI18nProvider>
             {children}

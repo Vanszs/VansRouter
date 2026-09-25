@@ -80,8 +80,11 @@ describe("DevinCliExecutor", () => {
 
   it("handles fragmented NDJSON output", async () => {
     const { events } = await run();
-    expect(events.some((event) => event.choices?.[0]?.delta?.content === "frag")).toBe(true);
-    expect(events.some((event) => event.choices?.[0]?.delta?.content === "mented")).toBe(true);
+    const fragments = events
+      .map((event) => event.choices?.[0]?.delta?.content)
+      .filter(Boolean);
+    expect(fragments.length).toBeGreaterThanOrEqual(2);
+    expect(fragments.join("")).toBe("fragmented");
   });
 
   it("times out a hanging CLI and emits one DONE", async () => {

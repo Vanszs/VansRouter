@@ -11,16 +11,8 @@ export function RuntimeI18nProvider({ children }) {
     initRuntimeI18n();
   }, []);
 
-  // Re-process DOM when route changes
   useEffect(() => {
-    if (pathname) {
-      // Double RAF to ensure React has committed changes to DOM
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          reloadTranslations();
-        });
-      });
-    }
+    if (pathname) reloadTranslations();
   }, [pathname]);
 
   return <>{children}</>;

@@ -49,6 +49,9 @@ describe("Database location & fallback path rules", () => {
 
     expect(service.volumes).toContain("vansrouter-data:/migration-data:ro");
     expect(compose.volumes["vansrouter-data"]).toEqual({ name: "vansrouter-data" });
+    expect(service.image).toContain("VANSROUTER_VERSION");
+    expect(service.image).not.toContain(":latest");
+    expect(read("docs/MIGRATION.md")).not.toContain("~/.vansrouter");
 
     const dockerfile = read("Dockerfile");
     expect(dockerfile).toContain("/migration-data");

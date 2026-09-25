@@ -31,14 +31,15 @@ export default async function handler(req) {
     return new Response(JSON.stringify({ error: error.message }), { status: 400, headers: { "content-type": "application/json" } });
   }
 
-  const headers = new Headers(req.headers);
-  headers.delete("x-relay-target");
-  headers.delete("x-relay-path");
-  headers.delete("host");
+  const rawHeaders = {};
+  for (const [key, value] of req.headers.entries()) rawHeaders[key] = value;
+  delete rawHeaders["x-relay-target"];
+  delete rawHeaders["x-relay-path"];
+  delete rawHeaders["host"];
 
   const response = await fetch(targetUrl, {
     method: req.method,
-    headers,
+    headers: rawHeaders,
     body: req.method !== "GET" && req.method !== "HEAD" ? req.body : undefined,
     duplex: "half",
   });
