@@ -24,6 +24,7 @@
 
 - Added `tests/unit/legacy-volume-migration.test.js` covering lock recovery on dead PID owners, canonical DB preservation, and sidecar quarantine.
 - Added `tests/unit/release-hardening.test.js` validating package closure, tarball integrity, and standalone symlink containment.
+- Added `tests/unit/remote-password-bootstrap.test.js` covering the remote default-password contract against the route itself; the previous post-merge guard asserted the same rule by grepping the source for a `status: 403` string, which only proved the text existed and broke on every refactor.
 - Extended `tests/unit/tokenharbor-provider.test.js` asserting multimodal vision and zero-rate pricing for `deepseek-v4.1-flash:free`.
 - Verified test suite: 326 test files / 3,664 tests passing.
 
