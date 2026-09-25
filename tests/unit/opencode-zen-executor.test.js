@@ -95,4 +95,18 @@ describe("opencode-zen fingerprint executor (issue #2507)", () => {
     expect(executor.buildHeaders(freeCredentials, true, "big-pickle")["Authorization"]).toBe("Bearer public");
     expect(executor.buildUrl("big-pickle")).toBe("https://opencode.ai/zen/v1/chat/completions");
   });
+
+  // The keyed zen lane used to guard the "public" fallback behind
+  // `provider === "opencode"`, so a connection that lost its key sent
+  // "Bearer undefined" — which the upstream reads as no credential at all.
+  it("never sends Bearer undefined on the keyed zen lane", () => {
+    const executor = new OpenCodeExecutor("opencode-zen");
+    const headers = executor.buildHeaders({ connectionId: "ocz-no-key" }, true, "big-pickle");
+    expect(headers["Authorization"]).toBe("Bearer public");
+  });
+
+  it("still prefers a real key over the public fallback", () => {
+    const executor = new OpenCodeExecutor("opencode-zen");
+    expect(executor.buildHeaders({ apiKey: "sk-real" }, true, "big-pickle")["Authorization"]).toBe("Bearer sk-real");
+  });
 });

@@ -39,6 +39,11 @@ const nextConfig = {
     serverComponentsHmrCache: true,
     // Tree-shake heavy barrel imports to cut compile + bundle size
     optimizePackageImports: ["@xyflow/react", "@dnd-kit/core", "@dnd-kit/sortable", "material-symbols", "marked"],
+    // Static generation runs one worker per CPU; on a shared or small box the
+    // default is the difference between finishing and being OOM-killed (which
+    // surfaces as "Next.js build failed" even though Next never started).
+    // Unset = Next's default, so CI and release builds are unaffected.
+    ...(process.env.NEXT_BUILD_CPUS ? { cpus: Number(process.env.NEXT_BUILD_CPUS) } : {}),
   },
   webpack: (config, { isServer, webpack }) => {
     // Ignore fs/path modules in browser bundle

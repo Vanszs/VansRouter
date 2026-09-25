@@ -98,11 +98,19 @@ function backupProductionDb() {
 }
 // Run focused no-undef lint before building so "X is not defined" runtime
 // crashes are caught early (e.g., GitHub Issue #1, OpenCode CLI setup).
-console.log("▶ running no-undef lint");
-execFileSync(process.execPath, [path.join(appDir, "scripts", "lint-undef.cjs")], {
-  stdio: "inherit",
-  cwd: appDir,
-});
+// It peaks around 1.2 GB, so on a small or shared box it can be OOM-killed and
+// surface as "Next.js build failed" even though Next never started. CI runs
+// `pnpm lint:undef` as its own step; skip the in-build copy with
+// SKIP_PREBUILD_LINT=1 when memory is tight.
+if (process.env.SKIP_PREBUILD_LINT !== "1") {
+  console.log("▶ running no-undef lint");
+  execFileSync(process.execPath, [path.join(appDir, "scripts", "lint-undef.cjs")], {
+    stdio: "inherit",
+    cwd: appDir,
+  });
+} else {
+  console.log("▶ skipping no-undef lint (SKIP_PREBUILD_LINT=1)");
+}
 
 // Empty, junction-free HOME for the build.
 fs.mkdirSync(path.join(fakeHome, "AppData", "Roaming"), { recursive: true });
