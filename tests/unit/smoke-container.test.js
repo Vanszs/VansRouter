@@ -9,7 +9,7 @@ const {
   ensureImageForPlatform,
   verifyContainerOpenClosure,
   verifyProductionLogin,
-  verifyRemoteDefaultPasswordRejected,
+  verifyRemoteLoginIsGrantOnly,
 } = require("../../scripts/smoke-container.cjs");
 
 describe("container release smoke test", () => {
@@ -52,20 +52,27 @@ describe("container release smoke test", () => {
     expect(source).toContain("INITIAL_PASSWORD=123456");
   });
 
-  it("rejects the default password when the request is not host-local", async () => {
+  it("gives a non-local default-password login the grant, never a session", async () => {
     const calls = [];
-    await verifyRemoteDefaultPasswordRejected("http://127.0.0.1:20128", "123456", async (url, init) => {
+    await verifyRemoteLoginIsGrantOnly("http://127.0.0.1:20128", "123456", async (url, init) => {
       calls.push({ url, init });
-      return { status: 403, json: async () => ({ success: false, mustChangePassword: true }) };
+      return { status: 200, json: async () => ({ success: true, mustChangePassword: true }) };
     });
 
     expect(calls[0].init.headers["X-Forwarded-For"]).toBe("203.0.113.10");
+    // A plain 200 without the flag means it handed out a dashboard session.
     await expect(
-      verifyRemoteDefaultPasswordRejected("http://127.0.0.1:20128", "123456", async () => ({
+      verifyRemoteLoginIsGrantOnly("http://127.0.0.1:20128", "123456", async () => ({
         status: 200,
         json: async () => ({ success: true }),
       })),
-    ).rejects.toThrow(/Remote default-password gate smoke failed/);
+    ).rejects.toThrow(/Remote default-password grant smoke failed/);
+    await expect(
+      verifyRemoteLoginIsGrantOnly("http://127.0.0.1:20128", "123456", async () => ({
+        status: 403,
+        json: async () => ({ success: false }),
+      })),
+    ).rejects.toThrow(/Remote default-password grant smoke failed/);
   });
 
   it("ships no locality knob in the entrypoint", () => {

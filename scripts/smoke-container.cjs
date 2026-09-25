@@ -89,10 +89,12 @@ async function verifyProductionLogin(baseUrl, password, requestFn = fetch) {
   return body;
 }
 
-// The compatibility default password must stay local-only. X-Forwarded-For makes
-// custom-server.js stamp x-9r-via-proxy, so the app treats the request as
+// A non-local login on the compatibility default must not receive a dashboard
+// session. It gets the password-change-only grant instead, so the browser is
+// forced to replace the password before anything else loads. X-Forwarded-For
+// makes custom-server.js stamp x-9r-via-proxy, so the app treats the request as
 // arriving from somewhere other than the operator's own machine.
-async function verifyRemoteDefaultPasswordRejected(baseUrl, password, requestFn = fetch) {
+async function verifyRemoteLoginIsGrantOnly(baseUrl, password, requestFn = fetch) {
   const response = await requestFn(`${baseUrl}/api/auth/login`, {
     method: "POST",
     headers: { "Content-Type": "application/json", "X-Forwarded-For": "203.0.113.10" },
@@ -102,8 +104,9 @@ async function verifyRemoteDefaultPasswordRejected(baseUrl, password, requestFn 
   try {
     body = await response.json();
   } catch {}
-  if (response.status !== 403 || body?.mustChangePassword !== true) {
-    throw new Error(`Remote default-password gate smoke failed: HTTP ${response.status}`);
+  const isGrant = response.status === 200 && body?.success === true && body?.mustChangePassword === true;
+  if (!isGrant) {
+    throw new Error(`Remote default-password grant smoke failed: HTTP ${response.status} body=${JSON.stringify(body)}`);
   }
   return body;
 }
@@ -207,7 +210,7 @@ async function runContainerSmoke({ image, expectedVersion, platform = "linux/amd
     const health = await requestJson(`${baseUrl}/api/health`);
     if (health.status !== 200) throw new Error(`Health check failed: ${health.status}`);
     await verifyProductionLogin(baseUrl, "123456");
-    await verifyRemoteDefaultPasswordRejected(baseUrl, "123456");
+    await verifyRemoteLoginIsGrantOnly(baseUrl, "123456");
     const version = await waitForJson(
       `${baseUrl}/api/version`,
       (body) => body?.currentVersion === expectedVersion,
@@ -236,7 +239,7 @@ module.exports = {
   ensureImageForPlatform,
   verifyContainerOpenClosure,
   verifyProductionLogin,
-  verifyRemoteDefaultPasswordRejected,
+  verifyRemoteLoginIsGrantOnly,
   runContainerSmoke,
 };
 
