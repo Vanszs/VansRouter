@@ -89,6 +89,15 @@ function docker(args, options = {}) {
   return execFileSync("docker", args, { encoding: "utf8", ...options });
 }
 
+function verifyContainerOpenClosure(containerName, dockerFn = docker) {
+  const script = [
+    "const { createRequire } = require('node:module');",
+    "const req = createRequire('/app/package.json');",
+    "for (const name of ['open', 'wsl-utils', 'powershell-utils', 'default-browser', 'define-lazy-prop', 'is-in-ssh', 'is-inside-container']) req.resolve(name);",
+  ].join("");
+  dockerFn(["exec", containerName, "node", "-e", script], { stdio: "inherit" });
+}
+
 function platformPair(platform) {
   const parts = String(platform).split("/");
   if (parts.length < 2 || !parts[0] || !parts[1]) {
@@ -157,6 +166,7 @@ async function runContainerSmoke({ image, expectedVersion, platform = "linux/amd
 
     const baseUrl = `http://127.0.0.1:${port}`;
     await waitForJson(`${baseUrl}/api/ready`, (body) => body?.ok === true && body?.database === "ready");
+    verifyContainerOpenClosure(name);
     const health = await requestJson(`${baseUrl}/api/health`);
     if (health.status !== 200) throw new Error(`Health check failed: ${health.status}`);
     const version = await waitForJson(
@@ -185,6 +195,7 @@ module.exports = {
   platformPair,
   inspectLocalPlatform,
   ensureImageForPlatform,
+  verifyContainerOpenClosure,
   runContainerSmoke,
 };
 

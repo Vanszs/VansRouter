@@ -18,6 +18,7 @@ package-lock.json
 # Build output
 # =============================================================================
 /.next/
+/.next-atomic-*/
 /.next-cli-build/
 /out/
 /gitbook/out/

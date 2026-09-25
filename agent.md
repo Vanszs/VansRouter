@@ -13,7 +13,7 @@ Gunakan deployment atomik dari root proyek:
 PORT=3003 node scripts/deploy-atomic.cjs
 ```
 
-Script membangun release terisolasi, menormalisasi symlink pnpm, menghapus build source, memverifikasi manifest/static/HTML, lalu menjalankan smoke check dengan `DATA_DIR` dan `HOME` terisolasi. PM2 menunjuk ke launcher persisten `custom-server.js` (dengan `server.js` mengikuti `RELEASE_SERVER`) melalui `ecosystem.config.cjs`; PM2 tidak boleh menunjuk langsung ke release di `/tmp`. Smoke check juga memverifikasi `/api/ready`, `/api/version`, dan aset HTML; PM2 state disimpan hanya setelah semua gate lulus.
+Script membangun release terisolasi, menormalisasi symlink pnpm, menghapus build source, memverifikasi manifest/static/HTML, lalu menjalankan smoke check dengan `DATA_DIR` dan `HOME` terisolasi. PM2 menunjuk ke launcher persisten `custom-server.js` (dengan `server.js` mengikuti `RELEASE_SERVER`) melalui `ecosystem.config.cjs`; tanpa `DATA_DIR`, path kompatibilitas default adalah `~/.9router`, sedangkan deployment production `/var/lib/9router` harus `export DATA_DIR=/var/lib/9router`. PM2 tidak boleh menunjuk langsung ke release di `/tmp`. Smoke check juga memverifikasi `/api/ready`, `/api/version`, dan aset HTML; PM2 state disimpan hanya setelah semua gate lulus.
 
 ## 2a. Fresh-installer verification
  sebelum deploy, gunakan layout pnpm default (tanpa `shamefully-hoist`):
@@ -53,7 +53,7 @@ Jangan menjalankan `pm2 save` saat eksperimen gagal atau saat `9router` tidak on
 - **Loading chunk failed:**
   Jangan menghapus atau menyalin ulang `.next/standalone` saat PM2 masih aktif. Gunakan `node scripts/deploy-atomic.cjs` agar release baru disiapkan terpisah dan symlink diganti secara atomik.
 - **Ikon atau StyleSheet tidak termuat di Dashboard:**
-  Verifikasi release aktif (`readlink -f /var/lib/9router/current`) memiliki `public/` dan `.next/static/`.
+  Verifikasi release aktif (`readlink -f "${DATA_DIR:-$HOME/.9router}/current"`) memiliki `public/` dan `.next/static/`.
 
 ---
 

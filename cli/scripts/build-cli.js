@@ -4,6 +4,7 @@ const fs = require("fs");
 const path = require("path");
 const { execSync } = require("child_process");
 const { fixStandaloneSymlinks } = require("../../scripts/fix-standalone-symlinks.cjs");
+const { resolvePackageDir } = require("../../scripts/package-closure.cjs");
 
 // Exclude patterns for files/folders we don't want to copy
 const EXCLUDE_PATTERNS = [
@@ -73,42 +74,51 @@ function copyRecursive(src, dest) {
 }
 
 function ensureModuleInBundle(pkg, options = {}) {
-  const cliAppDir = options.cliAppDir;
-  const appDir = options.appDir;
-  const rootDir = options.rootDir;
-  const copyRecursiveFn = options.copyRecursive || copyRecursive;
-  const requiredFiles = options.requiredFiles || ["package.json"];
+  const {
+    cliAppDir,
+    appDir,
+    rootDir,
+    copyRecursive: copyRecursiveFn = copyRecursive,
+    requiredFiles = ["package.json"],
+    includeDependencies = false,
+    searchPaths = [appDir, rootDir].filter(Boolean),
+    seen = new Set(),
+  } = options;
+
+  if (seen.has(pkg)) return;
+  seen.add(pkg);
 
   const dest = path.join(cliAppDir, "node_modules", pkg);
-  if (fs.existsSync(dest) && requiredFiles.every((file) => fs.existsSync(path.join(dest, file)))) {
-    console.log(`✅ ${pkg} already bundled`);
-    return;
-  }
-  const candidates = [
-    path.join(appDir, "node_modules", pkg),
-    path.join(rootDir, "node_modules", pkg),
-  ];
-
-  let src = candidates.find((p) => fs.existsSync(p));
-  // pnpm workspaces store dependencies in a virtual-store layout that plain
-  // node_modules walking misses; resolve the realpath via Node's resolver.
-  if (!src) {
-    try {
-      const resolved = require.resolve(`${pkg}/package.json`, { paths: [appDir, rootDir] });
-      src = path.dirname(resolved);
-    } catch {
-      // fall through to the warning below
-    }
-  }
-  if (!src) {
-    throw new Error(`${pkg} not found locally — refusing to build an incomplete CLI package`);
-  }
-  fs.mkdirSync(path.dirname(dest), { recursive: true });
-  copyRecursiveFn(src, dest);
+  const src = resolvePackageDir(pkg, searchPaths);
+  const sourcePackageDir = src ? fs.realpathSync(src) : null;
   if (!fs.existsSync(dest) || !requiredFiles.every((file) => fs.existsSync(path.join(dest, file)))) {
-    throw new Error(`${pkg} was not copied completely into the CLI package`);
+    if (!src) {
+      throw new Error(`${pkg} not found locally — refusing to build an incomplete CLI package`);
+    }
+    fs.mkdirSync(path.dirname(dest), { recursive: true });
+    copyRecursiveFn(src, dest);
+    if (!fs.existsSync(dest) || !requiredFiles.every((file) => fs.existsSync(path.join(dest, file)))) {
+      throw new Error(`${pkg} was not copied completely into the CLI package`);
+    }
+    console.log(`✅ Bundled ${pkg}`);
+  } else {
+    console.log(`✅ ${pkg} already bundled`);
   }
-  console.log(`✅ Bundled ${pkg}`);
+
+  if (!includeDependencies) return;
+  const manifest = JSON.parse(fs.readFileSync(path.join(dest, "package.json"), "utf8"));
+  for (const dependency of Object.keys(manifest.dependencies || {})) {
+    ensureModuleInBundle(dependency, {
+      cliAppDir,
+      appDir,
+      rootDir,
+      copyRecursive: copyRecursiveFn,
+      requiredFiles: ["package.json"],
+      includeDependencies: true,
+      searchPaths: [sourcePackageDir, path.dirname(sourcePackageDir), dest, appDir, rootDir].filter(Boolean),
+      seen,
+    });
+  }
 }
 
 function stripBundledPackage(cliAppDir, pkg) {
@@ -270,7 +280,13 @@ if (require.main === module) {
   // `open` stays external in the Next config and must also be present in the
   // published app's private NODE_PATH; otherwise OAuth launchers fail only
   // after installation, when the host node_modules are no longer visible.
-  ensureModuleInBundle("open", { cliAppDir, appDir, rootDir, copyRecursive });
+  ensureModuleInBundle("open", {
+    cliAppDir,
+    appDir,
+    rootDir,
+    copyRecursive,
+    includeDependencies: true,
+  });
   if (stripBundledPackage(cliAppDir, "better-sqlite3")) {
     console.log("✅ Stripped better-sqlite3 (lives in ~/.9router/runtime)");
   }

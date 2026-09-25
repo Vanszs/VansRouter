@@ -3,6 +3,48 @@ const path = require("path");
 const fs = require("fs");
 const crypto = require("crypto");
 
+const MAX_H2C_BODY_BYTES = 64 * 1024 * 1024;
+const H2C_CRLF = Buffer.from("\r\n");
+const H2C_CRLF_CRLF = Buffer.from("\r\n\r\n");
+
+function parseChunkedBody(input, { maxBytes = MAX_H2C_BODY_BYTES } = {}) {
+  const buffer = Buffer.isBuffer(input) ? input : Buffer.from(input);
+  const chunks = [];
+  let offset = 0;
+  let bodyBytes = 0;
+
+  while (true) {
+    const lineEnd = buffer.indexOf(H2C_CRLF, offset);
+    if (lineEnd === -1) return null;
+    const sizeToken = buffer.subarray(offset, lineEnd).toString("ascii").split(";", 1)[0].trim();
+    if (!/^[0-9a-f]+$/i.test(sizeToken)) {
+      throw new Error(`Invalid chunk size: ${sizeToken || "<empty>"}`);
+    }
+    const size = Number.parseInt(sizeToken, 16);
+    if (!Number.isSafeInteger(size)) throw new Error(`Chunk size is too large: ${sizeToken}`);
+    offset = lineEnd + H2C_CRLF.length;
+
+    if (size === 0) {
+      if (buffer.length >= offset + 2 && buffer.subarray(offset, offset + 2).equals(H2C_CRLF)) {
+        return { body: Buffer.concat(chunks), end: offset + 2 };
+      }
+      const trailerEnd = buffer.indexOf(H2C_CRLF_CRLF, offset);
+      if (trailerEnd === -1) return null;
+      return { body: Buffer.concat(chunks), end: trailerEnd + H2C_CRLF_CRLF.length };
+    }
+
+    bodyBytes += size;
+    if (bodyBytes > maxBytes) throw new Error(`Chunked body exceeds ${maxBytes} bytes`);
+    if (buffer.length < offset + size + 2) return null;
+    chunks.push(buffer.subarray(offset, offset + size));
+    offset += size;
+    if (!buffer.subarray(offset, offset + 2).equals(H2C_CRLF)) {
+      throw new Error("Chunk data is not terminated by CRLF");
+    }
+    offset += 2;
+  }
+}
+
 const portArgIndex = process.argv.indexOf("--port");
 if (portArgIndex !== -1) {
   const requestedPort = Number.parseInt(process.argv[portArgIndex + 1], 10);
@@ -46,24 +88,56 @@ http.createServer = (...args) => {
 
   // JBR 25 sends h2c upgrades that the HTTP/1.1 server would otherwise close.
   server.emit = function (event, ...eventArgs) {
-    const [req, socket, head] = eventArgs;
+    const [req, socket, head = Buffer.alloc(0)] = eventArgs;
     if (event !== "upgrade" || String(req.headers.upgrade || "").toLowerCase() !== "h2c") {
       return origEmit.call(this, event, ...eventArgs);
     }
 
-    const contentLength = Number(req.headers["content-length"] || 0);
-    if (!Number.isSafeInteger(contentLength) || contentLength < 0) {
-      socket.destroy();
+    const contentLengthHeader = req.headers["content-length"];
+    const transferEncodingHeader = req.headers["transfer-encoding"];
+    const rejectRequest = (message) => {
+      if (!socket.destroyed) {
+        const body = Buffer.from(message);
+        socket.end(`HTTP/1.1 400 Bad Request\r\nConnection: close\r\nContent-Length: ${body.length}\r\n\r\n${body}`);
+      }
+    };
+
+    if (contentLengthHeader !== undefined && transferEncodingHeader !== undefined) {
+      rejectRequest("Content-Length and Transfer-Encoding cannot be combined\n");
+      return true;
+    }
+
+    const transferEncoding = transferEncodingHeader === undefined
+      ? null
+      : String(transferEncodingHeader).split(",").map((value) => value.trim().toLowerCase()).filter(Boolean);
+    if (transferEncoding && (transferEncoding.length !== 1 || transferEncoding[0] !== "chunked")) {
+      rejectRequest("Unsupported h2c transfer encoding\n");
+      return true;
+    }
+
+    let expectedLength = 0;
+    if (contentLengthHeader !== undefined) {
+      expectedLength = Number(contentLengthHeader);
+      if (!Number.isSafeInteger(expectedLength) || expectedLength < 0) {
+        rejectRequest("Invalid Content-Length\n");
+        return true;
+      }
+    }
+    if (expectedLength > MAX_H2C_BODY_BYTES || head.length > MAX_H2C_BODY_BYTES) {
+      rejectRequest("h2c body is too large\n");
       return true;
     }
 
     const chunks = [head];
     let received = head.length;
-    const serve = () => {
-      // Replay the upgraded request through the existing HTTP/1.1 handler.
+    let settled = false;
+    const serve = (body) => {
+      if (settled) return;
+      settled = true;
+      socket.off("data", readBody);
       const replay = new http.IncomingMessage(socket);
       Object.assign(replay, { method: req.method, url: req.url, headers: req.headers, complete: true });
-      if (received) replay.push(Buffer.concat(chunks, received).subarray(0, contentLength));
+      if (body?.length) replay.push(body);
       replay.push(null);
 
       const res = new http.ServerResponse(replay);
@@ -77,19 +151,45 @@ http.createServer = (...args) => {
           socket.destroy();
         });
     };
+    const fail = (error) => {
+      if (settled) return;
+      settled = true;
+      socket.off("data", readBody);
+      rejectRequest(`${error.message}\n`);
+    };
+    const tryComplete = () => {
+      try {
+        if (transferEncoding) {
+          const result = parseChunkedBody(Buffer.concat(chunks, received));
+          if (result) serve(result.body);
+          return;
+        }
+        if (received >= expectedLength) {
+          serve(Buffer.concat(chunks, received).subarray(0, expectedLength));
+        }
+      } catch (error) {
+        fail(error);
+      }
+    };
+    const readBody = (chunk) => {
+      if (settled) return;
+      chunks.push(chunk);
+      received += chunk.length;
+      if (received > MAX_H2C_BODY_BYTES) {
+        fail(new Error("h2c body is too large"));
+        return;
+      }
+      tryComplete();
+    };
 
-    if (received >= contentLength) {
-      serve();
-    } else {
-      socket.on("data", function readBody(chunk) {
-        chunks.push(chunk);
-        received += chunk.length;
-        if (received < contentLength) return;
-        socket.off("data", readBody);
-        serve();
+    if (transferEncoding || received < expectedLength) {
+      socket.on("data", readBody);
+      socket.on("end", () => {
+        if (!settled) fail(new Error("h2c request ended before the body was complete"));
       });
       socket.resume();
     }
+    tryComplete();
 
     delete req.headers.upgrade;
     delete req.headers["http2-settings"];

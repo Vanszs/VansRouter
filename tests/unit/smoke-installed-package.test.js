@@ -4,7 +4,7 @@ import os from "node:os";
 import path from "node:path";
 
 const require = createRequire(import.meta.url);
-const { parseArgs, verifyVersionOutput } = require("../../cli/scripts/smoke-installed-package.cjs");
+const { parseArgs, verifyBundledOpenClosure, verifyVersionOutput } = require("../../cli/scripts/smoke-installed-package.cjs");
 
 describe("installed CLI package smoke test", () => {
   it("parses the tarball, version, and script mode", () => {
@@ -17,6 +17,19 @@ describe("installed CLI package smoke test", () => {
       expectedVersion: "1.2.3",
       runScripts: true,
     });
+    fs.rmSync(root, { recursive: true, force: true });
+  });
+
+  it("rejects an incomplete bundled open dependency closure", () => {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), "installed-open-closure-"));
+    const bundleRoot = path.join(root, "_nm");
+    fs.mkdirSync(path.join(bundleRoot, "open"), { recursive: true });
+    fs.writeFileSync(path.join(bundleRoot, "open", "package.json"), JSON.stringify({
+      name: "open",
+      dependencies: { "missing-helper": "1.0.0" },
+    }));
+
+    expect(() => verifyBundledOpenClosure(root)).toThrow(/missing-helper/);
     fs.rmSync(root, { recursive: true, force: true });
   });
 

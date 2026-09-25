@@ -5,13 +5,12 @@ const path = require("node:path");
 const { spawn, spawnSync } = require("node:child_process");
 const net = require("node:net");
 const { setTimeout: sleep } = require("node:timers/promises");
+const { resolveRuntimePaths } = require("./runtime-paths.cjs");
 
 const root = path.resolve(__dirname, "..");
 const appName = process.env.PM2_APP_NAME || "9router";
 const port = Number(process.env.PORT || 3003);
-const defaultDataDir = process.env.DATA_DIR || path.join(os.homedir(), ".local", "share", "9router");
-const releaseRoot = path.resolve(process.env.RELEASE_ROOT || path.join(defaultDataDir, "releases"));
-const currentLink = path.resolve(process.env.CURRENT_LINK || path.join(path.dirname(releaseRoot), "current"));
+const { dataDir: defaultDataDir, releaseRoot, currentLink } = resolveRuntimePaths();
 const smokeTimeoutMs = Number(process.env.SMOKE_TIMEOUT_MS || 30000);
 
 function isUnder(candidate, parent) {
@@ -419,32 +418,41 @@ function activate(releasePath, link = currentLink) {
   fs.renameSync(temporaryLink, link);
 }
 
-function readPm2App() {
-  const result = spawnSync("pm2", ["jlist"], { encoding: "utf8" });
-  if (result.status !== 0) return null;
+function readPm2App({ failOnError = false, run = spawnSync } = {}) {
+  const result = run("pm2", ["jlist"], { encoding: "utf8" });
+  if (result.error) {
+    if (failOnError) throw new Error(`Unable to query PM2 state: ${result.error.message}`);
+    return null;
+  }
+  if (result.status !== 0) {
+    if (failOnError) throw new Error(`Unable to query PM2 state (exit ${result.status}): ${result.stderr || "unknown error"}`);
+    return null;
+  }
   try {
     const apps = JSON.parse(result.stdout || "[]");
     return apps.find((entry) => entry.name === appName) || null;
-  } catch {
+  } catch (error) {
+    if (failOnError) throw new Error(`PM2 returned invalid application state: ${error.message}`);
     return null;
   }
 }
 
-function readPm2Environment() {
-  return readPm2App()?.pm2_env?.env || {};
+function readPm2Environment({ failOnError = false, run = spawnSync } = {}) {
+  return readPm2App({ failOnError, run })?.pm2_env?.env || {};
 }
 
 function switchPm2(buildId = null) {
   // Preserve credentials and DATA_DIR already held by PM2.  A deploy shell
   // often has only a subset of the production environment; blindly spreading
   // its environment with --update-env can silently remove provider secrets.
+  const pm2Environment = readPm2Environment({ failOnError: true });
   const env = {
     ...process.env,
-    ...readPm2Environment(),
+    ...pm2Environment,
     NODE_PATH: "",
     PORT: String(port),
     NODE_ENV: "production",
-    DATA_DIR: readPm2Environment().DATA_DIR || process.env.DATA_DIR || path.dirname(releaseRoot),
+    DATA_DIR: pm2Environment.DATA_DIR || process.env.DATA_DIR || defaultDataDir,
     RELEASE_ROOT: releaseRoot,
     CURRENT_LINK: currentLink,
     RELEASE_SERVER: path.join(currentLink, "server.js"),
@@ -732,6 +740,8 @@ module.exports = {
   getFreePort,
   makeReleaseSelfContained,
   readCurrentTarget,
+  readPm2App,
+  readPm2Environment,
   removeRuntimeEnvFiles,
   rollback,
   selectRollbackRelease,

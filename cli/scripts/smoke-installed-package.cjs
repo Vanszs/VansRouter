@@ -27,6 +27,18 @@ function verifyVersionOutput(output, expectedVersion) {
   return actualVersion;
 }
 
+function verifyBundledOpenClosure(appDir) {
+  const bundleRoot = path.join(appDir, "_nm");
+  const openManifestPath = path.join(bundleRoot, "open", "package.json");
+  const manifest = JSON.parse(fs.readFileSync(openManifestPath, "utf8"));
+  for (const dependency of Object.keys(manifest.dependencies || {})) {
+    const dependencyManifest = path.join(bundleRoot, dependency, "package.json");
+    if (!fs.existsSync(dependencyManifest)) {
+      throw new Error(`Bundled open dependency missing: ${dependency}`);
+    }
+  }
+}
+
 function runInstallSmoke({ tarball, expectedVersion, runScripts = false }) {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "vansrouter-install-smoke-"));
   const installDir = path.join(root, "install");
@@ -59,6 +71,7 @@ function runInstallSmoke({ tarball, expectedVersion, runScripts = false }) {
     execFileSync(npmCommand, npmArgs, { env, stdio: "inherit" });
     const cliPath = path.join(installDir, "node_modules", "vansrouter", "cli.js");
     if (!fs.existsSync(cliPath)) throw new Error(`Installed CLI binary missing: ${cliPath}`);
+    verifyBundledOpenClosure(path.join(installDir, "node_modules", "vansrouter", "app"));
     const result = spawnSync(process.execPath, [cliPath, "--version"], {
       env,
       encoding: "utf8",
@@ -75,7 +88,7 @@ function runInstallSmoke({ tarball, expectedVersion, runScripts = false }) {
   }
 }
 
-module.exports = { parseArgs, verifyVersionOutput, runInstallSmoke };
+module.exports = { parseArgs, verifyBundledOpenClosure, verifyVersionOutput, runInstallSmoke };
 
 if (require.main === module) {
   try {

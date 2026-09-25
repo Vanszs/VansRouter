@@ -171,7 +171,7 @@ VansRouter is configured via environment variables:
 | `DATA_DIR` | `~/.9router` | Root directory for persistent SQLite database and backups. |
 | `REQUIRE_API_KEY` | `false` | Enforce valid Bearer API key on all `/v1/*` routes. |
 | `JWT_SECRET` | Auto-generated | Secret for signing dashboard session cookies. |
-| `INITIAL_PASSWORD` | `123456` | Default password for initial dashboard login. |
+| `INITIAL_PASSWORD` | none in production | Strong first-login password; required until a password hash is stored. |
 | `HTTP_PROXY`, `HTTPS_PROXY` | `""` | Outbound proxy for upstream provider requests. |
 | `SEARXNG_URL` | `http://127.0.0.1:8888/search` | Endpoint for the local SearXNG search provider. |
 

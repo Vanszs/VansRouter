@@ -128,6 +128,38 @@ describe("build-helpers", () => {
     expect(fs.existsSync(path.join(destDir, "index.js"))).toBe(true);
   });
 
+  it("copies the complete runtime dependency closure when requested", () => {
+    const appDir = path.join(tmpDir, "app");
+    const rootDir = path.join(tmpDir, "root");
+    const cliAppDir = path.join(tmpDir, "cli", "app");
+    const openDir = path.join(appDir, "node_modules", "open");
+    const helperDir = path.join(appDir, "node_modules", "example-helper");
+    fs.mkdirSync(openDir, { recursive: true });
+    fs.mkdirSync(helperDir, { recursive: true });
+    fs.writeFileSync(path.join(openDir, "package.json"), JSON.stringify({
+      name: "open",
+      version: "11.0.0",
+      dependencies: { "example-helper": "1.0.0" },
+    }));
+    fs.writeFileSync(path.join(openDir, "index.js"), "module.exports = {};");
+    fs.writeFileSync(path.join(helperDir, "package.json"), JSON.stringify({
+      name: "example-helper",
+      version: "1.0.0",
+    }));
+    fs.writeFileSync(path.join(helperDir, "index.js"), "module.exports = {};");
+
+    ensureModuleInBundle("open", {
+      cliAppDir,
+      appDir,
+      rootDir,
+      copyRecursive,
+      includeDependencies: true,
+    });
+
+    expect(fs.existsSync(path.join(cliAppDir, "node_modules", "open", "package.json"))).toBe(true);
+    expect(fs.existsSync(path.join(cliAppDir, "node_modules", "example-helper", "package.json"))).toBe(true);
+  });
+
   it("is a no-op when the package is already present in the bundle", () => {
     const appDir = path.join(tmpDir, "app");
     const rootDir = path.join(tmpDir, "root");

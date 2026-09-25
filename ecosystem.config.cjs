@@ -1,13 +1,11 @@
 const fs = require("node:fs");
-const os = require("node:os");
 const path = require("node:path");
+const { resolveRuntimePaths } = require("./scripts/runtime-paths.cjs");
 
 const root = __dirname;
-// Derive the release pointer from the same persistent data root as the app.
-// A hard-coded /var/lib fallback makes a PM2 dump resurrect a dead release.
-const dataDir = process.env.DATA_DIR || path.join(os.homedir(), ".local", "share", "9router");
-const releaseRoot = process.env.RELEASE_ROOT || path.join(dataDir, "releases");
-const currentLink = process.env.CURRENT_LINK || path.join(path.dirname(releaseRoot), "current");
+// Keep PM2, the deployer, and the application on the same persistent data root.
+// An explicit DATA_DIR remains authoritative; the default preserves ~/.9router.
+const { dataDir, releaseRoot, currentLink } = resolveRuntimePaths();
 const defaultReleaseServer = path.join(currentLink, "server.js");
 const configuredReleaseServer = process.env.RELEASE_SERVER;
 const releaseServer = process.env.CURRENT_LINK

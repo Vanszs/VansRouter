@@ -9,6 +9,7 @@ on:
       - "scripts/deploy-atomic.cjs"
       - "scripts/verify-release-artifact.cjs"
       - "scripts/fix-standalone-symlinks.cjs"
+      - "scripts/package-closure.cjs"
       - "tests/unit/deploy-atomic.test.js"
       - "tests/unit/performance-boundaries.test.js"
       - "src/lib/dataDir.js"
@@ -26,6 +27,8 @@ on:
       - "pnpm-lock.yaml"
       - "pnpm-workspace.yaml"
       - "Dockerfile"
+      - "docker/entrypoint.sh"
+      - "docker/migrate-legacy-volume.cjs"
       - ".gitattributes"
       - ".github/workflows/**"
   pull_request:
@@ -36,6 +39,7 @@ on:
       - "scripts/deploy-atomic.cjs"
       - "scripts/verify-release-artifact.cjs"
       - "scripts/fix-standalone-symlinks.cjs"
+      - "scripts/package-closure.cjs"
       - "tests/unit/deploy-atomic.test.js"
       - "tests/unit/performance-boundaries.test.js"
       - "src/lib/dataDir.js"
@@ -53,6 +57,8 @@ on:
       - "pnpm-lock.yaml"
       - "pnpm-workspace.yaml"
       - "Dockerfile"
+      - "docker/entrypoint.sh"
+      - "docker/migrate-legacy-volume.cjs"
       - ".gitattributes"
       - ".github/workflows/**"
   workflow_dispatch:

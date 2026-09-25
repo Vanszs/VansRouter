@@ -6,6 +6,7 @@ const {
   waitForJson,
   platformPair,
   ensureImageForPlatform,
+  verifyContainerOpenClosure,
 } = require("../../scripts/smoke-container.cjs");
 
 describe("container release smoke test", () => {
@@ -33,6 +34,14 @@ describe("container release smoke test", () => {
       ["image", "rm", "example/image"],
       ["pull", "--platform", "linux/arm64", "example/image"],
     ]);
+  });
+
+  it("checks the bundled open dependency closure inside the container", () => {
+    const calls = [];
+    verifyContainerOpenClosure("smoke-container", (args, options) => calls.push({ args, options }));
+    expect(calls).toHaveLength(1);
+    expect(calls[0].args.slice(0, 3)).toEqual(["exec", "smoke-container", "node"]);
+    expect(calls[0].args[4]).toContain("wsl-utils");
   });
 
   it("retries transient HTTP failures and returns validated JSON", async () => {

@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { getInitialPassword } from "@/lib/auth/password";
 import { getSettings } from "@/lib/localDb";
 import bcrypt from "bcryptjs";
 import { cookies } from "next/headers";
@@ -36,7 +37,6 @@ export async function POST(request) {
       return NextResponse.json({ error: "Dashboard access via tunnel is disabled" }, { status: 403 });
     }
 
-    // Default password is '123456' if not set
     const storedHash = settings.password;
 
     if (settings.authMode === "oidc" && isOidcConfigured(settings)) {
@@ -47,8 +47,13 @@ export async function POST(request) {
     if (storedHash) {
       isValid = await bcrypt.compare(password, storedHash);
     } else {
-      // Use env var or default
-      const initialPassword = process.env.INITIAL_PASSWORD || "123456";
+      const initialPassword = getInitialPassword();
+      if (!initialPassword) {
+        return Response.json(
+          { error: "INITIAL_PASSWORD must be configured with a strong value before login" },
+          { status: 503, headers: NO_STORE_HEADERS },
+        );
+      }
       isValid = password === initialPassword;
     }
 

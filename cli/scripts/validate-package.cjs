@@ -31,6 +31,15 @@ for (const required of [requiredWasm, requiredNext, requiredOpen, requiredServer
     throw new Error(`Required CLI artifact missing: ${required}`);
   }
 }
+const openPackageJson = JSON.parse(execFileSync("tar", ["-xOf", tarball, requiredOpen], {
+  encoding: "utf8",
+}));
+for (const dependency of Object.keys(openPackageJson.dependencies || {})) {
+  const requiredDependency = `package/app/_nm/${dependency}/package.json`;
+  if (!entries.includes(requiredDependency)) {
+    throw new Error(`Bundled open dependency missing: ${dependency}`);
+  }
+}
 if (!entries.some((entry) => entry.startsWith("package/app/.next-cli-build/static/") && !entry.endsWith("/"))) {
   throw new Error("CLI static assets missing from final package");
 }

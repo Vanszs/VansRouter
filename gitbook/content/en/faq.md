@@ -236,7 +236,7 @@ npm run deploy:cloudflare
 **Environment variables:**
 - `JWT_SECRET` - **MUST change in production!**
 - `DATA_DIR` - Database storage path (default: `~/.9router`)
-- `INITIAL_PASSWORD` - Dashboard login (default: `123456`)
+- `INITIAL_PASSWORD` - Dashboard login; no production default, set a strong value before first login
 - `NODE_ENV` - Set to `production` for deploy
 
 See [deployment guide](getting-started/installation.md#deployment) for details.

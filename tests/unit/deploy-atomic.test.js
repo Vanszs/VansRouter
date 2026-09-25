@@ -68,7 +68,10 @@ describe("atomic deployment artifact", () => {
     expect(ecosystem).toContain('CURRENT_LINK: currentLink');
     expect(ecosystem).toContain('RELEASE_ROOT: releaseRoot');
     expect(ecosystem).toContain('DATA_DIR: dataDir');
-    expect(ecosystem).toContain('os.homedir()');
+    expect(ecosystem).toContain('resolveRuntimePaths');
+    const runtimePaths = fs.readFileSync(path.resolve("scripts/runtime-paths.cjs"), "utf8");
+    expect(runtimePaths).toContain('path.join(home, ".9router")');
+    expect(runtimePaths).not.toContain('.local", "share", "9router');
     expect(ecosystem).not.toContain('/var/lib/9router/current');
     expect(script).toContain('if (activeScript && path.resolve(activeScript) !== path.resolve(expectedScript))');
     expect(script).toContain('run("pm2", ["delete", appName]');

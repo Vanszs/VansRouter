@@ -139,7 +139,7 @@ If Headroom runs on the Docker host instead of as a sidecar, use `http://host.do
 
 ## Update without manual asset or database steps
 
-`9router-data` is the canonical volume. The compose file also mounts historical `vansrouter-data` read-only for automatic compatibility copying. The entrypoint copies the complete legacy data tree only when `/app/data/db/data.sqlite` does not exist and records `.legacy-volume-migrated`; it never overwrites an existing canonical file. Legacy installs that used a host bind mount (`$HOME/.9router:/app/data`) must keep that bind mount or copy its contents into `9router-data` before switching to named volumes.
+`9router-data` is the canonical volume. The compose file also mounts historical `vansrouter-data` read-only for automatic compatibility copying. The entrypoint stages and validates the legacy SQLite database before atomically installing it; a valid canonical database is preserved, while an invalid interrupted copy is replaced only from a validated migration source. The `.legacy-volume-migrated` marker is written last. Legacy installs that used a host bind mount (`$HOME/.9router:/app/data`) must keep that bind mount or copy its contents into `9router-data` before switching to named volumes.
 
 ```bash
 docker compose pull vansrouter

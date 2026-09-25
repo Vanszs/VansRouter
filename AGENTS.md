@@ -29,9 +29,9 @@ PORT=3003 node scripts/deploy-atomic.cjs
 pm2 save
 ```
 
-`ecosystem.config.cjs` pins PM2 to the persistent `custom-server.js` launcher, which wraps the `server.js` release launcher and follows `RELEASE_SERVER` through `/var/lib/9router/current`; PM2 must never point directly at a release inside `/tmp`.
+`ecosystem.config.cjs` pins PM2 to the persistent `custom-server.js` launcher, which wraps the `server.js` release launcher and follows `RELEASE_SERVER` through the `DATA_DIR`-derived current link. The compatibility default is `~/.9router/current`; production deployments that standardize on `/var/lib/9router` must set `DATA_DIR=/var/lib/9router` explicitly. PM2 must never point directly at a release inside `/tmp`.
 
-Atomic deployment builds an isolated release, validates its static chunks, switches `/var/lib/9router/current` only after smoke checks, and retains the previous release for rollback:
+Atomic deployment builds an isolated release, validates its static chunks, switches the `DATA_DIR`-derived current link only after smoke checks, and retains the previous release for rollback:
 
 ```bash
 node scripts/deploy-atomic.cjs rollback

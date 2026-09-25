@@ -54,13 +54,12 @@ describe("Database location & fallback path rules", () => {
     expect(read("docs/MIGRATION.md")).not.toContain("~/.vansrouter");
 
     const dockerfile = read("Dockerfile");
-    expect(dockerfile).toContain("/migration-data");
-    expect(dockerfile).toContain("[ ! -f /app/data/db/.legacy-volume-migrated ]");
-    expect(dockerfile).toContain("[ ! -e /app/data/db/data.sqlite ]");
-    expect(dockerfile).toContain("[ -d /migration-data ]");
-    expect(dockerfile).toContain("copy_missing() {");
-    expect(dockerfile).toContain('copy_missing /migration-data /app/data');
-    expect(dockerfile).toContain('elif [ ! -e "$destination" ]; then');
-    expect(dockerfile).toContain("touch /app/data/db/.legacy-volume-migrated");
+    expect(dockerfile).toContain("COPY docker/migrate-legacy-volume.cjs");
+    expect(dockerfile).toContain("COPY docker/entrypoint.sh");
+    const entrypoint = read("docker/entrypoint.sh");
+    expect(entrypoint).toContain("migrate-legacy-volume.cjs");
+    expect(entrypoint).toContain("exec su-exec node");
+    expect(read(".env.example")).toContain("INITIAL_PASSWORD=");
+    expect(read(".env.example")).not.toContain("INITIAL_PASSWORD=123456");
   });
 });
