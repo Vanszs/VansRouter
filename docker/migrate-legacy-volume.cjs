@@ -86,14 +86,23 @@ function cleanStagingDirectories(dataDir) {
   }
 }
 
-// true = owner alive, false = owner gone, null = cannot tell (no/unreadable pid).
-// Without this a container killed mid-migration leaves a fresh lock behind and
-// `set -eu` crash-loops the entrypoint until the 6h stale window elapses.
-function isLockOwnerAlive(lockPath) {
+// true = owner alive, false = owner gone, null = cannot tell.
+// `ownerPid` is null when the lock dir exists without a readable owner.json, i.e.
+// a crash between mkdir and the write — no liveness signal, so age decides there.
+function lockOwnerPid(lockPath) {
   try {
     const owner = JSON.parse(fs.readFileSync(path.join(lockPath, "owner.json"), "utf8"));
-    if (!Number.isInteger(owner.pid) || owner.pid <= 0) return null;
-    process.kill(owner.pid, 0);
+    return Number.isInteger(owner.pid) && owner.pid > 0 ? owner.pid : null;
+  } catch {
+    return null;
+  }
+}
+
+function isLockOwnerAlive(lockPath) {
+  const pid = lockOwnerPid(lockPath);
+  if (!pid) return null;
+  try {
+    process.kill(pid, 0);
     return true;
   } catch (error) {
     return error?.code === "ESRCH" ? false : null;
@@ -122,6 +131,17 @@ function acquireMigrationLock(dataDir, { staleMs = 6 * 60 * 60 * 1000 } = {}) {
     if (!stale && isLockOwnerAlive(lockPath) === false) {
       // Owner is gone (OOM-kill / force stop): reclaim now, no stale wait.
       stale = true;
+    }
+    if (!stale && lockOwnerPid(lockPath) === null) {
+      // Crashed between mkdir and writing owner.json: no pid to probe, so fall
+      // back to a short age instead of the full 6h window.
+      let ageMs = 0;
+      try {
+        ageMs = Date.now() - fs.statSync(lockPath).mtimeMs;
+      } catch {
+        ageMs = 0;
+      }
+      if (ageMs > 30_000) stale = true;
     }
     if (stale) {
       fs.rmSync(lockPath, { recursive: true, force: true });

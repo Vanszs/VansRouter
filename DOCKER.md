@@ -25,7 +25,7 @@ docker run -d \
 
 Save the generated `INITIAL_PASSWORD` securely. If omitted, a new installation uses the compatibility default `123456`; change it before public exposure. Open `http://localhost:20128/masuk` to log in.
 
-Docker publishes ports through the container network, so requests from the host arrive as the container gateway address. The entrypoint declares that address, which keeps host access local: `123456` logs in from the machine running Docker, while a client from another machine is rejected with `Default password must be changed before remote access` until the password is changed (Profile) or `INITIAL_PASSWORD` is set to a strong value.
+A login with the compatibility default `123456` that does not come from this machine is never given a dashboard session. It receives a short-lived, password-change-only grant instead, so the browser is asked for a strong replacement password (12+ characters) before anything else loads. This also means anyone who can reach the port before you have set a password could take the account over — set `INITIAL_PASSWORD` (or change the password immediately) on any install reachable from another machine.
 
 Replace `X.Y.Z` with the exact published release tag; do not run the placeholder or `latest`.
 

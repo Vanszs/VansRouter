@@ -83,7 +83,9 @@ async function getLatestVersionCached() {
 export async function GET() {
   // Release smoke tests set this flag so version verification never depends on
   // the public npm registry. Normal server requests retain update checks.
-  const latestVersion = process.env.VANROUTER_SKIP_UPDATE_CHECK === "1"
+  const skipUpdateCheck = process.env.VANSROUTER_SKIP_UPDATE_CHECK === "1"
+    || process.env.VANROUTER_SKIP_UPDATE_CHECK === "1";
+  const latestVersion = skipUpdateCheck
     ? null
     : await getLatestVersionCached();
   const currentVersion = pkg.version;

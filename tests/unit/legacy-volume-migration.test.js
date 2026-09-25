@@ -173,6 +173,24 @@ describe("legacy Docker volume migration", () => {
     fs.mkdirSync(lockPath, { recursive: true });
     fs.writeFileSync(path.join(lockPath, "owner.json"), JSON.stringify({ pid: deadPid(), startedAt: new Date().toISOString() }));
 
+    // No migration source: reaching a normal result at all proves the stale lock
+    // was reclaimed instead of throwing "already running".
+    const result = migrateLegacyVolume({ dataDir, migrationDir, Database });
+
+    expect(result.status).toBe("no-migration-source");
+    expect(fs.existsSync(lockPath)).toBe(false);
+  });
+
+  it("reclaims an ownerless lock left by a crash between mkdir and the write", () => {
+    const root = tempRoot();
+    const dataDir = path.join(root, "data");
+    const migrationDir = path.join(root, "migration");
+    const lockPath = path.join(dataDir, ".legacy-migration.lock");
+    fs.mkdirSync(lockPath, { recursive: true }); // no owner.json at all
+    // Backdate it past the short ownerless window.
+    const old = new Date(Date.now() - 60_000);
+    fs.utimesSync(lockPath, old, old);
+
     const result = migrateLegacyVolume({ dataDir, migrationDir, Database });
 
     expect(result.status).toBe("no-migration-source");

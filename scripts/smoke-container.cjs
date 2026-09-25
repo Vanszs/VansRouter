@@ -195,6 +195,7 @@ async function runContainerSmoke({ image, expectedVersion, platform = "linux/amd
       "-e", "NODE_ENV=production",
       "-e", "INITIAL_PASSWORD=123456",
       "-e", "NEXT_TELEMETRY_DISABLED=1",
+      "-e", "VANSROUTER_SKIP_UPDATE_CHECK=1",
       "-e", "VANROUTER_SKIP_UPDATE_CHECK=1",
       "-v", `${dataDir}:/app/data`,
       image,

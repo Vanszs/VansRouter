@@ -41,6 +41,7 @@ const child = spawn(process.execPath, [serverPath], {
     NODE_ENV: "production",
     NODE_PATH: bundledModules,
     NEXT_TELEMETRY_DISABLED: "1",
+    VANSROUTER_SKIP_UPDATE_CHECK: "1",
     VANROUTER_SKIP_UPDATE_CHECK: "1",
     PORT: String(port),
   },

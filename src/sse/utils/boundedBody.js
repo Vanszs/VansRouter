@@ -7,7 +7,9 @@ import { HTTP_STATUS } from "open-sse/config/runtimeConfig.js";
 const DEFAULT_MAX_BYTES = 8 * 1024 * 1024;
 
 function maxBodyBytes(limit) {
-  return limit || parseInt(process.env.NINEROUTER_MAX_BODY_BYTES || "", 10) || DEFAULT_MAX_BYTES;
+  return limit
+    || parseInt(process.env.VANSROUTER_MAX_BODY_BYTES || process.env.NINEROUTER_MAX_BODY_BYTES || "", 10)
+    || DEFAULT_MAX_BYTES;
 }
 
 function tooLarge(bytes, max) {

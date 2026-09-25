@@ -1,6 +1,9 @@
 // Free OpenCode models that don't use the "-free" id suffix
 const KNOWN_FREE_OPENCODE_MODELS = ["big-pickle"];
 
+// Upstream returns "Model is unavailable" or decommissioned for these ids — filter from suggested
+const DEAD_FREE_OPENCODE_MODELS = new Set(["deepseek-v4-flash-free", "hy3-free"]);
+
 // NVIDIA NIM free-tier models whitelist.
 // This is statically defined to prevent Next.js standalone dependency-splitting failures
 // where the import of PROVIDERS from open-sse registry yields an empty object in production.
@@ -30,7 +33,7 @@ export const FILTERS = {
 
   "opencode-free": (models) =>
     models
-      .filter((m) => m.id?.endsWith("-free") || KNOWN_FREE_OPENCODE_MODELS.includes(m.id))
+      .filter((m) => (m.id?.endsWith("-free") || KNOWN_FREE_OPENCODE_MODELS.includes(m.id)) && !DEAD_FREE_OPENCODE_MODELS.has(m.id))
       .map((m) => ({ id: m.id, name: m.id })),
 
   // models.dev returns a large catalog; keep only mimo models

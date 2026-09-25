@@ -58,7 +58,8 @@ if (portArgIndex !== -1) {
 
 const origCreate = http.createServer.bind(http);
 const PEER_TOKEN = crypto.randomBytes(24).toString("hex");
-process.env.NINEROUTER_PEER_TOKEN = PEER_TOKEN;
+process.env.VANSROUTER_PEER_TOKEN = PEER_TOKEN;
+process.env.NINEROUTER_PEER_TOKEN = PEER_TOKEN; // legacy alias
 
 // Wrap Next standalone HTTP server: derive client IP from the TCP socket
 // (unspoofable) and strip client-supplied forwarding headers so downstream
