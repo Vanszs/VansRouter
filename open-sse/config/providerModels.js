@@ -27,12 +27,20 @@ const DOT_VERSION_PROVIDERS = new Set(["kr", "kiro"]);
 // Find a registry entry by id. Thinking variants ("model(level)") resolve to their
 // base id so responses-only models keep their routing. For Kiro models, tolerates
 // dash/dot version separators ("claude-sonnet-4-5" ~= "claude-sonnet-4.5").
-// Other providers use exact match only.
+// Some registries name models with the provider's own prefix already attached
+// (nvidia/nemotron-*, poolside/laguna-*, fal-ai/flux/*). parseModel() splits the
+// client id at the first slash, so those lookups arrive bare and miss; the retry
+// below re-attaches the alias/id prefix. Without it the upstream body carries the
+// bare id and providers that require the org prefix (NVIDIA) answer 404.
 function findModel(models, modelId, aliasOrId) {
   if (!models) return undefined;
   const baseModelId = stripThinkingSuffix(modelId);
   const found = models.find(m => m.id === modelId || m.id === baseModelId);
   if (found) return found;
+  if (aliasOrId) {
+    const hit = models.find(m => m.id === `${aliasOrId}/${baseModelId}`);
+    if (hit) return hit;
+  }
   if (!DOT_VERSION_PROVIDERS.has(aliasOrId)) return undefined;
   const normalized = normalizeModelId(baseModelId);
   if (normalized === baseModelId) return undefined;

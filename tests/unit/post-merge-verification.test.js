@@ -32,9 +32,11 @@ describe("Post-merge: chat.js ACL enforcement preserved", () => {
   });
 
   it("propagates apiKeyInfo to handleSingleModelChat", () => {
-    // Both combo handlers must pass apiKeyInfo
-    const apiKeyInfoPassCount = (src.match(/apiKeyInfo\)/g) || []).length;
-    expect(apiKeyInfoPassCount).toBeGreaterThanOrEqual(4);
+    // Every entry path (combo, fusion, single) must forward apiKeyInfo.
+    const passCount = src
+      .split("\n")
+      .filter((line) => line.includes("handleSingleModelChat(") && line.includes("apiKeyInfo")).length;
+    expect(passCount).toBeGreaterThanOrEqual(4);
   });
 
   it("checks isKindAllowed for 'llm' kind", () => {

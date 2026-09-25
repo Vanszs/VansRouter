@@ -265,13 +265,27 @@ async function handleSingleModelChat(body, modelStr, clientRawRequest = null, re
     return errorResponse(HTTP_STATUS.FORBIDDEN, `Provider "${provider}" is not allowed for this API key`);
   }
 
-  // ACL: check if model is in available models list
+  // ACL: check if model is in available models list.
+  // Normalizes double-prefix "provider/provider/model" the same way embeddings.js does:
+  // combo picker stores `${alias}/${registryId}` while the connected-provider allowlist
+  // strips one alias prefix (allowedModels.js buildConnectedProviderIds).
   const resolvedModelStr = `${provider}/${model}`;
-  const isAllowed = (modelStr === resolvedModelStr)
-    ? await isModelAllowed(resolvedModelStr, apiKeyInfo)
-    : (await isModelAllowed(modelStr, apiKeyInfo) || await isModelAllowed(resolvedModelStr, apiKeyInfo));
+  const candidates = [resolvedModelStr];
+  if (model.startsWith(`${provider}/`)) {
+    candidates.push(`${provider}/${model.slice(provider.length + 1)}`);
+  }
+  if (modelStr !== resolvedModelStr && !candidates.includes(modelStr)) {
+    candidates.push(modelStr);
+  }
+  let isAllowed = false;
+  for (const candidate of candidates) {
+    if (await isModelAllowed(candidate, apiKeyInfo)) {
+      isAllowed = true;
+      break;
+    }
+  }
   if (!isAllowed) {
-    log.warn("CHAT", `Model not in available models list`, { model: resolvedModelStr });
+    log.warn("CHAT", `Model not in available models list`, { model: resolvedModelStr, candidates });
     return errorResponse(HTTP_STATUS.NOT_FOUND, `Model "${resolvedModelStr}" is not available. Only models listed in /v1/models can be used.`);
   }
 
