@@ -226,14 +226,10 @@ describe("Post-merge: hybrid security guards", () => {
     expect(src).toContain("redacted: true");
   });
 
-  it("checks remote default-password state before issuing a cookie", () => {
-    const src = read("src/app/api/auth/login/route.js");
-    const guard = src.indexOf("if (mustChangePassword)");
-    const cookie = src.lastIndexOf("setDashboardAuthCookie");
-    expect(guard).toBeGreaterThan(-1);
-    expect(cookie).toBeGreaterThan(guard);
-    expect(src.slice(guard, cookie)).toContain("status: 403");
-  });
+  // The "remote default-password login must not get a dashboard session" contract is
+  // owned by tests/unit/remote-password-bootstrap.test.js, which exercises the route
+  // itself. It used to be asserted here by grepping the source for a `status: 403`,
+  // which only proved the string existed and broke on every legitimate refactor.
 
   it("keeps the async search SSRF boundary", () => {
     const callers = read("open-sse/handlers/search/callers.js");
