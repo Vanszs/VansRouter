@@ -1,5 +1,11 @@
 # v0.91.34 (2026-09-25)
 
+## Reliability & Upstream Parity
+
+- **OpenCode dead-model filter (upstream parity)** — Restored `DEAD_FREE_OPENCODE_MODELS` in `src/app/api/providers/suggested-models/filters.js` with `deepseek-v4-flash-free` (upstream backend dead since 2026-09-02) and `hy3-free` (decommissioned), so the dashboard no longer suggests models upstream will reject.
+- **Env prefix standardization** — Standardized runtime env vars on `VANSROUTER_*` with legacy `NINEROUTER_*` / `VANROUTER_*` aliases kept for compatibility: peer token (`custom-server.js`, `src/lib/auth/trustedPeer.js`), max body bytes (`src/sse/utils/boundedBody.js`), and skip-update-check (`src/app/api/version/route.js`, smoke scripts). Documented in `.env.example`.
+- **Migration lock liveness hardening** — `docker/migrate-legacy-volume.cjs` reclaims locks whose owner PID is dead instead of crash-looping for the 6-hour stale window.
+
 ## Reliability & Deployment Hardening
 
 - **Atomic deployment standalone symlink isolation** — In `scripts/deploy-atomic.cjs`, rewritten Next.js standalone pnpm symlinks whose targets resolve into the temporary build tree (`NEXT_DIST_DIR`) to relative intra-release links (`makeReleaseSelfContained`). Temporary build paths are cleaned *before* running production smoke checks, preventing `Cannot find module 'next'` runtime crashes when deploying via PM2.
