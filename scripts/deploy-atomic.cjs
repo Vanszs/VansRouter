@@ -411,10 +411,28 @@ function readCurrentTarget(link = currentLink) {
   }
 }
 
+function linkExists(target) {
+  try {
+    fs.lstatSync(target);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 function activate(releasePath, link = currentLink) {
   fs.mkdirSync(path.dirname(link), { recursive: true });
   const temporaryLink = `${link}.next-${process.pid}-${Date.now()}-${Math.random().toString(36).slice(2)}`;
   fs.symlinkSync(releasePath, temporaryLink, process.platform === "win32" ? "junction" : "dir");
+  // POSIX rename replaces an existing symlink atomically; Windows refuses to
+  // rename over a junction, so the link is removed first there. Windows therefore
+  // loses the atomic swap — no workaround exists (no RENAME_EXCHANGE). Branch on
+  // filesystem state, not error code: Windows reports this as EPERM/EEXIST/
+  // ENOTEMPTY depending on destination shape. rmdir, not a recursive rm — the
+  // link points at a live release and only the link may be removed.
+  if (process.platform === "win32" && linkExists(link)) {
+    fs.rmdirSync(link);
+  }
   fs.renameSync(temporaryLink, link);
 }
 
