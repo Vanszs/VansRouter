@@ -72,6 +72,22 @@ describe("temporary DATA_DIR guard", () => {
     rmSync(temp, { recursive: true, force: true });
   });
 
+  it("ignores an opt-out that is not exactly \"1\", like every other flag here", async () => {
+    // VANSROUTER_SKIP_UPDATE_CHECK, NINE_ROUTER_PROXY_MANAGED and TRAY_MODE are
+    // all compared to "1". Treating any non-empty string as true would let
+    // DATA_DIR_ALLOW_TEMP=false disable the guard, which is the one answer the
+    // operator who wrote it least wants.
+    const temp = mkdtempSync(path.join(os.tmpdir(), "9router-data-smoke-"));
+    const dir = await loadDataDir({
+      platform: "linux",
+      env: { DATA_DIR: temp, DATA_DIR_ALLOW_TEMP: "false", NODE_ENV: "production" },
+    });
+
+    expect(dir).not.toBe(temp);
+    expect(guardFired()).toBe(true);
+    rmSync(temp, { recursive: true, force: true });
+  });
+
   it("classifies the macOS per-user temp root as temporary, and the opt-out covers it", async () => {
     const macTemp = "/var/folders/zz/T/vansrouter-atomic-check-1/data";
     const guarded = await loadDataDir({ platform: "darwin", env: { DATA_DIR: macTemp, NODE_ENV: "production" } });

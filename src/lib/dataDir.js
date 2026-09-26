@@ -39,9 +39,9 @@ export function getDataDir() {
   // Prevent production/PM2 deployments from accidentally using a smoke-test or
   // temp directory as the persistent data store. A temp DATA_DIR means the DB
   // appears "empty" after reboot/cleanup and real data in ~/.9router is ignored.
-  // The redirect is silent, so a caller that knows the directory is disposable
-  // — the release artifact check runs a throwaway sandbox — can opt out.
-  if (looksLikeSmokeDataDir(configured) && !process.env.DATA_DIR_ALLOW_TEMP) {
+  // A caller that knows the directory is disposable opts out with "1", the same
+  // spelling every other boolean flag in this codebase uses.
+  if (looksLikeSmokeDataDir(configured) && process.env.DATA_DIR_ALLOW_TEMP !== "1") {
     const fallback = defaultDir();
     if (isProductionLike()) {
       console.warn(

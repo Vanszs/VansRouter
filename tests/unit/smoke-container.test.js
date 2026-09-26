@@ -91,10 +91,8 @@ describe("container release smoke test", () => {
   });
 
   it("gives the container a named volume, never a host directory it cannot delete", async () => {
-    // The image sets no USER, so the container writes as root. Anything it leaves
-    // in a host bind mount is root-owned, and a non-root runner cannot chmod or
-    // unlink it -- POSIX refuses both, so no host-side cleanup can succeed. A
-    // named volume leaves nothing on the host to clean.
+    // The image sets no USER, so anything it leaves in a host bind mount is
+    // root-owned, and a non-root runner can neither chmod nor unlink it.
     const before = fs.readdirSync(os.tmpdir()).filter((n) => n.startsWith("vansrouter-container-smoke-"));
     const calls = [];
     const dockerFn = (args) => {

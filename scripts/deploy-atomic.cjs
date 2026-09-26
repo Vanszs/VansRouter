@@ -12,6 +12,7 @@ const appName = process.env.PM2_APP_NAME || "9router";
 const port = Number(process.env.PORT || 3003);
 const { releaseRoot, currentLink } = resolveRuntimePaths();
 const smokeTimeoutMs = Number(process.env.SMOKE_TIMEOUT_MS || 30000);
+const SMOKE_LOG_LIMIT = 4000;
 
 function isUnder(candidate, parent) {
   const relative = path.relative(parent, candidate);
@@ -658,7 +659,8 @@ async function smokeRelease(releasePath, distDir = null) {
   const child = spawn(process.execPath, [path.join(releasePath, releaseEntry)], {
     cwd: releasePath,
     env: {
-      ...process.env,      APPDATA: path.join(homeDir, "AppData", "Roaming"),
+      ...process.env,
+      APPDATA: path.join(homeDir, "AppData", "Roaming"),
       DATA_DIR: dataDir,
       DATA_DIR_ALLOW_TEMP: "1",
       HOME: homeDir,
@@ -671,14 +673,13 @@ async function smokeRelease(releasePath, distDir = null) {
     },
     stdio: ["ignore", "pipe", "pipe"],
   });
-  // A smoke failure that cannot be explained is a smoke failure that has to be
-  // reproduced by hand, so keep the tail of what the release printed. Pipes are
-  // drained as they fill; a full pipe would stall the server.
-  const serverLog = [];
+  // Keep the tail of what the release printed: a smoke failure that cannot be
+  // explained has to be reproduced by hand. Trimmed on arrival because a full
+  // pipe would stall the server.
+  let serverLog = "";
   for (const stream of [child.stdout, child.stderr]) {
     stream.on("data", (chunk) => {
-      serverLog.push(chunk.toString());
-      if (serverLog.length > 60) serverLog.shift();
+      serverLog = (serverLog + chunk).slice(-SMOKE_LOG_LIMIT);
     });
   }
   try {
@@ -687,7 +688,7 @@ async function smokeRelease(releasePath, distDir = null) {
       throw new Error("Smoke server did not use the isolated DATA_DIR");
     }
   } catch (error) {
-    error.message += `\n--- smoke server output ---\n${serverLog.join("").trim().slice(-4000)}`;
+    if (serverLog.trim()) error.message += `\n--- smoke server output ---\n${serverLog.trim()}`;
     throw error;
   } finally {
     child.kill("SIGTERM");
