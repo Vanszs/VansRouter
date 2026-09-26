@@ -174,6 +174,21 @@ console.log(`▶ copying public/ + ${distDir}/static into ${standaloneDir}`);
 fs.cpSync(path.join(appDir, "public"), path.join(standaloneDir, "public"), { recursive: true });
 fs.cpSync(path.join(appDir, distDir, "static"), path.join(standaloneDir, distDir, "static"), { recursive: true });
 
+// Bundle Next runtime packages that standalone output omits from top-level
+// node_modules. On POSIX, Next resolves these through intra-release symlinks
+// into .pnpm. On Windows, where junction copies dissolve into directories,
+// Next's internal requires (e.g. @swc/helpers in constants.js, @next/env in config.js)
+// must resolve directly from the release's node_modules.
+const { copyPackageClosure, copyDirectory } = require("./package-closure.cjs");
+const standaloneNodeModules = path.join(standaloneDir, "node_modules");
+for (const pkg of ["@swc/helpers", "@next/env", "react", "react-dom"]) {
+  copyPackageClosure(pkg, {
+    sourceRoots: [appDir],
+    destinationRoot: standaloneNodeModules,
+    copyPackage: copyDirectory,
+  });
+}
+
 fixStandaloneSymlinks(path.resolve(standaloneDir));
 fs.copyFileSync(path.join(appDir, "custom-server.js"), path.join(standaloneDir, "custom-server.js"));
 fs.copyFileSync(path.join(appDir, "runtime-secrets.cjs"), path.join(standaloneDir, "runtime-secrets.cjs"));

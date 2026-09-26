@@ -51,6 +51,13 @@ describe("build-helpers", () => {
     expect(content).toMatch(/ensureModuleInBundle\s*\(\s*["']@swc\/helpers["']\s*,/);
   });
 
+  it("bundles @swc/helpers into standalone node_modules in build.js", () => {
+    const buildScriptPath = path.resolve("scripts/build.js");
+    const content = fs.readFileSync(buildScriptPath, "utf8");
+    expect(content).toMatch(/copyPackageClosure\s*\(\s*pkg/);
+    expect(content).toContain('"@swc/helpers"');
+  });
+
   it("copies a package into the bundle node_modules from the candidate path", () => {
     const appDir = path.join(tmpDir, "app");
     const rootDir = path.join(tmpDir, "root");
