@@ -103,13 +103,9 @@ jobs:
       - name: Validate compose file
         env:
           VANSROUTER_VERSION: 0.0.0-ci
-        # env_file: .env is mandatory for a real deployment -- docker-compose.yml,
-        # DOCKER.md, docs/MIGRATION.md and .env.example all tell the operator to
-        # create it. The runner has no .env, so supply the documented starting
-        # point rather than making the file optional: required:false would let a
-        # container start on the 123456 default password with JWT_SECRET and
-        # REQUIRE_API_KEY unset, and it would drop the env_file path this step
-        # exists to check. The env: block above wins over the copied file.
+        # env_file: .env is mandatory by design, so supply the documented
+        # starting point rather than making it optional: required:false drops 17
+        # variables, including INITIAL_PASSWORD. The env: block above wins.
         run: cp .env.example .env && docker compose config -q
 
       # actionlint alone never lints shell inside `run:` blocks; a

@@ -4,10 +4,8 @@ import path from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 // getDataDir() runs at import time, so each case re-imports the module with
-// process.env and process.platform already staged. The temp-path guard is what
-// protects a production deployment from a DATA_DIR that is wiped on reboot; the
-// release artifact check needs the opposite, because its sandbox is disposable
-// by construction and it exists to prove the release honours DATA_DIR.
+// process.env and process.platform staged. The guard keeps a temp DATA_DIR from
+// becoming the persistent store; the artifact check needs the opposite.
 const GUARD_WARNING = "looks like a temp/smoke directory";
 
 async function loadDataDir({ platform, env }) {
@@ -73,10 +71,9 @@ describe("temporary DATA_DIR guard", () => {
   });
 
   it("ignores an opt-out that is not exactly \"1\", like every other flag here", async () => {
-    // VANSROUTER_SKIP_UPDATE_CHECK, NINE_ROUTER_PROXY_MANAGED and TRAY_MODE are
-    // all compared to "1". Treating any non-empty string as true would let
-    // DATA_DIR_ALLOW_TEMP=false disable the guard, which is the one answer the
-    // operator who wrote it least wants.
+    // Matches VANSROUTER_SKIP_UPDATE_CHECK, NINE_ROUTER_PROXY_MANAGED and
+    // TRAY_MODE, which all compare to "1": any non-empty string as true would let
+    // DATA_DIR_ALLOW_TEMP=false switch the guard off.
     const temp = mkdtempSync(path.join(os.tmpdir(), "9router-data-smoke-"));
     const dir = await loadDataDir({
       platform: "linux",
