@@ -6,10 +6,11 @@ const path = require("path");
 const http = require("http");
 const { execFileSync, spawn } = require("child_process");
 
-const [tarball, expectedVersion] = process.argv.slice(2);
-if (!tarball || !expectedVersion) {
+const [tarballArg, expectedVersion] = process.argv.slice(2);
+if (!tarballArg || !expectedVersion) {
   throw new Error("Usage: smoke-package.cjs <tarball> <version>");
 }
+const tarball = path.resolve(tarballArg);
 
 const root = fs.mkdtempSync(path.join(os.tmpdir(), "vansrouter-release-"));
 const dataDir = path.join(root, "data");

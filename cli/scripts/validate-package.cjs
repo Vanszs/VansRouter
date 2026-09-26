@@ -4,11 +4,12 @@ const fs = require("fs");
 const path = require("path");
 const { execFileSync } = require("child_process");
 
-const [tarball, expectedVersion] = process.argv.slice(2);
+const [tarballArg, expectedVersion] = process.argv.slice(2);
 
-if (!tarball || !expectedVersion) {
+if (!tarballArg || !expectedVersion) {
   throw new Error("Usage: validate-package.cjs <tarball> <version>");
 }
+const tarball = path.resolve(tarballArg);
 if (!fs.existsSync(tarball)) {
   throw new Error(`Tarball does not exist: ${tarball}`);
 }

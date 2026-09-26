@@ -14,7 +14,8 @@ function parseArgs(args) {
     throw new Error("Usage: smoke-installed-package.cjs <tarball> <version> [--run-scripts]");
   }
 
-  const [tarball, expectedVersion] = positional;
+  const [rawTarball, expectedVersion] = positional;
+  const tarball = path.resolve(rawTarball);
   if (!fs.existsSync(tarball)) throw new Error(`Tarball does not exist: ${tarball}`);
   return { tarball, expectedVersion, runScripts: args.includes("--run-scripts") };
 }
