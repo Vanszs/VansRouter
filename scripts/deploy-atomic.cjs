@@ -24,9 +24,21 @@ function isUnder(candidate, parent) {
  * contains a virtual-store graph, so following a link while walking would
  * either recurse forever or miss links in the copied release.
  */
-function collectSymlinks(root) {
+function collectSymlinks(root, platform = process.platform) {
   const rootPath = path.resolve(root);
   const links = [];
+
+  // A Windows junction is reported as a directory, so isSymbolicLink() is false
+  // for it and walking into it would follow the link into the build tree this
+  // pass exists to detach from — leaving the rewrite count at zero. lstat and
+  // stat disagree on inode for any link, which spots one without guessing.
+  const isLinkDirectory = (entryPath) => {
+    try {
+      return fs.lstatSync(entryPath).ino !== fs.statSync(entryPath).ino;
+    } catch {
+      return false;
+    }
+  };
 
   function walk(directory) {
     let entries;
@@ -38,7 +50,8 @@ function collectSymlinks(root) {
 
     for (const entry of entries) {
       const entryPath = path.join(directory, entry.name);
-      if (entry.isSymbolicLink()) {
+      if (entry.isSymbolicLink()
+        || (platform === "win32" && entry.isDirectory() && isLinkDirectory(entryPath))) {
         links.push(entryPath);
       } else if (entry.isDirectory()) {
         walk(entryPath);
@@ -84,7 +97,7 @@ function removeRuntimeEnvFiles(releasePath) {
 function makeReleaseSelfContained(releasePath, sourceStandalone = releasePath, { platform = process.platform } = {}) {
   const releaseRoot = path.resolve(releasePath);
   const sourceRoot = path.resolve(sourceStandalone);
-  const links = collectSymlinks(releaseRoot);
+  const links = collectSymlinks(releaseRoot, platform);
   const deferredWindowsLinks = [];
 
   for (const linkPath of links) {
@@ -111,7 +124,7 @@ function makeReleaseSelfContained(releasePath, sourceStandalone = releasePath, {
       throw new Error(`Standalone symlink target is missing: ${linkPath} -> ${rawTarget}`, { cause: error });
     }
 
-    fs.unlinkSync(linkPath);
+    removeLink(linkPath);
 
     if (platform === "win32" && !targetStat.isDirectory()) {
       fs.copyFileSync(target, linkPath);
@@ -411,6 +424,15 @@ function readCurrentTarget(link = currentLink) {
   }
 }
 
+// A Windows junction is a directory to the filesystem, so unlink refuses it.
+// lstat reports the real shape, which also keeps a simulated-Windows run honest:
+// it links a POSIX symlink on Linux, and that must still unlink. Never a
+// recursive rm — the link points at a live release, and only the link may go.
+function removeLink(target) {
+  if (fs.lstatSync(target).isDirectory()) fs.rmdirSync(target);
+  else fs.unlinkSync(target);
+}
+
 function linkExists(target) {
   try {
     fs.lstatSync(target);
@@ -430,9 +452,7 @@ function activate(releasePath, link = currentLink) {
   // filesystem state, not error code: Windows reports this as EPERM/EEXIST/
   // ENOTEMPTY depending on destination shape. rmdir, not a recursive rm — the
   // link points at a live release and only the link may be removed.
-  if (process.platform === "win32" && linkExists(link)) {
-    fs.rmdirSync(link);
-  }
+  if (process.platform === "win32" && linkExists(link)) removeLink(link);
   fs.renameSync(temporaryLink, link);
 }
 
