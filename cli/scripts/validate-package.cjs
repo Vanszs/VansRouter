@@ -14,7 +14,7 @@ if (!fs.existsSync(tarball)) {
   throw new Error(`Tarball does not exist: ${tarball}`);
 }
 
-const entries = execFileSync("tar", ["-tz"], {
+const entries = execFileSync("tar", ["-tzf", "-"], {
   input: fs.readFileSync(tarball),
   encoding: "utf8",
   maxBuffer: 64 * 1024 * 1024,
@@ -37,7 +37,7 @@ for (const required of [requiredWasm, requiredNext, requiredOpen, requiredServer
     throw new Error(`Required CLI artifact missing: ${required}`);
   }
 }
-const openPackageJson = JSON.parse(execFileSync("tar", ["-xzO", requiredOpen], {
+const openPackageJson = JSON.parse(execFileSync("tar", ["-xzOf", "-", requiredOpen], {
   input: fs.readFileSync(tarball),
   encoding: "utf8",
 }));
@@ -60,7 +60,7 @@ if (entries.some((entry) => /(^|\/)better_sqlite3\.node$/.test(entry))) {
   throw new Error("native better-sqlite3 leaked into final CLI package");
 }
 
-const packageJson = JSON.parse(execFileSync("tar", ["-xzO", "package/package.json"], {
+const packageJson = JSON.parse(execFileSync("tar", ["-xzOf", "-", "package/package.json"], {
   input: fs.readFileSync(tarball),
   encoding: "utf8",
 }));
