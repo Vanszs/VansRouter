@@ -19,7 +19,9 @@ fs.mkdirSync(dataDir, { recursive: true });
 fs.writeFileSync(path.join(dataDir, "db.json"), JSON.stringify({
   settings: { requireLogin: false },
 }));
-execFileSync("tar", ["-xzf", tarball, "-C", root]);
+execFileSync("tar", ["-xz", "-C", root], {
+  input: fs.readFileSync(tarball),
+});
 
 const appDir = path.join(root, "package", "app");
 const bundledModules = path.join(appDir, "_nm");

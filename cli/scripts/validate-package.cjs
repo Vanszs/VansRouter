@@ -14,7 +14,8 @@ if (!fs.existsSync(tarball)) {
   throw new Error(`Tarball does not exist: ${tarball}`);
 }
 
-const entries = execFileSync("tar", ["-tzf", tarball], {
+const entries = execFileSync("tar", ["-tz"], {
+  input: fs.readFileSync(tarball),
   encoding: "utf8",
   maxBuffer: 64 * 1024 * 1024,
 })
@@ -36,7 +37,8 @@ for (const required of [requiredWasm, requiredNext, requiredOpen, requiredServer
     throw new Error(`Required CLI artifact missing: ${required}`);
   }
 }
-const openPackageJson = JSON.parse(execFileSync("tar", ["-xOf", tarball, requiredOpen], {
+const openPackageJson = JSON.parse(execFileSync("tar", ["-xzO", requiredOpen], {
+  input: fs.readFileSync(tarball),
   encoding: "utf8",
 }));
 for (const dependency of Object.keys(openPackageJson.dependencies || {})) {
