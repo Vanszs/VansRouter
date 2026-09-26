@@ -19,7 +19,8 @@ fs.mkdirSync(dataDir, { recursive: true });
 fs.writeFileSync(path.join(dataDir, "db.json"), JSON.stringify({
   settings: { requireLogin: false },
 }));
-execFileSync("tar", ["-xzf", "-", "-C", root], {
+execFileSync("tar", ["-xzf", "-"], {
+  cwd: root,
   input: fs.readFileSync(tarball),
 });
 
