@@ -10,6 +10,10 @@ import { acquireLock, activate, assertRuntimePathAlignment, finalizeReleaseSymli
 
 const tempRoots = [];
 
+// readCurrentTarget() resolves the symlink, and on macOS that expands /var to
+// /private/var while os.tmpdir() still reports /var. Compare resolved to resolved.
+const real = (p) => fs.realpathSync(p);
+
 function makeRelease(root, name, chunk = "chunk.js") {
   const release = path.join(root, name);
   const nextDir = path.join(release, ".next");
@@ -94,10 +98,15 @@ describe("atomic deployment artifact", () => {
       pm2Env: { DATA_DIR: "/var/lib/9router" },
     });
 
-    expect(env.DATA_DIR).toBe("/var/lib/9router");
-    expect(env.RELEASE_ROOT).toBe("/var/lib/9router/releases");
-    expect(env.CURRENT_LINK).toBe("/var/lib/9router/current");
-    expect(env.RELEASE_SERVER).toBe("/var/lib/9router/current/server.js");
+    // Resolve the expectation too: path.resolve is a no-op on POSIX but prepends
+    // the drive letter on Windows, so a hardcoded "/var/..." only ever passed on
+    // Linux. The contract under test is "an explicit DATA_DIR wins", not the
+    // platform's spelling of it.
+    const dataDir = path.resolve("/var/lib/9router");
+    expect(env.DATA_DIR).toBe(dataDir);
+    expect(env.RELEASE_ROOT).toBe(path.join(dataDir, "releases"));
+    expect(env.CURRENT_LINK).toBe(path.join(dataDir, "current"));
+    expect(env.RELEASE_SERVER).toBe(path.join(dataDir, "current", "server.js"));
   });
 
   it("blocks a deploy when PM2 and the shell resolve different implicit data roots", () => {
@@ -245,9 +254,9 @@ describe("atomic deployment artifact", () => {
     // asserting it is null only held on machines without a deployed release.
     expect(readCurrentTarget()).toBe(productionLink);
 
-    expect(readCurrentTarget(current)).toBe(oldRelease);
+    expect(readCurrentTarget(current)).toBe(real(oldRelease));
     activate(newRelease, current);
-    expect(fs.realpathSync(current)).toBe(newRelease);
+    expect(fs.realpathSync(current)).toBe(real(newRelease));
     expect(fs.existsSync(path.join(newRelease, ".next", "static", "chunks", "chunk.js"))).toBe(true);
   });
 
@@ -273,7 +282,7 @@ describe("atomic deployment artifact", () => {
       activate(newRelease, current);
       const responses = await Promise.all(requests);
       expect(responses.every((response) => response.status === 200)).toBe(true);
-      expect(readCurrentTarget(current)).toBe(newRelease);
+      expect(readCurrentTarget(current)).toBe(real(newRelease));
     } finally {
       await new Promise((resolve) => server.close(resolve));
     }
@@ -288,7 +297,7 @@ describe("atomic deployment artifact", () => {
     activate(newRelease, current);
 
     expect(verifyRelease(oldRelease).chunkCount).toBe(1);
-    expect(readCurrentTarget(current)).toBe(newRelease);
+    expect(readCurrentTarget(current)).toBe(real(newRelease));
     expect(fs.existsSync(oldRelease)).toBe(true);
   });
 
@@ -299,7 +308,7 @@ describe("atomic deployment artifact", () => {
     const incomplete = path.join(root, "2026-01-03T00-00-00-000Z-3");
     fs.mkdirSync(incomplete);
 
-    expect(selectRollbackRelease(root)).toBe(valid);
+    expect(selectRollbackRelease(root)).toBe(real(valid));
   });
 
   it("serializes deployment locks and removes the lock on release", () => {
