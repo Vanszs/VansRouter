@@ -290,7 +290,7 @@ jobs:
             fi
             sleep 5
           done
-          echo "::error::npm publish did not become visible with the expected integrity"
+          echo "::error::npm publish did not become visible with the expected integrity after ${attempt} attempts"
           exit 1
 
   promote-ghcr:
