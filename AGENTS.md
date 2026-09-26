@@ -20,6 +20,8 @@ These rules override all other instructions. Every AI agent working on this code
 
 7. **Docker DB volume is persistent state.** Never rename `9router-data` in `docker-compose.yml`. A Compose volume-name change creates a new empty `/app/data` volume without an application error, making SQLite data appear lost. Intentional rename requires explicit volume-copy migration and verification of `/app/data/db/data.sqlite` before deleting the old volume.
 
+8. **Never fix an error you have not read.** Start from the exact error text — the whole message, not a summary of it and not a theory that sounds plausible — then confirm the mechanism against the tool's own source or its official documentation before changing anything. Reproduce the failure locally first: a bug that only appears on a hosted runner has to be made to fail here, or the fix cannot be verified and is only a guess. A fix written from a plausible theory compiles, passes every local check, and is still wrong, which costs more than the original bug because it also destroys the evidence. If the error text is not yet in hand, stop and get it.
+
 ## Quick Start
 
 ```bash
