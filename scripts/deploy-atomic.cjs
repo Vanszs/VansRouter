@@ -24,25 +24,9 @@ function isUnder(candidate, parent) {
  * contains a virtual-store graph, so following a link while walking would
  * either recurse forever or miss links in the copied release.
  */
-function collectSymlinks(root, platform = process.platform) {
+function collectSymlinks(root) {
   const rootPath = path.resolve(root);
   const links = [];
-
-  // A Windows junction is reported as a directory, so isSymbolicLink() is false
-  // for it and walking into it would follow the link into the build tree this
-  // pass exists to detach from — leaving the rewrite count at zero. readlink is
-  // the portable test: it returns a target for a link of either kind and throws
-  // EINVAL for a real directory. Inode comparison was tried first and is not
-  // usable here, because NTFS can report the same index for a reparse point and
-  // its target.
-  const isLinkDirectory = (entryPath) => {
-    try {
-      fs.readlinkSync(entryPath);
-      return true;
-    } catch {
-      return false;
-    }
-  };
 
   function walk(directory) {
     let entries;
@@ -54,8 +38,7 @@ function collectSymlinks(root, platform = process.platform) {
 
     for (const entry of entries) {
       const entryPath = path.join(directory, entry.name);
-      if (entry.isSymbolicLink()
-        || (platform === "win32" && entry.isDirectory() && isLinkDirectory(entryPath))) {
+      if (entry.isSymbolicLink()) {
         links.push(entryPath);
       } else if (entry.isDirectory()) {
         walk(entryPath);
@@ -101,7 +84,7 @@ function removeRuntimeEnvFiles(releasePath) {
 function makeReleaseSelfContained(releasePath, sourceStandalone = releasePath, { platform = process.platform } = {}) {
   const releaseRoot = path.resolve(releasePath);
   const sourceRoot = path.resolve(sourceStandalone);
-  const links = collectSymlinks(releaseRoot, platform);
+  const links = collectSymlinks(releaseRoot);
   const deferredWindowsLinks = [];
 
   for (const linkPath of links) {

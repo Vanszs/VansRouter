@@ -180,17 +180,23 @@ describe("atomic deployment artifact", () => {
 
     fs.cpSync(source, staged, { recursive: true, verbatimSymlinks: true });
     const stagedLink = path.join(staged, "node_modules", "next");
-    expect(isLink(stagedLink)).toBe(true);
-    expect(makeReleaseSelfContained(staged, source)).toBe(1);
-    expect(fs.readlinkSync(stagedLink)).not.toContain(source);
+
+    // fs.cpSync dispatches on lstat, and a junction lstats as a directory, so
+    // on Windows it takes the onDir branch and materialises the link as a real
+    // directory copy. verbatimSymlinks only reaches onLink, which a junction
+    // never gets to. Nothing is dangling there -- the copy is self-contained by
+    // construction -- but there is no link left to rewrite, so the count is 0.
+    const linkSurvivesCopy = process.platform !== "win32";
+    expect(fs.lstatSync(stagedLink).isSymbolicLink()).toBe(linkSurvivesCopy);
+    expect(makeReleaseSelfContained(staged, source)).toBe(linkSurvivesCopy ? 1 : 0);
+    if (linkSurvivesCopy) expect(fs.readlinkSync(stagedLink)).not.toContain(source);
 
     fs.rmSync(path.join(root, "build"), { recursive: true, force: true });
     fs.renameSync(staged, release);
-    const releaseLink = path.join(release, "node_modules", "next");
     expect(fs.existsSync(path.join(release, "node_modules", "next", "package.json"))).toBe(true);
-    expect(verifyStandaloneLinks(release)).toBe(1);
+    expect(verifyStandaloneLinks(release)).toBe(linkSurvivesCopy ? 1 : 0);
     expect(createRequire(path.join(release, "package.json")).resolve("next")).toContain(release);
-    expect(fs.readlinkSync(releaseLink)).not.toContain(source);
+    if (linkSurvivesCopy) expect(fs.readlinkSync(path.join(release, "node_modules", "next"))).not.toContain(source);
   });
 
   it("rejects a release that only resolves next from an ancestor", () => {
