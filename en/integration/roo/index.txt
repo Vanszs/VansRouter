@@ -1,0 +1,143 @@
+1:"$Sreact.fragment"
+2:I[39756,["/VansRouter/_next/static/chunks/ff1a16fafef87110.js","/VansRouter/_next/static/chunks/803a574de9eda7ae.js"],"default"]
+3:I[37457,["/VansRouter/_next/static/chunks/ff1a16fafef87110.js","/VansRouter/_next/static/chunks/803a574de9eda7ae.js"],"default"]
+5:I[97367,["/VansRouter/_next/static/chunks/ff1a16fafef87110.js","/VansRouter/_next/static/chunks/803a574de9eda7ae.js"],"OutletBoundary"]
+6:"$Sreact.suspense"
+8:I[97367,["/VansRouter/_next/static/chunks/ff1a16fafef87110.js","/VansRouter/_next/static/chunks/803a574de9eda7ae.js"],"ViewportBoundary"]
+a:I[97367,["/VansRouter/_next/static/chunks/ff1a16fafef87110.js","/VansRouter/_next/static/chunks/803a574de9eda7ae.js"],"MetadataBoundary"]
+c:I[68027,["/VansRouter/_next/static/chunks/ff1a16fafef87110.js","/VansRouter/_next/static/chunks/803a574de9eda7ae.js"],"default"]
+:HL["/VansRouter/_next/static/chunks/71d10a355cb8f2d7.css","style"]
+0:{"P":null,"b":"PUpTBY-8r_zZtEM8SJOLp","c":["","en","integration","roo",""],"q":"","i":false,"f":[[["",{"children":[["lang","en","d"],{"children":[["slug","integration/roo","c"],{"children":["__PAGE__",{}]}]}]},"$undefined","$undefined",true],[["$","$1","c",{"children":[[["$","link","0",{"rel":"stylesheet","href":"/VansRouter/_next/static/chunks/71d10a355cb8f2d7.css","precedence":"next","crossOrigin":"$undefined","nonce":"$undefined"}]],["$","html",null,{"lang":"en","children":[["$","head",null,{}],["$","body",null,{"className":"bg-[#FCFBF9] text-[#6B7280]","children":["$","$L2",null,{"parallelRouterKey":"children","error":"$undefined","errorStyles":"$undefined","errorScripts":"$undefined","template":["$","$L3",null,{}],"templateStyles":"$undefined","templateScripts":"$undefined","notFound":[[["$","title",null,{"children":"404: This page could not be found."}],["$","div",null,{"style":{"fontFamily":"system-ui,\"Segoe UI\",Roboto,Helvetica,Arial,sans-serif,\"Apple Color Emoji\",\"Segoe UI Emoji\"","height":"100vh","textAlign":"center","display":"flex","flexDirection":"column","alignItems":"center","justifyContent":"center"},"children":["$","div",null,{"children":[["$","style",null,{"dangerouslySetInnerHTML":{"__html":"body{color:#000;background:#fff;margin:0}.next-error-h1{border-right:1px solid rgba(0,0,0,.3)}@media (prefers-color-scheme:dark){body{color:#fff;background:#000}.next-error-h1{border-right:1px solid rgba(255,255,255,.3)}}"}}],["$","h1",null,{"className":"next-error-h1","style":{"display":"inline-block","margin":"0 20px 0 0","padding":"0 23px 0 0","fontSize":24,"fontWeight":500,"verticalAlign":"top","lineHeight":"49px"},"children":404}],["$","div",null,{"style":{"display":"inline-block"},"children":["$","h2",null,{"style":{"fontSize":14,"fontWeight":400,"lineHeight":"49px","margin":0},"children":"This page could not be found."}]}]]}]}]],[]],"forbidden":"$undefined","unauthorized":"$undefined"}]}]]}]]}],{"children":[["$","$1","c",{"children":[null,["$","$L2",null,{"parallelRouterKey":"children","error":"$undefined","errorStyles":"$undefined","errorScripts":"$undefined","template":["$","$L3",null,{}],"templateStyles":"$undefined","templateScripts":"$undefined","notFound":"$undefined","forbidden":"$undefined","unauthorized":"$undefined"}]]}],{"children":[["$","$1","c",{"children":[null,["$","$L2",null,{"parallelRouterKey":"children","error":"$undefined","errorStyles":"$undefined","errorScripts":"$undefined","template":["$","$L3",null,{}],"templateStyles":"$undefined","templateScripts":"$undefined","notFound":"$undefined","forbidden":"$undefined","unauthorized":"$undefined"}]]}],{"children":[["$","$1","c",{"children":["$L4",[["$","script","script-0",{"src":"/VansRouter/_next/static/chunks/ff1a16fafef87110.js","async":true,"nonce":"$undefined"}],["$","script","script-1",{"src":"/VansRouter/_next/static/chunks/3ba79d5b01800fdc.js","async":true,"nonce":"$undefined"}]],["$","$L5",null,{"children":["$","$6",null,{"name":"Next.MetadataOutlet","children":"$@7"}]}]]}],{},null,false,false]},null,false,false]},null,false,false]},null,false,false],["$","$1","h",{"children":[null,["$","$L8",null,{"children":"$L9"}],["$","div",null,{"hidden":true,"children":["$","$La",null,{"children":["$","$6",null,{"name":"Next.Metadata","children":"$Lb"}]}]}],null]}],false]],"m":"$undefined","G":["$c",[]],"S":true}
+d:I[81956,["/VansRouter/_next/static/chunks/ff1a16fafef87110.js","/VansRouter/_next/static/chunks/3ba79d5b01800fdc.js"],"default"]
+e:I[22982,["/VansRouter/_next/static/chunks/ff1a16fafef87110.js","/VansRouter/_next/static/chunks/3ba79d5b01800fdc.js"],"default"]
+f:Tc24,# Roo AI Assistant Integration
+
+Integrate VansRouter with Roo AI Assistant to access multiple AI models through a unified interface.
+
+## Prerequisites
+
+- Roo AI Assistant installed
+- VansRouter API key from [dashboard](http://localhost:20128/dashboard)
+- VansRouter running (local or cloud)
+
+## Configuration Steps
+
+### 1. Open Roo Settings
+
+Launch Roo AI Assistant and open the settings panel.
+
+### 2. Configure API Provider
+
+1. Navigate to **API Provider** settings
+2. Select **Ollama** as the provider type
+3. Configure the following settings:
+
+**For Local VansRouter:**
+```
+Base URL: http://localhost:20128/v1
+API Key: your-api-key-from-dashboard
+```
+
+**For Cloud VansRouter:**
+```
+Base URL: http://localhost:20128/v1
+API Key: your-api-key-from-dashboard
+```
+
+### 3. Select Model
+
+Choose from available VansRouter models:
+
+**Claude Models:**
+- `cc/claude-opus-4-5-20251101` - Most capable
+- `cc/claude-sonnet-4-20250514` - Balanced
+- `cc/claude-haiku-4-20250514` - Fast
+
+**DeepSeek Models:**
+- `cx/deepseek-chat` - General purpose
+- `cx/deepseek-reasoner` - Complex reasoning
+
+**GLM Models:**
+- `glm/glm-4-plus` - Advanced
+- `glm/glm-4-flash` - Fast responses
+
+### 4. Test Connection
+
+Send a test message to verify the integration:
+
+```
+Hello! Can you confirm you're connected through VansRouter?
+```
+
+## Usage Examples
+
+### Basic Chat
+```
+Ask Roo: "Explain quantum computing in simple terms"
+Model: cc/claude-sonnet-4-20250514
+```
+
+### Code Generation
+```
+Ask Roo: "Write a Python function to calculate Fibonacci numbers"
+Model: cx/deepseek-chat
+```
+
+### Complex Reasoning
+```
+Ask Roo: "Analyze the trade-offs between microservices and monolithic architecture"
+Model: cx/deepseek-reasoner
+```
+
+## Model Selection Tips
+
+- **Quick tasks**: Use `cc/claude-haiku-4-20250514` or `glm/glm-4-flash`
+- **Balanced performance**: Use `cc/claude-sonnet-4-20250514` or `cx/deepseek-chat`
+- **Complex reasoning**: Use `cc/claude-opus-4-5-20251101` or `cx/deepseek-reasoner`
+- **Cost optimization**: Use DeepSeek or GLM models
+
+## Troubleshooting
+
+### Connection Failed
+- Verify VansRouter is running: `curl http://localhost:20128/health`
+- Check API key is correct
+- Ensure Base URL includes `/v1` suffix
+
+### Model Not Available
+- Check model name matches exactly (case-sensitive)
+- Verify model is enabled in your VansRouter plan
+- Try a different model from the list
+
+### Slow Responses
+- Switch to faster models (haiku, flash)
+- Check network connection
+- Monitor VansRouter logs for issues
+
+## Advanced Configuration
+
+### Custom Model Aliases
+
+You can create shortcuts for frequently used models in Roo settings:
+
+```
+Alias: "fast" → cc/claude-haiku-4-20250514
+Alias: "smart" → cc/claude-opus-4-5-20251101
+Alias: "code" → cx/deepseek-chat
+```
+
+### Multiple Profiles
+
+Set up different profiles for different use cases:
+- **Development**: DeepSeek models for code
+- **Writing**: Claude models for content
+- **Research**: Reasoner models for analysis
+
+## Next Steps
+
+- [Configure Cursor](cursor.md) for IDE integration
+- [Set up Continue](continue.md) for VSCode
+- [Explore CLI usage](../cli/basic-usage.md)
+4:["$","$Ld",null,{"headings":[{"level":2,"text":"Prerequisites","id":"prerequisites"},{"level":2,"text":"Configuration Steps","id":"configuration-steps"},{"level":3,"text":"1. Open Roo Settings","id":"1-open-roo-settings"},{"level":3,"text":"2. Configure API Provider","id":"2-configure-api-provider"},{"level":3,"text":"3. Select Model","id":"3-select-model"},{"level":3,"text":"4. Test Connection","id":"4-test-connection"},{"level":2,"text":"Usage Examples","id":"usage-examples"},{"level":3,"text":"Basic Chat","id":"basic-chat"},{"level":3,"text":"Code Generation","id":"code-generation"},{"level":3,"text":"Complex Reasoning","id":"complex-reasoning"},{"level":2,"text":"Model Selection Tips","id":"model-selection-tips"},{"level":2,"text":"Troubleshooting","id":"troubleshooting"},{"level":3,"text":"Connection Failed","id":"connection-failed"},{"level":3,"text":"Model Not Available","id":"model-not-available"},{"level":3,"text":"Slow Responses","id":"slow-responses"},{"level":2,"text":"Advanced Configuration","id":"advanced-configuration"},{"level":3,"text":"Custom Model Aliases","id":"custom-model-aliases"},{"level":3,"text":"Multiple Profiles","id":"multiple-profiles"},{"level":2,"text":"Next Steps","id":"next-steps"}],"lang":"en","children":["$","$Le",null,{"content":"$f"}]}]
+9:[["$","meta","0",{"charSet":"utf-8"}],["$","meta","1",{"name":"viewport","content":"width=device-width, initial-scale=1"}]]
+7:null
+b:[["$","title","0",{"children":"9Router Documentation"}],["$","meta","1",{"name":"description","content":"Smart AI model router - Maximize subscriptions, minimize costs"}]]

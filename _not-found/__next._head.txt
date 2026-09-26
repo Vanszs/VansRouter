@@ -1,0 +1,5 @@
+1:"$Sreact.fragment"
+2:I[97367,["/VansRouter/_next/static/chunks/ff1a16fafef87110.js","/VansRouter/_next/static/chunks/803a574de9eda7ae.js"],"ViewportBoundary"]
+3:I[97367,["/VansRouter/_next/static/chunks/ff1a16fafef87110.js","/VansRouter/_next/static/chunks/803a574de9eda7ae.js"],"MetadataBoundary"]
+4:"$Sreact.suspense"
+0:{"buildId":"PUpTBY-8r_zZtEM8SJOLp","rsc":["$","$1","h",{"children":[["$","meta",null,{"name":"robots","content":"noindex"}],["$","$L2",null,{"children":[["$","meta","0",{"charSet":"utf-8"}],["$","meta","1",{"name":"viewport","content":"width=device-width, initial-scale=1"}]]}],["$","div",null,{"hidden":true,"children":["$","$L3",null,{"children":["$","$4",null,{"name":"Next.Metadata","children":[["$","title","0",{"children":"9Router Documentation"}],["$","meta","1",{"name":"description","content":"Smart AI model router - Maximize subscriptions, minimize costs"}]]}]}]}],null]}],"loading":null,"isPartial":false}

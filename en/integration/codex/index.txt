@@ -1,0 +1,152 @@
+1:"$Sreact.fragment"
+2:I[39756,["/VansRouter/_next/static/chunks/ff1a16fafef87110.js","/VansRouter/_next/static/chunks/803a574de9eda7ae.js"],"default"]
+3:I[37457,["/VansRouter/_next/static/chunks/ff1a16fafef87110.js","/VansRouter/_next/static/chunks/803a574de9eda7ae.js"],"default"]
+5:I[97367,["/VansRouter/_next/static/chunks/ff1a16fafef87110.js","/VansRouter/_next/static/chunks/803a574de9eda7ae.js"],"OutletBoundary"]
+6:"$Sreact.suspense"
+8:I[97367,["/VansRouter/_next/static/chunks/ff1a16fafef87110.js","/VansRouter/_next/static/chunks/803a574de9eda7ae.js"],"ViewportBoundary"]
+a:I[97367,["/VansRouter/_next/static/chunks/ff1a16fafef87110.js","/VansRouter/_next/static/chunks/803a574de9eda7ae.js"],"MetadataBoundary"]
+c:I[68027,["/VansRouter/_next/static/chunks/ff1a16fafef87110.js","/VansRouter/_next/static/chunks/803a574de9eda7ae.js"],"default"]
+:HL["/VansRouter/_next/static/chunks/71d10a355cb8f2d7.css","style"]
+0:{"P":null,"b":"PUpTBY-8r_zZtEM8SJOLp","c":["","en","integration","codex",""],"q":"","i":false,"f":[[["",{"children":[["lang","en","d"],{"children":[["slug","integration/codex","c"],{"children":["__PAGE__",{}]}]}]},"$undefined","$undefined",true],[["$","$1","c",{"children":[[["$","link","0",{"rel":"stylesheet","href":"/VansRouter/_next/static/chunks/71d10a355cb8f2d7.css","precedence":"next","crossOrigin":"$undefined","nonce":"$undefined"}]],["$","html",null,{"lang":"en","children":[["$","head",null,{}],["$","body",null,{"className":"bg-[#FCFBF9] text-[#6B7280]","children":["$","$L2",null,{"parallelRouterKey":"children","error":"$undefined","errorStyles":"$undefined","errorScripts":"$undefined","template":["$","$L3",null,{}],"templateStyles":"$undefined","templateScripts":"$undefined","notFound":[[["$","title",null,{"children":"404: This page could not be found."}],["$","div",null,{"style":{"fontFamily":"system-ui,\"Segoe UI\",Roboto,Helvetica,Arial,sans-serif,\"Apple Color Emoji\",\"Segoe UI Emoji\"","height":"100vh","textAlign":"center","display":"flex","flexDirection":"column","alignItems":"center","justifyContent":"center"},"children":["$","div",null,{"children":[["$","style",null,{"dangerouslySetInnerHTML":{"__html":"body{color:#000;background:#fff;margin:0}.next-error-h1{border-right:1px solid rgba(0,0,0,.3)}@media (prefers-color-scheme:dark){body{color:#fff;background:#000}.next-error-h1{border-right:1px solid rgba(255,255,255,.3)}}"}}],["$","h1",null,{"className":"next-error-h1","style":{"display":"inline-block","margin":"0 20px 0 0","padding":"0 23px 0 0","fontSize":24,"fontWeight":500,"verticalAlign":"top","lineHeight":"49px"},"children":404}],["$","div",null,{"style":{"display":"inline-block"},"children":["$","h2",null,{"style":{"fontSize":14,"fontWeight":400,"lineHeight":"49px","margin":0},"children":"This page could not be found."}]}]]}]}]],[]],"forbidden":"$undefined","unauthorized":"$undefined"}]}]]}]]}],{"children":[["$","$1","c",{"children":[null,["$","$L2",null,{"parallelRouterKey":"children","error":"$undefined","errorStyles":"$undefined","errorScripts":"$undefined","template":["$","$L3",null,{}],"templateStyles":"$undefined","templateScripts":"$undefined","notFound":"$undefined","forbidden":"$undefined","unauthorized":"$undefined"}]]}],{"children":[["$","$1","c",{"children":[null,["$","$L2",null,{"parallelRouterKey":"children","error":"$undefined","errorStyles":"$undefined","errorScripts":"$undefined","template":["$","$L3",null,{}],"templateStyles":"$undefined","templateScripts":"$undefined","notFound":"$undefined","forbidden":"$undefined","unauthorized":"$undefined"}]]}],{"children":[["$","$1","c",{"children":["$L4",[["$","script","script-0",{"src":"/VansRouter/_next/static/chunks/ff1a16fafef87110.js","async":true,"nonce":"$undefined"}],["$","script","script-1",{"src":"/VansRouter/_next/static/chunks/3ba79d5b01800fdc.js","async":true,"nonce":"$undefined"}]],["$","$L5",null,{"children":["$","$6",null,{"name":"Next.MetadataOutlet","children":"$@7"}]}]]}],{},null,false,false]},null,false,false]},null,false,false]},null,false,false],["$","$1","h",{"children":[null,["$","$L8",null,{"children":"$L9"}],["$","div",null,{"hidden":true,"children":["$","$La",null,{"children":["$","$6",null,{"name":"Next.Metadata","children":"$Lb"}]}]}],null]}],false]],"m":"$undefined","G":["$c",[]],"S":true}
+d:I[81956,["/VansRouter/_next/static/chunks/ff1a16fafef87110.js","/VansRouter/_next/static/chunks/3ba79d5b01800fdc.js"],"default"]
+e:I[22982,["/VansRouter/_next/static/chunks/ff1a16fafef87110.js","/VansRouter/_next/static/chunks/3ba79d5b01800fdc.js"],"default"]
+f:Tbe8,# OpenAI Codex CLI Integration
+
+Integrate VansRouter with OpenAI Codex CLI to route your OpenAI API requests through VansRouter's intelligent routing system.
+
+## Prerequisites
+
+- OpenAI Codex CLI installed
+- VansRouter running locally or cloud endpoint configured
+- API key from VansRouter dashboard
+
+## Setup
+
+### 1. Configure Environment Variables
+
+Set the following environment variables in your shell configuration file (`~/.bashrc`, `~/.zshrc`, or `~/.bash_profile`):
+
+```bash
+# Base URL for VansRouter
+export OPENAI_BASE_URL="http://localhost:20128/v1"
+
+# API Key from VansRouter dashboard
+export OPENAI_API_KEY="your-vansrouter-api-key"
+```
+
+### 2. Reload Shell Configuration
+
+```bash
+source ~/.zshrc  # or ~/.bashrc
+```
+
+### 3. Verify Configuration
+
+Check that the environment variables are set correctly:
+
+```bash
+echo $OPENAI_BASE_URL
+echo $OPENAI_API_KEY
+```
+
+## Available Models
+
+VansRouter provides the following Codex models:
+
+| Model ID | Description |
+|----------|-------------|
+| `cx/gpt-5.2-codex` | GPT-5.2 Codex - Latest version |
+| `cx/gpt-5.1-codex-max` | GPT-5.1 Codex Max - Extended context |
+
+## Usage Examples
+
+### Basic Usage
+
+```bash
+# Use GPT-5.2 Codex
+codex --model cx/gpt-5.2-codex "Write a function to sort an array"
+
+# Use GPT-5.1 Codex Max
+codex --model cx/gpt-5.1-codex-max "Explain this complex algorithm"
+```
+
+### Code Generation
+
+```bash
+codex --model cx/gpt-5.2-codex "Create a REST API endpoint for user authentication"
+```
+
+### Code Explanation
+
+```bash
+codex --model cx/gpt-5.1-codex-max "Explain what this code does: $(cat myfile.js)"
+```
+
+## Configuration File
+
+You can also configure Codex CLI using a configuration file. Create or edit `~/.codex/config.json`:
+
+```json
+{
+  "baseUrl": "http://localhost:20128/v1",
+  "apiKey": "your-vansrouter-api-key",
+  "defaultModel": "cx/gpt-5.2-codex"
+}
+```
+
+## Troubleshooting
+
+### Authentication Errors
+
+If you encounter authentication errors:
+
+1. Verify your API key is correct in VansRouter dashboard
+2. Check that `OPENAI_API_KEY` environment variable is set
+3. Ensure the API key has not expired
+
+### Connection Issues
+
+If you encounter connection errors:
+
+1. Verify VansRouter is running: `curl http://localhost:20128/health`
+2. Check environment variables are set correctly
+3. Ensure no firewall is blocking port 20128
+
+### Model Not Available
+
+If you get "model not available" errors:
+
+1. Verify the model name matches your VansRouter configuration
+2. Check that the OpenAI provider connection is active in VansRouter dashboard
+3. Ensure the model is available in your connected providers
+
+## Cloud Endpoint
+
+To use VansRouter cloud endpoint instead of localhost:
+
+```bash
+export OPENAI_BASE_URL="http://localhost:20128"
+```
+
+Make sure you have configured your API key in the VansRouter cloud dashboard.
+
+## Advanced Configuration
+
+### Custom Timeout
+
+```bash
+export OPENAI_TIMEOUT=60  # seconds
+```
+
+### Debug Mode
+
+Enable debug mode to see detailed request/response logs:
+
+```bash
+export CODEX_DEBUG=true
+codex --model cx/gpt-5.2-codex "Your prompt"
+```
+4:["$","$Ld",null,{"headings":[{"level":2,"text":"Prerequisites","id":"prerequisites"},{"level":2,"text":"Setup","id":"setup"},{"level":3,"text":"1. Configure Environment Variables","id":"1-configure-environment-variables"},{"level":3,"text":"2. Reload Shell Configuration","id":"2-reload-shell-configuration"},{"level":3,"text":"3. Verify Configuration","id":"3-verify-configuration"},{"level":2,"text":"Available Models","id":"available-models"},{"level":2,"text":"Usage Examples","id":"usage-examples"},{"level":3,"text":"Basic Usage","id":"basic-usage"},{"level":3,"text":"Code Generation","id":"code-generation"},{"level":3,"text":"Code Explanation","id":"code-explanation"},{"level":2,"text":"Configuration File","id":"configuration-file"},{"level":2,"text":"Troubleshooting","id":"troubleshooting"},{"level":3,"text":"Authentication Errors","id":"authentication-errors"},{"level":3,"text":"Connection Issues","id":"connection-issues"},{"level":3,"text":"Model Not Available","id":"model-not-available"},{"level":2,"text":"Cloud Endpoint","id":"cloud-endpoint"},{"level":2,"text":"Advanced Configuration","id":"advanced-configuration"},{"level":3,"text":"Custom Timeout","id":"custom-timeout"},{"level":3,"text":"Debug Mode","id":"debug-mode"}],"lang":"en","children":["$","$Le",null,{"content":"$f"}]}]
+9:[["$","meta","0",{"charSet":"utf-8"}],["$","meta","1",{"name":"viewport","content":"width=device-width, initial-scale=1"}]]
+7:null
+b:[["$","title","0",{"children":"9Router Documentation"}],["$","meta","1",{"name":"description","content":"Smart AI model router - Maximize subscriptions, minimize costs"}]]

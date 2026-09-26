@@ -1,0 +1,134 @@
+1:"$Sreact.fragment"
+2:I[81956,["/VansRouter/_next/static/chunks/ff1a16fafef87110.js","/VansRouter/_next/static/chunks/3ba79d5b01800fdc.js"],"default"]
+3:I[22982,["/VansRouter/_next/static/chunks/ff1a16fafef87110.js","/VansRouter/_next/static/chunks/3ba79d5b01800fdc.js"],"default"]
+5:I[97367,["/VansRouter/_next/static/chunks/ff1a16fafef87110.js","/VansRouter/_next/static/chunks/803a574de9eda7ae.js"],"OutletBoundary"]
+6:"$Sreact.suspense"
+4:Te35,# Roo AIアシスタント統合
+
+VansRouterをRoo AIアシスタントと統合し、統一インターフェイスから複数のAIモデルにアクセスします。
+
+## 前提条件
+
+- Roo AIアシスタントがインストール済み
+- [ダッシュボード](http://localhost:20128/dashboard)からのVansRouter APIキー
+- VansRouterが動作中 (ローカルまたはクラウド)
+
+## 設定手順
+
+### 1. Roo設定を開く
+
+Roo AIアシスタントを起動し、設定パネルを開きます。
+
+### 2. APIプロバイダーを設定
+
+1. **API Provider** 設定へ移動
+2. プロバイダータイプとして **Ollama** を選択
+3. 以下の設定を行う:
+
+**ローカルVansRouter用:**
+```
+Base URL: http://localhost:20128/v1
+API Key: your-api-key-from-dashboard
+```
+
+**クラウドVansRouter用:**
+```
+Base URL: http://localhost:20128/v1
+API Key: your-api-key-from-dashboard
+```
+
+### 3. モデルを選択
+
+利用可能なVansRouterモデルから選択:
+
+**Claudeモデル:**
+- `cc/claude-opus-4-5-20251101` - 最も高性能
+- `cc/claude-sonnet-4-20250514` - バランス
+- `cc/claude-haiku-4-20250514` - 高速
+
+**DeepSeekモデル:**
+- `cx/deepseek-chat` - 汎用
+- `cx/deepseek-reasoner` - 複雑な推論
+
+**GLMモデル:**
+- `glm/glm-4-plus` - 高度
+- `glm/glm-4-flash` - 高速応答
+
+### 4. 接続をテスト
+
+統合を確認するためにテストメッセージを送信:
+
+```
+Hello! Can you confirm you're connected through VansRouter?
+```
+
+## 使用例
+
+### 基本チャット
+```
+Rooに質問: "Explain quantum computing in simple terms"
+Model: cc/claude-sonnet-4-20250514
+```
+
+### コード生成
+```
+Rooに質問: "Write a Python function to calculate Fibonacci numbers"
+Model: cx/deepseek-chat
+```
+
+### 複雑な推論
+```
+Rooに質問: "Analyze the trade-offs between microservices and monolithic architecture"
+Model: cx/deepseek-reasoner
+```
+
+## モデル選択のヒント
+
+- **クイックタスク**: `cc/claude-haiku-4-20250514` または `glm/glm-4-flash` を使用
+- **バランスのとれたパフォーマンス**: `cc/claude-sonnet-4-20250514` または `cx/deepseek-chat` を使用
+- **複雑な推論**: `cc/claude-opus-4-5-20251101` または `cx/deepseek-reasoner` を使用
+- **コスト最適化**: DeepSeekまたはGLMモデルを使用
+
+## トラブルシューティング
+
+### 接続失敗
+- VansRouterが動作中か確認: `curl http://localhost:20128/health`
+- APIキーが正しいか確認
+- Base URLに `/v1` サフィックスが含まれていることを確認
+
+### モデルが利用不可
+- モデル名が正確に一致するか確認 (大文字小文字を区別)
+- VansRouterプランでモデルが有効か確認
+- リストから別のモデルを試す
+
+### 応答が遅い
+- より高速なモデルへ切替 (haiku、flash)
+- ネットワーク接続を確認
+- 問題についてVansRouterログをモニター
+
+## 高度な設定
+
+### カスタムモデルエイリアス
+
+Roo設定で頻繁に使うモデルのショートカットを作成:
+
+```
+エイリアス: "fast" → cc/claude-haiku-4-20250514
+エイリアス: "smart" → cc/claude-opus-4-5-20251101
+エイリアス: "code" → cx/deepseek-chat
+```
+
+### 複数のプロファイル
+
+異なるユースケース用の異なるプロファイルをセットアップ:
+- **開発**: コード用のDeepSeekモデル
+- **執筆**: コンテンツ用のClaudeモデル
+- **リサーチ**: 分析用のReasonerモデル
+
+## 次のステップ
+
+- [Cursorを設定](cursor.md) IDE統合用
+- [Continueをセットアップ](continue.md) VSCode用
+- [CLI使用法を確認](../cli/basic-usage.md)
+0:{"buildId":"PUpTBY-8r_zZtEM8SJOLp","rsc":["$","$1","c",{"children":[["$","$L2",null,{"headings":[{"level":2,"text":"前提条件","id":"前提条件"},{"level":2,"text":"設定手順","id":"設定手順"},{"level":3,"text":"1. Roo設定を開く","id":"1-roo設定を開く"},{"level":3,"text":"2. APIプロバイダーを設定","id":"2-apiプロバイダーを設定"},{"level":3,"text":"3. モデルを選択","id":"3-モデルを選択"},{"level":3,"text":"4. 接続をテスト","id":"4-接続をテスト"},{"level":2,"text":"使用例","id":"使用例"},{"level":3,"text":"基本チャット","id":"基本チャット"},{"level":3,"text":"コード生成","id":"コード生成"},{"level":3,"text":"複雑な推論","id":"複雑な推論"},{"level":2,"text":"モデル選択のヒント","id":"モデル選択のヒント"},{"level":2,"text":"トラブルシューティング","id":"トラブルシューティング"},{"level":3,"text":"接続失敗","id":"接続失敗"},{"level":3,"text":"モデルが利用不可","id":"モデルが利用不可"},{"level":3,"text":"応答が遅い","id":"応答が遅い"},{"level":2,"text":"高度な設定","id":"高度な設定"},{"level":3,"text":"カスタムモデルエイリアス","id":"カスタムモデルエイリアス"},{"level":3,"text":"複数のプロファイル","id":"複数のプロファイル"},{"level":2,"text":"次のステップ","id":"次のステップ"}],"lang":"ja","children":["$","$L3",null,{"content":"$4"}]}],[["$","script","script-0",{"src":"/VansRouter/_next/static/chunks/ff1a16fafef87110.js","async":true}],["$","script","script-1",{"src":"/VansRouter/_next/static/chunks/3ba79d5b01800fdc.js","async":true}]],["$","$L5",null,{"children":["$","$6",null,{"name":"Next.MetadataOutlet","children":"$@7"}]}]]}],"loading":null,"isPartial":false}
+7:null

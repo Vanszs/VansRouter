@@ -1,0 +1,572 @@
+<!DOCTYPE html><!--PUpTBY_8r_zZtEM8SJOLp--><html lang="en"><head><meta charSet="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/><link rel="stylesheet" href="/VansRouter/_next/static/chunks/71d10a355cb8f2d7.css" data-precedence="next"/><link rel="preload" as="script" fetchPriority="low" href="/VansRouter/_next/static/chunks/343aa45b5611d01d.js"/><script src="/VansRouter/_next/static/chunks/a0aa32a146625b3a.js" async=""></script><script src="/VansRouter/_next/static/chunks/3e45c79224336516.js" async=""></script><script src="/VansRouter/_next/static/chunks/turbopack-4db312a651dd60cf.js" async=""></script><script src="/VansRouter/_next/static/chunks/ff1a16fafef87110.js" async=""></script><script src="/VansRouter/_next/static/chunks/803a574de9eda7ae.js" async=""></script><script src="/VansRouter/_next/static/chunks/3ba79d5b01800fdc.js" async=""></script><title>9Router Documentation</title><meta name="description" content="Smart AI model router - Maximize subscriptions, minimize costs"/><script src="/VansRouter/_next/static/chunks/a6dad97d9634a72d.js" noModule=""></script></head><body class="bg-[#FCFBF9] text-[#6B7280]"><div hidden=""><!--$--><!--/$--></div><div class="min-h-screen flex flex-col bg-[#FCFBF9]"><header class="sticky top-0 z-50 w-full border-b bg-white/80 backdrop-blur-sm border-gray-200"><div class=" mx-auto px-4 h-16 flex items-center justify-between"><button type="button" class="lg:hidden p-2 rounded-lg hover:bg-gray-100 transition-colors" aria-label="Open menu"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-menu w-6 h-6 text-gray-600" aria-hidden="true"><path d="M4 5h16"></path><path d="M4 12h16"></path><path d="M4 19h16"></path></svg></button><a class="flex items-center gap-2 font-bold text-2xl text-black hover:opacity-80 transition-opacity" href="/VansRouter/en/"><span>9</span><span class="text-[#E68A6E]">9Router<!-- --> Docs</span></a><div class="flex items-center gap-2 sm:gap-3"><button type="button" class="flex items-center gap-1.5 px-2.5 py-1.5 text-sm text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors" aria-label="Switch language"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-globe w-4 h-4" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"></path><path d="M2 12h20"></path></svg><span class="hidden sm:inline">🇺🇸<!-- --> <!-- -->English</span><span class="sm:hidden">🇺🇸</span></button><a target="_blank" rel="noopener noreferrer" class="flex items-center gap-2 px-3 sm:px-4 py-2 bg-[#E68A6E] text-white rounded-lg font-medium hover:bg-[#d67a5e] transition-colors text-sm" href="http://localhost:20128"><span class="hidden sm:inline">Go to App</span><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-external-link w-4 h-4" aria-hidden="true"><path d="M15 3h6v6"></path><path d="M10 14 21 3"></path><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path></svg></a></div></div></header><div class="flex-1 flex"><div class="hidden lg:block"><aside class="w-64 border-r bg-white border-gray-200 h-[calc(100vh-4rem)] sticky top-16 overflow-y-auto"><nav class="p-4 space-y-6"><div><button type="button" class="flex items-center justify-between w-full text-sm font-semibold text-gray-900 mb-2 hover:text-[#E68A6E] transition-colors"><span class="flex items-center gap-2"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-rocket w-4 h-4" aria-hidden="true"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"></path><path d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"></path><path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"></path><path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"></path></svg>Getting Started</span><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-right w-4 h-4" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg></button></div><div><button type="button" class="flex items-center justify-between w-full text-sm font-semibold text-gray-900 mb-2 hover:text-[#E68A6E] transition-colors"><span class="flex items-center gap-2"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-layers w-4 h-4" aria-hidden="true"><path d="M12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83z"></path><path d="M2 12a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 12"></path><path d="M2 17a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 17"></path></svg>Providers</span><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-right w-4 h-4" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg></button></div><div><button type="button" class="flex items-center justify-between w-full text-sm font-semibold text-gray-900 mb-2 hover:text-[#E68A6E] transition-colors"><span class="flex items-center gap-2"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-zap w-4 h-4" aria-hidden="true"><path d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z"></path></svg>Features</span><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-right w-4 h-4" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg></button></div><div><button type="button" class="flex items-center justify-between w-full text-sm font-semibold text-gray-900 mb-2 hover:text-[#E68A6E] transition-colors"><span class="flex items-center gap-2"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-plug w-4 h-4" aria-hidden="true"><path d="M12 22v-5"></path><path d="M15 8V2"></path><path d="M17 8a1 1 0 0 1 1 1v4a4 4 0 0 1-4 4h-4a4 4 0 0 1-4-4V9a1 1 0 0 1 1-1z"></path><path d="M9 8V2"></path></svg>Integration</span><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-right w-4 h-4" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg></button></div><div><button type="button" class="flex items-center justify-between w-full text-sm font-semibold text-gray-900 mb-2 hover:text-[#E68A6E] transition-colors"><span class="flex items-center gap-2"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-cloud w-4 h-4" aria-hidden="true"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"></path></svg>Deployment</span><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-right w-4 h-4" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg></button></div><div><button type="button" class="flex items-center justify-between w-full text-sm font-semibold text-gray-900 mb-2 hover:text-[#E68A6E] transition-colors"><span class="flex items-center gap-2"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-circle-question-mark w-4 h-4" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><path d="M12 17h.01"></path></svg>Help</span><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-right w-4 h-4" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg></button></div></nav></aside></div><div class="flex-1 flex min-w-0"><main class="flex-1 min-w-0 overflow-x-hidden overflow-y-auto"><article class="max-w-4xl mx-auto px-4 sm:px-6 py-8"><div class="markdown-content"><h1 id="quota-tracking--usage-monitoring">Quota Tracking &amp; Usage Monitoring</h1>
+<p>Track real-time token consumption, monitor quota limits, estimate costs, and get alerts before running out. Never waste subscription quota or exceed budget limits.</p>
+<hr/>
+<h2 id="overview">Overview</h2>
+<p>VansRouter provides comprehensive quota tracking for all providers:</p>
+<ul>
+<li><strong>Real-time token consumption</strong> - See tokens used per request</li>
+<li><strong>Quota limits &amp; remaining</strong> - Track usage vs limits</li>
+<li><strong>Reset countdown</strong> - Know when quota refreshes</li>
+<li><strong>Cost estimation</strong> - Calculate spending for paid tiers</li>
+<li><strong>Monthly reports</strong> - Analyze usage patterns</li>
+<li><strong>Alerts &amp; notifications</strong> - Get warned before limits</li>
+</ul>
+<hr/>
+<h2 id="dashboard-overview">Dashboard Overview</h2>
+<h3 id="quota-summary">Quota Summary</h3>
+<pre><code>Dashboard → Home → Quota Overview
+
+┌─────────────────────────────────────────────┐
+│ Claude Code (cc/)                           │
+│ ████████████░░░░░░░░ 2.5h / 5h (50%)       │
+│ Resets in: 2h 30m                           │
+│ Cost: $0 (subscription)                     │
+└─────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────┐
+│ Gemini CLI (gc/)                            │
+│ ████████░░░░░░░░░░░░ 450 / 1000 (45%)      │
+│ Daily reset in: 18h 30m                     │
+│ Monthly: 45K / 180K (25%)                   │
+│ Cost: $0 (free tier)                        │
+└─────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────┐
+│ GLM-4.7 (glm/)                              │
+│ ██████████████░░░░░░ 7M / 10M tokens (70%)  │
+│ Resets: Daily 10:00 AM (in 5h 35m)         │
+│ Cost today: $4.20                           │
+└─────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────┐
+│ MiniMax M2.1 (minimax/)                     │
+│ ████████████████░░░░ 4M / 5M tokens (80%)   │
+│ Rolling 5h window                           │
+│ Cost (5h): $0.80                            │
+└─────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────┐
+│ iFlow (if/)                                 │
+│ ████████████████████ Unlimited              │
+│ Cost: $0 (free forever)                     │
+└─────────────────────────────────────────────┘
+</code></pre>
+<hr/>
+<h2 id="real-time-token-consumption">Real-Time Token Consumption</h2>
+<h3 id="per-request-tracking">Per-Request Tracking</h3>
+<p>Every request shows detailed token usage:</p>
+<pre><code>Dashboard → Activity → Recent Requests
+
+Request #1234
+Model: cc/claude-opus-4-5-20251101
+Timestamp: 2026-02-04 04:15:32
+
+Tokens:
+  Input: 1,250 tokens
+  Output: 850 tokens
+  Total: 2,100 tokens
+
+Cost: $0 (subscription quota)
+Duration: 3.2s
+Status: ✅ Success
+</code></pre>
+<h3 id="live-usage-monitor">Live Usage Monitor</h3>
+<pre><code>Dashboard → Live Monitor
+
+Current request:
+  Model: glm/glm-4.7
+  Tokens streamed: 450 / ~800 estimated
+  Cost so far: $0.0009
+  Duration: 1.8s
+</code></pre>
+<h3 id="token-breakdown-by-model">Token Breakdown by Model</h3>
+<pre><code>Dashboard → Analytics → Token Usage
+
+Today (Feb 4, 2026):
+  cc/claude-opus-4-5: 15M tokens ($0, subscription)
+  glm/glm-4.7: 8M tokens ($4.80)
+  if/kimi-k2-thinking: 3M tokens ($0, free)
+  
+Total: 26M tokens
+Cost: $4.80
+</code></pre>
+<hr/>
+<h2 id="quota-limits--reset-times">Quota Limits &amp; Reset Times</h2>
+<h3 id="subscription-providers">Subscription Providers</h3>
+<p><strong>Claude Code (Pro/Max)</strong></p>
+<pre><code>Quota type: Time-based (5-hour rolling)
+Limit: 5 hours of usage
+Reset: Rolling 5-hour window + Weekly refresh
+Tracking: Usage time per model
+
+Dashboard shows:
+  Opus: 2.5h / 5h used
+  Sonnet: 1.2h / 5h used
+  Haiku: 0.8h / 5h used
+  
+Weekly reset: Every Monday 00:00 UTC
+</code></pre>
+<p><strong>OpenAI Codex (Plus/Pro)</strong></p>
+<pre><code>Quota type: Time-based (5-hour rolling)
+Limit: 5 hours (Plus) / 10 hours (Pro)
+Reset: Rolling 5-hour window + Weekly refresh
+
+Dashboard shows:
+  GPT-5.2 Codex: 3.5h / 5h used
+  Resets in: 1h 30m
+</code></pre>
+<p><strong>Gemini CLI (FREE)</strong></p>
+<pre><code>Quota type: Request count + Monthly tokens
+Daily limit: 1,000 requests
+Monthly limit: 180,000 completions
+Reset: Daily 00:00 UTC + Monthly 1st
+
+Dashboard shows:
+  Today: 450 / 1,000 requests (45%)
+  This month: 45K / 180K completions (25%)
+  Daily reset in: 18h 30m
+  Monthly reset in: 26 days
+</code></pre>
+<p><strong>GitHub Copilot</strong></p>
+<pre><code>Quota type: Monthly usage
+Limit: Varies by plan
+Reset: 1st of each month
+
+Dashboard shows:
+  Usage: 60% of monthly quota
+  Resets: March 1, 2026 (in 25 days)
+</code></pre>
+<h3 id="cheap-providers">Cheap Providers</h3>
+<p><strong>GLM-4.7</strong></p>
+<pre><code>Quota type: Daily token limit
+Limit: 10M tokens/day (Coding Plan)
+Reset: Daily 10:00 AM Beijing Time (UTC+8)
+
+Dashboard shows:
+  Used: 7M / 10M tokens (70%)
+  Remaining: 3M tokens
+  Resets in: 5h 35m
+  Cost today: $4.20
+</code></pre>
+<p><strong>MiniMax M2.1</strong></p>
+<pre><code>Quota type: Rolling 5-hour window
+Limit: 5M tokens per 5 hours
+Reset: Continuous rolling window
+
+Dashboard shows:
+  Used (5h): 4M / 5M tokens (80%)
+  Oldest usage expires in: 45m
+  Cost (5h): $0.80
+</code></pre>
+<p><strong>Kimi K2</strong></p>
+<pre><code>Quota type: Monthly subscription
+Limit: 10M tokens/month ($9 flat)
+Reset: Monthly on subscription date
+
+Dashboard shows:
+  Used: 6M / 10M tokens (60%)
+  Resets: Feb 15, 2026 (in 11 days)
+  Cost: $9/month (prepaid)
+</code></pre>
+<h3 id="free-providers">Free Providers</h3>
+<p><strong>iFlow / Qwen / Kiro</strong></p>
+<pre><code>Quota type: Unlimited (rate-limited)
+Limit: No hard limit
+Reset: N/A
+
+Dashboard shows:
+  Used today: 5M tokens
+  Cost: $0 (free forever)
+  Status: ✅ Available
+</code></pre>
+<hr/>
+<h2 id="cost-estimation">Cost Estimation</h2>
+<h3 id="real-time-cost-tracking">Real-Time Cost Tracking</h3>
+<pre><code>Dashboard → Costs → Today
+
+Subscription providers: $0
+  Claude Code: 15M tokens ($0, included)
+  Gemini CLI: 3M tokens ($0, free tier)
+
+Paid providers: $4.80
+  GLM-4.7: 8M tokens ($4.80)
+    Input: 6M × $0.60/1M = $3.60
+    Output: 2M × $2.20/1M = $4.40
+    Total: $4.80
+
+Free providers: $0
+  iFlow: 3M tokens ($0)
+
+Total today: $4.80
+</code></pre>
+<h3 id="monthly-spending-report">Monthly Spending Report</h3>
+<pre><code>Dashboard → Costs → This Month (February 2026)
+
+Week 1 (Feb 1-7):
+  Subscription: $0 (80M tokens)
+  Paid: $15.20 (25M tokens)
+  Free: $0 (10M tokens)
+  Total: $15.20
+
+Week 2 (Feb 8-14):
+  Subscription: $0 (75M tokens)
+  Paid: $12.80 (20M tokens)
+  Free: $0 (8M tokens)
+  Total: $12.80
+
+Month to date: $28.00
+Projected (30 days): ~$120
+
+Breakdown by provider:
+  GLM-4.7: $22.00 (78%)
+  MiniMax M2.1: $6.00 (22%)
+  
+Average cost per 1M tokens: $0.62
+Savings vs ChatGPT API: 97% ($4,000 → $120)
+</code></pre>
+<h3 id="cost-projection">Cost Projection</h3>
+<pre><code>Dashboard → Costs → Projections
+
+Based on last 7 days usage:
+  Daily average: 50M tokens
+  Daily cost: $4.50
+
+Monthly projection:
+  Tokens: 1,500M (1.5B)
+  Cost: $135
+  
+Breakdown:
+  Subscription: 900M tokens ($0)
+  GLM-4.7: 450M tokens ($90)
+  MiniMax: 120M tokens ($24)
+  Free: 30M tokens ($0)
+
+Budget status:
+  Daily limit: $5 → 90% used today
+  Monthly limit: $150 → 90% projected
+  ⚠️ Warning: May exceed monthly budget
+</code></pre>
+<hr/>
+<h2 id="usage-dashboard">Usage Dashboard</h2>
+<h3 id="overview-stats">Overview Stats</h3>
+<pre><code>Dashboard → Analytics → Overview
+
+Today (Feb 4, 2026):
+  Requests: 1,234
+  Tokens: 26M
+  Cost: $4.80
+  Avg response time: 2.1s
+
+This week:
+  Requests: 8,456
+  Tokens: 180M
+  Cost: $28.00
+  Success rate: 99.2%
+
+This month:
+  Requests: 15,234
+  Tokens: 320M
+  Cost: $52.00
+  Top model: cc/claude-opus-4-5 (45%)
+</code></pre>
+<h3 id="usage-by-model">Usage by Model</h3>
+<pre><code>Dashboard → Analytics → Models
+
+Top models (this month):
+1. cc/claude-opus-4-5: 145M tokens (45%)
+2. glm/glm-4.7: 95M tokens (30%)
+3. if/kimi-k2-thinking: 50M tokens (16%)
+4. minimax/MiniMax-M2.1: 20M tokens (6%)
+5. gc/gemini-3-flash: 10M tokens (3%)
+
+Cost breakdown:
+  cc/claude-opus: $0 (subscription)
+  glm/glm-4.7: $45.00
+  if/kimi-k2-thinking: $0 (free)
+  minimax/MiniMax-M2.1: $7.00
+  gc/gemini-3-flash: $0 (free)
+</code></pre>
+<h3 id="usage-by-time">Usage by Time</h3>
+<pre><code>Dashboard → Analytics → Timeline
+
+Hourly usage (today):
+00:00 - 01:00: 0.5M tokens
+01:00 - 02:00: 0.2M tokens
+...
+08:00 - 09:00: 3.2M tokens (peak)
+09:00 - 10:00: 2.8M tokens
+...
+23:00 - 00:00: 0.8M tokens
+
+Peak hours: 08:00 - 12:00 (morning coding)
+Low hours: 00:00 - 06:00 (night)
+</code></pre>
+<h3 id="usage-by-combo">Usage by Combo</h3>
+<pre><code>Dashboard → Analytics → Combos
+
+premium-coding:
+  Requests: 456
+  Tokens: 12M
+  Cost: $2.40
+  
+  Breakdown:
+    cc/claude-opus: 8M tokens (67%, $0)
+    glm/glm-4.7: 3M tokens (25%, $1.80)
+    minimax/MiniMax-M2.1: 1M tokens (8%, $0.20)
+
+budget-combo:
+  Requests: 234
+  Tokens: 6M
+  Cost: $1.20
+  
+  Breakdown:
+    glm/glm-4.7: 4M tokens (67%, $2.40)
+    if/kimi-k2-thinking: 2M tokens (33%, $0)
+</code></pre>
+<hr/>
+<h2 id="alerts--notifications">Alerts &amp; Notifications</h2>
+<h3 id="quota-alerts">Quota Alerts</h3>
+<pre><code>Dashboard → Settings → Alerts
+
+Quota warnings:
+  ✅ Alert at 80% quota used
+  ✅ Alert at 90% quota used
+  ✅ Alert when quota exhausted
+  ✅ Notify when quota resets
+
+Delivery:
+  ✅ Dashboard notification
+  ✅ Email (optional)
+  ✅ Webhook (optional)
+</code></pre>
+<p><strong>Example notifications:</strong></p>
+<pre><code>⚠️ Claude Code quota 80% used
+   2.5h remaining (resets in 1h 30m)
+   
+⚠️ GLM-4.7 quota 90% used
+   1M tokens remaining (resets in 5h)
+   
+✅ Gemini CLI quota reset
+   1,000 requests available (daily limit)
+</code></pre>
+<h3 id="budget-alerts">Budget Alerts</h3>
+<pre><code>Dashboard → Settings → Budget Alerts
+
+Daily budget: $5
+  ✅ Alert at 80% ($4)
+  ✅ Alert at 100% ($5)
+  ✅ Auto-switch to free tier when exceeded
+
+Monthly budget: $150
+  ✅ Alert at 50% ($75)
+  ✅ Alert at 80% ($120)
+  ✅ Alert at 100% ($150)
+</code></pre>
+<p><strong>Example notifications:</strong></p>
+<pre><code>⚠️ Daily budget 80% used
+   $4.00 / $5.00 spent today
+   
+⚠️ Monthly budget 50% reached
+   $75 / $150 spent this month
+   Projected: $135 (within budget)
+   
+🚨 Daily budget exceeded
+   $5.20 / $5.00 spent today
+   Auto-switched to free tier
+</code></pre>
+<h3 id="cost-anomaly-detection">Cost Anomaly Detection</h3>
+<pre><code>Dashboard → Settings → Anomaly Detection
+
+✅ Detect unusual spending patterns
+✅ Alert on cost spikes (&gt;2× daily average)
+✅ Warn on quota exhaustion patterns
+
+Example alert:
+⚠️ Cost spike detected
+   Today: $12.50 (2.5× daily average)
+   Reason: High GLM-4.7 usage (20M tokens)
+   Suggestion: Check if primary models quota-exhausted
+</code></pre>
+<hr/>
+<h2 id="best-practices">Best Practices</h2>
+<h3 id="1-monitor-quota-daily">1. Monitor Quota Daily</h3>
+<pre><code>Daily routine:
+1. Check dashboard quota overview (30 seconds)
+2. Review reset times
+3. Plan usage around quota availability
+</code></pre>
+<p><strong>Example:</strong></p>
+<pre><code>Morning check:
+  ✅ Claude Code: 5h available (fresh reset)
+  ✅ Gemini CLI: 1K requests available
+  ⚠️ GLM-4.7: 2M tokens left (resets 10AM)
+  
+Action: Use Claude Code for morning work
+</code></pre>
+<h3 id="2-set-budget-limits">2. Set Budget Limits</h3>
+<pre><code>Dashboard → Settings → Budget:
+  Daily: $5 (prevents overspending)
+  Monthly: $150 (aligns with budget)
+</code></pre>
+<p><strong>Result</strong>: Auto-switch to free tier when limit reached.</p>
+<h3 id="3-optimize-combo-usage">3. Optimize Combo Usage</h3>
+<pre><code>Dashboard → Analytics → Combos:
+  Review which models are used most
+  Adjust combo order to minimize costs
+</code></pre>
+<p><strong>Example:</strong></p>
+<pre><code>Current: cc/claude-opus → glm/glm-4.7
+  80% via Claude (good)
+  20% via GLM ($12/month)
+
+Optimized: gc/gemini-3-flash → cc/claude-opus → glm/glm-4.7
+  50% via Gemini (free)
+  40% via Claude (subscription)
+  10% via GLM ($6/month)
+  
+Savings: $6/month
+</code></pre>
+<h3 id="4-track-reset-times">4. Track Reset Times</h3>
+<pre><code>Dashboard → Quota → Reset Schedule:
+  Claude Code: 5h rolling + Weekly Monday
+  Gemini CLI: Daily 00:00 UTC + Monthly 1st
+  GLM-4.7: Daily 10:00 AM Beijing Time
+  MiniMax: Rolling 5h window
+</code></pre>
+<p><strong>Strategy</strong>: Use providers when quota is fresh.</p>
+<h3 id="5-review-monthly-reports">5. Review Monthly Reports</h3>
+<pre><code>Dashboard → Analytics → Monthly Report:
+  Total tokens: 1.5B
+  Total cost: $120
+  Savings: 97% vs ChatGPT API
+  
+Insights:
+  - 60% usage via subscriptions ($0)
+  - 30% via GLM ($90)
+  - 10% via free tier ($0)
+  
+Optimization:
+  - Increase Gemini CLI usage (free)
+  - Reduce GLM usage (expensive)
+</code></pre>
+<hr/>
+<h2 id="api-access">API Access</h2>
+<h3 id="get-quota-status">Get Quota Status</h3>
+<pre><code class="hljs language-bash">GET http://localhost:20128/api/quota
+Authorization: Bearer your-api-key
+
+Response:
+{
+  <span class="hljs-string">&quot;providers&quot;</span>: [
+    {
+      <span class="hljs-string">&quot;id&quot;</span>: <span class="hljs-string">&quot;cc&quot;</span>,
+      <span class="hljs-string">&quot;name&quot;</span>: <span class="hljs-string">&quot;Claude Code&quot;</span>,
+      <span class="hljs-string">&quot;quota&quot;</span>: {
+        <span class="hljs-string">&quot;used&quot;</span>: 2.5,
+        <span class="hljs-string">&quot;limit&quot;</span>: 5,
+        <span class="hljs-string">&quot;unit&quot;</span>: <span class="hljs-string">&quot;hours&quot;</span>,
+        <span class="hljs-string">&quot;percentage&quot;</span>: 50
+      },
+      <span class="hljs-string">&quot;reset&quot;</span>: {
+        <span class="hljs-string">&quot;type&quot;</span>: <span class="hljs-string">&quot;rolling&quot;</span>,
+        <span class="hljs-string">&quot;window&quot;</span>: <span class="hljs-string">&quot;5h&quot;</span>,
+        <span class="hljs-string">&quot;nextReset&quot;</span>: <span class="hljs-string">&quot;2026-02-04T06:45:00Z&quot;</span>
+      },
+      <span class="hljs-string">&quot;cost&quot;</span>: {
+        <span class="hljs-string">&quot;today&quot;</span>: 0,
+        <span class="hljs-string">&quot;month&quot;</span>: 0,
+        <span class="hljs-string">&quot;currency&quot;</span>: <span class="hljs-string">&quot;USD&quot;</span>
+      }
+    },
+    {
+      <span class="hljs-string">&quot;id&quot;</span>: <span class="hljs-string">&quot;glm&quot;</span>,
+      <span class="hljs-string">&quot;name&quot;</span>: <span class="hljs-string">&quot;GLM-4.7&quot;</span>,
+      <span class="hljs-string">&quot;quota&quot;</span>: {
+        <span class="hljs-string">&quot;used&quot;</span>: 7000000,
+        <span class="hljs-string">&quot;limit&quot;</span>: 10000000,
+        <span class="hljs-string">&quot;unit&quot;</span>: <span class="hljs-string">&quot;tokens&quot;</span>,
+        <span class="hljs-string">&quot;percentage&quot;</span>: 70
+      },
+      <span class="hljs-string">&quot;reset&quot;</span>: {
+        <span class="hljs-string">&quot;type&quot;</span>: <span class="hljs-string">&quot;daily&quot;</span>,
+        <span class="hljs-string">&quot;time&quot;</span>: <span class="hljs-string">&quot;10:00 AM UTC+8&quot;</span>,
+        <span class="hljs-string">&quot;nextReset&quot;</span>: <span class="hljs-string">&quot;2026-02-04T10:00:00+08:00&quot;</span>
+      },
+      <span class="hljs-string">&quot;cost&quot;</span>: {
+        <span class="hljs-string">&quot;today&quot;</span>: 4.20,
+        <span class="hljs-string">&quot;month&quot;</span>: 52.00,
+        <span class="hljs-string">&quot;currency&quot;</span>: <span class="hljs-string">&quot;USD&quot;</span>
+      }
+    }
+  ]
+}
+</code></pre>
+<h3 id="get-usage-stats">Get Usage Stats</h3>
+<pre><code class="hljs language-bash">GET http://localhost:20128/api/usage?period=today
+Authorization: Bearer your-api-key
+
+Response:
+{
+  <span class="hljs-string">&quot;period&quot;</span>: <span class="hljs-string">&quot;today&quot;</span>,
+  <span class="hljs-string">&quot;date&quot;</span>: <span class="hljs-string">&quot;2026-02-04&quot;</span>,
+  <span class="hljs-string">&quot;summary&quot;</span>: {
+    <span class="hljs-string">&quot;requests&quot;</span>: 1234,
+    <span class="hljs-string">&quot;tokens&quot;</span>: 26000000,
+    <span class="hljs-string">&quot;cost&quot;</span>: 4.80
+  },
+  <span class="hljs-string">&quot;byModel&quot;</span>: [
+    {
+      <span class="hljs-string">&quot;model&quot;</span>: <span class="hljs-string">&quot;cc/claude-opus-4-5&quot;</span>,
+      <span class="hljs-string">&quot;requests&quot;</span>: 456,
+      <span class="hljs-string">&quot;tokens&quot;</span>: 15000000,
+      <span class="hljs-string">&quot;cost&quot;</span>: 0
+    },
+    {
+      <span class="hljs-string">&quot;model&quot;</span>: <span class="hljs-string">&quot;glm/glm-4.7&quot;</span>,
+      <span class="hljs-string">&quot;requests&quot;</span>: 234,
+      <span class="hljs-string">&quot;tokens&quot;</span>: 8000000,
+      <span class="hljs-string">&quot;cost&quot;</span>: 4.80
+    }
+  ]
+}
+</code></pre>
+<hr/>
+<h2 id="troubleshooting">Troubleshooting</h2>
+<p><strong>Issue: Quota shows 0% but requests failing</strong></p>
+<p><strong>Solution:</strong></p>
+<ol>
+<li>Check provider connection (Dashboard → Providers)</li>
+<li>Verify API keys are valid</li>
+<li>Check if provider is down (status page)</li>
+<li>Try reconnecting OAuth providers</li>
+</ol>
+<p><strong>Issue: Cost estimation incorrect</strong></p>
+<p><strong>Solution:</strong></p>
+<ol>
+<li>Dashboard → Settings → Pricing</li>
+<li>Verify pricing per provider matches current rates</li>
+<li>Update pricing if provider changed rates</li>
+<li>Contact support if discrepancy persists</li>
+</ol>
+<p><strong>Issue: Reset time not updating</strong></p>
+<p><strong>Solution:</strong></p>
+<ol>
+<li>Refresh dashboard (F5)</li>
+<li>Check system time is correct</li>
+<li>Verify timezone settings</li>
+<li>Restart VansRouter if issue persists</li>
+</ol>
+<p><strong>Issue: Alerts not received</strong></p>
+<p><strong>Solution:</strong></p>
+<ol>
+<li>Dashboard → Settings → Alerts</li>
+<li>Verify email address is correct</li>
+<li>Check spam folder</li>
+<li>Test notification (Send Test button)</li>
+</ol>
+<hr/>
+<h2 id="related">Related</h2>
+<ul>
+<li><a href="./smart-routing.md">Smart Routing</a> - Auto fallback based on quota</li>
+<li><a href="./combos.md">Combos</a> - Create custom fallback chains</li>
+</ul></div></article></main><div class="hidden lg:block"><aside class="hidden xl:block w-64 border-l bg-white border-gray-200 h-[calc(100vh-4rem)] sticky top-16 overflow-y-auto"><nav class="p-4"><h3 class="flex items-center gap-2 text-sm font-semibold text-gray-900 mb-3"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-list w-4 h-4" aria-hidden="true"><path d="M3 5h.01"></path><path d="M3 12h.01"></path><path d="M3 19h.01"></path><path d="M8 5h13"></path><path d="M8 12h13"></path><path d="M8 19h13"></path></svg>On this page</h3><ul class="space-y-2"><li><a href="#overview" class="block text-sm transition-colors  text-gray-600 hover:text-gray-900">Overview</a></li><li><a href="#dashboard-overview" class="block text-sm transition-colors  text-gray-600 hover:text-gray-900">Dashboard Overview</a></li><li><a href="#quota-summary" class="block text-sm transition-colors pl-4 text-gray-600 hover:text-gray-900">Quota Summary</a></li><li><a href="#real-time-token-consumption" class="block text-sm transition-colors  text-gray-600 hover:text-gray-900">Real-Time Token Consumption</a></li><li><a href="#per-request-tracking" class="block text-sm transition-colors pl-4 text-gray-600 hover:text-gray-900">Per-Request Tracking</a></li><li><a href="#live-usage-monitor" class="block text-sm transition-colors pl-4 text-gray-600 hover:text-gray-900">Live Usage Monitor</a></li><li><a href="#token-breakdown-by-model" class="block text-sm transition-colors pl-4 text-gray-600 hover:text-gray-900">Token Breakdown by Model</a></li><li><a href="#quota-limits--reset-times" class="block text-sm transition-colors  text-gray-600 hover:text-gray-900">Quota Limits &amp; Reset Times</a></li><li><a href="#subscription-providers" class="block text-sm transition-colors pl-4 text-gray-600 hover:text-gray-900">Subscription Providers</a></li><li><a href="#cheap-providers" class="block text-sm transition-colors pl-4 text-gray-600 hover:text-gray-900">Cheap Providers</a></li><li><a href="#free-providers" class="block text-sm transition-colors pl-4 text-gray-600 hover:text-gray-900">Free Providers</a></li><li><a href="#cost-estimation" class="block text-sm transition-colors  text-gray-600 hover:text-gray-900">Cost Estimation</a></li><li><a href="#real-time-cost-tracking" class="block text-sm transition-colors pl-4 text-gray-600 hover:text-gray-900">Real-Time Cost Tracking</a></li><li><a href="#monthly-spending-report" class="block text-sm transition-colors pl-4 text-gray-600 hover:text-gray-900">Monthly Spending Report</a></li><li><a href="#cost-projection" class="block text-sm transition-colors pl-4 text-gray-600 hover:text-gray-900">Cost Projection</a></li><li><a href="#usage-dashboard" class="block text-sm transition-colors  text-gray-600 hover:text-gray-900">Usage Dashboard</a></li><li><a href="#overview-stats" class="block text-sm transition-colors pl-4 text-gray-600 hover:text-gray-900">Overview Stats</a></li><li><a href="#usage-by-model" class="block text-sm transition-colors pl-4 text-gray-600 hover:text-gray-900">Usage by Model</a></li><li><a href="#usage-by-time" class="block text-sm transition-colors pl-4 text-gray-600 hover:text-gray-900">Usage by Time</a></li><li><a href="#usage-by-combo" class="block text-sm transition-colors pl-4 text-gray-600 hover:text-gray-900">Usage by Combo</a></li><li><a href="#alerts--notifications" class="block text-sm transition-colors  text-gray-600 hover:text-gray-900">Alerts &amp; Notifications</a></li><li><a href="#quota-alerts" class="block text-sm transition-colors pl-4 text-gray-600 hover:text-gray-900">Quota Alerts</a></li><li><a href="#budget-alerts" class="block text-sm transition-colors pl-4 text-gray-600 hover:text-gray-900">Budget Alerts</a></li><li><a href="#cost-anomaly-detection" class="block text-sm transition-colors pl-4 text-gray-600 hover:text-gray-900">Cost Anomaly Detection</a></li><li><a href="#best-practices" class="block text-sm transition-colors  text-gray-600 hover:text-gray-900">Best Practices</a></li><li><a href="#1-monitor-quota-daily" class="block text-sm transition-colors pl-4 text-gray-600 hover:text-gray-900">1. Monitor Quota Daily</a></li><li><a href="#2-set-budget-limits" class="block text-sm transition-colors pl-4 text-gray-600 hover:text-gray-900">2. Set Budget Limits</a></li><li><a href="#3-optimize-combo-usage" class="block text-sm transition-colors pl-4 text-gray-600 hover:text-gray-900">3. Optimize Combo Usage</a></li><li><a href="#4-track-reset-times" class="block text-sm transition-colors pl-4 text-gray-600 hover:text-gray-900">4. Track Reset Times</a></li><li><a href="#5-review-monthly-reports" class="block text-sm transition-colors pl-4 text-gray-600 hover:text-gray-900">5. Review Monthly Reports</a></li><li><a href="#api-access" class="block text-sm transition-colors  text-gray-600 hover:text-gray-900">API Access</a></li><li><a href="#get-quota-status" class="block text-sm transition-colors pl-4 text-gray-600 hover:text-gray-900">Get Quota Status</a></li><li><a href="#get-usage-stats" class="block text-sm transition-colors pl-4 text-gray-600 hover:text-gray-900">Get Usage Stats</a></li><li><a href="#troubleshooting" class="block text-sm transition-colors  text-gray-600 hover:text-gray-900">Troubleshooting</a></li><li><a href="#related" class="block text-sm transition-colors  text-gray-600 hover:text-gray-900">Related</a></li></ul></nav></aside></div></div></div></div><!--$--><!--/$--><script src="/VansRouter/_next/static/chunks/343aa45b5611d01d.js" id="_R_" async=""></script><script>(self.__next_f=self.__next_f||[]).push([0])</script><script>self.__next_f.push([1,"1:\"$Sreact.fragment\"\n2:I[39756,[\"/VansRouter/_next/static/chunks/ff1a16fafef87110.js\",\"/VansRouter/_next/static/chunks/803a574de9eda7ae.js\"],\"default\"]\n3:I[37457,[\"/VansRouter/_next/static/chunks/ff1a16fafef87110.js\",\"/VansRouter/_next/static/chunks/803a574de9eda7ae.js\"],\"default\"]\n5:I[97367,[\"/VansRouter/_next/static/chunks/ff1a16fafef87110.js\",\"/VansRouter/_next/static/chunks/803a574de9eda7ae.js\"],\"OutletBoundary\"]\n6:\"$Sreact.suspense\"\n8:I[97367,[\"/VansRouter/_next/static/chunks/ff1a16fafef87110.js\",\"/VansRouter/_next/static/chunks/803a574de9eda7ae.js\"],\"ViewportBoundary\"]\na:I[97367,[\"/VansRouter/_next/static/chunks/ff1a16fafef87110.js\",\"/VansRouter/_next/static/chunks/803a574de9eda7ae.js\"],\"MetadataBoundary\"]\nc:I[68027,[\"/VansRouter/_next/static/chunks/ff1a16fafef87110.js\",\"/VansRouter/_next/static/chunks/803a574de9eda7ae.js\"],\"default\"]\n:HL[\"/VansRouter/_next/static/chunks/71d10a355cb8f2d7.css\",\"style\"]\n"])</script><script>self.__next_f.push([1,"0:{\"P\":null,\"b\":\"PUpTBY-8r_zZtEM8SJOLp\",\"c\":[\"\",\"en\",\"features\",\"quota-tracking\",\"\"],\"q\":\"\",\"i\":false,\"f\":[[[\"\",{\"children\":[[\"lang\",\"en\",\"d\"],{\"children\":[[\"slug\",\"features/quota-tracking\",\"c\"],{\"children\":[\"__PAGE__\",{}]}]}]},\"$undefined\",\"$undefined\",true],[[\"$\",\"$1\",\"c\",{\"children\":[[[\"$\",\"link\",\"0\",{\"rel\":\"stylesheet\",\"href\":\"/VansRouter/_next/static/chunks/71d10a355cb8f2d7.css\",\"precedence\":\"next\",\"crossOrigin\":\"$undefined\",\"nonce\":\"$undefined\"}]],[\"$\",\"html\",null,{\"lang\":\"en\",\"children\":[[\"$\",\"head\",null,{}],[\"$\",\"body\",null,{\"className\":\"bg-[#FCFBF9] text-[#6B7280]\",\"children\":[\"$\",\"$L2\",null,{\"parallelRouterKey\":\"children\",\"error\":\"$undefined\",\"errorStyles\":\"$undefined\",\"errorScripts\":\"$undefined\",\"template\":[\"$\",\"$L3\",null,{}],\"templateStyles\":\"$undefined\",\"templateScripts\":\"$undefined\",\"notFound\":[[[\"$\",\"title\",null,{\"children\":\"404: This page could not be found.\"}],[\"$\",\"div\",null,{\"style\":{\"fontFamily\":\"system-ui,\\\"Segoe UI\\\",Roboto,Helvetica,Arial,sans-serif,\\\"Apple Color Emoji\\\",\\\"Segoe UI Emoji\\\"\",\"height\":\"100vh\",\"textAlign\":\"center\",\"display\":\"flex\",\"flexDirection\":\"column\",\"alignItems\":\"center\",\"justifyContent\":\"center\"},\"children\":[\"$\",\"div\",null,{\"children\":[[\"$\",\"style\",null,{\"dangerouslySetInnerHTML\":{\"__html\":\"body{color:#000;background:#fff;margin:0}.next-error-h1{border-right:1px solid rgba(0,0,0,.3)}@media (prefers-color-scheme:dark){body{color:#fff;background:#000}.next-error-h1{border-right:1px solid rgba(255,255,255,.3)}}\"}}],[\"$\",\"h1\",null,{\"className\":\"next-error-h1\",\"style\":{\"display\":\"inline-block\",\"margin\":\"0 20px 0 0\",\"padding\":\"0 23px 0 0\",\"fontSize\":24,\"fontWeight\":500,\"verticalAlign\":\"top\",\"lineHeight\":\"49px\"},\"children\":404}],[\"$\",\"div\",null,{\"style\":{\"display\":\"inline-block\"},\"children\":[\"$\",\"h2\",null,{\"style\":{\"fontSize\":14,\"fontWeight\":400,\"lineHeight\":\"49px\",\"margin\":0},\"children\":\"This page could not be found.\"}]}]]}]}]],[]],\"forbidden\":\"$undefined\",\"unauthorized\":\"$undefined\"}]}]]}]]}],{\"children\":[[\"$\",\"$1\",\"c\",{\"children\":[null,[\"$\",\"$L2\",null,{\"parallelRouterKey\":\"children\",\"error\":\"$undefined\",\"errorStyles\":\"$undefined\",\"errorScripts\":\"$undefined\",\"template\":[\"$\",\"$L3\",null,{}],\"templateStyles\":\"$undefined\",\"templateScripts\":\"$undefined\",\"notFound\":\"$undefined\",\"forbidden\":\"$undefined\",\"unauthorized\":\"$undefined\"}]]}],{\"children\":[[\"$\",\"$1\",\"c\",{\"children\":[null,[\"$\",\"$L2\",null,{\"parallelRouterKey\":\"children\",\"error\":\"$undefined\",\"errorStyles\":\"$undefined\",\"errorScripts\":\"$undefined\",\"template\":[\"$\",\"$L3\",null,{}],\"templateStyles\":\"$undefined\",\"templateScripts\":\"$undefined\",\"notFound\":\"$undefined\",\"forbidden\":\"$undefined\",\"unauthorized\":\"$undefined\"}]]}],{\"children\":[[\"$\",\"$1\",\"c\",{\"children\":[\"$L4\",[[\"$\",\"script\",\"script-0\",{\"src\":\"/VansRouter/_next/static/chunks/ff1a16fafef87110.js\",\"async\":true,\"nonce\":\"$undefined\"}],[\"$\",\"script\",\"script-1\",{\"src\":\"/VansRouter/_next/static/chunks/3ba79d5b01800fdc.js\",\"async\":true,\"nonce\":\"$undefined\"}]],[\"$\",\"$L5\",null,{\"children\":[\"$\",\"$6\",null,{\"name\":\"Next.MetadataOutlet\",\"children\":\"$@7\"}]}]]}],{},null,false,false]},null,false,false]},null,false,false]},null,false,false],[\"$\",\"$1\",\"h\",{\"children\":[null,[\"$\",\"$L8\",null,{\"children\":\"$L9\"}],[\"$\",\"div\",null,{\"hidden\":true,\"children\":[\"$\",\"$La\",null,{\"children\":[\"$\",\"$6\",null,{\"name\":\"Next.Metadata\",\"children\":\"$Lb\"}]}]}],null]}],false]],\"m\":\"$undefined\",\"G\":[\"$c\",[]],\"S\":true}\n"])</script><script>self.__next_f.push([1,"d:I[81956,[\"/VansRouter/_next/static/chunks/ff1a16fafef87110.js\",\"/VansRouter/_next/static/chunks/3ba79d5b01800fdc.js\"],\"default\"]\ne:I[22982,[\"/VansRouter/_next/static/chunks/ff1a16fafef87110.js\",\"/VansRouter/_next/static/chunks/3ba79d5b01800fdc.js\"],\"default\"]\nf:T3ca9,"])</script><script>self.__next_f.push([1,"# Quota Tracking \u0026 Usage Monitoring\r\n\r\nTrack real-time token consumption, monitor quota limits, estimate costs, and get alerts before running out. Never waste subscription quota or exceed budget limits.\r\n\r\n---\r\n\r\n## Overview\r\n\r\nVansRouter provides comprehensive quota tracking for all providers:\r\n\r\n- **Real-time token consumption** - See tokens used per request\r\n- **Quota limits \u0026 remaining** - Track usage vs limits\r\n- **Reset countdown** - Know when quota refreshes\r\n- **Cost estimation** - Calculate spending for paid tiers\r\n- **Monthly reports** - Analyze usage patterns\r\n- **Alerts \u0026 notifications** - Get warned before limits\r\n\r\n---\r\n\r\n## Dashboard Overview\r\n\r\n### Quota Summary\r\n\r\n```\r\nDashboard → Home → Quota Overview\r\n\r\n┌─────────────────────────────────────────────┐\r\n│ Claude Code (cc/)                           │\r\n│ ████████████░░░░░░░░ 2.5h / 5h (50%)       │\r\n│ Resets in: 2h 30m                           │\r\n│ Cost: $0 (subscription)                     │\r\n└─────────────────────────────────────────────┘\r\n\r\n┌─────────────────────────────────────────────┐\r\n│ Gemini CLI (gc/)                            │\r\n│ ████████░░░░░░░░░░░░ 450 / 1000 (45%)      │\r\n│ Daily reset in: 18h 30m                     │\r\n│ Monthly: 45K / 180K (25%)                   │\r\n│ Cost: $0 (free tier)                        │\r\n└─────────────────────────────────────────────┘\r\n\r\n┌─────────────────────────────────────────────┐\r\n│ GLM-4.7 (glm/)                              │\r\n│ ██████████████░░░░░░ 7M / 10M tokens (70%)  │\r\n│ Resets: Daily 10:00 AM (in 5h 35m)         │\r\n│ Cost today: $4.20                           │\r\n└─────────────────────────────────────────────┘\r\n\r\n┌─────────────────────────────────────────────┐\r\n│ MiniMax M2.1 (minimax/)                     │\r\n│ ████████████████░░░░ 4M / 5M tokens (80%)   │\r\n│ Rolling 5h window                           │\r\n│ Cost (5h): $0.80                            │\r\n└─────────────────────────────────────────────┘\r\n\r\n┌─────────────────────────────────────────────┐\r\n│ iFlow (if/)                                 │\r\n│ ████████████████████ Unlimited              │\r\n│ Cost: $0 (free forever)                     │\r\n└─────────────────────────────────────────────┘\r\n```\r\n\r\n---\r\n\r\n## Real-Time Token Consumption\r\n\r\n### Per-Request Tracking\r\n\r\nEvery request shows detailed token usage:\r\n\r\n```\r\nDashboard → Activity → Recent Requests\r\n\r\nRequest #1234\r\nModel: cc/claude-opus-4-5-20251101\r\nTimestamp: 2026-02-04 04:15:32\r\n\r\nTokens:\r\n  Input: 1,250 tokens\r\n  Output: 850 tokens\r\n  Total: 2,100 tokens\r\n\r\nCost: $0 (subscription quota)\r\nDuration: 3.2s\r\nStatus: ✅ Success\r\n```\r\n\r\n### Live Usage Monitor\r\n\r\n```\r\nDashboard → Live Monitor\r\n\r\nCurrent request:\r\n  Model: glm/glm-4.7\r\n  Tokens streamed: 450 / ~800 estimated\r\n  Cost so far: $0.0009\r\n  Duration: 1.8s\r\n```\r\n\r\n### Token Breakdown by Model\r\n\r\n```\r\nDashboard → Analytics → Token Usage\r\n\r\nToday (Feb 4, 2026):\r\n  cc/claude-opus-4-5: 15M tokens ($0, subscription)\r\n  glm/glm-4.7: 8M tokens ($4.80)\r\n  if/kimi-k2-thinking: 3M tokens ($0, free)\r\n  \r\nTotal: 26M tokens\r\nCost: $4.80\r\n```\r\n\r\n---\r\n\r\n## Quota Limits \u0026 Reset Times\r\n\r\n### Subscription Providers\r\n\r\n**Claude Code (Pro/Max)**\r\n```\r\nQuota type: Time-based (5-hour rolling)\r\nLimit: 5 hours of usage\r\nReset: Rolling 5-hour window + Weekly refresh\r\nTracking: Usage time per model\r\n\r\nDashboard shows:\r\n  Opus: 2.5h / 5h used\r\n  Sonnet: 1.2h / 5h used\r\n  Haiku: 0.8h / 5h used\r\n  \r\nWeekly reset: Every Monday 00:00 UTC\r\n```\r\n\r\n**OpenAI Codex (Plus/Pro)**\r\n```\r\nQuota type: Time-based (5-hour rolling)\r\nLimit: 5 hours (Plus) / 10 hours (Pro)\r\nReset: Rolling 5-hour window + Weekly refresh\r\n\r\nDashboard shows:\r\n  GPT-5.2 Codex: 3.5h / 5h used\r\n  Resets in: 1h 30m\r\n```\r\n\r\n**Gemini CLI (FREE)**\r\n```\r\nQuota type: Request count + Monthly tokens\r\nDaily limit: 1,000 requests\r\nMonthly limit: 180,000 completions\r\nReset: Daily 00:00 UTC + Monthly 1st\r\n\r\nDashboard shows:\r\n  Today: 450 / 1,000 requests (45%)\r\n  This month: 45K / 180K completions (25%)\r\n  Daily reset in: 18h 30m\r\n  Monthly reset in: 26 days\r\n```\r\n\r\n**GitHub Copilot**\r\n```\r\nQuota type: Monthly usage\r\nLimit: Varies by plan\r\nReset: 1st of each month\r\n\r\nDashboard shows:\r\n  Usage: 60% of monthly quota\r\n  Resets: March 1, 2026 (in 25 days)\r\n```\r\n\r\n### Cheap Providers\r\n\r\n**GLM-4.7**\r\n```\r\nQuota type: Daily token limit\r\nLimit: 10M tokens/day (Coding Plan)\r\nReset: Daily 10:00 AM Beijing Time (UTC+8)\r\n\r\nDashboard shows:\r\n  Used: 7M / 10M tokens (70%)\r\n  Remaining: 3M tokens\r\n  Resets in: 5h 35m\r\n  Cost today: $4.20\r\n```\r\n\r\n**MiniMax M2.1**\r\n```\r\nQuota type: Rolling 5-hour window\r\nLimit: 5M tokens per 5 hours\r\nReset: Continuous rolling window\r\n\r\nDashboard shows:\r\n  Used (5h): 4M / 5M tokens (80%)\r\n  Oldest usage expires in: 45m\r\n  Cost (5h): $0.80\r\n```\r\n\r\n**Kimi K2**\r\n```\r\nQuota type: Monthly subscription\r\nLimit: 10M tokens/month ($9 flat)\r\nReset: Monthly on subscription date\r\n\r\nDashboard shows:\r\n  Used: 6M / 10M tokens (60%)\r\n  Resets: Feb 15, 2026 (in 11 days)\r\n  Cost: $9/month (prepaid)\r\n```\r\n\r\n### Free Providers\r\n\r\n**iFlow / Qwen / Kiro**\r\n```\r\nQuota type: Unlimited (rate-limited)\r\nLimit: No hard limit\r\nReset: N/A\r\n\r\nDashboard shows:\r\n  Used today: 5M tokens\r\n  Cost: $0 (free forever)\r\n  Status: ✅ Available\r\n```\r\n\r\n---\r\n\r\n## Cost Estimation\r\n\r\n### Real-Time Cost Tracking\r\n\r\n```\r\nDashboard → Costs → Today\r\n\r\nSubscription providers: $0\r\n  Claude Code: 15M tokens ($0, included)\r\n  Gemini CLI: 3M tokens ($0, free tier)\r\n\r\nPaid providers: $4.80\r\n  GLM-4.7: 8M tokens ($4.80)\r\n    Input: 6M × $0.60/1M = $3.60\r\n    Output: 2M × $2.20/1M = $4.40\r\n    Total: $4.80\r\n\r\nFree providers: $0\r\n  iFlow: 3M tokens ($0)\r\n\r\nTotal today: $4.80\r\n```\r\n\r\n### Monthly Spending Report\r\n\r\n```\r\nDashboard → Costs → This Month (February 2026)\r\n\r\nWeek 1 (Feb 1-7):\r\n  Subscription: $0 (80M tokens)\r\n  Paid: $15.20 (25M tokens)\r\n  Free: $0 (10M tokens)\r\n  Total: $15.20\r\n\r\nWeek 2 (Feb 8-14):\r\n  Subscription: $0 (75M tokens)\r\n  Paid: $12.80 (20M tokens)\r\n  Free: $0 (8M tokens)\r\n  Total: $12.80\r\n\r\nMonth to date: $28.00\r\nProjected (30 days): ~$120\r\n\r\nBreakdown by provider:\r\n  GLM-4.7: $22.00 (78%)\r\n  MiniMax M2.1: $6.00 (22%)\r\n  \r\nAverage cost per 1M tokens: $0.62\r\nSavings vs ChatGPT API: 97% ($4,000 → $120)\r\n```\r\n\r\n### Cost Projection\r\n\r\n```\r\nDashboard → Costs → Projections\r\n\r\nBased on last 7 days usage:\r\n  Daily average: 50M tokens\r\n  Daily cost: $4.50\r\n\r\nMonthly projection:\r\n  Tokens: 1,500M (1.5B)\r\n  Cost: $135\r\n  \r\nBreakdown:\r\n  Subscription: 900M tokens ($0)\r\n  GLM-4.7: 450M tokens ($90)\r\n  MiniMax: 120M tokens ($24)\r\n  Free: 30M tokens ($0)\r\n\r\nBudget status:\r\n  Daily limit: $5 → 90% used today\r\n  Monthly limit: $150 → 90% projected\r\n  ⚠️ Warning: May exceed monthly budget\r\n```\r\n\r\n---\r\n\r\n## Usage Dashboard\r\n\r\n### Overview Stats\r\n\r\n```\r\nDashboard → Analytics → Overview\r\n\r\nToday (Feb 4, 2026):\r\n  Requests: 1,234\r\n  Tokens: 26M\r\n  Cost: $4.80\r\n  Avg response time: 2.1s\r\n\r\nThis week:\r\n  Requests: 8,456\r\n  Tokens: 180M\r\n  Cost: $28.00\r\n  Success rate: 99.2%\r\n\r\nThis month:\r\n  Requests: 15,234\r\n  Tokens: 320M\r\n  Cost: $52.00\r\n  Top model: cc/claude-opus-4-5 (45%)\r\n```\r\n\r\n### Usage by Model\r\n\r\n```\r\nDashboard → Analytics → Models\r\n\r\nTop models (this month):\r\n1. cc/claude-opus-4-5: 145M tokens (45%)\r\n2. glm/glm-4.7: 95M tokens (30%)\r\n3. if/kimi-k2-thinking: 50M tokens (16%)\r\n4. minimax/MiniMax-M2.1: 20M tokens (6%)\r\n5. gc/gemini-3-flash: 10M tokens (3%)\r\n\r\nCost breakdown:\r\n  cc/claude-opus: $0 (subscription)\r\n  glm/glm-4.7: $45.00\r\n  if/kimi-k2-thinking: $0 (free)\r\n  minimax/MiniMax-M2.1: $7.00\r\n  gc/gemini-3-flash: $0 (free)\r\n```\r\n\r\n### Usage by Time\r\n\r\n```\r\nDashboard → Analytics → Timeline\r\n\r\nHourly usage (today):\r\n00:00 - 01:00: 0.5M tokens\r\n01:00 - 02:00: 0.2M tokens\r\n...\r\n08:00 - 09:00: 3.2M tokens (peak)\r\n09:00 - 10:00: 2.8M tokens\r\n...\r\n23:00 - 00:00: 0.8M tokens\r\n\r\nPeak hours: 08:00 - 12:00 (morning coding)\r\nLow hours: 00:00 - 06:00 (night)\r\n```\r\n\r\n### Usage by Combo\r\n\r\n```\r\nDashboard → Analytics → Combos\r\n\r\npremium-coding:\r\n  Requests: 456\r\n  Tokens: 12M\r\n  Cost: $2.40\r\n  \r\n  Breakdown:\r\n    cc/claude-opus: 8M tokens (67%, $0)\r\n    glm/glm-4.7: 3M tokens (25%, $1.80)\r\n    minimax/MiniMax-M2.1: 1M tokens (8%, $0.20)\r\n\r\nbudget-combo:\r\n  Requests: 234\r\n  Tokens: 6M\r\n  Cost: $1.20\r\n  \r\n  Breakdown:\r\n    glm/glm-4.7: 4M tokens (67%, $2.40)\r\n    if/kimi-k2-thinking: 2M tokens (33%, $0)\r\n```\r\n\r\n---\r\n\r\n## Alerts \u0026 Notifications\r\n\r\n### Quota Alerts\r\n\r\n```\r\nDashboard → Settings → Alerts\r\n\r\nQuota warnings:\r\n  ✅ Alert at 80% quota used\r\n  ✅ Alert at 90% quota used\r\n  ✅ Alert when quota exhausted\r\n  ✅ Notify when quota resets\r\n\r\nDelivery:\r\n  ✅ Dashboard notification\r\n  ✅ Email (optional)\r\n  ✅ Webhook (optional)\r\n```\r\n\r\n**Example notifications:**\r\n```\r\n⚠️ Claude Code quota 80% used\r\n   2.5h remaining (resets in 1h 30m)\r\n   \r\n⚠️ GLM-4.7 quota 90% used\r\n   1M tokens remaining (resets in 5h)\r\n   \r\n✅ Gemini CLI quota reset\r\n   1,000 requests available (daily limit)\r\n```\r\n\r\n### Budget Alerts\r\n\r\n```\r\nDashboard → Settings → Budget Alerts\r\n\r\nDaily budget: $5\r\n  ✅ Alert at 80% ($4)\r\n  ✅ Alert at 100% ($5)\r\n  ✅ Auto-switch to free tier when exceeded\r\n\r\nMonthly budget: $150\r\n  ✅ Alert at 50% ($75)\r\n  ✅ Alert at 80% ($120)\r\n  ✅ Alert at 100% ($150)\r\n```\r\n\r\n**Example notifications:**\r\n```\r\n⚠️ Daily budget 80% used\r\n   $4.00 / $5.00 spent today\r\n   \r\n⚠️ Monthly budget 50% reached\r\n   $75 / $150 spent this month\r\n   Projected: $135 (within budget)\r\n   \r\n🚨 Daily budget exceeded\r\n   $5.20 / $5.00 spent today\r\n   Auto-switched to free tier\r\n```\r\n\r\n### Cost Anomaly Detection\r\n\r\n```\r\nDashboard → Settings → Anomaly Detection\r\n\r\n✅ Detect unusual spending patterns\r\n✅ Alert on cost spikes (\u003e2× daily average)\r\n✅ Warn on quota exhaustion patterns\r\n\r\nExample alert:\r\n⚠️ Cost spike detected\r\n   Today: $12.50 (2.5× daily average)\r\n   Reason: High GLM-4.7 usage (20M tokens)\r\n   Suggestion: Check if primary models quota-exhausted\r\n```\r\n\r\n---\r\n\r\n## Best Practices\r\n\r\n### 1. Monitor Quota Daily\r\n\r\n```\r\nDaily routine:\r\n1. Check dashboard quota overview (30 seconds)\r\n2. Review reset times\r\n3. Plan usage around quota availability\r\n```\r\n\r\n**Example:**\r\n```\r\nMorning check:\r\n  ✅ Claude Code: 5h available (fresh reset)\r\n  ✅ Gemini CLI: 1K requests available\r\n  ⚠️ GLM-4.7: 2M tokens left (resets 10AM)\r\n  \r\nAction: Use Claude Code for morning work\r\n```\r\n\r\n### 2. Set Budget Limits\r\n\r\n```\r\nDashboard → Settings → Budget:\r\n  Daily: $5 (prevents overspending)\r\n  Monthly: $150 (aligns with budget)\r\n```\r\n\r\n**Result**: Auto-switch to free tier when limit reached.\r\n\r\n### 3. Optimize Combo Usage\r\n\r\n```\r\nDashboard → Analytics → Combos:\r\n  Review which models are used most\r\n  Adjust combo order to minimize costs\r\n```\r\n\r\n**Example:**\r\n```\r\nCurrent: cc/claude-opus → glm/glm-4.7\r\n  80% via Claude (good)\r\n  20% via GLM ($12/month)\r\n\r\nOptimized: gc/gemini-3-flash → cc/claude-opus → glm/glm-4.7\r\n  50% via Gemini (free)\r\n  40% via Claude (subscription)\r\n  10% via GLM ($6/month)\r\n  \r\nSavings: $6/month\r\n```\r\n\r\n### 4. Track Reset Times\r\n\r\n```\r\nDashboard → Quota → Reset Schedule:\r\n  Claude Code: 5h rolling + Weekly Monday\r\n  Gemini CLI: Daily 00:00 UTC + Monthly 1st\r\n  GLM-4.7: Daily 10:00 AM Beijing Time\r\n  MiniMax: Rolling 5h window\r\n```\r\n\r\n**Strategy**: Use providers when quota is fresh.\r\n\r\n### 5. Review Monthly Reports\r\n\r\n```\r\nDashboard → Analytics → Monthly Report:\r\n  Total tokens: 1.5B\r\n  Total cost: $120\r\n  Savings: 97% vs ChatGPT API\r\n  \r\nInsights:\r\n  - 60% usage via subscriptions ($0)\r\n  - 30% via GLM ($90)\r\n  - 10% via free tier ($0)\r\n  \r\nOptimization:\r\n  - Increase Gemini CLI usage (free)\r\n  - Reduce GLM usage (expensive)\r\n```\r\n\r\n---\r\n\r\n## API Access\r\n\r\n### Get Quota Status\r\n\r\n```bash\r\nGET http://localhost:20128/api/quota\r\nAuthorization: Bearer your-api-key\r\n\r\nResponse:\r\n{\r\n  \"providers\": [\r\n    {\r\n      \"id\": \"cc\",\r\n      \"name\": \"Claude Code\",\r\n      \"quota\": {\r\n        \"used\": 2.5,\r\n        \"limit\": 5,\r\n        \"unit\": \"hours\",\r\n        \"percentage\": 50\r\n      },\r\n      \"reset\": {\r\n        \"type\": \"rolling\",\r\n        \"window\": \"5h\",\r\n        \"nextReset\": \"2026-02-04T06:45:00Z\"\r\n      },\r\n      \"cost\": {\r\n        \"today\": 0,\r\n        \"month\": 0,\r\n        \"currency\": \"USD\"\r\n      }\r\n    },\r\n    {\r\n      \"id\": \"glm\",\r\n      \"name\": \"GLM-4.7\",\r\n      \"quota\": {\r\n        \"used\": 7000000,\r\n        \"limit\": 10000000,\r\n        \"unit\": \"tokens\",\r\n        \"percentage\": 70\r\n      },\r\n      \"reset\": {\r\n        \"type\": \"daily\",\r\n        \"time\": \"10:00 AM UTC+8\",\r\n        \"nextReset\": \"2026-02-04T10:00:00+08:00\"\r\n      },\r\n      \"cost\": {\r\n        \"today\": 4.20,\r\n        \"month\": 52.00,\r\n        \"currency\": \"USD\"\r\n      }\r\n    }\r\n  ]\r\n}\r\n```\r\n\r\n### Get Usage Stats\r\n\r\n```bash\r\nGET http://localhost:20128/api/usage?period=today\r\nAuthorization: Bearer your-api-key\r\n\r\nResponse:\r\n{\r\n  \"period\": \"today\",\r\n  \"date\": \"2026-02-04\",\r\n  \"summary\": {\r\n    \"requests\": 1234,\r\n    \"tokens\": 26000000,\r\n    \"cost\": 4.80\r\n  },\r\n  \"byModel\": [\r\n    {\r\n      \"model\": \"cc/claude-opus-4-5\",\r\n      \"requests\": 456,\r\n      \"tokens\": 15000000,\r\n      \"cost\": 0\r\n    },\r\n    {\r\n      \"model\": \"glm/glm-4.7\",\r\n      \"requests\": 234,\r\n      \"tokens\": 8000000,\r\n      \"cost\": 4.80\r\n    }\r\n  ]\r\n}\r\n```\r\n\r\n---\r\n\r\n## Troubleshooting\r\n\r\n**Issue: Quota shows 0% but requests failing**\r\n\r\n**Solution:**\r\n1. Check provider connection (Dashboard → Providers)\r\n2. Verify API keys are valid\r\n3. Check if provider is down (status page)\r\n4. Try reconnecting OAuth providers\r\n\r\n**Issue: Cost estimation incorrect**\r\n\r\n**Solution:**\r\n1. Dashboard → Settings → Pricing\r\n2. Verify pricing per provider matches current rates\r\n3. Update pricing if provider changed rates\r\n4. Contact support if discrepancy persists\r\n\r\n**Issue: Reset time not updating**\r\n\r\n**Solution:**\r\n1. Refresh dashboard (F5)\r\n2. Check system time is correct\r\n3. Verify timezone settings\r\n4. Restart VansRouter if issue persists\r\n\r\n**Issue: Alerts not received**\r\n\r\n**Solution:**\r\n1. Dashboard → Settings → Alerts\r\n2. Verify email address is correct\r\n3. Check spam folder\r\n4. Test notification (Send Test button)\r\n\r\n---\r\n\r\n## Related\r\n\r\n- [Smart Routing](./smart-routing.md) - Auto fallback based on quota\r\n- [Combos](./combos.md) - Create custom fallback chains\r\n"])</script><script>self.__next_f.push([1,"4:[\"$\",\"$Ld\",null,{\"headings\":[{\"level\":2,\"text\":\"Overview\",\"id\":\"overview\"},{\"level\":2,\"text\":\"Dashboard Overview\",\"id\":\"dashboard-overview\"},{\"level\":3,\"text\":\"Quota Summary\",\"id\":\"quota-summary\"},{\"level\":2,\"text\":\"Real-Time Token Consumption\",\"id\":\"real-time-token-consumption\"},{\"level\":3,\"text\":\"Per-Request Tracking\",\"id\":\"per-request-tracking\"},{\"level\":3,\"text\":\"Live Usage Monitor\",\"id\":\"live-usage-monitor\"},{\"level\":3,\"text\":\"Token Breakdown by Model\",\"id\":\"token-breakdown-by-model\"},{\"level\":2,\"text\":\"Quota Limits \u0026 Reset Times\",\"id\":\"quota-limits--reset-times\"},{\"level\":3,\"text\":\"Subscription Providers\",\"id\":\"subscription-providers\"},{\"level\":3,\"text\":\"Cheap Providers\",\"id\":\"cheap-providers\"},{\"level\":3,\"text\":\"Free Providers\",\"id\":\"free-providers\"},{\"level\":2,\"text\":\"Cost Estimation\",\"id\":\"cost-estimation\"},{\"level\":3,\"text\":\"Real-Time Cost Tracking\",\"id\":\"real-time-cost-tracking\"},{\"level\":3,\"text\":\"Monthly Spending Report\",\"id\":\"monthly-spending-report\"},{\"level\":3,\"text\":\"Cost Projection\",\"id\":\"cost-projection\"},{\"level\":2,\"text\":\"Usage Dashboard\",\"id\":\"usage-dashboard\"},{\"level\":3,\"text\":\"Overview Stats\",\"id\":\"overview-stats\"},{\"level\":3,\"text\":\"Usage by Model\",\"id\":\"usage-by-model\"},{\"level\":3,\"text\":\"Usage by Time\",\"id\":\"usage-by-time\"},{\"level\":3,\"text\":\"Usage by Combo\",\"id\":\"usage-by-combo\"},{\"level\":2,\"text\":\"Alerts \u0026 Notifications\",\"id\":\"alerts--notifications\"},{\"level\":3,\"text\":\"Quota Alerts\",\"id\":\"quota-alerts\"},{\"level\":3,\"text\":\"Budget Alerts\",\"id\":\"budget-alerts\"},{\"level\":3,\"text\":\"Cost Anomaly Detection\",\"id\":\"cost-anomaly-detection\"},{\"level\":2,\"text\":\"Best Practices\",\"id\":\"best-practices\"},{\"level\":3,\"text\":\"1. Monitor Quota Daily\",\"id\":\"1-monitor-quota-daily\"},{\"level\":3,\"text\":\"2. Set Budget Limits\",\"id\":\"2-set-budget-limits\"},{\"level\":3,\"text\":\"3. Optimize Combo Usage\",\"id\":\"3-optimize-combo-usage\"},{\"level\":3,\"text\":\"4. Track Reset Times\",\"id\":\"4-track-reset-times\"},{\"level\":3,\"text\":\"5. Review Monthly Reports\",\"id\":\"5-review-monthly-reports\"},{\"level\":2,\"text\":\"API Access\",\"id\":\"api-access\"},{\"level\":3,\"text\":\"Get Quota Status\",\"id\":\"get-quota-status\"},{\"level\":3,\"text\":\"Get Usage Stats\",\"id\":\"get-usage-stats\"},{\"level\":2,\"text\":\"Troubleshooting\",\"id\":\"troubleshooting\"},{\"level\":2,\"text\":\"Related\",\"id\":\"related\"}],\"lang\":\"en\",\"children\":[\"$\",\"$Le\",null,{\"content\":\"$f\"}]}]\n"])</script><script>self.__next_f.push([1,"9:[[\"$\",\"meta\",\"0\",{\"charSet\":\"utf-8\"}],[\"$\",\"meta\",\"1\",{\"name\":\"viewport\",\"content\":\"width=device-width, initial-scale=1\"}]]\n"])</script><script>self.__next_f.push([1,"7:null\nb:[[\"$\",\"title\",\"0\",{\"children\":\"9Router Documentation\"}],[\"$\",\"meta\",\"1\",{\"name\":\"description\",\"content\":\"Smart AI model router - Maximize subscriptions, minimize costs\"}]]\n"])</script></body></html>

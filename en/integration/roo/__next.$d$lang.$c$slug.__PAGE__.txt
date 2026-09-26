@@ -1,0 +1,137 @@
+1:"$Sreact.fragment"
+2:I[81956,["/VansRouter/_next/static/chunks/ff1a16fafef87110.js","/VansRouter/_next/static/chunks/3ba79d5b01800fdc.js"],"default"]
+3:I[22982,["/VansRouter/_next/static/chunks/ff1a16fafef87110.js","/VansRouter/_next/static/chunks/3ba79d5b01800fdc.js"],"default"]
+8:I[97367,["/VansRouter/_next/static/chunks/ff1a16fafef87110.js","/VansRouter/_next/static/chunks/803a574de9eda7ae.js"],"OutletBoundary"]
+9:"$Sreact.suspense"
+4:Tc24,# Roo AI Assistant Integration
+
+Integrate VansRouter with Roo AI Assistant to access multiple AI models through a unified interface.
+
+## Prerequisites
+
+- Roo AI Assistant installed
+- VansRouter API key from [dashboard](http://localhost:20128/dashboard)
+- VansRouter running (local or cloud)
+
+## Configuration Steps
+
+### 1. Open Roo Settings
+
+Launch Roo AI Assistant and open the settings panel.
+
+### 2. Configure API Provider
+
+1. Navigate to **API Provider** settings
+2. Select **Ollama** as the provider type
+3. Configure the following settings:
+
+**For Local VansRouter:**
+```
+Base URL: http://localhost:20128/v1
+API Key: your-api-key-from-dashboard
+```
+
+**For Cloud VansRouter:**
+```
+Base URL: http://localhost:20128/v1
+API Key: your-api-key-from-dashboard
+```
+
+### 3. Select Model
+
+Choose from available VansRouter models:
+
+**Claude Models:**
+- `cc/claude-opus-4-5-20251101` - Most capable
+- `cc/claude-sonnet-4-20250514` - Balanced
+- `cc/claude-haiku-4-20250514` - Fast
+
+**DeepSeek Models:**
+- `cx/deepseek-chat` - General purpose
+- `cx/deepseek-reasoner` - Complex reasoning
+
+**GLM Models:**
+- `glm/glm-4-plus` - Advanced
+- `glm/glm-4-flash` - Fast responses
+
+### 4. Test Connection
+
+Send a test message to verify the integration:
+
+```
+Hello! Can you confirm you're connected through VansRouter?
+```
+
+## Usage Examples
+
+### Basic Chat
+```
+Ask Roo: "Explain quantum computing in simple terms"
+Model: cc/claude-sonnet-4-20250514
+```
+
+### Code Generation
+```
+Ask Roo: "Write a Python function to calculate Fibonacci numbers"
+Model: cx/deepseek-chat
+```
+
+### Complex Reasoning
+```
+Ask Roo: "Analyze the trade-offs between microservices and monolithic architecture"
+Model: cx/deepseek-reasoner
+```
+
+## Model Selection Tips
+
+- **Quick tasks**: Use `cc/claude-haiku-4-20250514` or `glm/glm-4-flash`
+- **Balanced performance**: Use `cc/claude-sonnet-4-20250514` or `cx/deepseek-chat`
+- **Complex reasoning**: Use `cc/claude-opus-4-5-20251101` or `cx/deepseek-reasoner`
+- **Cost optimization**: Use DeepSeek or GLM models
+
+## Troubleshooting
+
+### Connection Failed
+- Verify VansRouter is running: `curl http://localhost:20128/health`
+- Check API key is correct
+- Ensure Base URL includes `/v1` suffix
+
+### Model Not Available
+- Check model name matches exactly (case-sensitive)
+- Verify model is enabled in your VansRouter plan
+- Try a different model from the list
+
+### Slow Responses
+- Switch to faster models (haiku, flash)
+- Check network connection
+- Monitor VansRouter logs for issues
+
+## Advanced Configuration
+
+### Custom Model Aliases
+
+You can create shortcuts for frequently used models in Roo settings:
+
+```
+Alias: "fast" → cc/claude-haiku-4-20250514
+Alias: "smart" → cc/claude-opus-4-5-20251101
+Alias: "code" → cx/deepseek-chat
+```
+
+### Multiple Profiles
+
+Set up different profiles for different use cases:
+- **Development**: DeepSeek models for code
+- **Writing**: Claude models for content
+- **Research**: Reasoner models for analysis
+
+## Next Steps
+
+- [Configure Cursor](cursor.md) for IDE integration
+- [Set up Continue](continue.md) for VSCode
+- [Explore CLI usage](../cli/basic-usage.md)
+0:{"buildId":"PUpTBY-8r_zZtEM8SJOLp","rsc":["$","$1","c",{"children":[["$","$L2",null,{"headings":[{"level":2,"text":"Prerequisites","id":"prerequisites"},{"level":2,"text":"Configuration Steps","id":"configuration-steps"},{"level":3,"text":"1. Open Roo Settings","id":"1-open-roo-settings"},{"level":3,"text":"2. Configure API Provider","id":"2-configure-api-provider"},{"level":3,"text":"3. Select Model","id":"3-select-model"},{"level":3,"text":"4. Test Connection","id":"4-test-connection"},{"level":2,"text":"Usage Examples","id":"usage-examples"},{"level":3,"text":"Basic Chat","id":"basic-chat"},{"level":3,"text":"Code Generation","id":"code-generation"},{"level":3,"text":"Complex Reasoning","id":"complex-reasoning"},{"level":2,"text":"Model Selection Tips","id":"model-selection-tips"},{"level":2,"text":"Troubleshooting","id":"troubleshooting"},{"level":3,"text":"Connection Failed","id":"connection-failed"},{"level":3,"text":"Model Not Available","id":"model-not-available"},{"level":3,"text":"Slow Responses","id":"slow-responses"},{"level":2,"text":"Advanced Configuration","id":"advanced-configuration"},{"level":3,"text":"Custom Model Aliases","id":"custom-model-aliases"},{"level":3,"text":"Multiple Profiles","id":"multiple-profiles"},{"level":2,"text":"Next Steps","id":"next-steps"}],"lang":"en","children":["$","$L3",null,{"content":"$4"}]}],["$L5","$L6"],"$L7"]}],"loading":null,"isPartial":false}
+5:["$","script","script-0",{"src":"/VansRouter/_next/static/chunks/ff1a16fafef87110.js","async":true}]
+6:["$","script","script-1",{"src":"/VansRouter/_next/static/chunks/3ba79d5b01800fdc.js","async":true}]
+7:["$","$L8",null,{"children":["$","$9",null,{"name":"Next.MetadataOutlet","children":"$@a"}]}]
+a:null

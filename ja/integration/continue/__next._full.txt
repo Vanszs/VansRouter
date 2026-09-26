@@ -1,0 +1,265 @@
+1:"$Sreact.fragment"
+2:I[39756,["/VansRouter/_next/static/chunks/ff1a16fafef87110.js","/VansRouter/_next/static/chunks/803a574de9eda7ae.js"],"default"]
+3:I[37457,["/VansRouter/_next/static/chunks/ff1a16fafef87110.js","/VansRouter/_next/static/chunks/803a574de9eda7ae.js"],"default"]
+5:I[97367,["/VansRouter/_next/static/chunks/ff1a16fafef87110.js","/VansRouter/_next/static/chunks/803a574de9eda7ae.js"],"OutletBoundary"]
+6:"$Sreact.suspense"
+8:I[97367,["/VansRouter/_next/static/chunks/ff1a16fafef87110.js","/VansRouter/_next/static/chunks/803a574de9eda7ae.js"],"ViewportBoundary"]
+a:I[97367,["/VansRouter/_next/static/chunks/ff1a16fafef87110.js","/VansRouter/_next/static/chunks/803a574de9eda7ae.js"],"MetadataBoundary"]
+c:I[68027,["/VansRouter/_next/static/chunks/ff1a16fafef87110.js","/VansRouter/_next/static/chunks/803a574de9eda7ae.js"],"default"]
+:HL["/VansRouter/_next/static/chunks/71d10a355cb8f2d7.css","style"]
+0:{"P":null,"b":"PUpTBY-8r_zZtEM8SJOLp","c":["","ja","integration","continue",""],"q":"","i":false,"f":[[["",{"children":[["lang","ja","d"],{"children":[["slug","integration/continue","c"],{"children":["__PAGE__",{}]}]}]},"$undefined","$undefined",true],[["$","$1","c",{"children":[[["$","link","0",{"rel":"stylesheet","href":"/VansRouter/_next/static/chunks/71d10a355cb8f2d7.css","precedence":"next","crossOrigin":"$undefined","nonce":"$undefined"}]],["$","html",null,{"lang":"en","children":[["$","head",null,{}],["$","body",null,{"className":"bg-[#FCFBF9] text-[#6B7280]","children":["$","$L2",null,{"parallelRouterKey":"children","error":"$undefined","errorStyles":"$undefined","errorScripts":"$undefined","template":["$","$L3",null,{}],"templateStyles":"$undefined","templateScripts":"$undefined","notFound":[[["$","title",null,{"children":"404: This page could not be found."}],["$","div",null,{"style":{"fontFamily":"system-ui,\"Segoe UI\",Roboto,Helvetica,Arial,sans-serif,\"Apple Color Emoji\",\"Segoe UI Emoji\"","height":"100vh","textAlign":"center","display":"flex","flexDirection":"column","alignItems":"center","justifyContent":"center"},"children":["$","div",null,{"children":[["$","style",null,{"dangerouslySetInnerHTML":{"__html":"body{color:#000;background:#fff;margin:0}.next-error-h1{border-right:1px solid rgba(0,0,0,.3)}@media (prefers-color-scheme:dark){body{color:#fff;background:#000}.next-error-h1{border-right:1px solid rgba(255,255,255,.3)}}"}}],["$","h1",null,{"className":"next-error-h1","style":{"display":"inline-block","margin":"0 20px 0 0","padding":"0 23px 0 0","fontSize":24,"fontWeight":500,"verticalAlign":"top","lineHeight":"49px"},"children":404}],["$","div",null,{"style":{"display":"inline-block"},"children":["$","h2",null,{"style":{"fontSize":14,"fontWeight":400,"lineHeight":"49px","margin":0},"children":"This page could not be found."}]}]]}]}]],[]],"forbidden":"$undefined","unauthorized":"$undefined"}]}]]}]]}],{"children":[["$","$1","c",{"children":[null,["$","$L2",null,{"parallelRouterKey":"children","error":"$undefined","errorStyles":"$undefined","errorScripts":"$undefined","template":["$","$L3",null,{}],"templateStyles":"$undefined","templateScripts":"$undefined","notFound":"$undefined","forbidden":"$undefined","unauthorized":"$undefined"}]]}],{"children":[["$","$1","c",{"children":[null,["$","$L2",null,{"parallelRouterKey":"children","error":"$undefined","errorStyles":"$undefined","errorScripts":"$undefined","template":["$","$L3",null,{}],"templateStyles":"$undefined","templateScripts":"$undefined","notFound":"$undefined","forbidden":"$undefined","unauthorized":"$undefined"}]]}],{"children":[["$","$1","c",{"children":["$L4",[["$","script","script-0",{"src":"/VansRouter/_next/static/chunks/ff1a16fafef87110.js","async":true,"nonce":"$undefined"}],["$","script","script-1",{"src":"/VansRouter/_next/static/chunks/3ba79d5b01800fdc.js","async":true,"nonce":"$undefined"}]],["$","$L5",null,{"children":["$","$6",null,{"name":"Next.MetadataOutlet","children":"$@7"}]}]]}],{},null,false,false]},null,false,false]},null,false,false]},null,false,false],["$","$1","h",{"children":[null,["$","$L8",null,{"children":"$L9"}],["$","div",null,{"hidden":true,"children":["$","$La",null,{"children":["$","$6",null,{"name":"Next.Metadata","children":"$Lb"}]}]}],null]}],false]],"m":"$undefined","G":["$c",[]],"S":true}
+d:I[81956,["/VansRouter/_next/static/chunks/ff1a16fafef87110.js","/VansRouter/_next/static/chunks/3ba79d5b01800fdc.js"],"default"]
+e:I[22982,["/VansRouter/_next/static/chunks/ff1a16fafef87110.js","/VansRouter/_next/static/chunks/3ba79d5b01800fdc.js"],"default"]
+f:T1c31,# Continue VSCode拡張機能統合
+
+VansRouterをContinue拡張機能と統合し、Visual Studio Codeに直接AIアシスタンスを導入します。
+
+## 前提条件
+
+- Visual Studio Codeがインストール済み
+- VSCodeマーケットプレイスからContinue拡張機能がインストール済み
+- [ダッシュボード](http://localhost:20128/dashboard)からのVansRouter APIキー
+- VansRouterが動作中 (ローカルまたはクラウド)
+
+## 設定手順
+
+### 1. Continue設定を開く
+
+1. VSCodeを開く
+2. `Cmd+Shift+P` (Mac) または `Ctrl+Shift+P` (Windows/Linux) を押す
+3. 「Continue: Open Config」と入力して選択
+4. `~/.continue/config.json` が開きます
+
+### 2. VansRouterモデル設定を追加
+
+以下の設定を `config.json` に追加:
+
+**単一モデルセットアップ:**
+```json
+{
+  "models": [
+    {
+      "title": "VansRouter - Claude Opus",
+      "provider": "openai",
+      "model": "cc/claude-opus-4-5-20251101",
+      "apiKey": "your-api-key-from-dashboard",
+      "apiBase": "http://localhost:20128/v1"
+    }
+  ]
+}
+```
+
+**複数モデルセットアップ:**
+```json
+{
+  "models": [
+    {
+      "title": "VansRouter - Claude Opus (Best)",
+      "provider": "openai",
+      "model": "cc/claude-opus-4-5-20251101",
+      "apiKey": "your-api-key-from-dashboard",
+      "apiBase": "http://localhost:20128/v1"
+    },
+    {
+      "title": "VansRouter - Claude Sonnet (Balanced)",
+      "provider": "openai",
+      "model": "cc/claude-sonnet-4-20250514",
+      "apiKey": "your-api-key-from-dashboard",
+      "apiBase": "http://localhost:20128/v1"
+    },
+    {
+      "title": "VansRouter - DeepSeek Chat (Code)",
+      "provider": "openai",
+      "model": "cx/deepseek-chat",
+      "apiKey": "your-api-key-from-dashboard",
+      "apiBase": "http://localhost:20128/v1"
+    },
+    {
+      "title": "VansRouter - Claude Haiku (Fast)",
+      "provider": "openai",
+      "model": "cc/claude-haiku-4-20250514",
+      "apiKey": "your-api-key-from-dashboard",
+      "apiBase": "http://localhost:20128/v1"
+    }
+  ]
+}
+```
+
+**クラウドVansRouter用:**
+`apiBase` を以下に置き換え:
+```json
+"apiBase": "http://localhost:20128/v1"
+```
+
+### 3. 保存してリロード
+
+1. 設定ファイルを保存
+2. VSCodeウィンドウをリロード: `Cmd+Shift+P` → 「Developer: Reload Window」
+3. Continue拡張機能が新しい設定を読み込みます
+
+### 4. モデルを選択
+
+1. Continueサイドバーを開く (左パネルのContinueアイコンをクリック)
+2. 上部のモデルセレクタードロップダウンをクリック
+3. お好みのVansRouterモデルを選択
+
+## 利用可能なモデル
+
+### Claudeモデル (Anthropic)
+- `cc/claude-opus-4-5-20251101` - 最も高性能、複雑なタスクに最適
+- `cc/claude-sonnet-4-20250514` - パフォーマンスと速度のバランス
+- `cc/claude-haiku-4-20250514` - 最速、シンプルなタスクに適している
+
+### DeepSeekモデル
+- `cx/deepseek-chat` - コード生成に優れている
+- `cx/deepseek-reasoner` - 複雑な問題解決に最適
+
+### GLMモデル (Zhipu AI)
+- `glm/glm-4-plus` - 高度な中国語と英語
+- `glm/glm-4-flash` - 高速応答
+
+## 使用例
+
+### コード説明
+1. エディタでコードを選択
+2. Continueサイドバーを開く
+3. 入力: 「Explain this code」
+4. Model: `cc/claude-sonnet-4-20250514`
+
+### コード生成
+1. Continueサイドバーを開く
+2. 入力: 「Create a React component for user profile card」
+3. Model: `cx/deepseek-chat`
+
+### リファクタリング
+1. リファクタリングするコードを選択
+2. 入力: 「Refactor this to use async/await」
+3. Model: `cc/claude-sonnet-4-20250514`
+
+### バグ修正
+1. 問題のあるコードを選択
+2. 入力: 「Find and fix the bug in this code」
+3. Model: `cx/deepseek-reasoner`
+
+## 高度な設定
+
+### カスタムシステムプロンプト
+
+特定の動作のためのカスタムシステムプロンプトを追加:
+
+```json
+{
+  "models": [
+    {
+      "title": "VansRouter - Code Expert",
+      "provider": "openai",
+      "model": "cx/deepseek-chat",
+      "apiKey": "your-api-key",
+      "apiBase": "http://localhost:20128/v1",
+      "systemMessage": "You are an expert programmer. Always provide clean, well-documented code with best practices."
+    }
+  ]
+}
+```
+
+### Temperatureとパラメータ
+
+パラメータでモデルの動作を調整:
+
+```json
+{
+  "models": [
+    {
+      "title": "VansRouter - Creative Writer",
+      "provider": "openai",
+      "model": "cc/claude-opus-4-5-20251101",
+      "apiKey": "your-api-key",
+      "apiBase": "http://localhost:20128/v1",
+      "temperature": 0.9,
+      "topP": 0.95
+    }
+  ]
+}
+```
+
+### コンテキストプロバイダー
+
+Continueがモデルに送信するコンテキストを設定:
+
+```json
+{
+  "contextProviders": [
+    {
+      "name": "code",
+      "params": {
+        "maxLines": 100
+      }
+    },
+    {
+      "name": "diff",
+      "params": {}
+    },
+    {
+      "name": "terminal",
+      "params": {}
+    }
+  ]
+}
+```
+
+## キーボードショートカット
+
+- `Cmd+L` (Mac) / `Ctrl+L` (Windows/Linux) - Continueチャットを開く
+- `Cmd+I` (Mac) / `Ctrl+I` (Windows/Linux) - インライン編集
+- `Cmd+Shift+R` (Mac) / `Ctrl+Shift+R` (Windows/Linux) - 応答を再生成
+
+## トラブルシューティング
+
+### モデルが応答しない
+- VansRouterが動作中か確認: `curl http://localhost:20128/health`
+- config.jsonのAPIキーを確認
+- エラーについてVSCode開発者コンソールを確認: `Help` → `Toggle Developer Tools`
+
+### 間違ったモデルが選択されている
+- Continueサイドバーのモデルドロップダウンをクリック
+- 正しいVansRouterモデルを選択
+- モデル名は正確に一致する必要があります (大文字小文字を区別)
+
+### 設定が読み込まれない
+- JSON構文が有効であることを確認 (JSONバリデータを使用)
+- ファイルの場所を確認: `~/.continue/config.json`
+- 変更後にVSCodeウィンドウをリロード
+
+### パフォーマンスが遅い
+- より高速なモデルへ切替 (haiku、flash)
+- contextProvidersでコンテキストサイズを削減
+- VansRouterへのネットワークレイテンシを確認
+
+## ベストプラクティス
+
+### モデル選択戦略
+- **クイック編集**: `cc/claude-haiku-4-20250514` を使用
+- **コード生成**: `cx/deepseek-chat` を使用
+- **複雑なリファクタリング**: `cc/claude-opus-4-5-20251101` を使用
+- **問題解決**: `cx/deepseek-reasoner` を使用
+
+### コンテキスト管理
+- 質問する前に関連コードのみを選択
+- 具体的で明確なプロンプトを使用
+- 複雑なタスクを小さなステップに分解
+
+### コスト最適化
+- シンプルなタスクには高速/安価なモデルを使用
+- 可能な場合はコンテキストサイズを制限
+- 頻繁に使用される応答をキャッシュ
+
+## 次のステップ
+
+- [Cursorを設定](cursor.md) IDE統合を強化
+- [Rooをセットアップ](roo.md) AIアシスタント用
+- [CLI使用法を確認](../cli/basic-usage.md)
+- [モデル選択について学ぶ](../models/overview.md)
+4:["$","$Ld",null,{"headings":[{"level":2,"text":"前提条件","id":"前提条件"},{"level":2,"text":"設定手順","id":"設定手順"},{"level":3,"text":"1. Continue設定を開く","id":"1-continue設定を開く"},{"level":3,"text":"2. VansRouterモデル設定を追加","id":"2-vansrouterモデル設定を追加"},{"level":3,"text":"3. 保存してリロード","id":"3-保存してリロード"},{"level":3,"text":"4. モデルを選択","id":"4-モデルを選択"},{"level":2,"text":"利用可能なモデル","id":"利用可能なモデル"},{"level":3,"text":"Claudeモデル (Anthropic)","id":"claudeモデル-anthropic"},{"level":3,"text":"DeepSeekモデル","id":"deepseekモデル"},{"level":3,"text":"GLMモデル (Zhipu AI)","id":"glmモデル-zhipu-ai"},{"level":2,"text":"使用例","id":"使用例"},{"level":3,"text":"コード説明","id":"コード説明"},{"level":3,"text":"コード生成","id":"コード生成"},{"level":3,"text":"リファクタリング","id":"リファクタリング"},{"level":3,"text":"バグ修正","id":"バグ修正"},{"level":2,"text":"高度な設定","id":"高度な設定"},{"level":3,"text":"カスタムシステムプロンプト","id":"カスタムシステムプロンプト"},{"level":3,"text":"Temperatureとパラメータ","id":"temperatureとパラメータ"},{"level":3,"text":"コンテキストプロバイダー","id":"コンテキストプロバイダー"},{"level":2,"text":"キーボードショートカット","id":"キーボードショートカット"},{"level":2,"text":"トラブルシューティング","id":"トラブルシューティング"},{"level":3,"text":"モデルが応答しない","id":"モデルが応答しない"},{"level":3,"text":"間違ったモデルが選択されている","id":"間違ったモデルが選択されている"},{"level":3,"text":"設定が読み込まれない","id":"設定が読み込まれない"},{"level":3,"text":"パフォーマンスが遅い","id":"パフォーマンスが遅い"},{"level":2,"text":"ベストプラクティス","id":"ベストプラクティス"},{"level":3,"text":"モデル選択戦略","id":"モデル選択戦略"},{"level":3,"text":"コンテキスト管理","id":"コンテキスト管理"},{"level":3,"text":"コスト最適化","id":"コスト最適化"},{"level":2,"text":"次のステップ","id":"次のステップ"}],"lang":"ja","children":["$","$Le",null,{"content":"$f"}]}]
+9:[["$","meta","0",{"charSet":"utf-8"}],["$","meta","1",{"name":"viewport","content":"width=device-width, initial-scale=1"}]]
+7:null
+b:[["$","title","0",{"children":"9Router Documentation"}],["$","meta","1",{"name":"description","content":"Smart AI model router - Maximize subscriptions, minimize costs"}]]

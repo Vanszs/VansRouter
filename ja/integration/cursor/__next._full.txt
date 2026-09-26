@@ -1,0 +1,165 @@
+1:"$Sreact.fragment"
+2:I[39756,["/VansRouter/_next/static/chunks/ff1a16fafef87110.js","/VansRouter/_next/static/chunks/803a574de9eda7ae.js"],"default"]
+3:I[37457,["/VansRouter/_next/static/chunks/ff1a16fafef87110.js","/VansRouter/_next/static/chunks/803a574de9eda7ae.js"],"default"]
+5:I[97367,["/VansRouter/_next/static/chunks/ff1a16fafef87110.js","/VansRouter/_next/static/chunks/803a574de9eda7ae.js"],"OutletBoundary"]
+6:"$Sreact.suspense"
+8:I[97367,["/VansRouter/_next/static/chunks/ff1a16fafef87110.js","/VansRouter/_next/static/chunks/803a574de9eda7ae.js"],"ViewportBoundary"]
+a:I[97367,["/VansRouter/_next/static/chunks/ff1a16fafef87110.js","/VansRouter/_next/static/chunks/803a574de9eda7ae.js"],"MetadataBoundary"]
+c:I[68027,["/VansRouter/_next/static/chunks/ff1a16fafef87110.js","/VansRouter/_next/static/chunks/803a574de9eda7ae.js"],"default"]
+:HL["/VansRouter/_next/static/chunks/71d10a355cb8f2d7.css","style"]
+0:{"P":null,"b":"PUpTBY-8r_zZtEM8SJOLp","c":["","ja","integration","cursor",""],"q":"","i":false,"f":[[["",{"children":[["lang","ja","d"],{"children":[["slug","integration/cursor","c"],{"children":["__PAGE__",{}]}]}]},"$undefined","$undefined",true],[["$","$1","c",{"children":[[["$","link","0",{"rel":"stylesheet","href":"/VansRouter/_next/static/chunks/71d10a355cb8f2d7.css","precedence":"next","crossOrigin":"$undefined","nonce":"$undefined"}]],["$","html",null,{"lang":"en","children":[["$","head",null,{}],["$","body",null,{"className":"bg-[#FCFBF9] text-[#6B7280]","children":["$","$L2",null,{"parallelRouterKey":"children","error":"$undefined","errorStyles":"$undefined","errorScripts":"$undefined","template":["$","$L3",null,{}],"templateStyles":"$undefined","templateScripts":"$undefined","notFound":[[["$","title",null,{"children":"404: This page could not be found."}],["$","div",null,{"style":{"fontFamily":"system-ui,\"Segoe UI\",Roboto,Helvetica,Arial,sans-serif,\"Apple Color Emoji\",\"Segoe UI Emoji\"","height":"100vh","textAlign":"center","display":"flex","flexDirection":"column","alignItems":"center","justifyContent":"center"},"children":["$","div",null,{"children":[["$","style",null,{"dangerouslySetInnerHTML":{"__html":"body{color:#000;background:#fff;margin:0}.next-error-h1{border-right:1px solid rgba(0,0,0,.3)}@media (prefers-color-scheme:dark){body{color:#fff;background:#000}.next-error-h1{border-right:1px solid rgba(255,255,255,.3)}}"}}],["$","h1",null,{"className":"next-error-h1","style":{"display":"inline-block","margin":"0 20px 0 0","padding":"0 23px 0 0","fontSize":24,"fontWeight":500,"verticalAlign":"top","lineHeight":"49px"},"children":404}],["$","div",null,{"style":{"display":"inline-block"},"children":["$","h2",null,{"style":{"fontSize":14,"fontWeight":400,"lineHeight":"49px","margin":0},"children":"This page could not be found."}]}]]}]}]],[]],"forbidden":"$undefined","unauthorized":"$undefined"}]}]]}]]}],{"children":[["$","$1","c",{"children":[null,["$","$L2",null,{"parallelRouterKey":"children","error":"$undefined","errorStyles":"$undefined","errorScripts":"$undefined","template":["$","$L3",null,{}],"templateStyles":"$undefined","templateScripts":"$undefined","notFound":"$undefined","forbidden":"$undefined","unauthorized":"$undefined"}]]}],{"children":[["$","$1","c",{"children":[null,["$","$L2",null,{"parallelRouterKey":"children","error":"$undefined","errorStyles":"$undefined","errorScripts":"$undefined","template":["$","$L3",null,{}],"templateStyles":"$undefined","templateScripts":"$undefined","notFound":"$undefined","forbidden":"$undefined","unauthorized":"$undefined"}]]}],{"children":[["$","$1","c",{"children":["$L4",[["$","script","script-0",{"src":"/VansRouter/_next/static/chunks/ff1a16fafef87110.js","async":true,"nonce":"$undefined"}],["$","script","script-1",{"src":"/VansRouter/_next/static/chunks/3ba79d5b01800fdc.js","async":true,"nonce":"$undefined"}]],["$","$L5",null,{"children":["$","$6",null,{"name":"Next.MetadataOutlet","children":"$@7"}]}]]}],{},null,false,false]},null,false,false]},null,false,false]},null,false,false],["$","$1","h",{"children":[null,["$","$L8",null,{"children":"$L9"}],["$","div",null,{"hidden":true,"children":["$","$La",null,{"children":["$","$6",null,{"name":"Next.Metadata","children":"$Lb"}]}]}],null]}],false]],"m":"$undefined","G":["$c",[]],"S":true}
+d:I[81956,["/VansRouter/_next/static/chunks/ff1a16fafef87110.js","/VansRouter/_next/static/chunks/3ba79d5b01800fdc.js"],"default"]
+e:I[22982,["/VansRouter/_next/static/chunks/ff1a16fafef87110.js","/VansRouter/_next/static/chunks/3ba79d5b01800fdc.js"],"default"]
+f:T164d,# Cursor統合
+
+VansRouterをCursor IDEと統合し、AIリクエストをVansRouterのインテリジェントルーティングシステム経由でルーティングします。
+
+## 前提条件
+
+- Cursor IDEがインストール済み
+- Cursor Proアカウント (カスタムAPIエンドポイントに必要)
+- VansRouterクラウドエンドポイントが設定済み
+- VansRouterダッシュボードからのAPIキー
+
+## ⚠️ 重要な注意点
+
+> **クラウドエンドポイントが必要**: Cursorは独自のサーバー経由でリクエストをルーティングし、localhostエンドポイントをサポートしません。VansRouterクラウドエンドポイント `https://vansrouter.example` を使用する必要があります。
+
+> **Cursor Proが必要**: この機能はカスタムAPIエンドポイントを使用するためにCursor Proアカウントが必要です。
+
+## セットアップ
+
+### 1. Cursor設定を開く
+
+1. Cursor IDEを開く
+2. **Settings** へ移動 (Cmd/Ctrl + ,)
+3. **Models** セクションへ移動
+
+### 2. OpenAI APIを有効化
+
+1. **OpenAI API key** オプションを見つける
+2. トグルを有効にしてカスタムAPI設定を有効化
+
+### 3. Base URLを設定
+
+Base URLをVansRouterクラウドエンドポイントに設定:
+
+```
+https://vansrouter.example
+```
+
+**手順:**
+1. Models設定で **Base URL** フィールドを見つける
+2. 入力: `https://vansrouter.example`
+3. **Save** をクリック
+
+### 4. APIキーを追加
+
+1. **API Key** フィールドにVansRouter APIキーを入力
+2. APIキーはVansRouterダッシュボードの **Settings → API Keys** で確認できます
+3. **Save** をクリック
+
+### 5. カスタムモデルを追加
+
+1. **View All Models** ボタンをクリック
+2. **Add Custom Model** をクリック
+3. VansRouter設定からモデル名を入力 (例: `gpt-4`、`claude-opus-4-5` など)
+4. **Add** をクリック
+
+### 6. モデルを選択
+
+1. Cursorチャットインターフェイスでモデルセレクタードロップダウンをクリック
+2. リストからカスタムモデルを選択
+3. CursorでVansRouterを使い始める!
+
+## 設定例
+
+Cursor設定は次のようになります:
+
+```
+OpenAI API: ✓ Enabled
+Base URL: https://vansrouter.example
+API Key: sk-your-key-xxxxxxxxxxxxx
+Custom Models: gpt-4, claude-opus-4-5, gemini-2.0-flash
+```
+
+## 利用可能なモデル
+
+VansRouterダッシュボードで設定されたモデルを使用できます。一般的な例:
+
+| モデル名 | プロバイダー | 説明 |
+|------------|----------|-------------|
+| `gpt-4` | OpenAI | GPT-4 Turbo |
+| `gpt-4o` | OpenAI | GPT-4 Optimized |
+| `claude-opus-4-5` | Anthropic | Claude Opus 4.5 |
+| `claude-sonnet-4-5` | Anthropic | Claude Sonnet 4.5 |
+| `gemini-2.0-flash` | Google | Gemini 2.0 Flash |
+
+## 使用法
+
+### チャットインターフェイス
+
+1. Cursorチャットを開く (Cmd/Ctrl + L)
+2. ドロップダウンからモデルを選択
+3. VansRouter経由でAIとチャット開始
+
+### インラインコード生成
+
+1. エディタでコードを選択
+2. Cmd/Ctrl + Kを押す
+3. プロンプトを入力
+4. CursorはVansRouterを使用してコードを生成
+
+### コード説明
+
+1. エディタでコードを選択
+2. Cmd/Ctrl + Lを押す
+3. 「Explain this code」と質問
+4. VansRouter経由でAIによる説明を取得
+
+## トラブルシューティング
+
+### 「Invalid API Key」エラー
+
+1. VansRouterダッシュボードでAPIキーを確認
+2. `sk-your-key-` プレフィックスを含むキー全体をコピーしたか確認
+3. APIキーが期限切れでないか確認
+4. 新しいAPIキーを再生成してみる
+
+### 「Model Not Found」エラー
+
+1. モデル名がVansRouter設定と正確に一致するか確認
+2. VansRouterダッシュボードでプロバイダー接続がアクティブか確認
+3. 接続されたプロバイダーでモデルが利用可能か確認
+4. フルモデル名を使用してみる (例: `gpt-4` の代わりに `openai/gpt-4`)
+
+### 接続の問題
+
+1. クラウドエンドポイントを使用しているか確認: `https://vansrouter.example`
+2. インターネット接続を確認
+3. VansRouterクラウドサービスが運用中か確認
+4. VPNまたはプロキシが有効な場合は無効化してみる
+
+### Localhostが動作しない
+
+> **覚えておいてください**: Cursorはlocalhostエンドポイントをサポートしません。クラウドエンドポイント `https://vansrouter.example` を使用する必要があります。ローカルVansRouterインスタンスを使用したい場合は、ngrokなどのトンネリングサービスを検討してローカルエンドポイントを公開してください。
+
+## クラウドエンドポイントのセットアップ
+
+ローカルでVansRouterを実行し、Cursorで使用したい場合:
+
+1. VansRouter設定でクラウドエンドポイントを有効化
+2. VansRouterダッシュボードでクラウドエンドポイントURLを設定
+3. Cursor設定でクラウドURLを使用
+4. ローカルVansRouterインスタンスがインターネットからアクセス可能か確認
+
+## ベストプラクティス
+
+1. **モデルエイリアスを使用**: VansRouterで頻繁に使うモデル用のショートエイリアスを作成
+2. **使用量をモニター**: VansRouterダッシュボードで使用統計とコストを確認
+3. **APIキーをローテーション**: セキュリティのためAPIキーを定期的にローテーション
+4. **モデルをテスト**: ユースケースに最適なモデルを見つけるため、異なるモデルを試す
+4:["$","$Ld",null,{"headings":[{"level":2,"text":"前提条件","id":"前提条件"},{"level":2,"text":"重要な注意点","id":"重要な注意点"},{"level":2,"text":"セットアップ","id":"セットアップ"},{"level":3,"text":"1. Cursor設定を開く","id":"1-cursor設定を開く"},{"level":3,"text":"2. OpenAI APIを有効化","id":"2-openai-apiを有効化"},{"level":3,"text":"3. Base URLを設定","id":"3-base-urlを設定"},{"level":3,"text":"4. APIキーを追加","id":"4-apiキーを追加"},{"level":3,"text":"5. カスタムモデルを追加","id":"5-カスタムモデルを追加"},{"level":3,"text":"6. モデルを選択","id":"6-モデルを選択"},{"level":2,"text":"設定例","id":"設定例"},{"level":2,"text":"利用可能なモデル","id":"利用可能なモデル"},{"level":2,"text":"使用法","id":"使用法"},{"level":3,"text":"チャットインターフェイス","id":"チャットインターフェイス"},{"level":3,"text":"インラインコード生成","id":"インラインコード生成"},{"level":3,"text":"コード説明","id":"コード説明"},{"level":2,"text":"トラブルシューティング","id":"トラブルシューティング"},{"level":3,"text":"「Invalid API Key」エラー","id":"invalid-api-keyエラー"},{"level":3,"text":"「Model Not Found」エラー","id":"model-not-foundエラー"},{"level":3,"text":"接続の問題","id":"接続の問題"},{"level":3,"text":"Localhostが動作しない","id":"localhostが動作しない"},{"level":2,"text":"クラウドエンドポイントのセットアップ","id":"クラウドエンドポイントのセットアップ"},{"level":2,"text":"ベストプラクティス","id":"ベストプラクティス"}],"lang":"ja","children":["$","$Le",null,{"content":"$f"}]}]
+9:[["$","meta","0",{"charSet":"utf-8"}],["$","meta","1",{"name":"viewport","content":"width=device-width, initial-scale=1"}]]
+7:null
+b:[["$","title","0",{"children":"9Router Documentation"}],["$","meta","1",{"name":"description","content":"Smart AI model router - Maximize subscriptions, minimize costs"}]]

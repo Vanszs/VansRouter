@@ -1,0 +1,491 @@
+1:"$Sreact.fragment"
+2:I[81956,["/VansRouter/_next/static/chunks/ff1a16fafef87110.js","/VansRouter/_next/static/chunks/3ba79d5b01800fdc.js"],"default"]
+3:I[22982,["/VansRouter/_next/static/chunks/ff1a16fafef87110.js","/VansRouter/_next/static/chunks/3ba79d5b01800fdc.js"],"default"]
+8:I[97367,["/VansRouter/_next/static/chunks/ff1a16fafef87110.js","/VansRouter/_next/static/chunks/803a574de9eda7ae.js"],"OutletBoundary"]
+9:"$Sreact.suspense"
+4:T249c,# ☁️ Cloud Deployment
+
+Deploy VansRouter on VPS or Docker for remote access and production use.
+
+---
+
+## 🖥️ VPS Deployment
+
+### Prerequisites
+
+- Ubuntu 20.04+ or similar Linux distribution
+- Node.js 22.5+
+- Git
+- Root or sudo access
+
+### Step 1: Clone Repository
+
+```bash
+git clone https://github.com/Vanszs/VansRouter.git
+cd VansRouter
+```
+
+### Step 2: Install Dependencies
+
+```bash
+npm install
+```
+
+### Step 3: Build Application
+
+```bash
+npm run build
+```
+
+### Step 4: Configure Environment Variables
+
+Create a `.env` file or export variables:
+
+```bash
+export JWT_SECRET="$(openssl rand -base64 32)"
+export INITIAL_PASSWORD="$(openssl rand -base64 24)"
+export DATA_DIR="/var/lib/9router"
+export NODE_ENV="production"
+```
+
+**Environment Variables:**
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `JWT_SECRET` | Auto-generated | **MUST change in production!** Used for JWT token signing |
+| `INITIAL_PASSWORD` | `123456` for a new installation | Initial dashboard password; set a strong value before public exposure |
+| `DATA_DIR` | `~/.9router` | Database and data storage path |
+| `NODE_ENV` | `development` | Set to `production` for deployment |
+| `ENABLE_REQUEST_LOGS` | `false` | Enable debug request/response logs |
+
+### Step 5: Create Data Directory
+
+```bash
+sudo mkdir -p /var/lib/9router
+sudo chown $USER:$USER /var/lib/9router
+```
+
+### Step 6: Start Application
+
+```bash
+npm run start
+```
+
+### Step 7: Setup PM2 for Production
+
+PM2 keeps your application running and restarts it on crashes:
+
+```bash
+# Install PM2 globally
+npm install -g pm2
+
+# Start VansRouter with PM2
+pm2 start npm --name vansrouter -- start
+
+# Save PM2 configuration
+pm2 save
+
+# Setup PM2 to start on system boot
+pm2 startup
+# Follow the instructions printed by the command above
+```
+
+**PM2 Management Commands:**
+
+```bash
+# View logs
+pm2 logs vansrouter
+
+# Restart application
+pm2 restart vansrouter
+
+# Stop application
+pm2 stop vansrouter
+
+# View status
+pm2 status
+
+# Monitor resources
+pm2 monit
+```
+
+---
+
+## 🐳 Docker Deployment
+
+### Option 1: Using Dockerfile
+
+Create a `Dockerfile` in the `app` directory:
+
+```dockerfile
+FROM node:22-alpine
+
+WORKDIR /app
+
+# Copy package files
+COPY package*.json ./
+
+# Install dependencies
+RUN npm ci --only=production
+
+# Copy application files
+COPY . .
+
+# Build application
+RUN npm run build
+
+# Expose the VansRouter application port
+EXPOSE 20128
+
+# Set environment variables
+ENV NODE_ENV=production
+ENV DATA_DIR=/app/data
+
+# Create data directory
+RUN mkdir -p /app/data
+
+# Start application
+CMD ["npm", "run", "start"]
+```
+
+**Build and Run:**
+
+```bash
+# Build image
+docker build -t vansrouter .
+
+# Run container
+docker run -d \
+  --name vansrouter \
+  -p 20128:20128 \
+  -e JWT_SECRET="$(openssl rand -base64 32)" \
+  -e INITIAL_PASSWORD="$(openssl rand -base64 24)" \
+  -e DATA_DIR=/app/data \
+  -v 9router-data:/app/data \
+  vansrouter
+```
+
+### Option 2: Docker Compose
+
+Create `docker-compose.yml`:
+
+```yaml
+version: '3.8'
+
+services:
+  vansrouter:
+    image: ghcr.io/vanszs/vansrouter:X.Y.Z
+    container_name: vansrouter
+    ports:
+      - "20128:20128"
+    environment:
+      NODE_ENV: production
+      VANSROUTER_VERSION: X.Y.Z
+      JWT_SECRET: ${JWT_SECRET:?set a strong secret}
+      INITIAL_PASSWORD: ${INITIAL_PASSWORD:?set a strong password}
+      DATA_DIR: /app/data
+    volumes:
+      - 9router-data:/app/data
+      - vansrouter-data:/migration-data:ro
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:20128/api/ready"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+volumes:
+  9router-data:
+    name: 9router-data
+  vansrouter-data:
+```
+
+**Run with Docker Compose:**
+
+```bash
+# Start services
+docker compose up -d
+
+# View logs
+docker compose logs -f
+
+# Stop services
+docker compose down
+
+# Rebuild and restart
+docker compose up -d
+```
+
+---
+
+## 🌐 Reverse Proxy with Nginx
+
+### Why Use Nginx?
+
+- SSL/TLS termination
+- Domain name mapping
+- Load balancing
+- Better security
+
+### Step 1: Install Nginx
+
+```bash
+sudo apt update
+sudo apt install nginx
+```
+
+### Step 2: Configure Nginx
+
+Create `/etc/nginx/sites-available/vansrouter`:
+
+```nginx
+server {
+    listen 80;
+    server_name your-domain.com;
+
+    # Redirect HTTP to HTTPS
+    return 301 https://$server_name$request_uri;
+}
+
+server {
+    listen 443 ssl http2;
+    server_name your-domain.com;
+
+    # SSL certificates (use certbot to generate)
+    ssl_certificate /etc/letsencrypt/live/your-domain.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/your-domain.com/privkey.pem;
+
+    # SSL configuration
+    ssl_protocols TLSv1.2 TLSv1.3;
+    ssl_ciphers HIGH:!aNULL:!MD5;
+    ssl_prefer_server_ciphers on;
+
+    # Proxy to VansRouter
+    location / {
+        proxy_pass http://localhost:20128;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_cache_bypass $http_upgrade;
+        
+        # SSE support - CRITICAL for streaming
+        proxy_buffering off;
+        proxy_read_timeout 86400;
+    }
+
+    # API endpoint
+    location /v1 {
+        proxy_pass http://localhost:20128;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        
+        # SSE support - CRITICAL for streaming
+        proxy_buffering off;
+        proxy_read_timeout 86400;
+    }
+}
+```
+
+### Step 3: Enable Site
+
+```bash
+# Create symbolic link
+sudo ln -s /etc/nginx/sites-available/vansrouter /etc/nginx/sites-enabled/
+
+# Test configuration
+sudo nginx -t
+
+# Reload Nginx
+sudo systemctl reload nginx
+```
+
+### Step 4: Setup SSL with Let's Encrypt
+
+```bash
+# Install certbot
+sudo apt install certbot python3-certbot-nginx
+
+# Obtain SSL certificate
+sudo certbot --nginx -d your-domain.com
+
+# Auto-renewal is configured automatically
+# Test renewal
+sudo certbot renew --dry-run
+```
+
+---
+
+## 🔒 Security Considerations
+
+### 1. Change Default Credentials
+
+**CRITICAL:** Change `JWT_SECRET` and `INITIAL_PASSWORD` before deployment:
+
+```bash
+# Generate secure JWT secret
+openssl rand -base64 32
+
+# Use this value for JWT_SECRET
+export JWT_SECRET="generated-secret-here"
+```
+
+### 2. Firewall Configuration
+
+```bash
+# Allow SSH
+sudo ufw allow 22/tcp
+
+# Allow HTTP/HTTPS (if using Nginx)
+sudo ufw allow 80/tcp
+sudo ufw allow 443/tcp
+
+# If NOT using reverse proxy, allow VansRouter ports
+sudo ufw allow 3000/tcp
+sudo ufw allow 20128/tcp
+
+# Enable firewall
+sudo ufw enable
+```
+
+### 3. Restrict Dashboard Access
+
+If you only need API access, restrict dashboard port:
+
+```bash
+# Only allow localhost access to dashboard
+sudo ufw deny 3000/tcp
+```
+
+Access dashboard via SSH tunnel:
+
+```bash
+ssh -L 20128:localhost:20128 user@your-server.com
+# Then open http://localhost:20128/masuk in your browser
+```
+
+### 4. Regular Updates
+
+```bash
+# Update system packages
+sudo apt update && sudo apt upgrade -y
+
+# Update VansRouter
+cd /path/to/VansRouter
+git pull
+npm install
+npm run build
+pm2 restart vansrouter
+```
+
+### 5. Backup Strategy
+
+```bash
+# Backup data directory
+tar -czf vansrouter-backup-$(date +%Y%m%d).tar.gz /var/lib/9router
+
+# Automated daily backup (add to crontab)
+0 2 * * * tar -czf /backups/9router-$(date +\%Y\%m\%d).tar.gz /var/lib/9router
+```
+
+---
+
+## 📊 Monitoring
+
+### Check Application Status
+
+```bash
+# PM2 status
+pm2 status
+
+# View logs
+pm2 logs vansrouter --lines 100
+
+# Monitor resources
+pm2 monit
+```
+
+### Nginx Logs
+
+```bash
+# Access logs
+sudo tail -f /var/log/nginx/access.log
+
+# Error logs
+sudo tail -f /var/log/nginx/error.log
+```
+
+### System Resources
+
+```bash
+# CPU and memory usage
+htop
+
+# Disk usage
+df -h
+
+# Network connections
+netstat -tulpn | grep -E '3000|20128'
+```
+
+---
+
+## 🚨 Troubleshooting
+
+### Application Won't Start
+
+```bash
+# Check logs
+pm2 logs vansrouter
+
+# Check if ports are in use
+sudo lsof -i :3000
+sudo lsof -i :20128
+
+# Check environment variables
+pm2 env vansrouter
+```
+
+### Nginx 502 Bad Gateway
+
+```bash
+# Check if VansRouter is running
+pm2 status
+
+# Check Nginx error logs
+sudo tail -f /var/log/nginx/error.log
+
+# Test Nginx configuration
+sudo nginx -t
+```
+
+### SSE Streaming Not Working
+
+Ensure `proxy_buffering off` is set in Nginx configuration for SSE support.
+
+### Permission Denied Errors
+
+```bash
+# Fix data directory permissions
+sudo chown -R $USER:$USER /var/lib/9router
+chmod 755 /var/lib/9router
+```
+
+---
+
+## 🔗 Next Steps
+
+- [Connect Providers](/providers/subscription.md)
+- [Setup Combos](/features/combos.md)
+- [Integrate with Tools](/integration/cursor.md)
+0:{"buildId":"PUpTBY-8r_zZtEM8SJOLp","rsc":["$","$1","c",{"children":[["$","$L2",null,{"headings":[{"level":2,"text":"VPS Deployment","id":"vps-deployment"},{"level":3,"text":"Prerequisites","id":"prerequisites"},{"level":3,"text":"Step 1: Clone Repository","id":"step-1-clone-repository"},{"level":3,"text":"Step 2: Install Dependencies","id":"step-2-install-dependencies"},{"level":3,"text":"Step 3: Build Application","id":"step-3-build-application"},{"level":3,"text":"Step 4: Configure Environment Variables","id":"step-4-configure-environment-variables"},{"level":3,"text":"Step 5: Create Data Directory","id":"step-5-create-data-directory"},{"level":3,"text":"Step 6: Start Application","id":"step-6-start-application"},{"level":3,"text":"Step 7: Setup PM2 for Production","id":"step-7-setup-pm2-for-production"},{"level":2,"text":"Docker Deployment","id":"docker-deployment"},{"level":3,"text":"Option 1: Using Dockerfile","id":"option-1-using-dockerfile"},{"level":3,"text":"Option 2: Docker Compose","id":"option-2-docker-compose"},{"level":2,"text":"Reverse Proxy with Nginx","id":"reverse-proxy-with-nginx"},{"level":3,"text":"Why Use Nginx?","id":"why-use-nginx"},{"level":3,"text":"Step 1: Install Nginx","id":"step-1-install-nginx"},{"level":3,"text":"Step 2: Configure Nginx","id":"step-2-configure-nginx"},{"level":3,"text":"Step 3: Enable Site","id":"step-3-enable-site"},{"level":3,"text":"Step 4: Setup SSL with Let's Encrypt","id":"step-4-setup-ssl-with-lets-encrypt"},{"level":2,"text":"Security Considerations","id":"security-considerations"},{"level":3,"text":"1. Change Default Credentials","id":"1-change-default-credentials"},{"level":3,"text":"2. Firewall Configuration","id":"2-firewall-configuration"},{"level":3,"text":"3. Restrict Dashboard Access","id":"3-restrict-dashboard-access"},{"level":3,"text":"4. Regular Updates","id":"4-regular-updates"},{"level":3,"text":"5. Backup Strategy","id":"5-backup-strategy"},{"level":2,"text":"Monitoring","id":"monitoring"},{"level":3,"text":"Check Application Status","id":"check-application-status"},{"level":3,"text":"Nginx Logs","id":"nginx-logs"},{"level":3,"text":"System Resources","id":"system-resources"},{"level":2,"text":"Troubleshooting","id":"troubleshooting"},{"level":3,"text":"Application Won't Start","id":"application-wont-start"},{"level":3,"text":"Nginx 502 Bad Gateway","id":"nginx-502-bad-gateway"},{"level":3,"text":"SSE Streaming Not Working","id":"sse-streaming-not-working"},{"level":3,"text":"Permission Denied Errors","id":"permission-denied-errors"},{"level":2,"text":"Next Steps","id":"next-steps"}],"lang":"en","children":["$","$L3",null,{"content":"$4"}]}],["$L5","$L6"],"$L7"]}],"loading":null,"isPartial":false}
+5:["$","script","script-0",{"src":"/VansRouter/_next/static/chunks/ff1a16fafef87110.js","async":true}]
+6:["$","script","script-1",{"src":"/VansRouter/_next/static/chunks/3ba79d5b01800fdc.js","async":true}]
+7:["$","$L8",null,{"children":["$","$9",null,{"name":"Next.MetadataOutlet","children":"$@a"}]}]
+a:null

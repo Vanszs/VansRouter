@@ -1,0 +1,263 @@
+1:"$Sreact.fragment"
+2:I[39756,["/VansRouter/_next/static/chunks/ff1a16fafef87110.js","/VansRouter/_next/static/chunks/803a574de9eda7ae.js"],"default"]
+3:I[37457,["/VansRouter/_next/static/chunks/ff1a16fafef87110.js","/VansRouter/_next/static/chunks/803a574de9eda7ae.js"],"default"]
+5:I[97367,["/VansRouter/_next/static/chunks/ff1a16fafef87110.js","/VansRouter/_next/static/chunks/803a574de9eda7ae.js"],"OutletBoundary"]
+6:"$Sreact.suspense"
+8:I[97367,["/VansRouter/_next/static/chunks/ff1a16fafef87110.js","/VansRouter/_next/static/chunks/803a574de9eda7ae.js"],"ViewportBoundary"]
+a:I[97367,["/VansRouter/_next/static/chunks/ff1a16fafef87110.js","/VansRouter/_next/static/chunks/803a574de9eda7ae.js"],"MetadataBoundary"]
+c:I[68027,["/VansRouter/_next/static/chunks/ff1a16fafef87110.js","/VansRouter/_next/static/chunks/803a574de9eda7ae.js"],"default"]
+:HL["/VansRouter/_next/static/chunks/71d10a355cb8f2d7.css","style"]
+0:{"P":null,"b":"PUpTBY-8r_zZtEM8SJOLp","c":["","es","getting-started","quick-start",""],"q":"","i":false,"f":[[["",{"children":[["lang","es","d"],{"children":[["slug","getting-started/quick-start","c"],{"children":["__PAGE__",{}]}]}]},"$undefined","$undefined",true],[["$","$1","c",{"children":[[["$","link","0",{"rel":"stylesheet","href":"/VansRouter/_next/static/chunks/71d10a355cb8f2d7.css","precedence":"next","crossOrigin":"$undefined","nonce":"$undefined"}]],["$","html",null,{"lang":"en","children":[["$","head",null,{}],["$","body",null,{"className":"bg-[#FCFBF9] text-[#6B7280]","children":["$","$L2",null,{"parallelRouterKey":"children","error":"$undefined","errorStyles":"$undefined","errorScripts":"$undefined","template":["$","$L3",null,{}],"templateStyles":"$undefined","templateScripts":"$undefined","notFound":[[["$","title",null,{"children":"404: This page could not be found."}],["$","div",null,{"style":{"fontFamily":"system-ui,\"Segoe UI\",Roboto,Helvetica,Arial,sans-serif,\"Apple Color Emoji\",\"Segoe UI Emoji\"","height":"100vh","textAlign":"center","display":"flex","flexDirection":"column","alignItems":"center","justifyContent":"center"},"children":["$","div",null,{"children":[["$","style",null,{"dangerouslySetInnerHTML":{"__html":"body{color:#000;background:#fff;margin:0}.next-error-h1{border-right:1px solid rgba(0,0,0,.3)}@media (prefers-color-scheme:dark){body{color:#fff;background:#000}.next-error-h1{border-right:1px solid rgba(255,255,255,.3)}}"}}],["$","h1",null,{"className":"next-error-h1","style":{"display":"inline-block","margin":"0 20px 0 0","padding":"0 23px 0 0","fontSize":24,"fontWeight":500,"verticalAlign":"top","lineHeight":"49px"},"children":404}],["$","div",null,{"style":{"display":"inline-block"},"children":["$","h2",null,{"style":{"fontSize":14,"fontWeight":400,"lineHeight":"49px","margin":0},"children":"This page could not be found."}]}]]}]}]],[]],"forbidden":"$undefined","unauthorized":"$undefined"}]}]]}]]}],{"children":[["$","$1","c",{"children":[null,["$","$L2",null,{"parallelRouterKey":"children","error":"$undefined","errorStyles":"$undefined","errorScripts":"$undefined","template":["$","$L3",null,{}],"templateStyles":"$undefined","templateScripts":"$undefined","notFound":"$undefined","forbidden":"$undefined","unauthorized":"$undefined"}]]}],{"children":[["$","$1","c",{"children":[null,["$","$L2",null,{"parallelRouterKey":"children","error":"$undefined","errorStyles":"$undefined","errorScripts":"$undefined","template":["$","$L3",null,{}],"templateStyles":"$undefined","templateScripts":"$undefined","notFound":"$undefined","forbidden":"$undefined","unauthorized":"$undefined"}]]}],{"children":[["$","$1","c",{"children":["$L4",[["$","script","script-0",{"src":"/VansRouter/_next/static/chunks/ff1a16fafef87110.js","async":true,"nonce":"$undefined"}],["$","script","script-1",{"src":"/VansRouter/_next/static/chunks/3ba79d5b01800fdc.js","async":true,"nonce":"$undefined"}]],["$","$L5",null,{"children":["$","$6",null,{"name":"Next.MetadataOutlet","children":"$@7"}]}]]}],{},null,false,false]},null,false,false]},null,false,false]},null,false,false],["$","$1","h",{"children":[null,["$","$L8",null,{"children":"$L9"}],["$","div",null,{"hidden":true,"children":["$","$La",null,{"children":["$","$6",null,{"name":"Next.Metadata","children":"$Lb"}]}]}],null]}],false]],"m":"$undefined","G":["$c",[]],"S":true}
+d:I[81956,["/VansRouter/_next/static/chunks/ff1a16fafef87110.js","/VansRouter/_next/static/chunks/3ba79d5b01800fdc.js"],"default"]
+e:I[22982,["/VansRouter/_next/static/chunks/ff1a16fafef87110.js","/VansRouter/_next/static/chunks/3ba79d5b01800fdc.js"],"default"]
+f:T1805,# Empezar
+
+Pon en marcha VansRouter en 5 minutos y comienza a enrutar solicitudes de IA de forma inteligente.
+
+---
+
+## Inicio rápido
+
+### 1. Instalar
+
+```bash
+npm install -g vansrouter
+```
+
+**Requisitos:** Node.js 22.5+ ([Detalles de instalación](getting-started/installation.md))
+
+### 2. Iniciar
+
+```bash
+vansrouter
+```
+
+🎉 **El dashboard se abre automáticamente** en `http://localhost:20128`
+
+- Las instalaciones nuevas usan `123456` por defecto; configura un `INITIAL_PASSWORD` aleatorio antes de exponerlas.
+- API key generada automáticamente
+- Listo para conectar proveedores
+
+### 3. Conectar proveedores
+
+Tienes 3 formas de conectar proveedores:
+
+#### Opción A: OAuth (Proveedores de suscripción)
+
+**Ideal para:** Claude Code, Codex, Gemini CLI, GitHub Copilot
+
+```
+Dashboard → Providers → Connect [Provider]
+→ Login OAuth → Refresh automático de token
+→ Seguimiento de cuota habilitado
+```
+
+**Ejemplo: Claude Code**
+1. Clic en "Connect Claude Code"
+2. Inicia sesión con tu cuenta de Claude
+3. Autoriza VansRouter
+4. ✅ ¡Listo! Usa el modelo: `cc/claude-opus-4-5-20251101`
+
+#### Opción B: API Key (Proveedores baratos)
+
+**Ideal para:** GLM, MiniMax, Kimi, OpenRouter
+
+```
+Dashboard → Providers → Add API Key
+→ Selecciona proveedor
+→ Pega API key
+→ Guardar
+```
+
+**Ejemplo: GLM-4.7**
+1. Regístrate en [Zhipu AI](https://open.bigmodel.cn/)
+2. Obtén la API key del Coding Plan
+3. Dashboard → Add API Key → Provider: `glm` → Pega la key
+4. ✅ ¡Listo! Usa el modelo: `glm/glm-4.7`
+
+#### Opción C: Proveedores gratis (Sin costo)
+
+**Ideal para:** iFlow, Qwen, Kiro
+
+```
+Dashboard → Providers → Connect [Free Provider]
+→ Device code u OAuth
+→ Uso ilimitado
+```
+
+**Ejemplo: iFlow**
+1. Clic en "Connect iFlow"
+2. Inicia sesión con tu cuenta de iFlow
+3. Autoriza
+4. ✅ ¡Listo! Usa 8 modelos: `if/kimi-k2-thinking`, `if/qwen3-coder-plus`, etc.
+
+---
+
+## 4. Usar en herramientas CLI
+
+Apunta tu herramienta de codificación a VansRouter:
+
+### Cursor IDE
+
+```
+Settings → Models → Advanced:
+  OpenAI API Base URL: http://localhost:20128/v1
+  OpenAI API Key: [desde el dashboard de 9router]
+  Model: cc/claude-opus-4-5-20251101
+```
+
+### Claude Desktop
+
+Edita `~/.claude/config.json`:
+
+```json
+{
+  "anthropic_api_base": "http://localhost:20128/v1",
+  "anthropic_api_key": "your-vansrouter-api-key"
+}
+```
+
+### Cline / Continue / RooCode
+
+```
+Provider: OpenAI Compatible
+Base URL: http://localhost:20128/v1
+API Key: [desde el dashboard]
+Model: cc/claude-opus-4-5-20251101
+```
+
+### Codex CLI
+
+```bash
+export OPENAI_BASE_URL="http://localhost:20128"
+export OPENAI_API_KEY="your-vansrouter-api-key"
+
+codex "your prompt"
+```
+
+---
+
+## 5. Crear combos inteligentes (Opcional)
+
+Los combos habilitan el fallback automático entre modelos:
+
+```
+Dashboard → Combos → Create New
+
+Name: premium-coding
+Models:
+  1. cc/claude-opus-4-5-20251101 (Suscripción principal)
+  2. glm/glm-4.7 (Respaldo barato, $0.6/1M)
+  3. if/kimi-k2-thinking (Fallback gratis)
+
+Usar en CLI: premium-coding
+```
+
+**Cómo funciona:**
+1. Intenta primero Claude Opus (tu suscripción)
+2. Si la cuota se agota → GLM-4.7 (ultra-barato)
+3. Si llega al límite de presupuesto → iFlow (gratis)
+4. ¡Cero tiempo de inactividad, cambio automático!
+
+---
+
+## Modelos disponibles
+
+### Modelos de suscripción (Maximiza primero)
+
+**Claude Code (`cc/`)** - Suscripción Pro/Max:
+- `cc/claude-opus-4-5-20251101` - Claude 4.5 Opus
+- `cc/claude-sonnet-4-5-20250929` - Claude 4.5 Sonnet
+- `cc/claude-haiku-4-5-20251001` - Claude 4.5 Haiku
+
+**Codex (`cx/`)** - Suscripción Plus/Pro:
+- `cx/gpt-5.2-codex` - GPT 5.2 Codex
+- `cx/gpt-5.1-codex-max` - GPT 5.1 Codex Max
+
+**Gemini CLI (`gc/`)** - GRATIS 180K/mes:
+- `gc/gemini-3-flash-preview` - Gemini 3 Flash Preview
+- `gc/gemini-2.5-pro` - Gemini 2.5 Pro
+
+**GitHub Copilot (`gh/`)** - Suscripción:
+- `gh/gpt-5` - GPT-5
+- `gh/claude-4.5-sonnet` - Claude 4.5 Sonnet
+
+### Modelos baratos (Respaldo)
+
+**GLM (`glm/`)** - $0.6/$2.2 por 1M:
+- `glm/glm-4.7` - GLM 4.7 (reinicio diario 10AM)
+
+**MiniMax (`minimax/`)** - $0.20/$1.00 por 1M:
+- `minimax/MiniMax-M2.1` - MiniMax M2.1 (reinicio 5h)
+
+**Kimi (`kimi/`)** - $9/mes (10M tokens):
+- `kimi/kimi-latest` - Kimi Latest
+
+### Modelos GRATIS (Emergencia)
+
+**iFlow (`if/`)** - 8 modelos GRATIS:
+- `if/kimi-k2-thinking` - Kimi K2 Thinking
+- `if/qwen3-coder-plus` - Qwen3 Coder Plus
+- `if/glm-4.7` - GLM 4.7
+- `if/deepseek-r1` - DeepSeek R1
+
+**Qwen (`qw/`)** - 3 modelos GRATIS:
+- `qw/qwen3-coder-plus` - Qwen3 Coder Plus
+- `qw/qwen3-coder-flash` - Qwen3 Coder Flash
+
+**Kiro (`kr/`)** - 2 modelos GRATIS:
+- `kr/claude-sonnet-4.5` - Claude Sonnet 4.5
+- `kr/claude-haiku-4.5` - Claude Haiku 4.5
+
+---
+
+## Estrategia de optimización de costos
+
+### Presupuesto mensual: $10-20/mes
+
+```
+1. Usa el nivel gratis de Gemini CLI (180K/mes) para tareas rápidas
+2. Usa la cuota de suscripción de Claude Code al máximo (ya pagas)
+3. Fallback a GLM ($0.6/1M) cuando se agote la cuota
+4. Emergencia: MiniMax M2.1 ($0.20/1M) o iFlow (gratis)
+
+Ejemplo real (100M tokens/mes):
+  60M vía Gemini CLI: $0 (nivel gratis)
+  30M vía Claude Code: $0 (suscripción que ya tienes)
+  8M vía GLM: $4.80
+  2M vía MiniMax: $0.40
+  Total: $5.20/mes + suscripciones existentes
+```
+
+### Estrategia de reinicio de cuota
+
+```
+Rutina diaria:
+1. Mañana: Cuota fresca de Claude Code (reinicio 5h)
+2. Tarde: Cambia a Gemini CLI (1K/día)
+3. Noche: Cuota diaria de GLM (reinicio 10AM del día siguiente)
+4. Madrugada: MiniMax (rolling 5h) o iFlow (gratis)
+
+→ ¡Codifica 24/7 con costo extra mínimo!
+```
+
+---
+
+## Próximos pasos
+
+- [Detalles de instalación](getting-started/installation.md) - Requisitos, troubleshooting
+- [Características](features/) - Explora seguimiento de cuota, combos, despliegue
+- [FAQ](faq.md) - Preguntas y respuestas comunes
+- [Troubleshooting](troubleshooting.md) - Soluciona problemas comunes
+
+---
+
+## ¿Necesitas ayuda?
+
+- **Sitio web**: [VansRouter dashboard](http://localhost:20128)
+- **GitHub**: [github.com/Vanszs/VansRouter](https://github.com/Vanszs/VansRouter)
+- **Issues**: [github.com/Vanszs/VansRouter/issues](https://github.com/Vanszs/VansRouter/issues)
+4:["$","$Ld",null,{"headings":[{"level":2,"text":"Inicio rápido","id":"inicio-rápido"},{"level":3,"text":"1. Instalar","id":"1-instalar"},{"level":3,"text":"2. Iniciar","id":"2-iniciar"},{"level":3,"text":"3. Conectar proveedores","id":"3-conectar-proveedores"},{"level":2,"text":"4. Usar en herramientas CLI","id":"4-usar-en-herramientas-cli"},{"level":3,"text":"Cursor IDE","id":"cursor-ide"},{"level":3,"text":"Claude Desktop","id":"claude-desktop"},{"level":3,"text":"Cline / Continue / RooCode","id":"cline--continue--roocode"},{"level":3,"text":"Codex CLI","id":"codex-cli"},{"level":2,"text":"5. Crear combos inteligentes (Opcional)","id":"5-crear-combos-inteligentes-opcional"},{"level":2,"text":"Modelos disponibles","id":"modelos-disponibles"},{"level":3,"text":"Modelos de suscripción (Maximiza primero)","id":"modelos-de-suscripción-maximiza-primero"},{"level":3,"text":"Modelos baratos (Respaldo)","id":"modelos-baratos-respaldo"},{"level":3,"text":"Modelos GRATIS (Emergencia)","id":"modelos-gratis-emergencia"},{"level":2,"text":"Estrategia de optimización de costos","id":"estrategia-de-optimización-de-costos"},{"level":3,"text":"Presupuesto mensual: $10-20/mes","id":"presupuesto-mensual-10-20mes"},{"level":3,"text":"Estrategia de reinicio de cuota","id":"estrategia-de-reinicio-de-cuota"},{"level":2,"text":"Próximos pasos","id":"próximos-pasos"},{"level":2,"text":"¿Necesitas ayuda?","id":"necesitas-ayuda"}],"lang":"es","children":["$","$Le",null,{"content":"$f"}]}]
+9:[["$","meta","0",{"charSet":"utf-8"}],["$","meta","1",{"name":"viewport","content":"width=device-width, initial-scale=1"}]]
+7:null
+b:[["$","title","0",{"children":"9Router Documentation"}],["$","meta","1",{"name":"description","content":"Smart AI model router - Maximize subscriptions, minimize costs"}]]

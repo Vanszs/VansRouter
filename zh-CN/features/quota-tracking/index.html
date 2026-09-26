@@ -1,0 +1,572 @@
+<!DOCTYPE html><!--PUpTBY_8r_zZtEM8SJOLp--><html lang="en"><head><meta charSet="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/><link rel="stylesheet" href="/VansRouter/_next/static/chunks/71d10a355cb8f2d7.css" data-precedence="next"/><link rel="preload" as="script" fetchPriority="low" href="/VansRouter/_next/static/chunks/343aa45b5611d01d.js"/><script src="/VansRouter/_next/static/chunks/a0aa32a146625b3a.js" async=""></script><script src="/VansRouter/_next/static/chunks/3e45c79224336516.js" async=""></script><script src="/VansRouter/_next/static/chunks/turbopack-4db312a651dd60cf.js" async=""></script><script src="/VansRouter/_next/static/chunks/ff1a16fafef87110.js" async=""></script><script src="/VansRouter/_next/static/chunks/803a574de9eda7ae.js" async=""></script><script src="/VansRouter/_next/static/chunks/3ba79d5b01800fdc.js" async=""></script><title>9Router Documentation</title><meta name="description" content="Smart AI model router - Maximize subscriptions, minimize costs"/><script src="/VansRouter/_next/static/chunks/a6dad97d9634a72d.js" noModule=""></script></head><body class="bg-[#FCFBF9] text-[#6B7280]"><div hidden=""><!--$--><!--/$--></div><div class="min-h-screen flex flex-col bg-[#FCFBF9]"><header class="sticky top-0 z-50 w-full border-b bg-white/80 backdrop-blur-sm border-gray-200"><div class=" mx-auto px-4 h-16 flex items-center justify-between"><button type="button" class="lg:hidden p-2 rounded-lg hover:bg-gray-100 transition-colors" aria-label="Open menu"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-menu w-6 h-6 text-gray-600" aria-hidden="true"><path d="M4 5h16"></path><path d="M4 12h16"></path><path d="M4 19h16"></path></svg></button><a class="flex items-center gap-2 font-bold text-2xl text-black hover:opacity-80 transition-opacity" href="/VansRouter/zh-CN/"><span>9</span><span class="text-[#E68A6E]">9Router<!-- --> Docs</span></a><div class="flex items-center gap-2 sm:gap-3"><button type="button" class="flex items-center gap-1.5 px-2.5 py-1.5 text-sm text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors" aria-label="Switch language"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-globe w-4 h-4" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"></path><path d="M2 12h20"></path></svg><span class="hidden sm:inline">🇨🇳<!-- --> <!-- -->简体中文</span><span class="sm:hidden">🇨🇳</span></button><a target="_blank" rel="noopener noreferrer" class="flex items-center gap-2 px-3 sm:px-4 py-2 bg-[#E68A6E] text-white rounded-lg font-medium hover:bg-[#d67a5e] transition-colors text-sm" href="http://localhost:20128"><span class="hidden sm:inline">前往应用</span><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-external-link w-4 h-4" aria-hidden="true"><path d="M15 3h6v6"></path><path d="M10 14 21 3"></path><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path></svg></a></div></div></header><div class="flex-1 flex"><div class="hidden lg:block"><aside class="w-64 border-r bg-white border-gray-200 h-[calc(100vh-4rem)] sticky top-16 overflow-y-auto"><nav class="p-4 space-y-6"><div><button type="button" class="flex items-center justify-between w-full text-sm font-semibold text-gray-900 mb-2 hover:text-[#E68A6E] transition-colors"><span class="flex items-center gap-2"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-rocket w-4 h-4" aria-hidden="true"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"></path><path d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"></path><path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"></path><path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"></path></svg>开始使用</span><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-right w-4 h-4" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg></button></div><div><button type="button" class="flex items-center justify-between w-full text-sm font-semibold text-gray-900 mb-2 hover:text-[#E68A6E] transition-colors"><span class="flex items-center gap-2"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-layers w-4 h-4" aria-hidden="true"><path d="M12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83z"></path><path d="M2 12a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 12"></path><path d="M2 17a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 17"></path></svg>提供商</span><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-right w-4 h-4" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg></button></div><div><button type="button" class="flex items-center justify-between w-full text-sm font-semibold text-gray-900 mb-2 hover:text-[#E68A6E] transition-colors"><span class="flex items-center gap-2"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-zap w-4 h-4" aria-hidden="true"><path d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z"></path></svg>功能</span><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-right w-4 h-4" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg></button></div><div><button type="button" class="flex items-center justify-between w-full text-sm font-semibold text-gray-900 mb-2 hover:text-[#E68A6E] transition-colors"><span class="flex items-center gap-2"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-plug w-4 h-4" aria-hidden="true"><path d="M12 22v-5"></path><path d="M15 8V2"></path><path d="M17 8a1 1 0 0 1 1 1v4a4 4 0 0 1-4 4h-4a4 4 0 0 1-4-4V9a1 1 0 0 1 1-1z"></path><path d="M9 8V2"></path></svg>集成</span><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-right w-4 h-4" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg></button></div><div><button type="button" class="flex items-center justify-between w-full text-sm font-semibold text-gray-900 mb-2 hover:text-[#E68A6E] transition-colors"><span class="flex items-center gap-2"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-cloud w-4 h-4" aria-hidden="true"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"></path></svg>部署</span><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-right w-4 h-4" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg></button></div><div><button type="button" class="flex items-center justify-between w-full text-sm font-semibold text-gray-900 mb-2 hover:text-[#E68A6E] transition-colors"><span class="flex items-center gap-2"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-circle-question-mark w-4 h-4" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><path d="M12 17h.01"></path></svg>帮助</span><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-right w-4 h-4" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg></button></div></nav></aside></div><div class="flex-1 flex min-w-0"><main class="flex-1 min-w-0 overflow-x-hidden overflow-y-auto"><article class="max-w-4xl mx-auto px-4 sm:px-6 py-8"><div class="markdown-content"><h1 id="配额跟踪--使用监控">配额跟踪 &amp; 使用监控</h1>
+<p>实时跟踪 token 消耗、监控配额上限、估算成本,并在配额用尽前获得提醒。绝不浪费订阅配额,也不超出预算上限。</p>
+<hr/>
+<h2 id="概览">概览</h2>
+<p>VansRouter 为所有提供商提供完善的配额跟踪:</p>
+<ul>
+<li><strong>实时 token 消耗</strong> - 查看每次请求使用的 tokens</li>
+<li><strong>配额上限与剩余</strong> - 跟踪使用 vs 上限</li>
+<li><strong>重置倒计时</strong> - 了解配额何时刷新</li>
+<li><strong>成本估算</strong> - 计算付费层支出</li>
+<li><strong>月度报告</strong> - 分析使用模式</li>
+<li><strong>告警与通知</strong> - 接近上限时收到警告</li>
+</ul>
+<hr/>
+<h2 id="仪表盘总览">仪表盘总览</h2>
+<h3 id="配额摘要">配额摘要</h3>
+<pre><code>仪表盘 → 主页 → 配额概览
+
+┌─────────────────────────────────────────────┐
+│ Claude Code (cc/)                           │
+│ ████████████░░░░░░░░ 2.5h / 5h (50%)       │
+│ 重置剩余: 2h 30m                            │
+│ 成本: $0(订阅)                             │
+└─────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────┐
+│ Gemini CLI (gc/)                            │
+│ ████████░░░░░░░░░░░░ 450 / 1000 (45%)      │
+│ 每日重置剩余: 18h 30m                       │
+│ 本月: 45K / 180K (25%)                      │
+│ 成本: $0(免费层)                           │
+└─────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────┐
+│ GLM-4.7 (glm/)                              │
+│ ██████████████░░░░░░ 7M / 10M tokens (70%)  │
+│ 重置: 每日 10:00 AM(5h 35m 后)            │
+│ 今日成本: $4.20                             │
+└─────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────┐
+│ MiniMax M2.1 (minimax/)                     │
+│ ████████████████░░░░ 4M / 5M tokens (80%)   │
+│ 5h 滚动窗口                                  │
+│ 成本(5h): $0.80                            │
+└─────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────┐
+│ iFlow (if/)                                 │
+│ ████████████████████ 无限                   │
+│ 成本: $0(永久免费)                        │
+└─────────────────────────────────────────────┘
+</code></pre>
+<hr/>
+<h2 id="实时-token-消耗">实时 Token 消耗</h2>
+<h3 id="按请求跟踪">按请求跟踪</h3>
+<p>每次请求都会显示详细的 token 使用情况:</p>
+<pre><code>仪表盘 → 活动 → 最近请求
+
+请求 #1234
+模型: cc/claude-opus-4-5-20251101
+时间戳: 2026-02-04 04:15:32
+
+Tokens:
+  输入: 1,250 tokens
+  输出: 850 tokens
+  合计: 2,100 tokens
+
+成本: $0(订阅配额)
+耗时: 3.2s
+状态: ✅ 成功
+</code></pre>
+<h3 id="实时使用监控">实时使用监控</h3>
+<pre><code>仪表盘 → 实时监控
+
+当前请求:
+  模型: glm/glm-4.7
+  已流式输出 tokens: 450 / 预计 ~800
+  当前成本: $0.0009
+  耗时: 1.8s
+</code></pre>
+<h3 id="按模型分解-token">按模型分解 Token</h3>
+<pre><code>仪表盘 → 分析 → Token 使用
+
+今日(2026-02-04):
+  cc/claude-opus-4-5: 15M tokens($0,订阅)
+  glm/glm-4.7: 8M tokens($4.80)
+  if/kimi-k2-thinking: 3M tokens($0,免费)
+  
+合计: 26M tokens
+成本: $4.80
+</code></pre>
+<hr/>
+<h2 id="配额上限与重置时间">配额上限与重置时间</h2>
+<h3 id="订阅型提供商">订阅型提供商</h3>
+<p><strong>Claude Code (Pro/Max)</strong></p>
+<pre><code>配额类型: 基于时间(5 小时滚动)
+上限: 5 小时使用时长
+重置: 5 小时滚动窗口 + 每周刷新
+跟踪: 每个模型的使用时间
+
+仪表盘显示:
+  Opus: 已用 2.5h / 5h
+  Sonnet: 已用 1.2h / 5h
+  Haiku: 已用 0.8h / 5h
+  
+每周重置: 每周一 00:00 UTC
+</code></pre>
+<p><strong>OpenAI Codex (Plus/Pro)</strong></p>
+<pre><code>配额类型: 基于时间(5 小时滚动)
+上限: 5 小时(Plus)/ 10 小时(Pro)
+重置: 5 小时滚动窗口 + 每周刷新
+
+仪表盘显示:
+  GPT-5.2 Codex: 已用 3.5h / 5h
+  重置剩余: 1h 30m
+</code></pre>
+<p><strong>Gemini CLI(免费)</strong></p>
+<pre><code>配额类型: 请求次数 + 月度 tokens
+每日上限: 1,000 次请求
+月度上限: 180,000 次补全
+重置: 每日 00:00 UTC + 每月 1 日
+
+仪表盘显示:
+  今日: 450 / 1,000 次请求 (45%)
+  本月: 45K / 180K 次补全 (25%)
+  每日重置剩余: 18h 30m
+  月度重置剩余: 26 天
+</code></pre>
+<p><strong>GitHub Copilot</strong></p>
+<pre><code>配额类型: 月度使用量
+上限: 因套餐而异
+重置: 每月 1 日
+
+仪表盘显示:
+  使用: 月度配额 60%
+  重置: 2026 年 3 月 1 日(25 天后)
+</code></pre>
+<h3 id="低价提供商">低价提供商</h3>
+<p><strong>GLM-4.7</strong></p>
+<pre><code>配额类型: 每日 token 上限
+上限: 10M tokens/天(Coding Plan)
+重置: 每日 10:00 AM 北京时间(UTC+8)
+
+仪表盘显示:
+  已用: 7M / 10M tokens (70%)
+  剩余: 3M tokens
+  重置剩余: 5h 35m
+  今日成本: $4.20
+</code></pre>
+<p><strong>MiniMax M2.1</strong></p>
+<pre><code>配额类型: 5 小时滚动窗口
+上限: 每 5 小时 5M tokens
+重置: 连续滚动窗口
+
+仪表盘显示:
+  已用(5h): 4M / 5M tokens (80%)
+  最早一次使用过期: 45m
+  成本(5h): $0.80
+</code></pre>
+<p><strong>Kimi K2</strong></p>
+<pre><code>配额类型: 月度订阅
+上限: 10M tokens/月($9 固定)
+重置: 订阅日每月一次
+
+仪表盘显示:
+  已用: 6M / 10M tokens (60%)
+  重置: 2026 年 2 月 15 日(11 天后)
+  成本: $9/月(预付)
+</code></pre>
+<h3 id="免费提供商">免费提供商</h3>
+<p><strong>iFlow / Qwen / Kiro</strong></p>
+<pre><code>配额类型: 无限(限速)
+上限: 无硬上限
+重置: 不适用
+
+仪表盘显示:
+  今日已用: 5M tokens
+  成本: $0(永久免费)
+  状态: ✅ 可用
+</code></pre>
+<hr/>
+<h2 id="成本估算">成本估算</h2>
+<h3 id="实时成本跟踪">实时成本跟踪</h3>
+<pre><code>仪表盘 → 成本 → 今日
+
+订阅型提供商: $0
+  Claude Code: 15M tokens($0,包含)
+  Gemini CLI: 3M tokens($0,免费层)
+
+付费提供商: $4.80
+  GLM-4.7: 8M tokens($4.80)
+    输入: 6M × $0.60/1M = $3.60
+    输出: 2M × $2.20/1M = $4.40
+    合计: $4.80
+
+免费提供商: $0
+  iFlow: 3M tokens($0)
+
+今日合计: $4.80
+</code></pre>
+<h3 id="月度支出报告">月度支出报告</h3>
+<pre><code>仪表盘 → 成本 → 本月(2026 年 2 月)
+
+第 1 周(2 月 1-7 日):
+  订阅: $0(80M tokens)
+  付费: $15.20(25M tokens)
+  免费: $0(10M tokens)
+  合计: $15.20
+
+第 2 周(2 月 8-14 日):
+  订阅: $0(75M tokens)
+  付费: $12.80(20M tokens)
+  免费: $0(8M tokens)
+  合计: $12.80
+
+本月至今: $28.00
+预计(30 天): ~$120
+
+按提供商分解:
+  GLM-4.7: $22.00 (78%)
+  MiniMax M2.1: $6.00 (22%)
+  
+每 1M tokens 平均成本: $0.62
+相比 ChatGPT API 节省: 97%($4,000 → $120)
+</code></pre>
+<h3 id="成本预测">成本预测</h3>
+<pre><code>仪表盘 → 成本 → 预测
+
+基于近 7 天使用:
+  日均: 50M tokens
+  日成本: $4.50
+
+月度预测:
+  Tokens: 1,500M (1.5B)
+  成本: $135
+  
+分解:
+  订阅: 900M tokens($0)
+  GLM-4.7: 450M tokens($90)
+  MiniMax: 120M tokens($24)
+  免费: 30M tokens($0)
+
+预算状态:
+  每日上限: $5 → 今日已用 90%
+  每月上限: $150 → 预计 90%
+  ⚠️ 警告: 可能超出每月预算
+</code></pre>
+<hr/>
+<h2 id="使用仪表盘">使用仪表盘</h2>
+<h3 id="总览统计">总览统计</h3>
+<pre><code>仪表盘 → 分析 → 总览
+
+今日(2026-02-04):
+  请求: 1,234
+  Tokens: 26M
+  成本: $4.80
+  平均响应时间: 2.1s
+
+本周:
+  请求: 8,456
+  Tokens: 180M
+  成本: $28.00
+  成功率: 99.2%
+
+本月:
+  请求: 15,234
+  Tokens: 320M
+  成本: $52.00
+  Top 模型: cc/claude-opus-4-5 (45%)
+</code></pre>
+<h3 id="按模型使用">按模型使用</h3>
+<pre><code>仪表盘 → 分析 → 模型
+
+Top 模型(本月):
+1. cc/claude-opus-4-5: 145M tokens (45%)
+2. glm/glm-4.7: 95M tokens (30%)
+3. if/kimi-k2-thinking: 50M tokens (16%)
+4. minimax/MiniMax-M2.1: 20M tokens (6%)
+5. gc/gemini-3-flash: 10M tokens (3%)
+
+成本分解:
+  cc/claude-opus: $0(订阅)
+  glm/glm-4.7: $45.00
+  if/kimi-k2-thinking: $0(免费)
+  minimax/MiniMax-M2.1: $7.00
+  gc/gemini-3-flash: $0(免费)
+</code></pre>
+<h3 id="按时间使用">按时间使用</h3>
+<pre><code>仪表盘 → 分析 → 时间线
+
+按小时使用(今日):
+00:00 - 01:00: 0.5M tokens
+01:00 - 02:00: 0.2M tokens
+...
+08:00 - 09:00: 3.2M tokens(峰值)
+09:00 - 10:00: 2.8M tokens
+...
+23:00 - 00:00: 0.8M tokens
+
+峰值时段: 08:00 - 12:00(早上编码)
+低谷时段: 00:00 - 06:00(夜间)
+</code></pre>
+<h3 id="按组合使用">按组合使用</h3>
+<pre><code>仪表盘 → 分析 → 组合
+
+premium-coding:
+  请求: 456
+  Tokens: 12M
+  成本: $2.40
+  
+  分解:
+    cc/claude-opus: 8M tokens (67%, $0)
+    glm/glm-4.7: 3M tokens (25%, $1.80)
+    minimax/MiniMax-M2.1: 1M tokens (8%, $0.20)
+
+budget-combo:
+  请求: 234
+  Tokens: 6M
+  成本: $1.20
+  
+  分解:
+    glm/glm-4.7: 4M tokens (67%, $2.40)
+    if/kimi-k2-thinking: 2M tokens (33%, $0)
+</code></pre>
+<hr/>
+<h2 id="告警与通知">告警与通知</h2>
+<h3 id="配额告警">配额告警</h3>
+<pre><code>仪表盘 → 设置 → 告警
+
+配额预警:
+  ✅ 配额使用 80% 时告警
+  ✅ 配额使用 90% 时告警
+  ✅ 配额耗尽时告警
+  ✅ 配额重置时通知
+
+发送方式:
+  ✅ 仪表盘通知
+  ✅ 邮件(可选)
+  ✅ Webhook(可选)
+</code></pre>
+<p><strong>通知示例:</strong></p>
+<pre><code>⚠️ Claude Code 配额已用 80%
+   剩余 2.5h(1h 30m 后重置)
+   
+⚠️ GLM-4.7 配额已用 90%
+   剩余 1M tokens(5h 后重置)
+   
+✅ Gemini CLI 配额已重置
+   1,000 次请求可用(每日上限)
+</code></pre>
+<h3 id="预算告警">预算告警</h3>
+<pre><code>仪表盘 → 设置 → 预算告警
+
+每日预算: $5
+  ✅ 80%($4)告警
+  ✅ 100%($5)告警
+  ✅ 超额时自动切换到免费层
+
+每月预算: $150
+  ✅ 50%($75)告警
+  ✅ 80%($120)告警
+  ✅ 100%($150)告警
+</code></pre>
+<p><strong>通知示例:</strong></p>
+<pre><code>⚠️ 每日预算已用 80%
+   今日花费 $4.00 / $5.00
+   
+⚠️ 每月预算达到 50%
+   本月花费 $75 / $150
+   预计: $135(预算内)
+   
+🚨 每日预算超额
+   今日花费 $5.20 / $5.00
+   已自动切换到免费层
+</code></pre>
+<h3 id="成本异常检测">成本异常检测</h3>
+<pre><code>仪表盘 → 设置 → 异常检测
+
+✅ 检测异常支出模式
+✅ 成本峰值告警(&gt;2× 日均)
+✅ 配额耗尽模式警告
+
+告警示例:
+⚠️ 检测到成本峰值
+   今日: $12.50(2.5× 日均)
+   原因: GLM-4.7 高用量(20M tokens)
+   建议: 检查主模型是否配额耗尽
+</code></pre>
+<hr/>
+<h2 id="最佳实践">最佳实践</h2>
+<h3 id="1-每日监控配额">1. 每日监控配额</h3>
+<pre><code>日常:
+1. 查看仪表盘配额概览(30 秒)
+2. 检查重置时间
+3. 根据配额可用性规划使用
+</code></pre>
+<p><strong>示例:</strong></p>
+<pre><code>早晨检查:
+  ✅ Claude Code: 5h 可用(刚重置)
+  ✅ Gemini CLI: 1K 请求可用
+  ⚠️ GLM-4.7: 剩 2M tokens(10AM 重置)
+  
+行动: 早上工作用 Claude Code
+</code></pre>
+<h3 id="2-设置预算上限">2. 设置预算上限</h3>
+<pre><code>仪表盘 → 设置 → 预算:
+  每日: $5(防止超支)
+  每月: $150(与预算对齐)
+</code></pre>
+<p><strong>结果</strong>:达到上限时自动切换到免费层。</p>
+<h3 id="3-优化组合使用">3. 优化组合使用</h3>
+<pre><code>仪表盘 → 分析 → 组合:
+  查看哪些模型用得最多
+  调整组合顺序以最小化成本
+</code></pre>
+<p><strong>示例:</strong></p>
+<pre><code>当前: cc/claude-opus → glm/glm-4.7
+  80% 通过 Claude(好)
+  20% 通过 GLM($12/月)
+
+优化后: gc/gemini-3-flash → cc/claude-opus → glm/glm-4.7
+  50% 通过 Gemini(免费)
+  40% 通过 Claude(订阅)
+  10% 通过 GLM($6/月)
+  
+节省: $6/月
+</code></pre>
+<h3 id="4-跟踪重置时间">4. 跟踪重置时间</h3>
+<pre><code>仪表盘 → 配额 → 重置日程:
+  Claude Code: 5h 滚动 + 每周一
+  Gemini CLI: 每日 00:00 UTC + 每月 1 日
+  GLM-4.7: 每日 10:00 AM 北京时间
+  MiniMax: 5h 滚动窗口
+</code></pre>
+<p><strong>策略</strong>:配额刚刷新时使用对应提供商。</p>
+<h3 id="5-查看月度报告">5. 查看月度报告</h3>
+<pre><code>仪表盘 → 分析 → 月度报告:
+  总 tokens: 1.5B
+  总成本: $120
+  节省: 相比 ChatGPT API 节省 97%
+  
+洞察:
+  - 60% 用量来自订阅($0)
+  - 30% 通过 GLM($90)
+  - 10% 通过免费层($0)
+  
+优化:
+  - 增加 Gemini CLI 用量(免费)
+  - 减少 GLM 用量(更贵)
+</code></pre>
+<hr/>
+<h2 id="api-访问">API 访问</h2>
+<h3 id="获取配额状态">获取配额状态</h3>
+<pre><code class="hljs language-bash">GET http://localhost:20128/api/quota
+Authorization: Bearer your-api-key
+
+Response:
+{
+  <span class="hljs-string">&quot;providers&quot;</span>: [
+    {
+      <span class="hljs-string">&quot;id&quot;</span>: <span class="hljs-string">&quot;cc&quot;</span>,
+      <span class="hljs-string">&quot;name&quot;</span>: <span class="hljs-string">&quot;Claude Code&quot;</span>,
+      <span class="hljs-string">&quot;quota&quot;</span>: {
+        <span class="hljs-string">&quot;used&quot;</span>: 2.5,
+        <span class="hljs-string">&quot;limit&quot;</span>: 5,
+        <span class="hljs-string">&quot;unit&quot;</span>: <span class="hljs-string">&quot;hours&quot;</span>,
+        <span class="hljs-string">&quot;percentage&quot;</span>: 50
+      },
+      <span class="hljs-string">&quot;reset&quot;</span>: {
+        <span class="hljs-string">&quot;type&quot;</span>: <span class="hljs-string">&quot;rolling&quot;</span>,
+        <span class="hljs-string">&quot;window&quot;</span>: <span class="hljs-string">&quot;5h&quot;</span>,
+        <span class="hljs-string">&quot;nextReset&quot;</span>: <span class="hljs-string">&quot;2026-02-04T06:45:00Z&quot;</span>
+      },
+      <span class="hljs-string">&quot;cost&quot;</span>: {
+        <span class="hljs-string">&quot;today&quot;</span>: 0,
+        <span class="hljs-string">&quot;month&quot;</span>: 0,
+        <span class="hljs-string">&quot;currency&quot;</span>: <span class="hljs-string">&quot;USD&quot;</span>
+      }
+    },
+    {
+      <span class="hljs-string">&quot;id&quot;</span>: <span class="hljs-string">&quot;glm&quot;</span>,
+      <span class="hljs-string">&quot;name&quot;</span>: <span class="hljs-string">&quot;GLM-4.7&quot;</span>,
+      <span class="hljs-string">&quot;quota&quot;</span>: {
+        <span class="hljs-string">&quot;used&quot;</span>: 7000000,
+        <span class="hljs-string">&quot;limit&quot;</span>: 10000000,
+        <span class="hljs-string">&quot;unit&quot;</span>: <span class="hljs-string">&quot;tokens&quot;</span>,
+        <span class="hljs-string">&quot;percentage&quot;</span>: 70
+      },
+      <span class="hljs-string">&quot;reset&quot;</span>: {
+        <span class="hljs-string">&quot;type&quot;</span>: <span class="hljs-string">&quot;daily&quot;</span>,
+        <span class="hljs-string">&quot;time&quot;</span>: <span class="hljs-string">&quot;10:00 AM UTC+8&quot;</span>,
+        <span class="hljs-string">&quot;nextReset&quot;</span>: <span class="hljs-string">&quot;2026-02-04T10:00:00+08:00&quot;</span>
+      },
+      <span class="hljs-string">&quot;cost&quot;</span>: {
+        <span class="hljs-string">&quot;today&quot;</span>: 4.20,
+        <span class="hljs-string">&quot;month&quot;</span>: 52.00,
+        <span class="hljs-string">&quot;currency&quot;</span>: <span class="hljs-string">&quot;USD&quot;</span>
+      }
+    }
+  ]
+}
+</code></pre>
+<h3 id="获取使用统计">获取使用统计</h3>
+<pre><code class="hljs language-bash">GET http://localhost:20128/api/usage?period=today
+Authorization: Bearer your-api-key
+
+Response:
+{
+  <span class="hljs-string">&quot;period&quot;</span>: <span class="hljs-string">&quot;today&quot;</span>,
+  <span class="hljs-string">&quot;date&quot;</span>: <span class="hljs-string">&quot;2026-02-04&quot;</span>,
+  <span class="hljs-string">&quot;summary&quot;</span>: {
+    <span class="hljs-string">&quot;requests&quot;</span>: 1234,
+    <span class="hljs-string">&quot;tokens&quot;</span>: 26000000,
+    <span class="hljs-string">&quot;cost&quot;</span>: 4.80
+  },
+  <span class="hljs-string">&quot;byModel&quot;</span>: [
+    {
+      <span class="hljs-string">&quot;model&quot;</span>: <span class="hljs-string">&quot;cc/claude-opus-4-5&quot;</span>,
+      <span class="hljs-string">&quot;requests&quot;</span>: 456,
+      <span class="hljs-string">&quot;tokens&quot;</span>: 15000000,
+      <span class="hljs-string">&quot;cost&quot;</span>: 0
+    },
+    {
+      <span class="hljs-string">&quot;model&quot;</span>: <span class="hljs-string">&quot;glm/glm-4.7&quot;</span>,
+      <span class="hljs-string">&quot;requests&quot;</span>: 234,
+      <span class="hljs-string">&quot;tokens&quot;</span>: 8000000,
+      <span class="hljs-string">&quot;cost&quot;</span>: 4.80
+    }
+  ]
+}
+</code></pre>
+<hr/>
+<h2 id="故障排除">故障排除</h2>
+<p><strong>问题:配额显示 0% 但请求失败</strong></p>
+<p><strong>方案:</strong></p>
+<ol>
+<li>检查提供商连接(仪表盘 → 提供商)</li>
+<li>确认 API keys 有效</li>
+<li>检查提供商是否宕机(状态页)</li>
+<li>尝试重新连接 OAuth 提供商</li>
+</ol>
+<p><strong>问题:成本估算不正确</strong></p>
+<p><strong>方案:</strong></p>
+<ol>
+<li>仪表盘 → 设置 → 定价</li>
+<li>确认每个提供商的定价与当前一致</li>
+<li>若提供商调整费率,更新定价</li>
+<li>若差异持续,联系支持</li>
+</ol>
+<p><strong>问题:重置时间没有更新</strong></p>
+<p><strong>方案:</strong></p>
+<ol>
+<li>刷新仪表盘(F5)</li>
+<li>检查系统时间是否正确</li>
+<li>确认时区设置</li>
+<li>若问题持续,重启 VansRouter</li>
+</ol>
+<p><strong>问题:未收到告警</strong></p>
+<p><strong>方案:</strong></p>
+<ol>
+<li>仪表盘 → 设置 → 告警</li>
+<li>确认邮箱地址正确</li>
+<li>检查垃圾邮件夹</li>
+<li>测试通知(Send Test 按钮)</li>
+</ol>
+<hr/>
+<h2 id="相关">相关</h2>
+<ul>
+<li><a href="./smart-routing.md">智能路由</a> - 基于配额自动回退</li>
+<li><a href="./combos.md">组合</a> - 创建自定义回退链</li>
+</ul></div></article></main><div class="hidden lg:block"><aside class="hidden xl:block w-64 border-l bg-white border-gray-200 h-[calc(100vh-4rem)] sticky top-16 overflow-y-auto"><nav class="p-4"><h3 class="flex items-center gap-2 text-sm font-semibold text-gray-900 mb-3"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-list w-4 h-4" aria-hidden="true"><path d="M3 5h.01"></path><path d="M3 12h.01"></path><path d="M3 19h.01"></path><path d="M8 5h13"></path><path d="M8 12h13"></path><path d="M8 19h13"></path></svg>本页内容</h3><ul class="space-y-2"><li><a href="#概览" class="block text-sm transition-colors  text-gray-600 hover:text-gray-900">概览</a></li><li><a href="#仪表盘总览" class="block text-sm transition-colors  text-gray-600 hover:text-gray-900">仪表盘总览</a></li><li><a href="#配额摘要" class="block text-sm transition-colors pl-4 text-gray-600 hover:text-gray-900">配额摘要</a></li><li><a href="#实时-token-消耗" class="block text-sm transition-colors  text-gray-600 hover:text-gray-900">实时 Token 消耗</a></li><li><a href="#按请求跟踪" class="block text-sm transition-colors pl-4 text-gray-600 hover:text-gray-900">按请求跟踪</a></li><li><a href="#实时使用监控" class="block text-sm transition-colors pl-4 text-gray-600 hover:text-gray-900">实时使用监控</a></li><li><a href="#按模型分解-token" class="block text-sm transition-colors pl-4 text-gray-600 hover:text-gray-900">按模型分解 Token</a></li><li><a href="#配额上限与重置时间" class="block text-sm transition-colors  text-gray-600 hover:text-gray-900">配额上限与重置时间</a></li><li><a href="#订阅型提供商" class="block text-sm transition-colors pl-4 text-gray-600 hover:text-gray-900">订阅型提供商</a></li><li><a href="#低价提供商" class="block text-sm transition-colors pl-4 text-gray-600 hover:text-gray-900">低价提供商</a></li><li><a href="#免费提供商" class="block text-sm transition-colors pl-4 text-gray-600 hover:text-gray-900">免费提供商</a></li><li><a href="#成本估算" class="block text-sm transition-colors  text-gray-600 hover:text-gray-900">成本估算</a></li><li><a href="#实时成本跟踪" class="block text-sm transition-colors pl-4 text-gray-600 hover:text-gray-900">实时成本跟踪</a></li><li><a href="#月度支出报告" class="block text-sm transition-colors pl-4 text-gray-600 hover:text-gray-900">月度支出报告</a></li><li><a href="#成本预测" class="block text-sm transition-colors pl-4 text-gray-600 hover:text-gray-900">成本预测</a></li><li><a href="#使用仪表盘" class="block text-sm transition-colors  text-gray-600 hover:text-gray-900">使用仪表盘</a></li><li><a href="#总览统计" class="block text-sm transition-colors pl-4 text-gray-600 hover:text-gray-900">总览统计</a></li><li><a href="#按模型使用" class="block text-sm transition-colors pl-4 text-gray-600 hover:text-gray-900">按模型使用</a></li><li><a href="#按时间使用" class="block text-sm transition-colors pl-4 text-gray-600 hover:text-gray-900">按时间使用</a></li><li><a href="#按组合使用" class="block text-sm transition-colors pl-4 text-gray-600 hover:text-gray-900">按组合使用</a></li><li><a href="#告警与通知" class="block text-sm transition-colors  text-gray-600 hover:text-gray-900">告警与通知</a></li><li><a href="#配额告警" class="block text-sm transition-colors pl-4 text-gray-600 hover:text-gray-900">配额告警</a></li><li><a href="#预算告警" class="block text-sm transition-colors pl-4 text-gray-600 hover:text-gray-900">预算告警</a></li><li><a href="#成本异常检测" class="block text-sm transition-colors pl-4 text-gray-600 hover:text-gray-900">成本异常检测</a></li><li><a href="#最佳实践" class="block text-sm transition-colors  text-gray-600 hover:text-gray-900">最佳实践</a></li><li><a href="#1-每日监控配额" class="block text-sm transition-colors pl-4 text-gray-600 hover:text-gray-900">1. 每日监控配额</a></li><li><a href="#2-设置预算上限" class="block text-sm transition-colors pl-4 text-gray-600 hover:text-gray-900">2. 设置预算上限</a></li><li><a href="#3-优化组合使用" class="block text-sm transition-colors pl-4 text-gray-600 hover:text-gray-900">3. 优化组合使用</a></li><li><a href="#4-跟踪重置时间" class="block text-sm transition-colors pl-4 text-gray-600 hover:text-gray-900">4. 跟踪重置时间</a></li><li><a href="#5-查看月度报告" class="block text-sm transition-colors pl-4 text-gray-600 hover:text-gray-900">5. 查看月度报告</a></li><li><a href="#api-访问" class="block text-sm transition-colors  text-gray-600 hover:text-gray-900">API 访问</a></li><li><a href="#获取配额状态" class="block text-sm transition-colors pl-4 text-gray-600 hover:text-gray-900">获取配额状态</a></li><li><a href="#获取使用统计" class="block text-sm transition-colors pl-4 text-gray-600 hover:text-gray-900">获取使用统计</a></li><li><a href="#故障排除" class="block text-sm transition-colors  text-gray-600 hover:text-gray-900">故障排除</a></li><li><a href="#相关" class="block text-sm transition-colors  text-gray-600 hover:text-gray-900">相关</a></li></ul></nav></aside></div></div></div></div><!--$--><!--/$--><script src="/VansRouter/_next/static/chunks/343aa45b5611d01d.js" id="_R_" async=""></script><script>(self.__next_f=self.__next_f||[]).push([0])</script><script>self.__next_f.push([1,"1:\"$Sreact.fragment\"\n2:I[39756,[\"/VansRouter/_next/static/chunks/ff1a16fafef87110.js\",\"/VansRouter/_next/static/chunks/803a574de9eda7ae.js\"],\"default\"]\n3:I[37457,[\"/VansRouter/_next/static/chunks/ff1a16fafef87110.js\",\"/VansRouter/_next/static/chunks/803a574de9eda7ae.js\"],\"default\"]\n5:I[97367,[\"/VansRouter/_next/static/chunks/ff1a16fafef87110.js\",\"/VansRouter/_next/static/chunks/803a574de9eda7ae.js\"],\"OutletBoundary\"]\n6:\"$Sreact.suspense\"\n8:I[97367,[\"/VansRouter/_next/static/chunks/ff1a16fafef87110.js\",\"/VansRouter/_next/static/chunks/803a574de9eda7ae.js\"],\"ViewportBoundary\"]\na:I[97367,[\"/VansRouter/_next/static/chunks/ff1a16fafef87110.js\",\"/VansRouter/_next/static/chunks/803a574de9eda7ae.js\"],\"MetadataBoundary\"]\nc:I[68027,[\"/VansRouter/_next/static/chunks/ff1a16fafef87110.js\",\"/VansRouter/_next/static/chunks/803a574de9eda7ae.js\"],\"default\"]\n:HL[\"/VansRouter/_next/static/chunks/71d10a355cb8f2d7.css\",\"style\"]\n"])</script><script>self.__next_f.push([1,"0:{\"P\":null,\"b\":\"PUpTBY-8r_zZtEM8SJOLp\",\"c\":[\"\",\"zh-CN\",\"features\",\"quota-tracking\",\"\"],\"q\":\"\",\"i\":false,\"f\":[[[\"\",{\"children\":[[\"lang\",\"zh-CN\",\"d\"],{\"children\":[[\"slug\",\"features/quota-tracking\",\"c\"],{\"children\":[\"__PAGE__\",{}]}]}]},\"$undefined\",\"$undefined\",true],[[\"$\",\"$1\",\"c\",{\"children\":[[[\"$\",\"link\",\"0\",{\"rel\":\"stylesheet\",\"href\":\"/VansRouter/_next/static/chunks/71d10a355cb8f2d7.css\",\"precedence\":\"next\",\"crossOrigin\":\"$undefined\",\"nonce\":\"$undefined\"}]],[\"$\",\"html\",null,{\"lang\":\"en\",\"children\":[[\"$\",\"head\",null,{}],[\"$\",\"body\",null,{\"className\":\"bg-[#FCFBF9] text-[#6B7280]\",\"children\":[\"$\",\"$L2\",null,{\"parallelRouterKey\":\"children\",\"error\":\"$undefined\",\"errorStyles\":\"$undefined\",\"errorScripts\":\"$undefined\",\"template\":[\"$\",\"$L3\",null,{}],\"templateStyles\":\"$undefined\",\"templateScripts\":\"$undefined\",\"notFound\":[[[\"$\",\"title\",null,{\"children\":\"404: This page could not be found.\"}],[\"$\",\"div\",null,{\"style\":{\"fontFamily\":\"system-ui,\\\"Segoe UI\\\",Roboto,Helvetica,Arial,sans-serif,\\\"Apple Color Emoji\\\",\\\"Segoe UI Emoji\\\"\",\"height\":\"100vh\",\"textAlign\":\"center\",\"display\":\"flex\",\"flexDirection\":\"column\",\"alignItems\":\"center\",\"justifyContent\":\"center\"},\"children\":[\"$\",\"div\",null,{\"children\":[[\"$\",\"style\",null,{\"dangerouslySetInnerHTML\":{\"__html\":\"body{color:#000;background:#fff;margin:0}.next-error-h1{border-right:1px solid rgba(0,0,0,.3)}@media (prefers-color-scheme:dark){body{color:#fff;background:#000}.next-error-h1{border-right:1px solid rgba(255,255,255,.3)}}\"}}],[\"$\",\"h1\",null,{\"className\":\"next-error-h1\",\"style\":{\"display\":\"inline-block\",\"margin\":\"0 20px 0 0\",\"padding\":\"0 23px 0 0\",\"fontSize\":24,\"fontWeight\":500,\"verticalAlign\":\"top\",\"lineHeight\":\"49px\"},\"children\":404}],[\"$\",\"div\",null,{\"style\":{\"display\":\"inline-block\"},\"children\":[\"$\",\"h2\",null,{\"style\":{\"fontSize\":14,\"fontWeight\":400,\"lineHeight\":\"49px\",\"margin\":0},\"children\":\"This page could not be found.\"}]}]]}]}]],[]],\"forbidden\":\"$undefined\",\"unauthorized\":\"$undefined\"}]}]]}]]}],{\"children\":[[\"$\",\"$1\",\"c\",{\"children\":[null,[\"$\",\"$L2\",null,{\"parallelRouterKey\":\"children\",\"error\":\"$undefined\",\"errorStyles\":\"$undefined\",\"errorScripts\":\"$undefined\",\"template\":[\"$\",\"$L3\",null,{}],\"templateStyles\":\"$undefined\",\"templateScripts\":\"$undefined\",\"notFound\":\"$undefined\",\"forbidden\":\"$undefined\",\"unauthorized\":\"$undefined\"}]]}],{\"children\":[[\"$\",\"$1\",\"c\",{\"children\":[null,[\"$\",\"$L2\",null,{\"parallelRouterKey\":\"children\",\"error\":\"$undefined\",\"errorStyles\":\"$undefined\",\"errorScripts\":\"$undefined\",\"template\":[\"$\",\"$L3\",null,{}],\"templateStyles\":\"$undefined\",\"templateScripts\":\"$undefined\",\"notFound\":\"$undefined\",\"forbidden\":\"$undefined\",\"unauthorized\":\"$undefined\"}]]}],{\"children\":[[\"$\",\"$1\",\"c\",{\"children\":[\"$L4\",[[\"$\",\"script\",\"script-0\",{\"src\":\"/VansRouter/_next/static/chunks/ff1a16fafef87110.js\",\"async\":true,\"nonce\":\"$undefined\"}],[\"$\",\"script\",\"script-1\",{\"src\":\"/VansRouter/_next/static/chunks/3ba79d5b01800fdc.js\",\"async\":true,\"nonce\":\"$undefined\"}]],[\"$\",\"$L5\",null,{\"children\":[\"$\",\"$6\",null,{\"name\":\"Next.MetadataOutlet\",\"children\":\"$@7\"}]}]]}],{},null,false,false]},null,false,false]},null,false,false]},null,false,false],[\"$\",\"$1\",\"h\",{\"children\":[null,[\"$\",\"$L8\",null,{\"children\":\"$L9\"}],[\"$\",\"div\",null,{\"hidden\":true,\"children\":[\"$\",\"$La\",null,{\"children\":[\"$\",\"$6\",null,{\"name\":\"Next.Metadata\",\"children\":\"$Lb\"}]}]}],null]}],false]],\"m\":\"$undefined\",\"G\":[\"$c\",[]],\"S\":true}\n"])</script><script>self.__next_f.push([1,"d:I[81956,[\"/VansRouter/_next/static/chunks/ff1a16fafef87110.js\",\"/VansRouter/_next/static/chunks/3ba79d5b01800fdc.js\"],\"default\"]\ne:I[22982,[\"/VansRouter/_next/static/chunks/ff1a16fafef87110.js\",\"/VansRouter/_next/static/chunks/3ba79d5b01800fdc.js\"],\"default\"]\nf:T3b06,"])</script><script>self.__next_f.push([1,"# 配额跟踪 \u0026 使用监控\r\n\r\n实时跟踪 token 消耗、监控配额上限、估算成本,并在配额用尽前获得提醒。绝不浪费订阅配额,也不超出预算上限。\r\n\r\n---\r\n\r\n## 概览\r\n\r\nVansRouter 为所有提供商提供完善的配额跟踪:\r\n\r\n- **实时 token 消耗** - 查看每次请求使用的 tokens\r\n- **配额上限与剩余** - 跟踪使用 vs 上限\r\n- **重置倒计时** - 了解配额何时刷新\r\n- **成本估算** - 计算付费层支出\r\n- **月度报告** - 分析使用模式\r\n- **告警与通知** - 接近上限时收到警告\r\n\r\n---\r\n\r\n## 仪表盘总览\r\n\r\n### 配额摘要\r\n\r\n```\r\n仪表盘 → 主页 → 配额概览\r\n\r\n┌─────────────────────────────────────────────┐\r\n│ Claude Code (cc/)                           │\r\n│ ████████████░░░░░░░░ 2.5h / 5h (50%)       │\r\n│ 重置剩余: 2h 30m                            │\r\n│ 成本: $0(订阅)                             │\r\n└─────────────────────────────────────────────┘\r\n\r\n┌─────────────────────────────────────────────┐\r\n│ Gemini CLI (gc/)                            │\r\n│ ████████░░░░░░░░░░░░ 450 / 1000 (45%)      │\r\n│ 每日重置剩余: 18h 30m                       │\r\n│ 本月: 45K / 180K (25%)                      │\r\n│ 成本: $0(免费层)                           │\r\n└─────────────────────────────────────────────┘\r\n\r\n┌─────────────────────────────────────────────┐\r\n│ GLM-4.7 (glm/)                              │\r\n│ ██████████████░░░░░░ 7M / 10M tokens (70%)  │\r\n│ 重置: 每日 10:00 AM(5h 35m 后)            │\r\n│ 今日成本: $4.20                             │\r\n└─────────────────────────────────────────────┘\r\n\r\n┌─────────────────────────────────────────────┐\r\n│ MiniMax M2.1 (minimax/)                     │\r\n│ ████████████████░░░░ 4M / 5M tokens (80%)   │\r\n│ 5h 滚动窗口                                  │\r\n│ 成本(5h): $0.80                            │\r\n└─────────────────────────────────────────────┘\r\n\r\n┌─────────────────────────────────────────────┐\r\n│ iFlow (if/)                                 │\r\n│ ████████████████████ 无限                   │\r\n│ 成本: $0(永久免费)                        │\r\n└─────────────────────────────────────────────┘\r\n```\r\n\r\n---\r\n\r\n## 实时 Token 消耗\r\n\r\n### 按请求跟踪\r\n\r\n每次请求都会显示详细的 token 使用情况:\r\n\r\n```\r\n仪表盘 → 活动 → 最近请求\r\n\r\n请求 #1234\r\n模型: cc/claude-opus-4-5-20251101\r\n时间戳: 2026-02-04 04:15:32\r\n\r\nTokens:\r\n  输入: 1,250 tokens\r\n  输出: 850 tokens\r\n  合计: 2,100 tokens\r\n\r\n成本: $0(订阅配额)\r\n耗时: 3.2s\r\n状态: ✅ 成功\r\n```\r\n\r\n### 实时使用监控\r\n\r\n```\r\n仪表盘 → 实时监控\r\n\r\n当前请求:\r\n  模型: glm/glm-4.7\r\n  已流式输出 tokens: 450 / 预计 ~800\r\n  当前成本: $0.0009\r\n  耗时: 1.8s\r\n```\r\n\r\n### 按模型分解 Token\r\n\r\n```\r\n仪表盘 → 分析 → Token 使用\r\n\r\n今日(2026-02-04):\r\n  cc/claude-opus-4-5: 15M tokens($0,订阅)\r\n  glm/glm-4.7: 8M tokens($4.80)\r\n  if/kimi-k2-thinking: 3M tokens($0,免费)\r\n  \r\n合计: 26M tokens\r\n成本: $4.80\r\n```\r\n\r\n---\r\n\r\n## 配额上限与重置时间\r\n\r\n### 订阅型提供商\r\n\r\n**Claude Code (Pro/Max)**\r\n```\r\n配额类型: 基于时间(5 小时滚动)\r\n上限: 5 小时使用时长\r\n重置: 5 小时滚动窗口 + 每周刷新\r\n跟踪: 每个模型的使用时间\r\n\r\n仪表盘显示:\r\n  Opus: 已用 2.5h / 5h\r\n  Sonnet: 已用 1.2h / 5h\r\n  Haiku: 已用 0.8h / 5h\r\n  \r\n每周重置: 每周一 00:00 UTC\r\n```\r\n\r\n**OpenAI Codex (Plus/Pro)**\r\n```\r\n配额类型: 基于时间(5 小时滚动)\r\n上限: 5 小时(Plus)/ 10 小时(Pro)\r\n重置: 5 小时滚动窗口 + 每周刷新\r\n\r\n仪表盘显示:\r\n  GPT-5.2 Codex: 已用 3.5h / 5h\r\n  重置剩余: 1h 30m\r\n```\r\n\r\n**Gemini CLI(免费)**\r\n```\r\n配额类型: 请求次数 + 月度 tokens\r\n每日上限: 1,000 次请求\r\n月度上限: 180,000 次补全\r\n重置: 每日 00:00 UTC + 每月 1 日\r\n\r\n仪表盘显示:\r\n  今日: 450 / 1,000 次请求 (45%)\r\n  本月: 45K / 180K 次补全 (25%)\r\n  每日重置剩余: 18h 30m\r\n  月度重置剩余: 26 天\r\n```\r\n\r\n**GitHub Copilot**\r\n```\r\n配额类型: 月度使用量\r\n上限: 因套餐而异\r\n重置: 每月 1 日\r\n\r\n仪表盘显示:\r\n  使用: 月度配额 60%\r\n  重置: 2026 年 3 月 1 日(25 天后)\r\n```\r\n\r\n### 低价提供商\r\n\r\n**GLM-4.7**\r\n```\r\n配额类型: 每日 token 上限\r\n上限: 10M tokens/天(Coding Plan)\r\n重置: 每日 10:00 AM 北京时间(UTC+8)\r\n\r\n仪表盘显示:\r\n  已用: 7M / 10M tokens (70%)\r\n  剩余: 3M tokens\r\n  重置剩余: 5h 35m\r\n  今日成本: $4.20\r\n```\r\n\r\n**MiniMax M2.1**\r\n```\r\n配额类型: 5 小时滚动窗口\r\n上限: 每 5 小时 5M tokens\r\n重置: 连续滚动窗口\r\n\r\n仪表盘显示:\r\n  已用(5h): 4M / 5M tokens (80%)\r\n  最早一次使用过期: 45m\r\n  成本(5h): $0.80\r\n```\r\n\r\n**Kimi K2**\r\n```\r\n配额类型: 月度订阅\r\n上限: 10M tokens/月($9 固定)\r\n重置: 订阅日每月一次\r\n\r\n仪表盘显示:\r\n  已用: 6M / 10M tokens (60%)\r\n  重置: 2026 年 2 月 15 日(11 天后)\r\n  成本: $9/月(预付)\r\n```\r\n\r\n### 免费提供商\r\n\r\n**iFlow / Qwen / Kiro**\r\n```\r\n配额类型: 无限(限速)\r\n上限: 无硬上限\r\n重置: 不适用\r\n\r\n仪表盘显示:\r\n  今日已用: 5M tokens\r\n  成本: $0(永久免费)\r\n  状态: ✅ 可用\r\n```\r\n\r\n---\r\n\r\n## 成本估算\r\n\r\n### 实时成本跟踪\r\n\r\n```\r\n仪表盘 → 成本 → 今日\r\n\r\n订阅型提供商: $0\r\n  Claude Code: 15M tokens($0,包含)\r\n  Gemini CLI: 3M tokens($0,免费层)\r\n\r\n付费提供商: $4.80\r\n  GLM-4.7: 8M tokens($4.80)\r\n    输入: 6M × $0.60/1M = $3.60\r\n    输出: 2M × $2.20/1M = $4.40\r\n    合计: $4.80\r\n\r\n免费提供商: $0\r\n  iFlow: 3M tokens($0)\r\n\r\n今日合计: $4.80\r\n```\r\n\r\n### 月度支出报告\r\n\r\n```\r\n仪表盘 → 成本 → 本月(2026 年 2 月)\r\n\r\n第 1 周(2 月 1-7 日):\r\n  订阅: $0(80M tokens)\r\n  付费: $15.20(25M tokens)\r\n  免费: $0(10M tokens)\r\n  合计: $15.20\r\n\r\n第 2 周(2 月 8-14 日):\r\n  订阅: $0(75M tokens)\r\n  付费: $12.80(20M tokens)\r\n  免费: $0(8M tokens)\r\n  合计: $12.80\r\n\r\n本月至今: $28.00\r\n预计(30 天): ~$120\r\n\r\n按提供商分解:\r\n  GLM-4.7: $22.00 (78%)\r\n  MiniMax M2.1: $6.00 (22%)\r\n  \r\n每 1M tokens 平均成本: $0.62\r\n相比 ChatGPT API 节省: 97%($4,000 → $120)\r\n```\r\n\r\n### 成本预测\r\n\r\n```\r\n仪表盘 → 成本 → 预测\r\n\r\n基于近 7 天使用:\r\n  日均: 50M tokens\r\n  日成本: $4.50\r\n\r\n月度预测:\r\n  Tokens: 1,500M (1.5B)\r\n  成本: $135\r\n  \r\n分解:\r\n  订阅: 900M tokens($0)\r\n  GLM-4.7: 450M tokens($90)\r\n  MiniMax: 120M tokens($24)\r\n  免费: 30M tokens($0)\r\n\r\n预算状态:\r\n  每日上限: $5 → 今日已用 90%\r\n  每月上限: $150 → 预计 90%\r\n  ⚠️ 警告: 可能超出每月预算\r\n```\r\n\r\n---\r\n\r\n## 使用仪表盘\r\n\r\n### 总览统计\r\n\r\n```\r\n仪表盘 → 分析 → 总览\r\n\r\n今日(2026-02-04):\r\n  请求: 1,234\r\n  Tokens: 26M\r\n  成本: $4.80\r\n  平均响应时间: 2.1s\r\n\r\n本周:\r\n  请求: 8,456\r\n  Tokens: 180M\r\n  成本: $28.00\r\n  成功率: 99.2%\r\n\r\n本月:\r\n  请求: 15,234\r\n  Tokens: 320M\r\n  成本: $52.00\r\n  Top 模型: cc/claude-opus-4-5 (45%)\r\n```\r\n\r\n### 按模型使用\r\n\r\n```\r\n仪表盘 → 分析 → 模型\r\n\r\nTop 模型(本月):\r\n1. cc/claude-opus-4-5: 145M tokens (45%)\r\n2. glm/glm-4.7: 95M tokens (30%)\r\n3. if/kimi-k2-thinking: 50M tokens (16%)\r\n4. minimax/MiniMax-M2.1: 20M tokens (6%)\r\n5. gc/gemini-3-flash: 10M tokens (3%)\r\n\r\n成本分解:\r\n  cc/claude-opus: $0(订阅)\r\n  glm/glm-4.7: $45.00\r\n  if/kimi-k2-thinking: $0(免费)\r\n  minimax/MiniMax-M2.1: $7.00\r\n  gc/gemini-3-flash: $0(免费)\r\n```\r\n\r\n### 按时间使用\r\n\r\n```\r\n仪表盘 → 分析 → 时间线\r\n\r\n按小时使用(今日):\r\n00:00 - 01:00: 0.5M tokens\r\n01:00 - 02:00: 0.2M tokens\r\n...\r\n08:00 - 09:00: 3.2M tokens(峰值)\r\n09:00 - 10:00: 2.8M tokens\r\n...\r\n23:00 - 00:00: 0.8M tokens\r\n\r\n峰值时段: 08:00 - 12:00(早上编码)\r\n低谷时段: 00:00 - 06:00(夜间)\r\n```\r\n\r\n### 按组合使用\r\n\r\n```\r\n仪表盘 → 分析 → 组合\r\n\r\npremium-coding:\r\n  请求: 456\r\n  Tokens: 12M\r\n  成本: $2.40\r\n  \r\n  分解:\r\n    cc/claude-opus: 8M tokens (67%, $0)\r\n    glm/glm-4.7: 3M tokens (25%, $1.80)\r\n    minimax/MiniMax-M2.1: 1M tokens (8%, $0.20)\r\n\r\nbudget-combo:\r\n  请求: 234\r\n  Tokens: 6M\r\n  成本: $1.20\r\n  \r\n  分解:\r\n    glm/glm-4.7: 4M tokens (67%, $2.40)\r\n    if/kimi-k2-thinking: 2M tokens (33%, $0)\r\n```\r\n\r\n---\r\n\r\n## 告警与通知\r\n\r\n### 配额告警\r\n\r\n```\r\n仪表盘 → 设置 → 告警\r\n\r\n配额预警:\r\n  ✅ 配额使用 80% 时告警\r\n  ✅ 配额使用 90% 时告警\r\n  ✅ 配额耗尽时告警\r\n  ✅ 配额重置时通知\r\n\r\n发送方式:\r\n  ✅ 仪表盘通知\r\n  ✅ 邮件(可选)\r\n  ✅ Webhook(可选)\r\n```\r\n\r\n**通知示例:**\r\n```\r\n⚠️ Claude Code 配额已用 80%\r\n   剩余 2.5h(1h 30m 后重置)\r\n   \r\n⚠️ GLM-4.7 配额已用 90%\r\n   剩余 1M tokens(5h 后重置)\r\n   \r\n✅ Gemini CLI 配额已重置\r\n   1,000 次请求可用(每日上限)\r\n```\r\n\r\n### 预算告警\r\n\r\n```\r\n仪表盘 → 设置 → 预算告警\r\n\r\n每日预算: $5\r\n  ✅ 80%($4)告警\r\n  ✅ 100%($5)告警\r\n  ✅ 超额时自动切换到免费层\r\n\r\n每月预算: $150\r\n  ✅ 50%($75)告警\r\n  ✅ 80%($120)告警\r\n  ✅ 100%($150)告警\r\n```\r\n\r\n**通知示例:**\r\n```\r\n⚠️ 每日预算已用 80%\r\n   今日花费 $4.00 / $5.00\r\n   \r\n⚠️ 每月预算达到 50%\r\n   本月花费 $75 / $150\r\n   预计: $135(预算内)\r\n   \r\n🚨 每日预算超额\r\n   今日花费 $5.20 / $5.00\r\n   已自动切换到免费层\r\n```\r\n\r\n### 成本异常检测\r\n\r\n```\r\n仪表盘 → 设置 → 异常检测\r\n\r\n✅ 检测异常支出模式\r\n✅ 成本峰值告警(\u003e2× 日均)\r\n✅ 配额耗尽模式警告\r\n\r\n告警示例:\r\n⚠️ 检测到成本峰值\r\n   今日: $12.50(2.5× 日均)\r\n   原因: GLM-4.7 高用量(20M tokens)\r\n   建议: 检查主模型是否配额耗尽\r\n```\r\n\r\n---\r\n\r\n## 最佳实践\r\n\r\n### 1. 每日监控配额\r\n\r\n```\r\n日常:\r\n1. 查看仪表盘配额概览(30 秒)\r\n2. 检查重置时间\r\n3. 根据配额可用性规划使用\r\n```\r\n\r\n**示例:**\r\n```\r\n早晨检查:\r\n  ✅ Claude Code: 5h 可用(刚重置)\r\n  ✅ Gemini CLI: 1K 请求可用\r\n  ⚠️ GLM-4.7: 剩 2M tokens(10AM 重置)\r\n  \r\n行动: 早上工作用 Claude Code\r\n```\r\n\r\n### 2. 设置预算上限\r\n\r\n```\r\n仪表盘 → 设置 → 预算:\r\n  每日: $5(防止超支)\r\n  每月: $150(与预算对齐)\r\n```\r\n\r\n**结果**:达到上限时自动切换到免费层。\r\n\r\n### 3. 优化组合使用\r\n\r\n```\r\n仪表盘 → 分析 → 组合:\r\n  查看哪些模型用得最多\r\n  调整组合顺序以最小化成本\r\n```\r\n\r\n**示例:**\r\n```\r\n当前: cc/claude-opus → glm/glm-4.7\r\n  80% 通过 Claude(好)\r\n  20% 通过 GLM($12/月)\r\n\r\n优化后: gc/gemini-3-flash → cc/claude-opus → glm/glm-4.7\r\n  50% 通过 Gemini(免费)\r\n  40% 通过 Claude(订阅)\r\n  10% 通过 GLM($6/月)\r\n  \r\n节省: $6/月\r\n```\r\n\r\n### 4. 跟踪重置时间\r\n\r\n```\r\n仪表盘 → 配额 → 重置日程:\r\n  Claude Code: 5h 滚动 + 每周一\r\n  Gemini CLI: 每日 00:00 UTC + 每月 1 日\r\n  GLM-4.7: 每日 10:00 AM 北京时间\r\n  MiniMax: 5h 滚动窗口\r\n```\r\n\r\n**策略**:配额刚刷新时使用对应提供商。\r\n\r\n### 5. 查看月度报告\r\n\r\n```\r\n仪表盘 → 分析 → 月度报告:\r\n  总 tokens: 1.5B\r\n  总成本: $120\r\n  节省: 相比 ChatGPT API 节省 97%\r\n  \r\n洞察:\r\n  - 60% 用量来自订阅($0)\r\n  - 30% 通过 GLM($90)\r\n  - 10% 通过免费层($0)\r\n  \r\n优化:\r\n  - 增加 Gemini CLI 用量(免费)\r\n  - 减少 GLM 用量(更贵)\r\n```\r\n\r\n---\r\n\r\n## API 访问\r\n\r\n### 获取配额状态\r\n\r\n```bash\r\nGET http://localhost:20128/api/quota\r\nAuthorization: Bearer your-api-key\r\n\r\nResponse:\r\n{\r\n  \"providers\": [\r\n    {\r\n      \"id\": \"cc\",\r\n      \"name\": \"Claude Code\",\r\n      \"quota\": {\r\n        \"used\": 2.5,\r\n        \"limit\": 5,\r\n        \"unit\": \"hours\",\r\n        \"percentage\": 50\r\n      },\r\n      \"reset\": {\r\n        \"type\": \"rolling\",\r\n        \"window\": \"5h\",\r\n        \"nextReset\": \"2026-02-04T06:45:00Z\"\r\n      },\r\n      \"cost\": {\r\n        \"today\": 0,\r\n        \"month\": 0,\r\n        \"currency\": \"USD\"\r\n      }\r\n    },\r\n    {\r\n      \"id\": \"glm\",\r\n      \"name\": \"GLM-4.7\",\r\n      \"quota\": {\r\n        \"used\": 7000000,\r\n        \"limit\": 10000000,\r\n        \"unit\": \"tokens\",\r\n        \"percentage\": 70\r\n      },\r\n      \"reset\": {\r\n        \"type\": \"daily\",\r\n        \"time\": \"10:00 AM UTC+8\",\r\n        \"nextReset\": \"2026-02-04T10:00:00+08:00\"\r\n      },\r\n      \"cost\": {\r\n        \"today\": 4.20,\r\n        \"month\": 52.00,\r\n        \"currency\": \"USD\"\r\n      }\r\n    }\r\n  ]\r\n}\r\n```\r\n\r\n### 获取使用统计\r\n\r\n```bash\r\nGET http://localhost:20128/api/usage?period=today\r\nAuthorization: Bearer your-api-key\r\n\r\nResponse:\r\n{\r\n  \"period\": \"today\",\r\n  \"date\": \"2026-02-04\",\r\n  \"summary\": {\r\n    \"requests\": 1234,\r\n    \"tokens\": 26000000,\r\n    \"cost\": 4.80\r\n  },\r\n  \"byModel\": [\r\n    {\r\n      \"model\": \"cc/claude-opus-4-5\",\r\n      \"requests\": 456,\r\n      \"tokens\": 15000000,\r\n      \"cost\": 0\r\n    },\r\n    {\r\n      \"model\": \"glm/glm-4.7\",\r\n      \"requests\": 234,\r\n      \"tokens\": 8000000,\r\n      \"cost\": 4.80\r\n    }\r\n  ]\r\n}\r\n```\r\n\r\n---\r\n\r\n## 故障排除\r\n\r\n**问题:配额显示 0% 但请求失败**\r\n\r\n**方案:**\r\n1. 检查提供商连接(仪表盘 → 提供商)\r\n2. 确认 API keys 有效\r\n3. 检查提供商是否宕机(状态页)\r\n4. 尝试重新连接 OAuth 提供商\r\n\r\n**问题:成本估算不正确**\r\n\r\n**方案:**\r\n1. 仪表盘 → 设置 → 定价\r\n2. 确认每个提供商的定价与当前一致\r\n3. 若提供商调整费率,更新定价\r\n4. 若差异持续,联系支持\r\n\r\n**问题:重置时间没有更新**\r\n\r\n**方案:**\r\n1. 刷新仪表盘(F5)\r\n2. 检查系统时间是否正确\r\n3. 确认时区设置\r\n4. 若问题持续,重启 VansRouter\r\n\r\n**问题:未收到告警**\r\n\r\n**方案:**\r\n1. 仪表盘 → 设置 → 告警\r\n2. 确认邮箱地址正确\r\n3. 检查垃圾邮件夹\r\n4. 测试通知(Send Test 按钮)\r\n\r\n---\r\n\r\n## 相关\r\n\r\n- [智能路由](./smart-routing.md) - 基于配额自动回退\r\n- [组合](./combos.md) - 创建自定义回退链\r\n"])</script><script>self.__next_f.push([1,"4:[\"$\",\"$Ld\",null,{\"headings\":[{\"level\":2,\"text\":\"概览\",\"id\":\"概览\"},{\"level\":2,\"text\":\"仪表盘总览\",\"id\":\"仪表盘总览\"},{\"level\":3,\"text\":\"配额摘要\",\"id\":\"配额摘要\"},{\"level\":2,\"text\":\"实时 Token 消耗\",\"id\":\"实时-token-消耗\"},{\"level\":3,\"text\":\"按请求跟踪\",\"id\":\"按请求跟踪\"},{\"level\":3,\"text\":\"实时使用监控\",\"id\":\"实时使用监控\"},{\"level\":3,\"text\":\"按模型分解 Token\",\"id\":\"按模型分解-token\"},{\"level\":2,\"text\":\"配额上限与重置时间\",\"id\":\"配额上限与重置时间\"},{\"level\":3,\"text\":\"订阅型提供商\",\"id\":\"订阅型提供商\"},{\"level\":3,\"text\":\"低价提供商\",\"id\":\"低价提供商\"},{\"level\":3,\"text\":\"免费提供商\",\"id\":\"免费提供商\"},{\"level\":2,\"text\":\"成本估算\",\"id\":\"成本估算\"},{\"level\":3,\"text\":\"实时成本跟踪\",\"id\":\"实时成本跟踪\"},{\"level\":3,\"text\":\"月度支出报告\",\"id\":\"月度支出报告\"},{\"level\":3,\"text\":\"成本预测\",\"id\":\"成本预测\"},{\"level\":2,\"text\":\"使用仪表盘\",\"id\":\"使用仪表盘\"},{\"level\":3,\"text\":\"总览统计\",\"id\":\"总览统计\"},{\"level\":3,\"text\":\"按模型使用\",\"id\":\"按模型使用\"},{\"level\":3,\"text\":\"按时间使用\",\"id\":\"按时间使用\"},{\"level\":3,\"text\":\"按组合使用\",\"id\":\"按组合使用\"},{\"level\":2,\"text\":\"告警与通知\",\"id\":\"告警与通知\"},{\"level\":3,\"text\":\"配额告警\",\"id\":\"配额告警\"},{\"level\":3,\"text\":\"预算告警\",\"id\":\"预算告警\"},{\"level\":3,\"text\":\"成本异常检测\",\"id\":\"成本异常检测\"},{\"level\":2,\"text\":\"最佳实践\",\"id\":\"最佳实践\"},{\"level\":3,\"text\":\"1. 每日监控配额\",\"id\":\"1-每日监控配额\"},{\"level\":3,\"text\":\"2. 设置预算上限\",\"id\":\"2-设置预算上限\"},{\"level\":3,\"text\":\"3. 优化组合使用\",\"id\":\"3-优化组合使用\"},{\"level\":3,\"text\":\"4. 跟踪重置时间\",\"id\":\"4-跟踪重置时间\"},{\"level\":3,\"text\":\"5. 查看月度报告\",\"id\":\"5-查看月度报告\"},{\"level\":2,\"text\":\"API 访问\",\"id\":\"api-访问\"},{\"level\":3,\"text\":\"获取配额状态\",\"id\":\"获取配额状态\"},{\"level\":3,\"text\":\"获取使用统计\",\"id\":\"获取使用统计\"},{\"level\":2,\"text\":\"故障排除\",\"id\":\"故障排除\"},{\"level\":2,\"text\":\"相关\",\"id\":\"相关\"}],\"lang\":\"zh-CN\",\"children\":[\"$\",\"$Le\",null,{\"content\":\"$f\"}]}]\n"])</script><script>self.__next_f.push([1,"9:[[\"$\",\"meta\",\"0\",{\"charSet\":\"utf-8\"}],[\"$\",\"meta\",\"1\",{\"name\":\"viewport\",\"content\":\"width=device-width, initial-scale=1\"}]]\n"])</script><script>self.__next_f.push([1,"7:null\nb:[[\"$\",\"title\",\"0\",{\"children\":\"9Router Documentation\"}],[\"$\",\"meta\",\"1\",{\"name\":\"description\",\"content\":\"Smart AI model router - Maximize subscriptions, minimize costs\"}]]\n"])</script></body></html>

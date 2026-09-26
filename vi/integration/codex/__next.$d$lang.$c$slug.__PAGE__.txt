@@ -1,0 +1,146 @@
+1:"$Sreact.fragment"
+2:I[81956,["/VansRouter/_next/static/chunks/ff1a16fafef87110.js","/VansRouter/_next/static/chunks/3ba79d5b01800fdc.js"],"default"]
+3:I[22982,["/VansRouter/_next/static/chunks/ff1a16fafef87110.js","/VansRouter/_next/static/chunks/3ba79d5b01800fdc.js"],"default"]
+8:I[97367,["/VansRouter/_next/static/chunks/ff1a16fafef87110.js","/VansRouter/_next/static/chunks/803a574de9eda7ae.js"],"OutletBoundary"]
+9:"$Sreact.suspense"
+4:Tc44,# Tích hợp OpenAI Codex CLI
+
+Tích hợp VansRouter với OpenAI Codex CLI để định tuyến request API OpenAI qua hệ thống routing thông minh của VansRouter.
+
+## Yêu cầu
+
+- OpenAI Codex CLI đã cài đặt
+- VansRouter đang chạy cục bộ hoặc cloud endpoint đã cấu hình
+- API key từ VansRouter dashboard
+
+## Setup
+
+### 1. Cấu hình biến môi trường
+
+Đặt các biến môi trường sau trong file cấu hình shell (`~/.bashrc`, `~/.zshrc`, hoặc `~/.bash_profile`):
+
+```bash
+# Base URL for VansRouter
+export OPENAI_BASE_URL="http://localhost:20128/v1"
+
+# API Key from VansRouter dashboard
+export OPENAI_API_KEY="your-vansrouter-api-key"
+```
+
+### 2. Reload Shell Configuration
+
+```bash
+source ~/.zshrc  # or ~/.bashrc
+```
+
+### 3. Xác minh Cấu hình
+
+Kiểm tra các biến môi trường đã set đúng:
+
+```bash
+echo $OPENAI_BASE_URL
+echo $OPENAI_API_KEY
+```
+
+## Model có sẵn
+
+VansRouter cung cấp các model Codex sau:
+
+| Model ID | Mô tả |
+|----------|-------------|
+| `cx/gpt-5.2-codex` | GPT-5.2 Codex - Phiên bản mới nhất |
+| `cx/gpt-5.1-codex-max` | GPT-5.1 Codex Max - Extended context |
+
+## Ví dụ Sử dụng
+
+### Sử dụng Cơ bản
+
+```bash
+# Use GPT-5.2 Codex
+codex --model cx/gpt-5.2-codex "Write a function to sort an array"
+
+# Use GPT-5.1 Codex Max
+codex --model cx/gpt-5.1-codex-max "Explain this complex algorithm"
+```
+
+### Tạo Code
+
+```bash
+codex --model cx/gpt-5.2-codex "Create a REST API endpoint for user authentication"
+```
+
+### Giải thích Code
+
+```bash
+codex --model cx/gpt-5.1-codex-max "Explain what this code does: $(cat myfile.js)"
+```
+
+## File Cấu hình
+
+Bạn cũng có thể cấu hình Codex CLI qua file cấu hình. Tạo hoặc sửa `~/.codex/config.json`:
+
+```json
+{
+  "baseUrl": "http://localhost:20128/v1",
+  "apiKey": "your-vansrouter-api-key",
+  "defaultModel": "cx/gpt-5.2-codex"
+}
+```
+
+## Troubleshooting
+
+### Lỗi Xác thực
+
+Nếu gặp lỗi xác thực:
+
+1. Xác minh API key đúng trong VansRouter dashboard
+2. Kiểm tra biến môi trường `OPENAI_API_KEY` đã set
+3. Đảm bảo API key chưa hết hạn
+
+### Lỗi Connection
+
+Nếu gặp lỗi kết nối:
+
+1. Xác minh VansRouter đang chạy: `curl http://localhost:20128/health`
+2. Kiểm tra biến môi trường đã set đúng
+3. Đảm bảo không firewall nào chặn port 20128
+
+### Model không khả dụng
+
+Nếu gặp lỗi "model not available":
+
+1. Xác minh tên model khớp với cấu hình VansRouter
+2. Kiểm tra kết nối provider OpenAI đang hoạt động trong VansRouter dashboard
+3. Đảm bảo model có sẵn trong các provider đã kết nối
+
+## Cloud Endpoint
+
+Để dùng VansRouter cloud endpoint thay vì localhost:
+
+```bash
+export OPENAI_BASE_URL="http://localhost:20128"
+```
+
+Đảm bảo bạn đã cấu hình API key trong VansRouter cloud dashboard.
+
+## Cấu hình Nâng cao
+
+### Custom Timeout
+
+```bash
+export OPENAI_TIMEOUT=60  # seconds
+```
+
+### Debug Mode
+
+Bật debug mode để xem logs request/response chi tiết:
+
+```bash
+export CODEX_DEBUG=true
+codex --model cx/gpt-5.2-codex "Your prompt"
+```
+0:{"buildId":"PUpTBY-8r_zZtEM8SJOLp","rsc":["$","$1","c",{"children":[["$","$L2",null,{"headings":[{"level":2,"text":"Yêu cầu","id":"yêu-cầu"},{"level":2,"text":"Setup","id":"setup"},{"level":3,"text":"1. Cấu hình biến môi trường","id":"1-cấu-hình-biến-môi-trường"},{"level":3,"text":"2. Reload Shell Configuration","id":"2-reload-shell-configuration"},{"level":3,"text":"3. Xác minh Cấu hình","id":"3-xác-minh-cấu-hình"},{"level":2,"text":"Model có sẵn","id":"model-có-sẵn"},{"level":2,"text":"Ví dụ Sử dụng","id":"ví-dụ-sử-dụng"},{"level":3,"text":"Sử dụng Cơ bản","id":"sử-dụng-cơ-bản"},{"level":3,"text":"Tạo Code","id":"tạo-code"},{"level":3,"text":"Giải thích Code","id":"giải-thích-code"},{"level":2,"text":"File Cấu hình","id":"file-cấu-hình"},{"level":2,"text":"Troubleshooting","id":"troubleshooting"},{"level":3,"text":"Lỗi Xác thực","id":"lỗi-xác-thực"},{"level":3,"text":"Lỗi Connection","id":"lỗi-connection"},{"level":3,"text":"Model không khả dụng","id":"model-không-khả-dụng"},{"level":2,"text":"Cloud Endpoint","id":"cloud-endpoint"},{"level":2,"text":"Cấu hình Nâng cao","id":"cấu-hình-nâng-cao"},{"level":3,"text":"Custom Timeout","id":"custom-timeout"},{"level":3,"text":"Debug Mode","id":"debug-mode"}],"lang":"vi","children":["$","$L3",null,{"content":"$4"}]}],["$L5","$L6"],"$L7"]}],"loading":null,"isPartial":false}
+5:["$","script","script-0",{"src":"/VansRouter/_next/static/chunks/ff1a16fafef87110.js","async":true}]
+6:["$","script","script-1",{"src":"/VansRouter/_next/static/chunks/3ba79d5b01800fdc.js","async":true}]
+7:["$","$L8",null,{"children":["$","$9",null,{"name":"Next.MetadataOutlet","children":"$@a"}]}]
+a:null

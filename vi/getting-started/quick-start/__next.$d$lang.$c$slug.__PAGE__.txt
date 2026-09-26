@@ -1,0 +1,257 @@
+1:"$Sreact.fragment"
+2:I[81956,["/VansRouter/_next/static/chunks/ff1a16fafef87110.js","/VansRouter/_next/static/chunks/3ba79d5b01800fdc.js"],"default"]
+3:I[22982,["/VansRouter/_next/static/chunks/ff1a16fafef87110.js","/VansRouter/_next/static/chunks/3ba79d5b01800fdc.js"],"default"]
+8:I[97367,["/VansRouter/_next/static/chunks/ff1a16fafef87110.js","/VansRouter/_next/static/chunks/803a574de9eda7ae.js"],"OutletBoundary"]
+9:"$Sreact.suspense"
+4:T17a4,# Bắt đầu
+
+Khởi chạy VansRouter trong 5 phút và bắt đầu định tuyến các request AI một cách thông minh.
+
+---
+
+## Bắt đầu nhanh
+
+### 1. Cài đặt
+
+```bash
+npm install -g vansrouter
+```
+
+**Yêu cầu:** Node.js 22.5+ ([Chi tiết cài đặt](getting-started/installation.md))
+
+### 2. Khởi chạy
+
+```bash
+vansrouter
+```
+
+🎉 **Dashboard tự động mở** tại `http://localhost:20128`
+
+- Bản cài mới mặc định dùng `123456`; hãy đặt `INITIAL_PASSWORD` ngẫu nhiên trước khi công khai.
+- API key được tạo tự động
+- Sẵn sàng kết nối provider
+
+### 3. Kết nối Provider
+
+Bạn có 3 cách để kết nối provider:
+
+#### Cách A: OAuth (Subscription Provider)
+
+**Tốt nhất cho:** Claude Code, Codex, Gemini CLI, GitHub Copilot
+
+```
+Dashboard → Providers → Connect [Provider]
+→ OAuth login → Auto token refresh
+→ Quota tracking enabled
+```
+
+**Ví dụ: Claude Code**
+1. Click "Connect Claude Code"
+2. Đăng nhập tài khoản Claude
+3. Cho phép VansRouter
+4. ✅ Xong! Dùng model: `cc/claude-opus-4-5-20251101`
+
+#### Cách B: API Key (Cheap Provider)
+
+**Tốt nhất cho:** GLM, MiniMax, Kimi, OpenRouter
+
+```
+Dashboard → Providers → Add API Key
+→ Select provider
+→ Paste API key
+→ Save
+```
+
+**Ví dụ: GLM-4.7**
+1. Đăng ký tại [Zhipu AI](https://open.bigmodel.cn/)
+2. Lấy API key từ Coding Plan
+3. Dashboard → Add API Key → Provider: `glm` → Paste key
+4. ✅ Xong! Dùng model: `glm/glm-4.7`
+
+#### Cách C: Free Provider (Miễn phí)
+
+**Tốt nhất cho:** iFlow, Qwen, Kiro
+
+```
+Dashboard → Providers → Connect [Free Provider]
+→ Device code or OAuth
+→ Unlimited usage
+```
+
+**Ví dụ: iFlow**
+1. Click "Connect iFlow"
+2. Đăng nhập tài khoản iFlow
+3. Cho phép
+4. ✅ Xong! Dùng 8 model: `if/kimi-k2-thinking`, `if/qwen3-coder-plus`, v.v.
+
+---
+
+## 4. Dùng trong CLI Tools
+
+Trỏ công cụ code của bạn tới VansRouter:
+
+### Cursor IDE
+
+```
+Settings → Models → Advanced:
+  OpenAI API Base URL: http://localhost:20128/v1
+  OpenAI API Key: [from 9router dashboard]
+  Model: cc/claude-opus-4-5-20251101
+```
+
+### Claude Desktop
+
+Sửa `~/.claude/config.json`:
+
+```json
+{
+  "anthropic_api_base": "http://localhost:20128/v1",
+  "anthropic_api_key": "your-vansrouter-api-key"
+}
+```
+
+### Cline / Continue / RooCode
+
+```
+Provider: OpenAI Compatible
+Base URL: http://localhost:20128/v1
+API Key: [from dashboard]
+Model: cc/claude-opus-4-5-20251101
+```
+
+### Codex CLI
+
+```bash
+export OPENAI_BASE_URL="http://localhost:20128"
+export OPENAI_API_KEY="your-vansrouter-api-key"
+
+codex "your prompt"
+```
+
+---
+
+## 5. Tạo Smart Combos (Tùy chọn)
+
+Combo cho phép fallback tự động giữa các model:
+
+```
+Dashboard → Combos → Create New
+
+Name: premium-coding
+Models:
+  1. cc/claude-opus-4-5-20251101 (Subscription primary)
+  2. glm/glm-4.7 (Cheap backup, $0.6/1M)
+  3. if/kimi-k2-thinking (Free fallback)
+
+Use in CLI: premium-coding
+```
+
+**Cách hoạt động:**
+1. Thử Claude Opus trước (subscription của bạn)
+2. Nếu hết quota → GLM-4.7 (siêu rẻ)
+3. Nếu hết budget → iFlow (miễn phí)
+4. Zero downtime, chuyển đổi tự động!
+
+---
+
+## Model có sẵn
+
+### Subscription Models (Dùng đầu tiên)
+
+**Claude Code (`cc/`)** - Subscription Pro/Max:
+- `cc/claude-opus-4-5-20251101` - Claude 4.5 Opus
+- `cc/claude-sonnet-4-5-20250929` - Claude 4.5 Sonnet
+- `cc/claude-haiku-4-5-20251001` - Claude 4.5 Haiku
+
+**Codex (`cx/`)** - Subscription Plus/Pro:
+- `cx/gpt-5.2-codex` - GPT 5.2 Codex
+- `cx/gpt-5.1-codex-max` - GPT 5.1 Codex Max
+
+**Gemini CLI (`gc/`)** - MIỄN PHÍ 180K/tháng:
+- `gc/gemini-3-flash-preview` - Gemini 3 Flash Preview
+- `gc/gemini-2.5-pro` - Gemini 2.5 Pro
+
+**GitHub Copilot (`gh/`)** - Subscription:
+- `gh/gpt-5` - GPT-5
+- `gh/claude-4.5-sonnet` - Claude 4.5 Sonnet
+
+### Cheap Models (Backup)
+
+**GLM (`glm/`)** - $0.6/$2.2 per 1M:
+- `glm/glm-4.7` - GLM 4.7 (reset 10AM hàng ngày)
+
+**MiniMax (`minimax/`)** - $0.20/$1.00 per 1M:
+- `minimax/MiniMax-M2.1` - MiniMax M2.1 (reset 5h)
+
+**Kimi (`kimi/`)** - $9/tháng (10M tokens):
+- `kimi/kimi-latest` - Kimi Latest
+
+### Model MIỄN PHÍ (Khẩn cấp)
+
+**iFlow (`if/`)** - 8 models MIỄN PHÍ:
+- `if/kimi-k2-thinking` - Kimi K2 Thinking
+- `if/qwen3-coder-plus` - Qwen3 Coder Plus
+- `if/glm-4.7` - GLM 4.7
+- `if/deepseek-r1` - DeepSeek R1
+
+**Qwen (`qw/`)** - 3 models MIỄN PHÍ:
+- `qw/qwen3-coder-plus` - Qwen3 Coder Plus
+- `qw/qwen3-coder-flash` - Qwen3 Coder Flash
+
+**Kiro (`kr/`)** - 2 models MIỄN PHÍ:
+- `kr/claude-sonnet-4.5` - Claude Sonnet 4.5
+- `kr/claude-haiku-4.5` - Claude Haiku 4.5
+
+---
+
+## Chiến lược Tối ưu Chi phí
+
+### Ngân sách hàng tháng: $10-20/tháng
+
+```
+1. Use Gemini CLI free tier (180K/month) for quick tasks
+2. Use Claude Code subscription quota fully (you already pay)
+3. Fallback to GLM ($0.6/1M) when quota out
+4. Emergency: MiniMax M2.1 ($0.20/1M) or iFlow (free)
+
+Real example (100M tokens/month):
+  60M via Gemini CLI: $0 (free tier)
+  30M via Claude Code: $0 (subscription you already have)
+  8M via GLM: $4.80
+  2M via MiniMax: $0.40
+  Total: $5.20/month + existing subscriptions
+```
+
+### Chiến lược Reset Quota
+
+```
+Daily routine:
+1. Morning: Fresh Claude Code quota (5h reset)
+2. Afternoon: Switch to Gemini CLI (1K/day)
+3. Evening: GLM daily quota (reset 10AM next day)
+4. Late night: MiniMax (5h rolling) or iFlow (free)
+
+→ Code 24/7 with minimal extra cost!
+```
+
+---
+
+## Bước tiếp theo
+
+- [Chi tiết cài đặt](getting-started/installation.md) - Yêu cầu, troubleshooting
+- [Tính năng](features/) - Khám phá quota tracking, combos, deployment
+- [FAQ](faq.md) - Câu hỏi thường gặp
+- [Troubleshooting](troubleshooting.md) - Sửa các vấn đề phổ biến
+
+---
+
+## Cần trợ giúp?
+
+- **Website**: [VansRouter dashboard](http://localhost:20128)
+- **GitHub**: [github.com/Vanszs/VansRouter](https://github.com/Vanszs/VansRouter)
+- **Issues**: [github.com/Vanszs/VansRouter/issues](https://github.com/Vanszs/VansRouter/issues)
+0:{"buildId":"PUpTBY-8r_zZtEM8SJOLp","rsc":["$","$1","c",{"children":[["$","$L2",null,{"headings":[{"level":2,"text":"Bắt đầu nhanh","id":"bắt-đầu-nhanh"},{"level":3,"text":"1. Cài đặt","id":"1-cài-đặt"},{"level":3,"text":"2. Khởi chạy","id":"2-khởi-chạy"},{"level":3,"text":"3. Kết nối Provider","id":"3-kết-nối-provider"},{"level":2,"text":"4. Dùng trong CLI Tools","id":"4-dùng-trong-cli-tools"},{"level":3,"text":"Cursor IDE","id":"cursor-ide"},{"level":3,"text":"Claude Desktop","id":"claude-desktop"},{"level":3,"text":"Cline / Continue / RooCode","id":"cline--continue--roocode"},{"level":3,"text":"Codex CLI","id":"codex-cli"},{"level":2,"text":"5. Tạo Smart Combos (Tùy chọn)","id":"5-tạo-smart-combos-tùy-chọn"},{"level":2,"text":"Model có sẵn","id":"model-có-sẵn"},{"level":3,"text":"Subscription Models (Dùng đầu tiên)","id":"subscription-models-dùng-đầu-tiên"},{"level":3,"text":"Cheap Models (Backup)","id":"cheap-models-backup"},{"level":3,"text":"Model MIỄN PHÍ (Khẩn cấp)","id":"model-miễn-phí-khẩn-cấp"},{"level":2,"text":"Chiến lược Tối ưu Chi phí","id":"chiến-lược-tối-ưu-chi-phí"},{"level":3,"text":"Ngân sách hàng tháng: $10-20/tháng","id":"ngân-sách-hàng-tháng-10-20tháng"},{"level":3,"text":"Chiến lược Reset Quota","id":"chiến-lược-reset-quota"},{"level":2,"text":"Bước tiếp theo","id":"bước-tiếp-theo"},{"level":2,"text":"Cần trợ giúp?","id":"cần-trợ-giúp"}],"lang":"vi","children":["$","$L3",null,{"content":"$4"}]}],["$L5","$L6"],"$L7"]}],"loading":null,"isPartial":false}
+5:["$","script","script-0",{"src":"/VansRouter/_next/static/chunks/ff1a16fafef87110.js","async":true}]
+6:["$","script","script-1",{"src":"/VansRouter/_next/static/chunks/3ba79d5b01800fdc.js","async":true}]
+7:["$","$L8",null,{"children":["$","$9",null,{"name":"Next.MetadataOutlet","children":"$@a"}]}]
+a:null

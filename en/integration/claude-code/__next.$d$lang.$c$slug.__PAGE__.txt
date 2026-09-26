@@ -1,0 +1,119 @@
+1:"$Sreact.fragment"
+2:I[81956,["/VansRouter/_next/static/chunks/ff1a16fafef87110.js","/VansRouter/_next/static/chunks/3ba79d5b01800fdc.js"],"default"]
+3:I[22982,["/VansRouter/_next/static/chunks/ff1a16fafef87110.js","/VansRouter/_next/static/chunks/3ba79d5b01800fdc.js"],"default"]
+8:I[97367,["/VansRouter/_next/static/chunks/ff1a16fafef87110.js","/VansRouter/_next/static/chunks/803a574de9eda7ae.js"],"OutletBoundary"]
+9:"$Sreact.suspense"
+4:Ta75,# Claude Code Integration
+
+Integrate VansRouter with Claude Code CLI to route your Anthropic API requests through VansRouter's intelligent routing system.
+
+## Prerequisites
+
+- Claude Code CLI installed
+- VansRouter running locally or cloud endpoint configured
+- API key from VansRouter dashboard
+
+## Setup
+
+### 1. Configure Environment Variables
+
+Set the following environment variables in your shell configuration file (`~/.bashrc`, `~/.zshrc`, or `~/.bash_profile`):
+
+```bash
+# Base URL for VansRouter
+export ANTHROPIC_BASE_URL="http://localhost:20128/v1"
+
+# Optional: Set default models for aliases
+export ANTHROPIC_DEFAULT_OPUS_MODEL="cc/claude-opus-4-5-20251101"
+export ANTHROPIC_DEFAULT_SONNET_MODEL="cc/claude-sonnet-4-5-20250929"
+export ANTHROPIC_DEFAULT_HAIKU_MODEL="cc/claude-haiku-4-5-20251001"
+```
+
+### 2. Reload Shell Configuration
+
+```bash
+source ~/.zshrc  # or ~/.bashrc
+```
+
+### 3. Verify Configuration
+
+Check that the environment variables are set correctly:
+
+```bash
+echo $ANTHROPIC_BASE_URL
+```
+
+## Model Aliases
+
+Claude Code supports the following model aliases that map to VansRouter models:
+
+| Alias | Model | Environment Variable |
+|-------|-------|---------------------|
+| `opus` | Claude Opus 4.5 | `ANTHROPIC_DEFAULT_OPUS_MODEL` |
+| `sonnet` | Claude Sonnet 4.5 | `ANTHROPIC_DEFAULT_SONNET_MODEL` |
+| `haiku` | Claude Haiku 4.5 | `ANTHROPIC_DEFAULT_HAIKU_MODEL` |
+
+## Usage Examples
+
+### Using Model Aliases
+
+```bash
+# Use Opus model
+claude --model opus "Explain quantum computing"
+
+# Use Sonnet model
+claude --model sonnet "Write a Python function"
+
+# Use Haiku model
+claude --model haiku "Quick code review"
+```
+
+### Using Full Model Names
+
+```bash
+claude --model cc/claude-opus-4-5-20251101 "Your prompt here"
+```
+
+## Settings File
+
+Claude Code stores its configuration in `~/.claude/settings.json`. You can manually edit this file if needed:
+
+```json
+{
+  "baseUrl": "http://localhost:20128/v1",
+  "defaultModel": "sonnet"
+}
+```
+
+## Troubleshooting
+
+### Connection Issues
+
+If you encounter connection errors:
+
+1. Verify VansRouter is running: `curl http://localhost:20128/health`
+2. Check environment variables are set correctly
+3. Ensure no firewall is blocking port 20128
+
+### Model Not Found
+
+If you get "model not found" errors:
+
+1. Verify the model name matches your VansRouter configuration
+2. Check that the provider connection is active in VansRouter dashboard
+3. Ensure the model is available in your connected providers
+
+## Cloud Endpoint
+
+To use VansRouter cloud endpoint instead of localhost:
+
+```bash
+export ANTHROPIC_BASE_URL="http://localhost:20128"
+```
+
+Make sure you have configured your API key in the VansRouter cloud dashboard.
+0:{"buildId":"PUpTBY-8r_zZtEM8SJOLp","rsc":["$","$1","c",{"children":[["$","$L2",null,{"headings":[{"level":2,"text":"Prerequisites","id":"prerequisites"},{"level":2,"text":"Setup","id":"setup"},{"level":3,"text":"1. Configure Environment Variables","id":"1-configure-environment-variables"},{"level":3,"text":"2. Reload Shell Configuration","id":"2-reload-shell-configuration"},{"level":3,"text":"3. Verify Configuration","id":"3-verify-configuration"},{"level":2,"text":"Model Aliases","id":"model-aliases"},{"level":2,"text":"Usage Examples","id":"usage-examples"},{"level":3,"text":"Using Model Aliases","id":"using-model-aliases"},{"level":3,"text":"Using Full Model Names","id":"using-full-model-names"},{"level":2,"text":"Settings File","id":"settings-file"},{"level":2,"text":"Troubleshooting","id":"troubleshooting"},{"level":3,"text":"Connection Issues","id":"connection-issues"},{"level":3,"text":"Model Not Found","id":"model-not-found"},{"level":2,"text":"Cloud Endpoint","id":"cloud-endpoint"}],"lang":"en","children":["$","$L3",null,{"content":"$4"}]}],["$L5","$L6"],"$L7"]}],"loading":null,"isPartial":false}
+5:["$","script","script-0",{"src":"/VansRouter/_next/static/chunks/ff1a16fafef87110.js","async":true}]
+6:["$","script","script-1",{"src":"/VansRouter/_next/static/chunks/3ba79d5b01800fdc.js","async":true}]
+7:["$","$L8",null,{"children":["$","$9",null,{"name":"Next.MetadataOutlet","children":"$@a"}]}]
+a:null

@@ -1,0 +1,265 @@
+1:"$Sreact.fragment"
+2:I[39756,["/VansRouter/_next/static/chunks/ff1a16fafef87110.js","/VansRouter/_next/static/chunks/803a574de9eda7ae.js"],"default"]
+3:I[37457,["/VansRouter/_next/static/chunks/ff1a16fafef87110.js","/VansRouter/_next/static/chunks/803a574de9eda7ae.js"],"default"]
+5:I[97367,["/VansRouter/_next/static/chunks/ff1a16fafef87110.js","/VansRouter/_next/static/chunks/803a574de9eda7ae.js"],"OutletBoundary"]
+6:"$Sreact.suspense"
+8:I[97367,["/VansRouter/_next/static/chunks/ff1a16fafef87110.js","/VansRouter/_next/static/chunks/803a574de9eda7ae.js"],"ViewportBoundary"]
+a:I[97367,["/VansRouter/_next/static/chunks/ff1a16fafef87110.js","/VansRouter/_next/static/chunks/803a574de9eda7ae.js"],"MetadataBoundary"]
+c:I[68027,["/VansRouter/_next/static/chunks/ff1a16fafef87110.js","/VansRouter/_next/static/chunks/803a574de9eda7ae.js"],"default"]
+:HL["/VansRouter/_next/static/chunks/71d10a355cb8f2d7.css","style"]
+0:{"P":null,"b":"PUpTBY-8r_zZtEM8SJOLp","c":["","vi","integration","continue",""],"q":"","i":false,"f":[[["",{"children":[["lang","vi","d"],{"children":[["slug","integration/continue","c"],{"children":["__PAGE__",{}]}]}]},"$undefined","$undefined",true],[["$","$1","c",{"children":[[["$","link","0",{"rel":"stylesheet","href":"/VansRouter/_next/static/chunks/71d10a355cb8f2d7.css","precedence":"next","crossOrigin":"$undefined","nonce":"$undefined"}]],["$","html",null,{"lang":"en","children":[["$","head",null,{}],["$","body",null,{"className":"bg-[#FCFBF9] text-[#6B7280]","children":["$","$L2",null,{"parallelRouterKey":"children","error":"$undefined","errorStyles":"$undefined","errorScripts":"$undefined","template":["$","$L3",null,{}],"templateStyles":"$undefined","templateScripts":"$undefined","notFound":[[["$","title",null,{"children":"404: This page could not be found."}],["$","div",null,{"style":{"fontFamily":"system-ui,\"Segoe UI\",Roboto,Helvetica,Arial,sans-serif,\"Apple Color Emoji\",\"Segoe UI Emoji\"","height":"100vh","textAlign":"center","display":"flex","flexDirection":"column","alignItems":"center","justifyContent":"center"},"children":["$","div",null,{"children":[["$","style",null,{"dangerouslySetInnerHTML":{"__html":"body{color:#000;background:#fff;margin:0}.next-error-h1{border-right:1px solid rgba(0,0,0,.3)}@media (prefers-color-scheme:dark){body{color:#fff;background:#000}.next-error-h1{border-right:1px solid rgba(255,255,255,.3)}}"}}],["$","h1",null,{"className":"next-error-h1","style":{"display":"inline-block","margin":"0 20px 0 0","padding":"0 23px 0 0","fontSize":24,"fontWeight":500,"verticalAlign":"top","lineHeight":"49px"},"children":404}],["$","div",null,{"style":{"display":"inline-block"},"children":["$","h2",null,{"style":{"fontSize":14,"fontWeight":400,"lineHeight":"49px","margin":0},"children":"This page could not be found."}]}]]}]}]],[]],"forbidden":"$undefined","unauthorized":"$undefined"}]}]]}]]}],{"children":[["$","$1","c",{"children":[null,["$","$L2",null,{"parallelRouterKey":"children","error":"$undefined","errorStyles":"$undefined","errorScripts":"$undefined","template":["$","$L3",null,{}],"templateStyles":"$undefined","templateScripts":"$undefined","notFound":"$undefined","forbidden":"$undefined","unauthorized":"$undefined"}]]}],{"children":[["$","$1","c",{"children":[null,["$","$L2",null,{"parallelRouterKey":"children","error":"$undefined","errorStyles":"$undefined","errorScripts":"$undefined","template":["$","$L3",null,{}],"templateStyles":"$undefined","templateScripts":"$undefined","notFound":"$undefined","forbidden":"$undefined","unauthorized":"$undefined"}]]}],{"children":[["$","$1","c",{"children":["$L4",[["$","script","script-0",{"src":"/VansRouter/_next/static/chunks/ff1a16fafef87110.js","async":true,"nonce":"$undefined"}],["$","script","script-1",{"src":"/VansRouter/_next/static/chunks/3ba79d5b01800fdc.js","async":true,"nonce":"$undefined"}]],["$","$L5",null,{"children":["$","$6",null,{"name":"Next.MetadataOutlet","children":"$@7"}]}]]}],{},null,false,false]},null,false,false]},null,false,false]},null,false,false],["$","$1","h",{"children":[null,["$","$L8",null,{"children":"$L9"}],["$","div",null,{"hidden":true,"children":["$","$La",null,{"children":["$","$6",null,{"name":"Next.Metadata","children":"$Lb"}]}]}],null]}],false]],"m":"$undefined","G":["$c",[]],"S":true}
+d:I[81956,["/VansRouter/_next/static/chunks/ff1a16fafef87110.js","/VansRouter/_next/static/chunks/3ba79d5b01800fdc.js"],"default"]
+e:I[22982,["/VansRouter/_next/static/chunks/ff1a16fafef87110.js","/VansRouter/_next/static/chunks/3ba79d5b01800fdc.js"],"default"]
+f:T1958,# Tích hợp Continue VSCode Extension
+
+Tích hợp VansRouter với extension Continue để mang trợ lý AI trực tiếp vào Visual Studio Code.
+
+## Yêu cầu
+
+- Visual Studio Code đã cài đặt
+- Extension Continue đã cài đặt từ VSCode marketplace
+- VansRouter API key từ [dashboard](http://localhost:20128/dashboard)
+- VansRouter đang chạy (cục bộ hoặc cloud)
+
+## Các bước Cấu hình
+
+### 1. Mở Continue Configuration
+
+1. Mở VSCode
+2. Nhấn `Cmd+Shift+P` (Mac) hoặc `Ctrl+Shift+P` (Windows/Linux)
+3. Gõ "Continue: Open Config" và chọn
+4. Mở `~/.continue/config.json`
+
+### 2. Thêm Cấu hình Model VansRouter
+
+Thêm cấu hình sau vào `config.json`:
+
+**Setup Một Model:**
+```json
+{
+  "models": [
+    {
+      "title": "VansRouter - Claude Opus",
+      "provider": "openai",
+      "model": "cc/claude-opus-4-5-20251101",
+      "apiKey": "your-api-key-from-dashboard",
+      "apiBase": "http://localhost:20128/v1"
+    }
+  ]
+}
+```
+
+**Setup Nhiều Model:**
+```json
+{
+  "models": [
+    {
+      "title": "VansRouter - Claude Opus (Best)",
+      "provider": "openai",
+      "model": "cc/claude-opus-4-5-20251101",
+      "apiKey": "your-api-key-from-dashboard",
+      "apiBase": "http://localhost:20128/v1"
+    },
+    {
+      "title": "VansRouter - Claude Sonnet (Balanced)",
+      "provider": "openai",
+      "model": "cc/claude-sonnet-4-20250514",
+      "apiKey": "your-api-key-from-dashboard",
+      "apiBase": "http://localhost:20128/v1"
+    },
+    {
+      "title": "VansRouter - DeepSeek Chat (Code)",
+      "provider": "openai",
+      "model": "cx/deepseek-chat",
+      "apiKey": "your-api-key-from-dashboard",
+      "apiBase": "http://localhost:20128/v1"
+    },
+    {
+      "title": "VansRouter - Claude Haiku (Fast)",
+      "provider": "openai",
+      "model": "cc/claude-haiku-4-20250514",
+      "apiKey": "your-api-key-from-dashboard",
+      "apiBase": "http://localhost:20128/v1"
+    }
+  ]
+}
+```
+
+**Cho Cloud VansRouter:**
+Thay `apiBase` bằng:
+```json
+"apiBase": "http://localhost:20128/v1"
+```
+
+### 3. Lưu và Reload
+
+1. Lưu file cấu hình
+2. Reload cửa sổ VSCode: `Cmd+Shift+P` → "Developer: Reload Window"
+3. Extension Continue sẽ load cấu hình mới
+
+### 4. Chọn Model
+
+1. Mở sidebar Continue (click icon Continue trong panel trái)
+2. Click dropdown chọn model ở trên cùng
+3. Chọn model VansRouter ưa thích
+
+## Model có sẵn
+
+### Claude Models (Anthropic)
+- `cc/claude-opus-4-5-20251101` - Mạnh nhất, tốt nhất cho task phức tạp
+- `cc/claude-sonnet-4-20250514` - Cân bằng hiệu năng và tốc độ
+- `cc/claude-haiku-4-20250514` - Nhanh nhất, phù hợp task đơn giản
+
+### DeepSeek Models
+- `cx/deepseek-chat` - Xuất sắc cho tạo code
+- `cx/deepseek-reasoner` - Tốt nhất cho giải quyết vấn đề phức tạp
+
+### GLM Models (Zhipu AI)
+- `glm/glm-4-plus` - Tiếng Trung và tiếng Anh nâng cao
+- `glm/glm-4-flash` - Phản hồi nhanh
+
+## Ví dụ Sử dụng
+
+### Giải thích Code
+1. Chọn code trong editor
+2. Mở sidebar Continue
+3. Gõ: "Explain this code"
+4. Model: `cc/claude-sonnet-4-20250514`
+
+### Tạo Code
+1. Mở sidebar Continue
+2. Gõ: "Create a React component for user profile card"
+3. Model: `cx/deepseek-chat`
+
+### Refactoring
+1. Chọn code để refactor
+2. Gõ: "Refactor this to use async/await"
+3. Model: `cc/claude-sonnet-4-20250514`
+
+### Sửa Bug
+1. Chọn code có vấn đề
+2. Gõ: "Find and fix the bug in this code"
+3. Model: `cx/deepseek-reasoner`
+
+## Cấu hình Nâng cao
+
+### Custom System Prompts
+
+Thêm system prompt tùy chỉnh cho hành vi cụ thể:
+
+```json
+{
+  "models": [
+    {
+      "title": "VansRouter - Code Expert",
+      "provider": "openai",
+      "model": "cx/deepseek-chat",
+      "apiKey": "your-api-key",
+      "apiBase": "http://localhost:20128/v1",
+      "systemMessage": "You are an expert programmer. Always provide clean, well-documented code with best practices."
+    }
+  ]
+}
+```
+
+### Temperature và Parameters
+
+Điều chỉnh hành vi model với parameters:
+
+```json
+{
+  "models": [
+    {
+      "title": "VansRouter - Creative Writer",
+      "provider": "openai",
+      "model": "cc/claude-opus-4-5-20251101",
+      "apiKey": "your-api-key",
+      "apiBase": "http://localhost:20128/v1",
+      "temperature": 0.9,
+      "topP": 0.95
+    }
+  ]
+}
+```
+
+### Context Providers
+
+Cấu hình context Continue gửi đến model:
+
+```json
+{
+  "contextProviders": [
+    {
+      "name": "code",
+      "params": {
+        "maxLines": 100
+      }
+    },
+    {
+      "name": "diff",
+      "params": {}
+    },
+    {
+      "name": "terminal",
+      "params": {}
+    }
+  ]
+}
+```
+
+## Phím tắt
+
+- `Cmd+L` (Mac) / `Ctrl+L` (Windows/Linux) - Mở Continue chat
+- `Cmd+I` (Mac) / `Ctrl+I` (Windows/Linux) - Inline edit
+- `Cmd+Shift+R` (Mac) / `Ctrl+Shift+R` (Windows/Linux) - Tạo lại response
+
+## Troubleshooting
+
+### Model không phản hồi
+- Kiểm tra VansRouter đang chạy: `curl http://localhost:20128/health`
+- Xác minh API key trong config.json
+- Kiểm tra VSCode Developer Console để xem lỗi: `Help` → `Toggle Developer Tools`
+
+### Chọn sai Model
+- Click dropdown model trong sidebar Continue
+- Chọn đúng model VansRouter
+- Tên model phải khớp chính xác (case-sensitive)
+
+### Cấu hình không Load
+- Xác minh JSON syntax hợp lệ (dùng JSON validator)
+- Kiểm tra vị trí file: `~/.continue/config.json`
+- Reload cửa sổ VSCode sau khi thay đổi
+
+### Hiệu năng Chậm
+- Chuyển sang model nhanh hơn (haiku, flash)
+- Giảm context size trong contextProviders
+- Kiểm tra độ trễ network đến VansRouter
+
+## Best Practices
+
+### Chiến lược Chọn Model
+- **Edit nhanh**: Dùng `cc/claude-haiku-4-20250514`
+- **Tạo code**: Dùng `cx/deepseek-chat`
+- **Refactoring phức tạp**: Dùng `cc/claude-opus-4-5-20251101`
+- **Giải quyết vấn đề**: Dùng `cx/deepseek-reasoner`
+
+### Quản lý Context
+- Chỉ chọn code liên quan trước khi hỏi
+- Dùng prompt cụ thể, rõ ràng
+- Chia task phức tạp thành các bước nhỏ
+
+### Tối ưu Chi phí
+- Dùng model nhanh hơn/rẻ hơn cho task đơn giản
+- Giới hạn context size khi có thể
+- Cache response thường dùng
+
+## Bước tiếp theo
+
+- [Cấu hình Cursor](cursor.md) cho tích hợp IDE nâng cao
+- [Setup Roo](roo.md) cho trợ lý AI
+- [Khám phá CLI usage](../cli/basic-usage.md)
+- [Tìm hiểu về chọn model](../models/overview.md)
+4:["$","$Ld",null,{"headings":[{"level":2,"text":"Yêu cầu","id":"yêu-cầu"},{"level":2,"text":"Các bước Cấu hình","id":"các-bước-cấu-hình"},{"level":3,"text":"1. Mở Continue Configuration","id":"1-mở-continue-configuration"},{"level":3,"text":"2. Thêm Cấu hình Model VansRouter","id":"2-thêm-cấu-hình-model-vansrouter"},{"level":3,"text":"3. Lưu và Reload","id":"3-lưu-và-reload"},{"level":3,"text":"4. Chọn Model","id":"4-chọn-model"},{"level":2,"text":"Model có sẵn","id":"model-có-sẵn"},{"level":3,"text":"Claude Models (Anthropic)","id":"claude-models-anthropic"},{"level":3,"text":"DeepSeek Models","id":"deepseek-models"},{"level":3,"text":"GLM Models (Zhipu AI)","id":"glm-models-zhipu-ai"},{"level":2,"text":"Ví dụ Sử dụng","id":"ví-dụ-sử-dụng"},{"level":3,"text":"Giải thích Code","id":"giải-thích-code"},{"level":3,"text":"Tạo Code","id":"tạo-code"},{"level":3,"text":"Refactoring","id":"refactoring"},{"level":3,"text":"Sửa Bug","id":"sửa-bug"},{"level":2,"text":"Cấu hình Nâng cao","id":"cấu-hình-nâng-cao"},{"level":3,"text":"Custom System Prompts","id":"custom-system-prompts"},{"level":3,"text":"Temperature và Parameters","id":"temperature-và-parameters"},{"level":3,"text":"Context Providers","id":"context-providers"},{"level":2,"text":"Phím tắt","id":"phím-tắt"},{"level":2,"text":"Troubleshooting","id":"troubleshooting"},{"level":3,"text":"Model không phản hồi","id":"model-không-phản-hồi"},{"level":3,"text":"Chọn sai Model","id":"chọn-sai-model"},{"level":3,"text":"Cấu hình không Load","id":"cấu-hình-không-load"},{"level":3,"text":"Hiệu năng Chậm","id":"hiệu-năng-chậm"},{"level":2,"text":"Best Practices","id":"best-practices"},{"level":3,"text":"Chiến lược Chọn Model","id":"chiến-lược-chọn-model"},{"level":3,"text":"Quản lý Context","id":"quản-lý-context"},{"level":3,"text":"Tối ưu Chi phí","id":"tối-ưu-chi-phí"},{"level":2,"text":"Bước tiếp theo","id":"bước-tiếp-theo"}],"lang":"vi","children":["$","$Le",null,{"content":"$f"}]}]
+9:[["$","meta","0",{"charSet":"utf-8"}],["$","meta","1",{"name":"viewport","content":"width=device-width, initial-scale=1"}]]
+7:null
+b:[["$","title","0",{"children":"9Router Documentation"}],["$","meta","1",{"name":"description","content":"Smart AI model router - Maximize subscriptions, minimize costs"}]]

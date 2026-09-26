@@ -1,0 +1,125 @@
+1:"$Sreact.fragment"
+2:I[39756,["/VansRouter/_next/static/chunks/ff1a16fafef87110.js","/VansRouter/_next/static/chunks/803a574de9eda7ae.js"],"default"]
+3:I[37457,["/VansRouter/_next/static/chunks/ff1a16fafef87110.js","/VansRouter/_next/static/chunks/803a574de9eda7ae.js"],"default"]
+5:I[97367,["/VansRouter/_next/static/chunks/ff1a16fafef87110.js","/VansRouter/_next/static/chunks/803a574de9eda7ae.js"],"OutletBoundary"]
+6:"$Sreact.suspense"
+8:I[97367,["/VansRouter/_next/static/chunks/ff1a16fafef87110.js","/VansRouter/_next/static/chunks/803a574de9eda7ae.js"],"ViewportBoundary"]
+a:I[97367,["/VansRouter/_next/static/chunks/ff1a16fafef87110.js","/VansRouter/_next/static/chunks/803a574de9eda7ae.js"],"MetadataBoundary"]
+c:I[68027,["/VansRouter/_next/static/chunks/ff1a16fafef87110.js","/VansRouter/_next/static/chunks/803a574de9eda7ae.js"],"default"]
+:HL["/VansRouter/_next/static/chunks/71d10a355cb8f2d7.css","style"]
+0:{"P":null,"b":"PUpTBY-8r_zZtEM8SJOLp","c":["","ja","integration","claude-code",""],"q":"","i":false,"f":[[["",{"children":[["lang","ja","d"],{"children":[["slug","integration/claude-code","c"],{"children":["__PAGE__",{}]}]}]},"$undefined","$undefined",true],[["$","$1","c",{"children":[[["$","link","0",{"rel":"stylesheet","href":"/VansRouter/_next/static/chunks/71d10a355cb8f2d7.css","precedence":"next","crossOrigin":"$undefined","nonce":"$undefined"}]],["$","html",null,{"lang":"en","children":[["$","head",null,{}],["$","body",null,{"className":"bg-[#FCFBF9] text-[#6B7280]","children":["$","$L2",null,{"parallelRouterKey":"children","error":"$undefined","errorStyles":"$undefined","errorScripts":"$undefined","template":["$","$L3",null,{}],"templateStyles":"$undefined","templateScripts":"$undefined","notFound":[[["$","title",null,{"children":"404: This page could not be found."}],["$","div",null,{"style":{"fontFamily":"system-ui,\"Segoe UI\",Roboto,Helvetica,Arial,sans-serif,\"Apple Color Emoji\",\"Segoe UI Emoji\"","height":"100vh","textAlign":"center","display":"flex","flexDirection":"column","alignItems":"center","justifyContent":"center"},"children":["$","div",null,{"children":[["$","style",null,{"dangerouslySetInnerHTML":{"__html":"body{color:#000;background:#fff;margin:0}.next-error-h1{border-right:1px solid rgba(0,0,0,.3)}@media (prefers-color-scheme:dark){body{color:#fff;background:#000}.next-error-h1{border-right:1px solid rgba(255,255,255,.3)}}"}}],["$","h1",null,{"className":"next-error-h1","style":{"display":"inline-block","margin":"0 20px 0 0","padding":"0 23px 0 0","fontSize":24,"fontWeight":500,"verticalAlign":"top","lineHeight":"49px"},"children":404}],["$","div",null,{"style":{"display":"inline-block"},"children":["$","h2",null,{"style":{"fontSize":14,"fontWeight":400,"lineHeight":"49px","margin":0},"children":"This page could not be found."}]}]]}]}]],[]],"forbidden":"$undefined","unauthorized":"$undefined"}]}]]}]]}],{"children":[["$","$1","c",{"children":[null,["$","$L2",null,{"parallelRouterKey":"children","error":"$undefined","errorStyles":"$undefined","errorScripts":"$undefined","template":["$","$L3",null,{}],"templateStyles":"$undefined","templateScripts":"$undefined","notFound":"$undefined","forbidden":"$undefined","unauthorized":"$undefined"}]]}],{"children":[["$","$1","c",{"children":[null,["$","$L2",null,{"parallelRouterKey":"children","error":"$undefined","errorStyles":"$undefined","errorScripts":"$undefined","template":["$","$L3",null,{}],"templateStyles":"$undefined","templateScripts":"$undefined","notFound":"$undefined","forbidden":"$undefined","unauthorized":"$undefined"}]]}],{"children":[["$","$1","c",{"children":["$L4",[["$","script","script-0",{"src":"/VansRouter/_next/static/chunks/ff1a16fafef87110.js","async":true,"nonce":"$undefined"}],["$","script","script-1",{"src":"/VansRouter/_next/static/chunks/3ba79d5b01800fdc.js","async":true,"nonce":"$undefined"}]],["$","$L5",null,{"children":["$","$6",null,{"name":"Next.MetadataOutlet","children":"$@7"}]}]]}],{},null,false,false]},null,false,false]},null,false,false]},null,false,false],["$","$1","h",{"children":[null,["$","$L8",null,{"children":"$L9"}],["$","div",null,{"hidden":true,"children":["$","$La",null,{"children":["$","$6",null,{"name":"Next.Metadata","children":"$Lb"}]}]}],null]}],false]],"m":"$undefined","G":["$c",[]],"S":true}
+d:I[81956,["/VansRouter/_next/static/chunks/ff1a16fafef87110.js","/VansRouter/_next/static/chunks/3ba79d5b01800fdc.js"],"default"]
+e:I[22982,["/VansRouter/_next/static/chunks/ff1a16fafef87110.js","/VansRouter/_next/static/chunks/3ba79d5b01800fdc.js"],"default"]
+f:Tc6d,# Claude Code統合
+
+VansRouterをClaude Code CLIと統合し、AnthropicのAPIリクエストをVansRouterのインテリジェントルーティングシステム経由でルーティングします。
+
+## 前提条件
+
+- Claude Code CLIがインストール済み
+- VansRouterがローカルで動作中、またはクラウドエンドポイントが設定済み
+- VansRouterダッシュボードからのAPIキー
+
+## セットアップ
+
+### 1. 環境変数を設定
+
+シェル設定ファイル (`~/.bashrc`、`~/.zshrc`、または `~/.bash_profile`) で以下の環境変数を設定:
+
+```bash
+# VansRouter用Base URL
+export ANTHROPIC_BASE_URL="http://localhost:20128/v1"
+
+# オプション: エイリアス用のデフォルトモデルを設定
+export ANTHROPIC_DEFAULT_OPUS_MODEL="cc/claude-opus-4-5-20251101"
+export ANTHROPIC_DEFAULT_SONNET_MODEL="cc/claude-sonnet-4-5-20250929"
+export ANTHROPIC_DEFAULT_HAIKU_MODEL="cc/claude-haiku-4-5-20251001"
+```
+
+### 2. シェル設定をリロード
+
+```bash
+source ~/.zshrc  # または ~/.bashrc
+```
+
+### 3. 設定を確認
+
+環境変数が正しく設定されているか確認:
+
+```bash
+echo $ANTHROPIC_BASE_URL
+```
+
+## モデルエイリアス
+
+Claude CodeはVansRouterモデルにマッピングされる以下のモデルエイリアスをサポート:
+
+| エイリアス | モデル | 環境変数 |
+|-------|-------|---------------------|
+| `opus` | Claude Opus 4.5 | `ANTHROPIC_DEFAULT_OPUS_MODEL` |
+| `sonnet` | Claude Sonnet 4.5 | `ANTHROPIC_DEFAULT_SONNET_MODEL` |
+| `haiku` | Claude Haiku 4.5 | `ANTHROPIC_DEFAULT_HAIKU_MODEL` |
+
+## 使用例
+
+### モデルエイリアスを使用
+
+```bash
+# Opusモデルを使用
+claude --model opus "Explain quantum computing"
+
+# Sonnetモデルを使用
+claude --model sonnet "Write a Python function"
+
+# Haikuモデルを使用
+claude --model haiku "Quick code review"
+```
+
+### フルモデル名を使用
+
+```bash
+claude --model cc/claude-opus-4-5-20251101 "Your prompt here"
+```
+
+## 設定ファイル
+
+Claude Codeは設定を `~/.claude/settings.json` に保存します。必要に応じてこのファイルを手動で編集できます:
+
+```json
+{
+  "baseUrl": "http://localhost:20128/v1",
+  "defaultModel": "sonnet"
+}
+```
+
+## トラブルシューティング
+
+### 接続の問題
+
+接続エラーが発生した場合:
+
+1. VansRouterが動作中か確認: `curl http://localhost:20128/health`
+2. 環境変数が正しく設定されているか確認
+3. ファイアウォールがポート20128をブロックしていないか確認
+
+### モデルが見つからない
+
+「model not found」エラーが発生した場合:
+
+1. モデル名がVansRouterの設定と一致しているか確認
+2. VansRouterダッシュボードでプロバイダー接続がアクティブか確認
+3. 接続されたプロバイダーでモデルが利用可能か確認
+
+## クラウドエンドポイント
+
+localhostの代わりにVansRouterクラウドエンドポイントを使用するには:
+
+```bash
+export ANTHROPIC_BASE_URL="http://localhost:20128"
+```
+
+VansRouterクラウドダッシュボードでAPIキーが設定されていることを確認してください。
+4:["$","$Ld",null,{"headings":[{"level":2,"text":"前提条件","id":"前提条件"},{"level":2,"text":"セットアップ","id":"セットアップ"},{"level":3,"text":"1. 環境変数を設定","id":"1-環境変数を設定"},{"level":3,"text":"2. シェル設定をリロード","id":"2-シェル設定をリロード"},{"level":3,"text":"3. 設定を確認","id":"3-設定を確認"},{"level":2,"text":"モデルエイリアス","id":"モデルエイリアス"},{"level":2,"text":"使用例","id":"使用例"},{"level":3,"text":"モデルエイリアスを使用","id":"モデルエイリアスを使用"},{"level":3,"text":"フルモデル名を使用","id":"フルモデル名を使用"},{"level":2,"text":"設定ファイル","id":"設定ファイル"},{"level":2,"text":"トラブルシューティング","id":"トラブルシューティング"},{"level":3,"text":"接続の問題","id":"接続の問題"},{"level":3,"text":"モデルが見つからない","id":"モデルが見つからない"},{"level":2,"text":"クラウドエンドポイント","id":"クラウドエンドポイント"}],"lang":"ja","children":["$","$Le",null,{"content":"$f"}]}]
+9:[["$","meta","0",{"charSet":"utf-8"}],["$","meta","1",{"name":"viewport","content":"width=device-width, initial-scale=1"}]]
+7:null
+b:[["$","title","0",{"children":"9Router Documentation"}],["$","meta","1",{"name":"description","content":"Smart AI model router - Maximize subscriptions, minimize costs"}]]

@@ -1,0 +1,180 @@
+1:"$Sreact.fragment"
+2:I[39756,["/VansRouter/_next/static/chunks/ff1a16fafef87110.js","/VansRouter/_next/static/chunks/803a574de9eda7ae.js"],"default"]
+3:I[37457,["/VansRouter/_next/static/chunks/ff1a16fafef87110.js","/VansRouter/_next/static/chunks/803a574de9eda7ae.js"],"default"]
+5:I[97367,["/VansRouter/_next/static/chunks/ff1a16fafef87110.js","/VansRouter/_next/static/chunks/803a574de9eda7ae.js"],"OutletBoundary"]
+6:"$Sreact.suspense"
+8:I[97367,["/VansRouter/_next/static/chunks/ff1a16fafef87110.js","/VansRouter/_next/static/chunks/803a574de9eda7ae.js"],"ViewportBoundary"]
+a:I[97367,["/VansRouter/_next/static/chunks/ff1a16fafef87110.js","/VansRouter/_next/static/chunks/803a574de9eda7ae.js"],"MetadataBoundary"]
+c:I[68027,["/VansRouter/_next/static/chunks/ff1a16fafef87110.js","/VansRouter/_next/static/chunks/803a574de9eda7ae.js"],"default"]
+:HL["/VansRouter/_next/static/chunks/71d10a355cb8f2d7.css","style"]
+0:{"P":null,"b":"PUpTBY-8r_zZtEM8SJOLp","c":["","en","deployment","localhost",""],"q":"","i":false,"f":[[["",{"children":[["lang","en","d"],{"children":[["slug","deployment/localhost","c"],{"children":["__PAGE__",{}]}]}]},"$undefined","$undefined",true],[["$","$1","c",{"children":[[["$","link","0",{"rel":"stylesheet","href":"/VansRouter/_next/static/chunks/71d10a355cb8f2d7.css","precedence":"next","crossOrigin":"$undefined","nonce":"$undefined"}]],["$","html",null,{"lang":"en","children":[["$","head",null,{}],["$","body",null,{"className":"bg-[#FCFBF9] text-[#6B7280]","children":["$","$L2",null,{"parallelRouterKey":"children","error":"$undefined","errorStyles":"$undefined","errorScripts":"$undefined","template":["$","$L3",null,{}],"templateStyles":"$undefined","templateScripts":"$undefined","notFound":[[["$","title",null,{"children":"404: This page could not be found."}],["$","div",null,{"style":{"fontFamily":"system-ui,\"Segoe UI\",Roboto,Helvetica,Arial,sans-serif,\"Apple Color Emoji\",\"Segoe UI Emoji\"","height":"100vh","textAlign":"center","display":"flex","flexDirection":"column","alignItems":"center","justifyContent":"center"},"children":["$","div",null,{"children":[["$","style",null,{"dangerouslySetInnerHTML":{"__html":"body{color:#000;background:#fff;margin:0}.next-error-h1{border-right:1px solid rgba(0,0,0,.3)}@media (prefers-color-scheme:dark){body{color:#fff;background:#000}.next-error-h1{border-right:1px solid rgba(255,255,255,.3)}}"}}],["$","h1",null,{"className":"next-error-h1","style":{"display":"inline-block","margin":"0 20px 0 0","padding":"0 23px 0 0","fontSize":24,"fontWeight":500,"verticalAlign":"top","lineHeight":"49px"},"children":404}],["$","div",null,{"style":{"display":"inline-block"},"children":["$","h2",null,{"style":{"fontSize":14,"fontWeight":400,"lineHeight":"49px","margin":0},"children":"This page could not be found."}]}]]}]}]],[]],"forbidden":"$undefined","unauthorized":"$undefined"}]}]]}]]}],{"children":[["$","$1","c",{"children":[null,["$","$L2",null,{"parallelRouterKey":"children","error":"$undefined","errorStyles":"$undefined","errorScripts":"$undefined","template":["$","$L3",null,{}],"templateStyles":"$undefined","templateScripts":"$undefined","notFound":"$undefined","forbidden":"$undefined","unauthorized":"$undefined"}]]}],{"children":[["$","$1","c",{"children":[null,["$","$L2",null,{"parallelRouterKey":"children","error":"$undefined","errorStyles":"$undefined","errorScripts":"$undefined","template":["$","$L3",null,{}],"templateStyles":"$undefined","templateScripts":"$undefined","notFound":"$undefined","forbidden":"$undefined","unauthorized":"$undefined"}]]}],{"children":[["$","$1","c",{"children":["$L4",[["$","script","script-0",{"src":"/VansRouter/_next/static/chunks/ff1a16fafef87110.js","async":true,"nonce":"$undefined"}],["$","script","script-1",{"src":"/VansRouter/_next/static/chunks/3ba79d5b01800fdc.js","async":true,"nonce":"$undefined"}]],["$","$L5",null,{"children":["$","$6",null,{"name":"Next.MetadataOutlet","children":"$@7"}]}]]}],{},null,false,false]},null,false,false]},null,false,false]},null,false,false],["$","$1","h",{"children":[null,["$","$L8",null,{"children":"$L9"}],["$","div",null,{"hidden":true,"children":["$","$La",null,{"children":["$","$6",null,{"name":"Next.Metadata","children":"$Lb"}]}]}],null]}],false]],"m":"$undefined","G":["$c",[]],"S":true}
+d:I[81956,["/VansRouter/_next/static/chunks/ff1a16fafef87110.js","/VansRouter/_next/static/chunks/3ba79d5b01800fdc.js"],"default"]
+e:I[22982,["/VansRouter/_next/static/chunks/ff1a16fafef87110.js","/VansRouter/_next/static/chunks/3ba79d5b01800fdc.js"],"default"]
+f:Tb42,# 🏠 Localhost Deployment
+
+Run VansRouter on your local machine for development and personal use.
+
+---
+
+## 📦 Installation
+
+Install VansRouter globally via npm:
+
+```bash
+npm install -g vansrouter
+```
+
+**Requirements:**
+- Node.js 22.5 or higher
+- npm 9 or higher
+
+---
+
+## 🚀 Starting the Server
+
+Start VansRouter with a single command:
+
+```bash
+vansrouter
+```
+
+The dashboard will automatically open in your browser at `http://localhost:20128/masuk`
+
+**Default Configuration:**
+- **Dashboard**: `http://localhost:20128/masuk`
+- **API Endpoint**: `http://localhost:20128/v1`
+- **Data Directory**: `~/.9router` (macOS/Linux) or `%APPDATA%\9router` (Windows)
+
+---
+
+## 🔧 Configuration
+
+### Custom Data Directory
+
+Set a custom data directory using environment variable:
+
+```bash
+DATA_DIR=/path/to/data vansrouter
+```
+
+### Custom Port
+
+The application port is `20128` by default. Use `--port` or `PORT` to override it.
+
+---
+
+## 🛑 Stopping the Server
+
+Press `Ctrl+C` in the terminal where VansRouter is running.
+
+```bash
+# In the terminal running vansrouter
+^C  # Press Ctrl+C
+```
+
+The server will gracefully shut down and save all data.
+
+---
+
+## 🔄 Restarting the Server
+
+Simply run the start command again:
+
+```bash
+vansrouter
+```
+
+All your configurations, API keys, and combos are preserved in the data directory.
+
+---
+
+## 📊 Updating VansRouter
+
+Update to the latest version:
+
+```bash
+npm update -g vansrouter
+```
+
+Check your current version:
+
+```bash
+npm list -g vansrouter
+```
+
+---
+
+## 🔍 Troubleshooting
+
+### Port Already in Use
+
+If port 20128 or 3000 is already in use:
+
+```bash
+# Find process using the port (macOS/Linux)
+lsof -i :20128
+lsof -i :3000
+
+# Kill the process
+kill -9 <PID>
+```
+
+### Permission Errors
+
+If you encounter permission errors during installation:
+
+```bash
+# Use sudo (not recommended)
+sudo npm install -g vansrouter
+
+# Or fix npm permissions (recommended)
+mkdir ~/.npm-global
+npm config set prefix '~/.npm-global'
+echo 'export PATH=~/.npm-global/bin:$PATH' >> ~/.bashrc
+source ~/.bashrc
+```
+
+### Data Directory Issues
+
+If the data directory is not accessible:
+
+```bash
+# Check permissions
+ls -la ~/.9router
+
+# Fix permissions
+chmod 755 ~/.9router
+```
+
+---
+
+## 📁 Data Directory Structure
+
+```
+~/.9router/
+├── db.json           # Main database (providers, combos, settings)
+├── logs/             # Application logs
+└── cache/            # Temporary cache files
+```
+
+**Backup Your Data:**
+
+```bash
+# Backup
+cp -r ~/.9router ~/.9router.backup
+
+# Restore
+cp -r ~/.9router.backup ~/.9router
+```
+
+---
+
+## 🔗 Next Steps
+
+- [Connect Providers](/providers/subscription.md)
+- [Create Combos](/features/combos.md)
+- [Integrate with CLI Tools](/integration/cursor.md)
+4:["$","$Ld",null,{"headings":[{"level":2,"text":"Installation","id":"installation"},{"level":2,"text":"Starting the Server","id":"starting-the-server"},{"level":2,"text":"Configuration","id":"configuration"},{"level":3,"text":"Custom Data Directory","id":"custom-data-directory"},{"level":3,"text":"Custom Port","id":"custom-port"},{"level":2,"text":"Stopping the Server","id":"stopping-the-server"},{"level":2,"text":"Restarting the Server","id":"restarting-the-server"},{"level":2,"text":"Updating VansRouter","id":"updating-vansrouter"},{"level":2,"text":"Troubleshooting","id":"troubleshooting"},{"level":3,"text":"Port Already in Use","id":"port-already-in-use"},{"level":3,"text":"Permission Errors","id":"permission-errors"},{"level":3,"text":"Data Directory Issues","id":"data-directory-issues"},{"level":2,"text":"Data Directory Structure","id":"data-directory-structure"},{"level":2,"text":"Next Steps","id":"next-steps"}],"lang":"en","children":["$","$Le",null,{"content":"$f"}]}]
+9:[["$","meta","0",{"charSet":"utf-8"}],["$","meta","1",{"name":"viewport","content":"width=device-width, initial-scale=1"}]]
+7:null
+b:[["$","title","0",{"children":"9Router Documentation"}],["$","meta","1",{"name":"description","content":"Smart AI model router - Maximize subscriptions, minimize costs"}]]

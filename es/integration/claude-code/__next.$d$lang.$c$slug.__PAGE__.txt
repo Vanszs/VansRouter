@@ -1,0 +1,119 @@
+1:"$Sreact.fragment"
+2:I[81956,["/VansRouter/_next/static/chunks/ff1a16fafef87110.js","/VansRouter/_next/static/chunks/3ba79d5b01800fdc.js"],"default"]
+3:I[22982,["/VansRouter/_next/static/chunks/ff1a16fafef87110.js","/VansRouter/_next/static/chunks/3ba79d5b01800fdc.js"],"default"]
+8:I[97367,["/VansRouter/_next/static/chunks/ff1a16fafef87110.js","/VansRouter/_next/static/chunks/803a574de9eda7ae.js"],"OutletBoundary"]
+9:"$Sreact.suspense"
+4:Tbce,# Integración con Claude Code
+
+Integra VansRouter con Claude Code CLI para enrutar tus solicitudes de la API de Anthropic a través del sistema de enrutamiento inteligente de VansRouter.
+
+## Requisitos previos
+
+- Claude Code CLI instalado
+- VansRouter ejecutándose localmente o endpoint en la nube configurado
+- API key del dashboard de VansRouter
+
+## Configuración
+
+### 1. Configurar variables de entorno
+
+Establece las siguientes variables de entorno en tu archivo de configuración del shell (`~/.bashrc`, `~/.zshrc`, o `~/.bash_profile`):
+
+```bash
+# Base URL for VansRouter
+export ANTHROPIC_BASE_URL="http://localhost:20128/v1"
+
+# Optional: Set default models for aliases
+export ANTHROPIC_DEFAULT_OPUS_MODEL="cc/claude-opus-4-5-20251101"
+export ANTHROPIC_DEFAULT_SONNET_MODEL="cc/claude-sonnet-4-5-20250929"
+export ANTHROPIC_DEFAULT_HAIKU_MODEL="cc/claude-haiku-4-5-20251001"
+```
+
+### 2. Recargar la configuración del shell
+
+```bash
+source ~/.zshrc  # o ~/.bashrc
+```
+
+### 3. Verificar la configuración
+
+Verifica que las variables de entorno estén configuradas correctamente:
+
+```bash
+echo $ANTHROPIC_BASE_URL
+```
+
+## Aliases de modelos
+
+Claude Code soporta los siguientes aliases de modelos que mapean a modelos de VansRouter:
+
+| Alias | Modelo | Variable de entorno |
+|-------|-------|---------------------|
+| `opus` | Claude Opus 4.5 | `ANTHROPIC_DEFAULT_OPUS_MODEL` |
+| `sonnet` | Claude Sonnet 4.5 | `ANTHROPIC_DEFAULT_SONNET_MODEL` |
+| `haiku` | Claude Haiku 4.5 | `ANTHROPIC_DEFAULT_HAIKU_MODEL` |
+
+## Ejemplos de uso
+
+### Usando aliases de modelos
+
+```bash
+# Usar modelo Opus
+claude --model opus "Explain quantum computing"
+
+# Usar modelo Sonnet
+claude --model sonnet "Write a Python function"
+
+# Usar modelo Haiku
+claude --model haiku "Quick code review"
+```
+
+### Usando nombres completos de modelos
+
+```bash
+claude --model cc/claude-opus-4-5-20251101 "Your prompt here"
+```
+
+## Archivo de configuración
+
+Claude Code almacena su configuración en `~/.claude/settings.json`. Puedes editar este archivo manualmente si es necesario:
+
+```json
+{
+  "baseUrl": "http://localhost:20128/v1",
+  "defaultModel": "sonnet"
+}
+```
+
+## Solución de problemas
+
+### Problemas de conexión
+
+Si encuentras errores de conexión:
+
+1. Verifica que VansRouter esté corriendo: `curl http://localhost:20128/health`
+2. Verifica que las variables de entorno estén configuradas correctamente
+3. Asegúrate de que ningún firewall esté bloqueando el puerto 20128
+
+### Modelo no encontrado
+
+Si obtienes errores de "modelo no encontrado":
+
+1. Verifica que el nombre del modelo coincida con tu configuración de VansRouter
+2. Verifica que la conexión del proveedor esté activa en el dashboard de VansRouter
+3. Asegúrate de que el modelo esté disponible en tus proveedores conectados
+
+## Endpoint en la nube
+
+Para usar el endpoint en la nube de VansRouter en lugar de localhost:
+
+```bash
+export ANTHROPIC_BASE_URL="http://localhost:20128"
+```
+
+Asegúrate de haber configurado tu API key en el dashboard en la nube de VansRouter.
+0:{"buildId":"PUpTBY-8r_zZtEM8SJOLp","rsc":["$","$1","c",{"children":[["$","$L2",null,{"headings":[{"level":2,"text":"Requisitos previos","id":"requisitos-previos"},{"level":2,"text":"Configuración","id":"configuración"},{"level":3,"text":"1. Configurar variables de entorno","id":"1-configurar-variables-de-entorno"},{"level":3,"text":"2. Recargar la configuración del shell","id":"2-recargar-la-configuración-del-shell"},{"level":3,"text":"3. Verificar la configuración","id":"3-verificar-la-configuración"},{"level":2,"text":"Aliases de modelos","id":"aliases-de-modelos"},{"level":2,"text":"Ejemplos de uso","id":"ejemplos-de-uso"},{"level":3,"text":"Usando aliases de modelos","id":"usando-aliases-de-modelos"},{"level":3,"text":"Usando nombres completos de modelos","id":"usando-nombres-completos-de-modelos"},{"level":2,"text":"Archivo de configuración","id":"archivo-de-configuración"},{"level":2,"text":"Solución de problemas","id":"solución-de-problemas"},{"level":3,"text":"Problemas de conexión","id":"problemas-de-conexión"},{"level":3,"text":"Modelo no encontrado","id":"modelo-no-encontrado"},{"level":2,"text":"Endpoint en la nube","id":"endpoint-en-la-nube"}],"lang":"es","children":["$","$L3",null,{"content":"$4"}]}],["$L5","$L6"],"$L7"]}],"loading":null,"isPartial":false}
+5:["$","script","script-0",{"src":"/VansRouter/_next/static/chunks/ff1a16fafef87110.js","async":true}]
+6:["$","script","script-1",{"src":"/VansRouter/_next/static/chunks/3ba79d5b01800fdc.js","async":true}]
+7:["$","$L8",null,{"children":["$","$9",null,{"name":"Next.MetadataOutlet","children":"$@a"}]}]
+a:null

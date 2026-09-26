@@ -1,0 +1,358 @@
+<!DOCTYPE html><!--PUpTBY_8r_zZtEM8SJOLp--><html lang="en"><head><meta charSet="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/><link rel="stylesheet" href="/VansRouter/_next/static/chunks/71d10a355cb8f2d7.css" data-precedence="next"/><link rel="preload" as="script" fetchPriority="low" href="/VansRouter/_next/static/chunks/343aa45b5611d01d.js"/><script src="/VansRouter/_next/static/chunks/a0aa32a146625b3a.js" async=""></script><script src="/VansRouter/_next/static/chunks/3e45c79224336516.js" async=""></script><script src="/VansRouter/_next/static/chunks/turbopack-4db312a651dd60cf.js" async=""></script><script src="/VansRouter/_next/static/chunks/ff1a16fafef87110.js" async=""></script><script src="/VansRouter/_next/static/chunks/803a574de9eda7ae.js" async=""></script><script src="/VansRouter/_next/static/chunks/3ba79d5b01800fdc.js" async=""></script><title>9Router Documentation</title><meta name="description" content="Smart AI model router - Maximize subscriptions, minimize costs"/><script src="/VansRouter/_next/static/chunks/a6dad97d9634a72d.js" noModule=""></script></head><body class="bg-[#FCFBF9] text-[#6B7280]"><div hidden=""><!--$--><!--/$--></div><div class="min-h-screen flex flex-col bg-[#FCFBF9]"><header class="sticky top-0 z-50 w-full border-b bg-white/80 backdrop-blur-sm border-gray-200"><div class=" mx-auto px-4 h-16 flex items-center justify-between"><button type="button" class="lg:hidden p-2 rounded-lg hover:bg-gray-100 transition-colors" aria-label="Open menu"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-menu w-6 h-6 text-gray-600" aria-hidden="true"><path d="M4 5h16"></path><path d="M4 12h16"></path><path d="M4 19h16"></path></svg></button><a class="flex items-center gap-2 font-bold text-2xl text-black hover:opacity-80 transition-opacity" href="/VansRouter/ja/"><span>9</span><span class="text-[#E68A6E]">9Router<!-- --> Docs</span></a><div class="flex items-center gap-2 sm:gap-3"><button type="button" class="flex items-center gap-1.5 px-2.5 py-1.5 text-sm text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors" aria-label="Switch language"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-globe w-4 h-4" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"></path><path d="M2 12h20"></path></svg><span class="hidden sm:inline">🇯🇵<!-- --> <!-- -->日本語</span><span class="sm:hidden">🇯🇵</span></button><a target="_blank" rel="noopener noreferrer" class="flex items-center gap-2 px-3 sm:px-4 py-2 bg-[#E68A6E] text-white rounded-lg font-medium hover:bg-[#d67a5e] transition-colors text-sm" href="http://localhost:20128"><span class="hidden sm:inline">アプリへ</span><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-external-link w-4 h-4" aria-hidden="true"><path d="M15 3h6v6"></path><path d="M10 14 21 3"></path><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path></svg></a></div></div></header><div class="flex-1 flex"><div class="hidden lg:block"><aside class="w-64 border-r bg-white border-gray-200 h-[calc(100vh-4rem)] sticky top-16 overflow-y-auto"><nav class="p-4 space-y-6"><div><button type="button" class="flex items-center justify-between w-full text-sm font-semibold text-gray-900 mb-2 hover:text-[#E68A6E] transition-colors"><span class="flex items-center gap-2"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-rocket w-4 h-4" aria-hidden="true"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"></path><path d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"></path><path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"></path><path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"></path></svg>はじめに</span><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-right w-4 h-4" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg></button></div><div><button type="button" class="flex items-center justify-between w-full text-sm font-semibold text-gray-900 mb-2 hover:text-[#E68A6E] transition-colors"><span class="flex items-center gap-2"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-layers w-4 h-4" aria-hidden="true"><path d="M12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83z"></path><path d="M2 12a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 12"></path><path d="M2 17a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 17"></path></svg>プロバイダー</span><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-right w-4 h-4" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg></button></div><div><button type="button" class="flex items-center justify-between w-full text-sm font-semibold text-gray-900 mb-2 hover:text-[#E68A6E] transition-colors"><span class="flex items-center gap-2"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-zap w-4 h-4" aria-hidden="true"><path d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z"></path></svg>機能</span><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-right w-4 h-4" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg></button></div><div><button type="button" class="flex items-center justify-between w-full text-sm font-semibold text-gray-900 mb-2 hover:text-[#E68A6E] transition-colors"><span class="flex items-center gap-2"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-plug w-4 h-4" aria-hidden="true"><path d="M12 22v-5"></path><path d="M15 8V2"></path><path d="M17 8a1 1 0 0 1 1 1v4a4 4 0 0 1-4 4h-4a4 4 0 0 1-4-4V9a1 1 0 0 1 1-1z"></path><path d="M9 8V2"></path></svg>連携</span><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-right w-4 h-4" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg></button></div><div><button type="button" class="flex items-center justify-between w-full text-sm font-semibold text-gray-900 mb-2 hover:text-[#E68A6E] transition-colors"><span class="flex items-center gap-2"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-cloud w-4 h-4" aria-hidden="true"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"></path></svg>デプロイ</span><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-right w-4 h-4" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg></button></div><div><button type="button" class="flex items-center justify-between w-full text-sm font-semibold text-gray-900 mb-2 hover:text-[#E68A6E] transition-colors"><span class="flex items-center gap-2"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-circle-question-mark w-4 h-4" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><path d="M12 17h.01"></path></svg>ヘルプ</span><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-right w-4 h-4" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg></button></div></nav></aside></div><div class="flex-1 flex min-w-0"><main class="flex-1 min-w-0 overflow-x-hidden overflow-y-auto"><article class="max-w-4xl mx-auto px-4 sm:px-6 py-8"><div class="markdown-content"><h1 id="クラウドデプロイメント">☁️ クラウドデプロイメント</h1>
+<p>リモートアクセスと本番利用のため、VPSまたはDockerにVansRouterをデプロイ。</p>
+<hr/>
+<h2 id="vpsデプロイメント"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-server inline-block mr-2 align-[-0.15em] w-[1em] h-[1em] text-gray-700" aria-hidden="true"><rect width="20" height="8" x="2" y="2" rx="2" ry="2"></rect><rect width="20" height="8" x="2" y="14" rx="2" ry="2"></rect><line x1="6" x2="6.01" y1="6" y2="6"></line><line x1="6" x2="6.01" y1="18" y2="18"></line></svg>VPSデプロイメント</h2>
+<h3 id="前提条件">前提条件</h3>
+<ul>
+<li>Ubuntu 20.04+ または同様のLinuxディストリビューション</li>
+<li>Node.js 20以上</li>
+<li>Git</li>
+<li>rootまたはsudoアクセス</li>
+</ul>
+<h3 id="ステップ1-リポジトリをクローン">ステップ1: リポジトリをクローン</h3>
+<pre><code class="hljs language-bash">git <span class="hljs-built_in">clone</span> https://github.com/Vanszs/VansRouter.git
+<span class="hljs-built_in">cd</span> VansRouter
+</code></pre>
+<h3 id="ステップ2-依存関係をインストール">ステップ2: 依存関係をインストール</h3>
+<pre><code class="hljs language-bash">npm install
+</code></pre>
+<h3 id="ステップ3-アプリケーションをビルド">ステップ3: アプリケーションをビルド</h3>
+<pre><code class="hljs language-bash">npm run build
+</code></pre>
+<h3 id="ステップ4-環境変数を設定">ステップ4: 環境変数を設定</h3>
+<p><code>.env</code> ファイルを作成するか、変数をエクスポート:</p>
+<pre><code class="hljs language-bash"><span class="hljs-built_in">export</span> JWT_SECRET=<span class="hljs-string">&quot;your-secure-secret-change-this-to-random-string&quot;</span>
+<span class="hljs-built_in">export</span> INITIAL_PASSWORD=<span class="hljs-string">&quot;<span class="hljs-subst">$(openssl rand -base64 24)</span>&quot;</span>
+<span class="hljs-built_in">export</span> DATA_DIR=<span class="hljs-string">&quot;/var/lib/9router&quot;</span>
+<span class="hljs-built_in">export</span> NODE_ENV=<span class="hljs-string">&quot;production&quot;</span>
+</code></pre>
+<p><strong>環境変数:</strong></p>
+<table><thead><tr><th>変数</th><th>デフォルト</th><th>説明</th></tr></thead><tbody><tr><td><code>JWT_SECRET</code></td><td>自動生成</td><td><strong>本番環境では必ず変更!</strong> JWTトークンの署名に使用</td></tr><tr><td><code>INITIAL_PASSWORD</code></td><td>新規インストールは <code>123456</code></td><td>公開前に強いランダム値を設定</td></tr><tr><td><code>DATA_DIR</code></td><td><code>~/.9router</code></td><td>データベースとデータの保存パス</td></tr><tr><td><code>NODE_ENV</code></td><td><code>development</code></td><td>デプロイ時は <code>production</code> に設定</td></tr><tr><td><code>ENABLE_REQUEST_LOGS</code></td><td><code>false</code></td><td>デバッグリクエスト/レスポンスログを有効化</td></tr></tbody></table>
+<h3 id="ステップ5-データディレクトリを作成">ステップ5: データディレクトリを作成</h3>
+<pre><code class="hljs language-bash"><span class="hljs-built_in">sudo</span> <span class="hljs-built_in">mkdir</span> -p /var/lib/9router
+<span class="hljs-built_in">sudo</span> <span class="hljs-built_in">chown</span> <span class="hljs-variable">$USER</span>:<span class="hljs-variable">$USER</span> /var/lib/9router
+</code></pre>
+<h3 id="ステップ6-アプリケーションを起動">ステップ6: アプリケーションを起動</h3>
+<pre><code class="hljs language-bash">npm run start
+</code></pre>
+<h3 id="ステップ7-本番環境用にpm2をセットアップ">ステップ7: 本番環境用にPM2をセットアップ</h3>
+<p>PM2はアプリケーションを稼働させ続け、クラッシュ時に再起動します:</p>
+<pre><code class="hljs language-bash"><span class="hljs-comment"># PM2をグローバルにインストール</span>
+npm install -g pm2
+
+<span class="hljs-comment"># PM2でVansRouterを起動</span>
+pm2 start npm --name vansrouter -- start
+
+<span class="hljs-comment"># PM2設定を保存</span>
+pm2 save
+
+<span class="hljs-comment"># システム起動時にPM2を開始するようセットアップ</span>
+pm2 startup
+<span class="hljs-comment"># 上記コマンドが出力する指示に従ってください</span>
+</code></pre>
+<p><strong>PM2管理コマンド:</strong></p>
+<pre><code class="hljs language-bash"><span class="hljs-comment"># ログを表示</span>
+pm2 logs vansrouter
+
+<span class="hljs-comment"># アプリケーションを再起動</span>
+pm2 restart vansrouter
+
+<span class="hljs-comment"># アプリケーションを停止</span>
+pm2 stop vansrouter
+
+<span class="hljs-comment"># ステータスを表示</span>
+pm2 status
+
+<span class="hljs-comment"># リソースをモニタリング</span>
+pm2 monit
+</code></pre>
+<hr/>
+<h2 id="dockerデプロイメント"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-container inline-block mr-2 align-[-0.15em] w-[1em] h-[1em] text-blue-500" aria-hidden="true"><path d="M22 7.7c0-.6-.4-1.2-.8-1.5l-6.3-3.9a1.72 1.72 0 0 0-1.7 0l-10.3 6c-.5.2-.9.8-.9 1.4v6.6c0 .5.4 1.2.8 1.5l6.3 3.9a1.72 1.72 0 0 0 1.7 0l10.3-6c.5-.3.9-1 .9-1.5Z"></path><path d="M10 21.9V14L2.1 9.1"></path><path d="m10 14 11.9-6.9"></path><path d="M14 19.8v-8.1"></path><path d="M18 17.5V9.4"></path></svg>Dockerデプロイメント</h2>
+<h3 id="オプション1-dockerfileを使用">オプション1: Dockerfileを使用</h3>
+<p><code>app</code> ディレクトリに <code>Dockerfile</code> を作成:</p>
+<pre><code class="hljs language-dockerfile">FROM node:22-alpine
+
+WORKDIR /app
+
+# Copy package files
+COPY package*.json ./
+
+# Install dependencies
+RUN npm ci --only=production
+
+# Copy application files
+COPY . .
+
+# Build application
+RUN npm run build
+
+# Expose ports
+EXPOSE 3000 20128
+
+# Set environment variables
+ENV NODE_ENV=production
+ENV DATA_DIR=/app/data
+
+# Create data directory
+RUN mkdir -p /app/data
+
+# Start application
+CMD [&quot;npm&quot;, &quot;run&quot;, &quot;start&quot;]
+</code></pre>
+<p><strong>ビルドと実行:</strong></p>
+<pre><code class="hljs language-bash"><span class="hljs-comment"># イメージをビルド</span>
+docker build -t 9router .
+
+<span class="hljs-comment"># コンテナを実行</span>
+docker run -d \
+  --name vansrouter \
+  -p 3000:3000 \
+  -p 20128:20128 \
+  -e JWT_SECRET=<span class="hljs-string">&quot;your-secure-secret-change-this&quot;</span> \
+  -e INITIAL_PASSWORD=<span class="hljs-string">&quot;<span class="hljs-subst">$(openssl rand -base64 24)</span>&quot;</span> \
+  -v 9router-data:/app/data \
+  vansrouter
+</code></pre>
+<h3 id="オプション2-docker-compose">オプション2: Docker Compose</h3>
+<p><code>docker-compose.yml</code> を作成:</p>
+<pre><code class="hljs language-yaml"><span class="hljs-attr">version:</span> <span class="hljs-string">&#x27;3.8&#x27;</span>
+
+<span class="hljs-attr">services:</span>
+  <span class="hljs-attr">9router:</span>
+    <span class="hljs-attr">build:</span> <span class="hljs-string">.</span>
+    <span class="hljs-attr">container_name:</span> <span class="hljs-string">9router</span>
+    <span class="hljs-attr">ports:</span>
+      <span class="hljs-bullet">-</span> <span class="hljs-string">&quot;3000:3000&quot;</span>
+      <span class="hljs-bullet">-</span> <span class="hljs-string">&quot;20128:20128&quot;</span>
+    <span class="hljs-attr">environment:</span>
+      <span class="hljs-bullet">-</span> <span class="hljs-string">NODE_ENV=production</span>
+      <span class="hljs-bullet">-</span> <span class="hljs-string">JWT_SECRET=your-secure-secret-change-this</span>
+      <span class="hljs-bullet">-</span> <span class="hljs-string">INITIAL_PASSWORD=${INITIAL_PASSWORD:?set</span> <span class="hljs-string">a</span> <span class="hljs-string">strong</span> <span class="hljs-string">password}</span>
+      <span class="hljs-bullet">-</span> <span class="hljs-string">DATA_DIR=/app/data</span>
+    <span class="hljs-attr">volumes:</span>
+      <span class="hljs-bullet">-</span> <span class="hljs-string">9router-data:/app/data</span>
+    <span class="hljs-attr">restart:</span> <span class="hljs-string">unless-stopped</span>
+
+<span class="hljs-attr">volumes:</span>
+  <span class="hljs-attr">9router-data:</span>
+</code></pre>
+<p><strong>Docker Composeで実行:</strong></p>
+<pre><code class="hljs language-bash"><span class="hljs-comment"># サービスを起動</span>
+docker-compose up -d
+
+<span class="hljs-comment"># ログを表示</span>
+docker-compose logs -f
+
+<span class="hljs-comment"># サービスを停止</span>
+docker-compose down
+
+<span class="hljs-comment"># 再ビルドして再起動</span>
+docker-compose up -d --build
+</code></pre>
+<hr/>
+<h2 id="nginxリバースプロキシ"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-globe inline-block mr-2 align-[-0.15em] w-[1em] h-[1em] text-blue-500" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"></path><path d="M2 12h20"></path></svg>Nginxリバースプロキシ</h2>
+<h3 id="nginxを使う理由">Nginxを使う理由</h3>
+<ul>
+<li>SSL/TLS終端</li>
+<li>ドメイン名マッピング</li>
+<li>ロードバランシング</li>
+<li>セキュリティ強化</li>
+</ul>
+<h3 id="ステップ1-nginxをインストール">ステップ1: Nginxをインストール</h3>
+<pre><code class="hljs language-bash"><span class="hljs-built_in">sudo</span> apt update
+<span class="hljs-built_in">sudo</span> apt install nginx
+</code></pre>
+<h3 id="ステップ2-nginxを設定">ステップ2: Nginxを設定</h3>
+<p><code>/etc/nginx/sites-available/9router</code> を作成:</p>
+<pre><code class="hljs language-nginx">server {
+    listen 80;
+    server_name your-domain.com;
+
+    # Redirect HTTP to HTTPS
+    return 301 https://$server_name$request_uri;
+}
+
+server {
+    listen 443 ssl http2;
+    server_name your-domain.com;
+
+    # SSL certificates (use certbot to generate)
+    ssl_certificate /etc/letsencrypt/live/your-domain.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/your-domain.com/privkey.pem;
+
+    # SSL configuration
+    ssl_protocols TLSv1.2 TLSv1.3;
+    ssl_ciphers HIGH:!aNULL:!MD5;
+    ssl_prefer_server_ciphers on;
+
+    # Proxy to VansRouter
+    location / {
+        proxy_pass http://localhost:3000;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection &#x27;upgrade&#x27;;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_cache_bypass $http_upgrade;
+        
+        # SSE support - CRITICAL for streaming
+        proxy_buffering off;
+        proxy_read_timeout 86400;
+    }
+
+    # API endpoint
+    location /v1 {
+        proxy_pass http://localhost:20128;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        
+        # SSE support - CRITICAL for streaming
+        proxy_buffering off;
+        proxy_read_timeout 86400;
+    }
+}
+</code></pre>
+<h3 id="ステップ3-サイトを有効化">ステップ3: サイトを有効化</h3>
+<pre><code class="hljs language-bash"><span class="hljs-comment"># シンボリックリンクを作成</span>
+<span class="hljs-built_in">sudo</span> <span class="hljs-built_in">ln</span> -s /etc/nginx/sites-available/9router /etc/nginx/sites-enabled/
+
+<span class="hljs-comment"># 設定をテスト</span>
+<span class="hljs-built_in">sudo</span> nginx -t
+
+<span class="hljs-comment"># Nginxをリロード</span>
+<span class="hljs-built_in">sudo</span> systemctl reload nginx
+</code></pre>
+<h3 id="ステップ4-lets-encryptでsslをセットアップ">ステップ4: Let&#x27;s EncryptでSSLをセットアップ</h3>
+<pre><code class="hljs language-bash"><span class="hljs-comment"># certbotをインストール</span>
+<span class="hljs-built_in">sudo</span> apt install certbot python3-certbot-nginx
+
+<span class="hljs-comment"># SSL証明書を取得</span>
+<span class="hljs-built_in">sudo</span> certbot --nginx -d your-domain.com
+
+<span class="hljs-comment"># 自動更新は自動的に設定されます</span>
+<span class="hljs-comment"># 更新をテスト</span>
+<span class="hljs-built_in">sudo</span> certbot renew --dry-run
+</code></pre>
+<hr/>
+<h2 id="セキュリティ考慮事項"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-lock inline-block mr-2 align-[-0.15em] w-[1em] h-[1em] text-gray-700" aria-hidden="true"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>セキュリティ考慮事項</h2>
+<h3 id="1-デフォルト認証情報を変更">1. デフォルト認証情報を変更</h3>
+<p><strong>重要:</strong> デプロイ前に <code>JWT_SECRET</code> と <code>INITIAL_PASSWORD</code> を変更:</p>
+<pre><code class="hljs language-bash"><span class="hljs-comment"># 安全なJWTシークレットを生成</span>
+openssl rand -<span class="hljs-built_in">base64</span> 32
+
+<span class="hljs-comment"># この値をJWT_SECRETに使用</span>
+<span class="hljs-built_in">export</span> JWT_SECRET=<span class="hljs-string">&quot;generated-secret-here&quot;</span>
+</code></pre>
+<h3 id="2-ファイアウォール設定">2. ファイアウォール設定</h3>
+<pre><code class="hljs language-bash"><span class="hljs-comment"># SSHを許可</span>
+<span class="hljs-built_in">sudo</span> ufw allow 22/tcp
+
+<span class="hljs-comment"># HTTP/HTTPSを許可 (Nginx使用時)</span>
+<span class="hljs-built_in">sudo</span> ufw allow 80/tcp
+<span class="hljs-built_in">sudo</span> ufw allow 443/tcp
+
+<span class="hljs-comment"># リバースプロキシを使用しない場合、VansRouterポートを許可</span>
+<span class="hljs-built_in">sudo</span> ufw allow 3000/tcp
+<span class="hljs-built_in">sudo</span> ufw allow 20128/tcp
+
+<span class="hljs-comment"># ファイアウォールを有効化</span>
+<span class="hljs-built_in">sudo</span> ufw <span class="hljs-built_in">enable</span>
+</code></pre>
+<h3 id="3-ダッシュボードアクセスを制限">3. ダッシュボードアクセスを制限</h3>
+<p>APIアクセスのみ必要な場合、ダッシュボードポートを制限:</p>
+<pre><code class="hljs language-bash"><span class="hljs-comment"># ダッシュボードへのlocalhostアクセスのみ許可</span>
+<span class="hljs-built_in">sudo</span> ufw deny 3000/tcp
+</code></pre>
+<p>SSHトンネル経由でダッシュボードにアクセス:</p>
+<pre><code class="hljs language-bash">ssh -L 3000:localhost:3000 user@your-server.com
+<span class="hljs-comment"># ブラウザで http://localhost:3000 を開く</span>
+</code></pre>
+<h3 id="4-定期的な更新">4. 定期的な更新</h3>
+<pre><code class="hljs language-bash"><span class="hljs-comment"># システムパッケージを更新</span>
+<span class="hljs-built_in">sudo</span> apt update &amp;&amp; <span class="hljs-built_in">sudo</span> apt upgrade -y
+
+<span class="hljs-comment"># VansRouterを更新</span>
+<span class="hljs-built_in">cd</span> /path/to/9router/app
+git pull
+npm install
+npm run build
+pm2 restart vansrouter
+</code></pre>
+<h3 id="5-バックアップ戦略">5. バックアップ戦略</h3>
+<pre><code class="hljs language-bash"><span class="hljs-comment"># データディレクトリをバックアップ</span>
+tar -czf vansrouter-backup-$(<span class="hljs-built_in">date</span> +%Y%m%d).tar.gz /var/lib/9router
+
+<span class="hljs-comment"># 自動毎日バックアップ (crontabに追加)</span>
+0 2 * * * tar -czf /backups/9router-$(<span class="hljs-built_in">date</span> +\%Y\%m\%d).tar.gz /var/lib/9router
+</code></pre>
+<hr/>
+<h2 id="モニタリング"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chart-column inline-block mr-2 align-[-0.15em] w-[1em] h-[1em] text-[#E68A6E]" aria-hidden="true"><path d="M3 3v16a2 2 0 0 0 2 2h16"></path><path d="M18 17V9"></path><path d="M13 17V5"></path><path d="M8 17v-3"></path></svg>モニタリング</h2>
+<h3 id="アプリケーションステータスを確認">アプリケーションステータスを確認</h3>
+<pre><code class="hljs language-bash"><span class="hljs-comment"># PM2ステータス</span>
+pm2 status
+
+<span class="hljs-comment"># ログを表示</span>
+pm2 logs vansrouter --lines 100
+
+<span class="hljs-comment"># リソースをモニタリング</span>
+pm2 monit
+</code></pre>
+<h3 id="nginxログ">Nginxログ</h3>
+<pre><code class="hljs language-bash"><span class="hljs-comment"># アクセスログ</span>
+<span class="hljs-built_in">sudo</span> <span class="hljs-built_in">tail</span> -f /var/log/nginx/access.log
+
+<span class="hljs-comment"># エラーログ</span>
+<span class="hljs-built_in">sudo</span> <span class="hljs-built_in">tail</span> -f /var/log/nginx/error.log
+</code></pre>
+<h3 id="システムリソース">システムリソース</h3>
+<pre><code class="hljs language-bash"><span class="hljs-comment"># CPUとメモリ使用量</span>
+htop
+
+<span class="hljs-comment"># ディスク使用量</span>
+<span class="hljs-built_in">df</span> -h
+
+<span class="hljs-comment"># ネットワーク接続</span>
+netstat -tulpn | grep -E <span class="hljs-string">&#x27;3000|20128&#x27;</span>
+</code></pre>
+<hr/>
+<h2 id="トラブルシューティング"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-siren inline-block mr-2 align-[-0.15em] w-[1em] h-[1em] text-red-500" aria-hidden="true"><path d="M7 18v-6a5 5 0 1 1 10 0v6"></path><path d="M5 21a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-1a2 2 0 0 0-2-2H7a2 2 0 0 0-2 2z"></path><path d="M21 12h1"></path><path d="M18.5 4.5 18 5"></path><path d="M2 12h1"></path><path d="M12 2v1"></path><path d="m4.929 4.929.707.707"></path><path d="M12 12v6"></path></svg>トラブルシューティング</h2>
+<h3 id="アプリケーションが起動しない">アプリケーションが起動しない</h3>
+<pre><code class="hljs language-bash"><span class="hljs-comment"># ログを確認</span>
+pm2 logs vansrouter
+
+<span class="hljs-comment"># ポートが使用中か確認</span>
+<span class="hljs-built_in">sudo</span> lsof -i :3000
+<span class="hljs-built_in">sudo</span> lsof -i :20128
+
+<span class="hljs-comment"># 環境変数を確認</span>
+pm2 <span class="hljs-built_in">env</span> vansrouter
+</code></pre>
+<h3 id="nginx-502-bad-gateway">Nginx 502 Bad Gateway</h3>
+<pre><code class="hljs language-bash"><span class="hljs-comment"># VansRouterが実行中か確認</span>
+pm2 status
+
+<span class="hljs-comment"># Nginxエラーログを確認</span>
+<span class="hljs-built_in">sudo</span> <span class="hljs-built_in">tail</span> -f /var/log/nginx/error.log
+
+<span class="hljs-comment"># Nginx設定をテスト</span>
+<span class="hljs-built_in">sudo</span> nginx -t
+</code></pre>
+<h3 id="sseストリーミングが動作しない">SSEストリーミングが動作しない</h3>
+<p>SSEサポート用にNginx設定で <code>proxy_buffering off</code> が設定されていることを確認。</p>
+<h3 id="permission-deniedエラー">Permission Deniedエラー</h3>
+<pre><code class="hljs language-bash"><span class="hljs-comment"># データディレクトリ権限を修正</span>
+<span class="hljs-built_in">sudo</span> <span class="hljs-built_in">chown</span> -R <span class="hljs-variable">$USER</span>:<span class="hljs-variable">$USER</span> /var/lib/9router
+<span class="hljs-built_in">chmod</span> 755 /var/lib/9router
+</code></pre>
+<hr/>
+<h2 id="次のステップ"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-link2 lucide-link-2 inline-block mr-2 align-[-0.15em] w-[1em] h-[1em] text-blue-500" aria-hidden="true"><path d="M9 17H7A5 5 0 0 1 7 7h2"></path><path d="M15 7h2a5 5 0 1 1 0 10h-2"></path><line x1="8" x2="16" y1="12" y2="12"></line></svg>次のステップ</h2>
+<ul>
+<li><a href="/providers/subscription.md">プロバイダーを接続</a></li>
+<li><a href="/features/combos.md">コンボをセットアップ</a></li>
+<li><a href="/integration/cursor.md">ツールと統合</a></li>
+</ul></div></article></main><div class="hidden lg:block"><aside class="hidden xl:block w-64 border-l bg-white border-gray-200 h-[calc(100vh-4rem)] sticky top-16 overflow-y-auto"><nav class="p-4"><h3 class="flex items-center gap-2 text-sm font-semibold text-gray-900 mb-3"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-list w-4 h-4" aria-hidden="true"><path d="M3 5h.01"></path><path d="M3 12h.01"></path><path d="M3 19h.01"></path><path d="M8 5h13"></path><path d="M8 12h13"></path><path d="M8 19h13"></path></svg>このページ</h3><ul class="space-y-2"><li><a href="#vpsデプロイメント" class="block text-sm transition-colors  text-gray-600 hover:text-gray-900">VPSデプロイメント</a></li><li><a href="#前提条件" class="block text-sm transition-colors pl-4 text-gray-600 hover:text-gray-900">前提条件</a></li><li><a href="#ステップ1-リポジトリをクローン" class="block text-sm transition-colors pl-4 text-gray-600 hover:text-gray-900">ステップ1: リポジトリをクローン</a></li><li><a href="#ステップ2-依存関係をインストール" class="block text-sm transition-colors pl-4 text-gray-600 hover:text-gray-900">ステップ2: 依存関係をインストール</a></li><li><a href="#ステップ3-アプリケーションをビルド" class="block text-sm transition-colors pl-4 text-gray-600 hover:text-gray-900">ステップ3: アプリケーションをビルド</a></li><li><a href="#ステップ4-環境変数を設定" class="block text-sm transition-colors pl-4 text-gray-600 hover:text-gray-900">ステップ4: 環境変数を設定</a></li><li><a href="#ステップ5-データディレクトリを作成" class="block text-sm transition-colors pl-4 text-gray-600 hover:text-gray-900">ステップ5: データディレクトリを作成</a></li><li><a href="#ステップ6-アプリケーションを起動" class="block text-sm transition-colors pl-4 text-gray-600 hover:text-gray-900">ステップ6: アプリケーションを起動</a></li><li><a href="#ステップ7-本番環境用にpm2をセットアップ" class="block text-sm transition-colors pl-4 text-gray-600 hover:text-gray-900">ステップ7: 本番環境用にPM2をセットアップ</a></li><li><a href="#dockerデプロイメント" class="block text-sm transition-colors  text-gray-600 hover:text-gray-900">Dockerデプロイメント</a></li><li><a href="#オプション1-dockerfileを使用" class="block text-sm transition-colors pl-4 text-gray-600 hover:text-gray-900">オプション1: Dockerfileを使用</a></li><li><a href="#オプション2-docker-compose" class="block text-sm transition-colors pl-4 text-gray-600 hover:text-gray-900">オプション2: Docker Compose</a></li><li><a href="#nginxリバースプロキシ" class="block text-sm transition-colors  text-gray-600 hover:text-gray-900">Nginxリバースプロキシ</a></li><li><a href="#nginxを使う理由" class="block text-sm transition-colors pl-4 text-gray-600 hover:text-gray-900">Nginxを使う理由</a></li><li><a href="#ステップ1-nginxをインストール" class="block text-sm transition-colors pl-4 text-gray-600 hover:text-gray-900">ステップ1: Nginxをインストール</a></li><li><a href="#ステップ2-nginxを設定" class="block text-sm transition-colors pl-4 text-gray-600 hover:text-gray-900">ステップ2: Nginxを設定</a></li><li><a href="#ステップ3-サイトを有効化" class="block text-sm transition-colors pl-4 text-gray-600 hover:text-gray-900">ステップ3: サイトを有効化</a></li><li><a href="#ステップ4-lets-encryptでsslをセットアップ" class="block text-sm transition-colors pl-4 text-gray-600 hover:text-gray-900">ステップ4: Let&#x27;s EncryptでSSLをセットアップ</a></li><li><a href="#セキュリティ考慮事項" class="block text-sm transition-colors  text-gray-600 hover:text-gray-900">セキュリティ考慮事項</a></li><li><a href="#1-デフォルト認証情報を変更" class="block text-sm transition-colors pl-4 text-gray-600 hover:text-gray-900">1. デフォルト認証情報を変更</a></li><li><a href="#2-ファイアウォール設定" class="block text-sm transition-colors pl-4 text-gray-600 hover:text-gray-900">2. ファイアウォール設定</a></li><li><a href="#3-ダッシュボードアクセスを制限" class="block text-sm transition-colors pl-4 text-gray-600 hover:text-gray-900">3. ダッシュボードアクセスを制限</a></li><li><a href="#4-定期的な更新" class="block text-sm transition-colors pl-4 text-gray-600 hover:text-gray-900">4. 定期的な更新</a></li><li><a href="#5-バックアップ戦略" class="block text-sm transition-colors pl-4 text-gray-600 hover:text-gray-900">5. バックアップ戦略</a></li><li><a href="#モニタリング" class="block text-sm transition-colors  text-gray-600 hover:text-gray-900">モニタリング</a></li><li><a href="#アプリケーションステータスを確認" class="block text-sm transition-colors pl-4 text-gray-600 hover:text-gray-900">アプリケーションステータスを確認</a></li><li><a href="#nginxログ" class="block text-sm transition-colors pl-4 text-gray-600 hover:text-gray-900">Nginxログ</a></li><li><a href="#システムリソース" class="block text-sm transition-colors pl-4 text-gray-600 hover:text-gray-900">システムリソース</a></li><li><a href="#トラブルシューティング" class="block text-sm transition-colors  text-gray-600 hover:text-gray-900">トラブルシューティング</a></li><li><a href="#アプリケーションが起動しない" class="block text-sm transition-colors pl-4 text-gray-600 hover:text-gray-900">アプリケーションが起動しない</a></li><li><a href="#nginx-502-bad-gateway" class="block text-sm transition-colors pl-4 text-gray-600 hover:text-gray-900">Nginx 502 Bad Gateway</a></li><li><a href="#sseストリーミングが動作しない" class="block text-sm transition-colors pl-4 text-gray-600 hover:text-gray-900">SSEストリーミングが動作しない</a></li><li><a href="#permission-deniedエラー" class="block text-sm transition-colors pl-4 text-gray-600 hover:text-gray-900">Permission Deniedエラー</a></li><li><a href="#次のステップ" class="block text-sm transition-colors  text-gray-600 hover:text-gray-900">次のステップ</a></li></ul></nav></aside></div></div></div></div><!--$--><!--/$--><script src="/VansRouter/_next/static/chunks/343aa45b5611d01d.js" id="_R_" async=""></script><script>(self.__next_f=self.__next_f||[]).push([0])</script><script>self.__next_f.push([1,"1:\"$Sreact.fragment\"\n2:I[39756,[\"/VansRouter/_next/static/chunks/ff1a16fafef87110.js\",\"/VansRouter/_next/static/chunks/803a574de9eda7ae.js\"],\"default\"]\n3:I[37457,[\"/VansRouter/_next/static/chunks/ff1a16fafef87110.js\",\"/VansRouter/_next/static/chunks/803a574de9eda7ae.js\"],\"default\"]\n5:I[97367,[\"/VansRouter/_next/static/chunks/ff1a16fafef87110.js\",\"/VansRouter/_next/static/chunks/803a574de9eda7ae.js\"],\"OutletBoundary\"]\n6:\"$Sreact.suspense\"\n8:I[97367,[\"/VansRouter/_next/static/chunks/ff1a16fafef87110.js\",\"/VansRouter/_next/static/chunks/803a574de9eda7ae.js\"],\"ViewportBoundary\"]\na:I[97367,[\"/VansRouter/_next/static/chunks/ff1a16fafef87110.js\",\"/VansRouter/_next/static/chunks/803a574de9eda7ae.js\"],\"MetadataBoundary\"]\nc:I[68027,[\"/VansRouter/_next/static/chunks/ff1a16fafef87110.js\",\"/VansRouter/_next/static/chunks/803a574de9eda7ae.js\"],\"default\"]\n:HL[\"/VansRouter/_next/static/chunks/71d10a355cb8f2d7.css\",\"style\"]\n"])</script><script>self.__next_f.push([1,"0:{\"P\":null,\"b\":\"PUpTBY-8r_zZtEM8SJOLp\",\"c\":[\"\",\"ja\",\"deployment\",\"cloud\",\"\"],\"q\":\"\",\"i\":false,\"f\":[[[\"\",{\"children\":[[\"lang\",\"ja\",\"d\"],{\"children\":[[\"slug\",\"deployment/cloud\",\"c\"],{\"children\":[\"__PAGE__\",{}]}]}]},\"$undefined\",\"$undefined\",true],[[\"$\",\"$1\",\"c\",{\"children\":[[[\"$\",\"link\",\"0\",{\"rel\":\"stylesheet\",\"href\":\"/VansRouter/_next/static/chunks/71d10a355cb8f2d7.css\",\"precedence\":\"next\",\"crossOrigin\":\"$undefined\",\"nonce\":\"$undefined\"}]],[\"$\",\"html\",null,{\"lang\":\"en\",\"children\":[[\"$\",\"head\",null,{}],[\"$\",\"body\",null,{\"className\":\"bg-[#FCFBF9] text-[#6B7280]\",\"children\":[\"$\",\"$L2\",null,{\"parallelRouterKey\":\"children\",\"error\":\"$undefined\",\"errorStyles\":\"$undefined\",\"errorScripts\":\"$undefined\",\"template\":[\"$\",\"$L3\",null,{}],\"templateStyles\":\"$undefined\",\"templateScripts\":\"$undefined\",\"notFound\":[[[\"$\",\"title\",null,{\"children\":\"404: This page could not be found.\"}],[\"$\",\"div\",null,{\"style\":{\"fontFamily\":\"system-ui,\\\"Segoe UI\\\",Roboto,Helvetica,Arial,sans-serif,\\\"Apple Color Emoji\\\",\\\"Segoe UI Emoji\\\"\",\"height\":\"100vh\",\"textAlign\":\"center\",\"display\":\"flex\",\"flexDirection\":\"column\",\"alignItems\":\"center\",\"justifyContent\":\"center\"},\"children\":[\"$\",\"div\",null,{\"children\":[[\"$\",\"style\",null,{\"dangerouslySetInnerHTML\":{\"__html\":\"body{color:#000;background:#fff;margin:0}.next-error-h1{border-right:1px solid rgba(0,0,0,.3)}@media (prefers-color-scheme:dark){body{color:#fff;background:#000}.next-error-h1{border-right:1px solid rgba(255,255,255,.3)}}\"}}],[\"$\",\"h1\",null,{\"className\":\"next-error-h1\",\"style\":{\"display\":\"inline-block\",\"margin\":\"0 20px 0 0\",\"padding\":\"0 23px 0 0\",\"fontSize\":24,\"fontWeight\":500,\"verticalAlign\":\"top\",\"lineHeight\":\"49px\"},\"children\":404}],[\"$\",\"div\",null,{\"style\":{\"display\":\"inline-block\"},\"children\":[\"$\",\"h2\",null,{\"style\":{\"fontSize\":14,\"fontWeight\":400,\"lineHeight\":\"49px\",\"margin\":0},\"children\":\"This page could not be found.\"}]}]]}]}]],[]],\"forbidden\":\"$undefined\",\"unauthorized\":\"$undefined\"}]}]]}]]}],{\"children\":[[\"$\",\"$1\",\"c\",{\"children\":[null,[\"$\",\"$L2\",null,{\"parallelRouterKey\":\"children\",\"error\":\"$undefined\",\"errorStyles\":\"$undefined\",\"errorScripts\":\"$undefined\",\"template\":[\"$\",\"$L3\",null,{}],\"templateStyles\":\"$undefined\",\"templateScripts\":\"$undefined\",\"notFound\":\"$undefined\",\"forbidden\":\"$undefined\",\"unauthorized\":\"$undefined\"}]]}],{\"children\":[[\"$\",\"$1\",\"c\",{\"children\":[null,[\"$\",\"$L2\",null,{\"parallelRouterKey\":\"children\",\"error\":\"$undefined\",\"errorStyles\":\"$undefined\",\"errorScripts\":\"$undefined\",\"template\":[\"$\",\"$L3\",null,{}],\"templateStyles\":\"$undefined\",\"templateScripts\":\"$undefined\",\"notFound\":\"$undefined\",\"forbidden\":\"$undefined\",\"unauthorized\":\"$undefined\"}]]}],{\"children\":[[\"$\",\"$1\",\"c\",{\"children\":[\"$L4\",[[\"$\",\"script\",\"script-0\",{\"src\":\"/VansRouter/_next/static/chunks/ff1a16fafef87110.js\",\"async\":true,\"nonce\":\"$undefined\"}],[\"$\",\"script\",\"script-1\",{\"src\":\"/VansRouter/_next/static/chunks/3ba79d5b01800fdc.js\",\"async\":true,\"nonce\":\"$undefined\"}]],[\"$\",\"$L5\",null,{\"children\":[\"$\",\"$6\",null,{\"name\":\"Next.MetadataOutlet\",\"children\":\"$@7\"}]}]]}],{},null,false,false]},null,false,false]},null,false,false]},null,false,false],[\"$\",\"$1\",\"h\",{\"children\":[null,[\"$\",\"$L8\",null,{\"children\":\"$L9\"}],[\"$\",\"div\",null,{\"hidden\":true,\"children\":[\"$\",\"$La\",null,{\"children\":[\"$\",\"$6\",null,{\"name\":\"Next.Metadata\",\"children\":\"$Lb\"}]}]}],null]}],false]],\"m\":\"$undefined\",\"G\":[\"$c\",[]],\"S\":true}\n"])</script><script>self.__next_f.push([1,"d:I[81956,[\"/VansRouter/_next/static/chunks/ff1a16fafef87110.js\",\"/VansRouter/_next/static/chunks/3ba79d5b01800fdc.js\"],\"default\"]\ne:I[22982,[\"/VansRouter/_next/static/chunks/ff1a16fafef87110.js\",\"/VansRouter/_next/static/chunks/3ba79d5b01800fdc.js\"],\"default\"]\nf:T2806,"])</script><script>self.__next_f.push([1,"# ☁️ クラウドデプロイメント\r\n\r\nリモートアクセスと本番利用のため、VPSまたはDockerにVansRouterをデプロイ。\r\n\r\n---\r\n\r\n## 🖥️ VPSデプロイメント\r\n\r\n### 前提条件\r\n\r\n- Ubuntu 20.04+ または同様のLinuxディストリビューション\r\n- Node.js 20以上\r\n- Git\r\n- rootまたはsudoアクセス\r\n\r\n### ステップ1: リポジトリをクローン\r\n\r\n```bash\r\ngit clone https://github.com/Vanszs/VansRouter.git\r\ncd VansRouter\r\n```\r\n\r\n### ステップ2: 依存関係をインストール\r\n\r\n```bash\r\nnpm install\r\n```\r\n\r\n### ステップ3: アプリケーションをビルド\r\n\r\n```bash\r\nnpm run build\r\n```\r\n\r\n### ステップ4: 環境変数を設定\r\n\r\n`.env` ファイルを作成するか、変数をエクスポート:\r\n\r\n```bash\r\nexport JWT_SECRET=\"your-secure-secret-change-this-to-random-string\"\r\nexport INITIAL_PASSWORD=\"$(openssl rand -base64 24)\"\r\nexport DATA_DIR=\"/var/lib/9router\"\r\nexport NODE_ENV=\"production\"\r\n```\r\n\r\n**環境変数:**\r\n\r\n| 変数 | デフォルト | 説明 |\r\n|----------|---------|-------------|\r\n| `JWT_SECRET` | 自動生成 | **本番環境では必ず変更!** JWTトークンの署名に使用 |\r\n| `INITIAL_PASSWORD` | 新規インストールは `123456` | 公開前に強いランダム値を設定 |\r\n| `DATA_DIR` | `~/.9router` | データベースとデータの保存パス |\r\n| `NODE_ENV` | `development` | デプロイ時は `production` に設定 |\r\n| `ENABLE_REQUEST_LOGS` | `false` | デバッグリクエスト/レスポンスログを有効化 |\r\n\r\n### ステップ5: データディレクトリを作成\r\n\r\n```bash\r\nsudo mkdir -p /var/lib/9router\r\nsudo chown $USER:$USER /var/lib/9router\r\n```\r\n\r\n### ステップ6: アプリケーションを起動\r\n\r\n```bash\r\nnpm run start\r\n```\r\n\r\n### ステップ7: 本番環境用にPM2をセットアップ\r\n\r\nPM2はアプリケーションを稼働させ続け、クラッシュ時に再起動します:\r\n\r\n```bash\r\n# PM2をグローバルにインストール\r\nnpm install -g pm2\r\n\r\n# PM2でVansRouterを起動\r\npm2 start npm --name vansrouter -- start\r\n\r\n# PM2設定を保存\r\npm2 save\r\n\r\n# システム起動時にPM2を開始するようセットアップ\r\npm2 startup\r\n# 上記コマンドが出力する指示に従ってください\r\n```\r\n\r\n**PM2管理コマンド:**\r\n\r\n```bash\r\n# ログを表示\r\npm2 logs vansrouter\r\n\r\n# アプリケーションを再起動\r\npm2 restart vansrouter\r\n\r\n# アプリケーションを停止\r\npm2 stop vansrouter\r\n\r\n# ステータスを表示\r\npm2 status\r\n\r\n# リソースをモニタリング\r\npm2 monit\r\n```\r\n\r\n---\r\n\r\n## 🐳 Dockerデプロイメント\r\n\r\n### オプション1: Dockerfileを使用\r\n\r\n`app` ディレクトリに `Dockerfile` を作成:\r\n\r\n```dockerfile\r\nFROM node:22-alpine\r\n\r\nWORKDIR /app\r\n\r\n# Copy package files\r\nCOPY package*.json ./\r\n\r\n# Install dependencies\r\nRUN npm ci --only=production\r\n\r\n# Copy application files\r\nCOPY . .\r\n\r\n# Build application\r\nRUN npm run build\r\n\r\n# Expose ports\r\nEXPOSE 3000 20128\r\n\r\n# Set environment variables\r\nENV NODE_ENV=production\r\nENV DATA_DIR=/app/data\r\n\r\n# Create data directory\r\nRUN mkdir -p /app/data\r\n\r\n# Start application\r\nCMD [\"npm\", \"run\", \"start\"]\r\n```\r\n\r\n**ビルドと実行:**\r\n\r\n```bash\r\n# イメージをビルド\r\ndocker build -t 9router .\r\n\r\n# コンテナを実行\r\ndocker run -d \\\r\n  --name vansrouter \\\r\n  -p 3000:3000 \\\r\n  -p 20128:20128 \\\r\n  -e JWT_SECRET=\"your-secure-secret-change-this\" \\\r\n  -e INITIAL_PASSWORD=\"$(openssl rand -base64 24)\" \\\r\n  -v 9router-data:/app/data \\\r\n  vansrouter\r\n```\r\n\r\n### オプション2: Docker Compose\r\n\r\n`docker-compose.yml` を作成:\r\n\r\n```yaml\r\nversion: '3.8'\r\n\r\nservices:\r\n  9router:\r\n    build: .\r\n    container_name: 9router\r\n    ports:\r\n      - \"3000:3000\"\r\n      - \"20128:20128\"\r\n    environment:\r\n      - NODE_ENV=production\r\n      - JWT_SECRET=your-secure-secret-change-this\r\n      - INITIAL_PASSWORD=${INITIAL_PASSWORD:?set a strong password}\r\n      - DATA_DIR=/app/data\r\n    volumes:\r\n      - 9router-data:/app/data\r\n    restart: unless-stopped\r\n\r\nvolumes:\r\n  9router-data:\r\n```\r\n\r\n**Docker Composeで実行:**\r\n\r\n```bash\r\n# サービスを起動\r\ndocker-compose up -d\r\n\r\n# ログを表示\r\ndocker-compose logs -f\r\n\r\n# サービスを停止\r\ndocker-compose down\r\n\r\n# 再ビルドして再起動\r\ndocker-compose up -d --build\r\n```\r\n\r\n---\r\n\r\n## 🌐 Nginxリバースプロキシ\r\n\r\n### Nginxを使う理由\r\n\r\n- SSL/TLS終端\r\n- ドメイン名マッピング\r\n- ロードバランシング\r\n- セキュリティ強化\r\n\r\n### ステップ1: Nginxをインストール\r\n\r\n```bash\r\nsudo apt update\r\nsudo apt install nginx\r\n```\r\n\r\n### ステップ2: Nginxを設定\r\n\r\n`/etc/nginx/sites-available/9router` を作成:\r\n\r\n```nginx\r\nserver {\r\n    listen 80;\r\n    server_name your-domain.com;\r\n\r\n    # Redirect HTTP to HTTPS\r\n    return 301 https://$server_name$request_uri;\r\n}\r\n\r\nserver {\r\n    listen 443 ssl http2;\r\n    server_name your-domain.com;\r\n\r\n    # SSL certificates (use certbot to generate)\r\n    ssl_certificate /etc/letsencrypt/live/your-domain.com/fullchain.pem;\r\n    ssl_certificate_key /etc/letsencrypt/live/your-domain.com/privkey.pem;\r\n\r\n    # SSL configuration\r\n    ssl_protocols TLSv1.2 TLSv1.3;\r\n    ssl_ciphers HIGH:!aNULL:!MD5;\r\n    ssl_prefer_server_ciphers on;\r\n\r\n    # Proxy to VansRouter\r\n    location / {\r\n        proxy_pass http://localhost:3000;\r\n        proxy_http_version 1.1;\r\n        proxy_set_header Upgrade $http_upgrade;\r\n        proxy_set_header Connection 'upgrade';\r\n        proxy_set_header Host $host;\r\n        proxy_set_header X-Real-IP $remote_addr;\r\n        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;\r\n        proxy_set_header X-Forwarded-Proto $scheme;\r\n        proxy_cache_bypass $http_upgrade;\r\n        \r\n        # SSE support - CRITICAL for streaming\r\n        proxy_buffering off;\r\n        proxy_read_timeout 86400;\r\n    }\r\n\r\n    # API endpoint\r\n    location /v1 {\r\n        proxy_pass http://localhost:20128;\r\n        proxy_http_version 1.1;\r\n        proxy_set_header Host $host;\r\n        proxy_set_header X-Real-IP $remote_addr;\r\n        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;\r\n        proxy_set_header X-Forwarded-Proto $scheme;\r\n        \r\n        # SSE support - CRITICAL for streaming\r\n        proxy_buffering off;\r\n        proxy_read_timeout 86400;\r\n    }\r\n}\r\n```\r\n\r\n### ステップ3: サイトを有効化\r\n\r\n```bash\r\n# シンボリックリンクを作成\r\nsudo ln -s /etc/nginx/sites-available/9router /etc/nginx/sites-enabled/\r\n\r\n# 設定をテスト\r\nsudo nginx -t\r\n\r\n# Nginxをリロード\r\nsudo systemctl reload nginx\r\n```\r\n\r\n### ステップ4: Let's EncryptでSSLをセットアップ\r\n\r\n```bash\r\n# certbotをインストール\r\nsudo apt install certbot python3-certbot-nginx\r\n\r\n# SSL証明書を取得\r\nsudo certbot --nginx -d your-domain.com\r\n\r\n# 自動更新は自動的に設定されます\r\n# 更新をテスト\r\nsudo certbot renew --dry-run\r\n```\r\n\r\n---\r\n\r\n## 🔒 セキュリティ考慮事項\r\n\r\n### 1. デフォルト認証情報を変更\r\n\r\n**重要:** デプロイ前に `JWT_SECRET` と `INITIAL_PASSWORD` を変更:\r\n\r\n```bash\r\n# 安全なJWTシークレットを生成\r\nopenssl rand -base64 32\r\n\r\n# この値をJWT_SECRETに使用\r\nexport JWT_SECRET=\"generated-secret-here\"\r\n```\r\n\r\n### 2. ファイアウォール設定\r\n\r\n```bash\r\n# SSHを許可\r\nsudo ufw allow 22/tcp\r\n\r\n# HTTP/HTTPSを許可 (Nginx使用時)\r\nsudo ufw allow 80/tcp\r\nsudo ufw allow 443/tcp\r\n\r\n# リバースプロキシを使用しない場合、VansRouterポートを許可\r\nsudo ufw allow 3000/tcp\r\nsudo ufw allow 20128/tcp\r\n\r\n# ファイアウォールを有効化\r\nsudo ufw enable\r\n```\r\n\r\n### 3. ダッシュボードアクセスを制限\r\n\r\nAPIアクセスのみ必要な場合、ダッシュボードポートを制限:\r\n\r\n```bash\r\n# ダッシュボードへのlocalhostアクセスのみ許可\r\nsudo ufw deny 3000/tcp\r\n```\r\n\r\nSSHトンネル経由でダッシュボードにアクセス:\r\n\r\n```bash\r\nssh -L 3000:localhost:3000 user@your-server.com\r\n# ブラウザで http://localhost:3000 を開く\r\n```\r\n\r\n### 4. 定期的な更新\r\n\r\n```bash\r\n# システムパッケージを更新\r\nsudo apt update \u0026\u0026 sudo apt upgrade -y\r\n\r\n# VansRouterを更新\r\ncd /path/to/9router/app\r\ngit pull\r\nnpm install\r\nnpm run build\r\npm2 restart vansrouter\r\n```\r\n\r\n### 5. バックアップ戦略\r\n\r\n```bash\r\n# データディレクトリをバックアップ\r\ntar -czf vansrouter-backup-$(date +%Y%m%d).tar.gz /var/lib/9router\r\n\r\n# 自動毎日バックアップ (crontabに追加)\r\n0 2 * * * tar -czf /backups/9router-$(date +\\%Y\\%m\\%d).tar.gz /var/lib/9router\r\n```\r\n\r\n---\r\n\r\n## 📊 モニタリング\r\n\r\n### アプリケーションステータスを確認\r\n\r\n```bash\r\n# PM2ステータス\r\npm2 status\r\n\r\n# ログを表示\r\npm2 logs vansrouter --lines 100\r\n\r\n# リソースをモニタリング\r\npm2 monit\r\n```\r\n\r\n### Nginxログ\r\n\r\n```bash\r\n# アクセスログ\r\nsudo tail -f /var/log/nginx/access.log\r\n\r\n# エラーログ\r\nsudo tail -f /var/log/nginx/error.log\r\n```\r\n\r\n### システムリソース\r\n\r\n```bash\r\n# CPUとメモリ使用量\r\nhtop\r\n\r\n# ディスク使用量\r\ndf -h\r\n\r\n# ネットワーク接続\r\nnetstat -tulpn | grep -E '3000|20128'\r\n```\r\n\r\n---\r\n\r\n## 🚨 トラブルシューティング\r\n\r\n### アプリケーションが起動しない\r\n\r\n```bash\r\n# ログを確認\r\npm2 logs vansrouter\r\n\r\n# ポートが使用中か確認\r\nsudo lsof -i :3000\r\nsudo lsof -i :20128\r\n\r\n# 環境変数を確認\r\npm2 env vansrouter\r\n```\r\n\r\n### Nginx 502 Bad Gateway\r\n\r\n```bash\r\n# VansRouterが実行中か確認\r\npm2 status\r\n\r\n# Nginxエラーログを確認\r\nsudo tail -f /var/log/nginx/error.log\r\n\r\n# Nginx設定をテスト\r\nsudo nginx -t\r\n```\r\n\r\n### SSEストリーミングが動作しない\r\n\r\nSSEサポート用にNginx設定で `proxy_buffering off` が設定されていることを確認。\r\n\r\n### Permission Deniedエラー\r\n\r\n```bash\r\n# データディレクトリ権限を修正\r\nsudo chown -R $USER:$USER /var/lib/9router\r\nchmod 755 /var/lib/9router\r\n```\r\n\r\n---\r\n\r\n## 🔗 次のステップ\r\n\r\n- [プロバイダーを接続](/providers/subscription.md)\r\n- [コンボをセットアップ](/features/combos.md)\r\n- [ツールと統合](/integration/cursor.md)\r\n"])</script><script>self.__next_f.push([1,"4:[\"$\",\"$Ld\",null,{\"headings\":[{\"level\":2,\"text\":\"VPSデプロイメント\",\"id\":\"vpsデプロイメント\"},{\"level\":3,\"text\":\"前提条件\",\"id\":\"前提条件\"},{\"level\":3,\"text\":\"ステップ1: リポジトリをクローン\",\"id\":\"ステップ1-リポジトリをクローン\"},{\"level\":3,\"text\":\"ステップ2: 依存関係をインストール\",\"id\":\"ステップ2-依存関係をインストール\"},{\"level\":3,\"text\":\"ステップ3: アプリケーションをビルド\",\"id\":\"ステップ3-アプリケーションをビルド\"},{\"level\":3,\"text\":\"ステップ4: 環境変数を設定\",\"id\":\"ステップ4-環境変数を設定\"},{\"level\":3,\"text\":\"ステップ5: データディレクトリを作成\",\"id\":\"ステップ5-データディレクトリを作成\"},{\"level\":3,\"text\":\"ステップ6: アプリケーションを起動\",\"id\":\"ステップ6-アプリケーションを起動\"},{\"level\":3,\"text\":\"ステップ7: 本番環境用にPM2をセットアップ\",\"id\":\"ステップ7-本番環境用にpm2をセットアップ\"},{\"level\":2,\"text\":\"Dockerデプロイメント\",\"id\":\"dockerデプロイメント\"},{\"level\":3,\"text\":\"オプション1: Dockerfileを使用\",\"id\":\"オプション1-dockerfileを使用\"},{\"level\":3,\"text\":\"オプション2: Docker Compose\",\"id\":\"オプション2-docker-compose\"},{\"level\":2,\"text\":\"Nginxリバースプロキシ\",\"id\":\"nginxリバースプロキシ\"},{\"level\":3,\"text\":\"Nginxを使う理由\",\"id\":\"nginxを使う理由\"},{\"level\":3,\"text\":\"ステップ1: Nginxをインストール\",\"id\":\"ステップ1-nginxをインストール\"},{\"level\":3,\"text\":\"ステップ2: Nginxを設定\",\"id\":\"ステップ2-nginxを設定\"},{\"level\":3,\"text\":\"ステップ3: サイトを有効化\",\"id\":\"ステップ3-サイトを有効化\"},{\"level\":3,\"text\":\"ステップ4: Let's EncryptでSSLをセットアップ\",\"id\":\"ステップ4-lets-encryptでsslをセットアップ\"},{\"level\":2,\"text\":\"セキュリティ考慮事項\",\"id\":\"セキュリティ考慮事項\"},{\"level\":3,\"text\":\"1. デフォルト認証情報を変更\",\"id\":\"1-デフォルト認証情報を変更\"},{\"level\":3,\"text\":\"2. ファイアウォール設定\",\"id\":\"2-ファイアウォール設定\"},{\"level\":3,\"text\":\"3. ダッシュボードアクセスを制限\",\"id\":\"3-ダッシュボードアクセスを制限\"},{\"level\":3,\"text\":\"4. 定期的な更新\",\"id\":\"4-定期的な更新\"},{\"level\":3,\"text\":\"5. バックアップ戦略\",\"id\":\"5-バックアップ戦略\"},{\"level\":2,\"text\":\"モニタリング\",\"id\":\"モニタリング\"},{\"level\":3,\"text\":\"アプリケーションステータスを確認\",\"id\":\"アプリケーションステータスを確認\"},{\"level\":3,\"text\":\"Nginxログ\",\"id\":\"nginxログ\"},{\"level\":3,\"text\":\"システムリソース\",\"id\":\"システムリソース\"},{\"level\":2,\"text\":\"トラブルシューティング\",\"id\":\"トラブルシューティング\"},{\"level\":3,\"text\":\"アプリケーションが起動しない\",\"id\":\"アプリケーションが起動しない\"},{\"level\":3,\"text\":\"Nginx 502 Bad Gateway\",\"id\":\"nginx-502-bad-gateway\"},{\"level\":3,\"text\":\"SSEストリーミングが動作しない\",\"id\":\"sseストリーミングが動作しない\"},{\"level\":3,\"text\":\"Permission Deniedエラー\",\"id\":\"permission-deniedエラー\"},{\"level\":2,\"text\":\"次のステップ\",\"id\":\"次のステップ\"}],\"lang\":\"ja\",\"children\":[\"$\",\"$Le\",null,{\"content\":\"$f\"}]}]\n"])</script><script>self.__next_f.push([1,"9:[[\"$\",\"meta\",\"0\",{\"charSet\":\"utf-8\"}],[\"$\",\"meta\",\"1\",{\"name\":\"viewport\",\"content\":\"width=device-width, initial-scale=1\"}]]\n"])</script><script>self.__next_f.push([1,"7:null\nb:[[\"$\",\"title\",\"0\",{\"children\":\"9Router Documentation\"}],[\"$\",\"meta\",\"1\",{\"name\":\"description\",\"content\":\"Smart AI model router - Maximize subscriptions, minimize costs\"}]]\n"])</script></body></html>

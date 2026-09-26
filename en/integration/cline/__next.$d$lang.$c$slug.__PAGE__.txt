@@ -1,0 +1,211 @@
+1:"$Sreact.fragment"
+2:I[81956,["/VansRouter/_next/static/chunks/ff1a16fafef87110.js","/VansRouter/_next/static/chunks/3ba79d5b01800fdc.js"],"default"]
+3:I[22982,["/VansRouter/_next/static/chunks/ff1a16fafef87110.js","/VansRouter/_next/static/chunks/3ba79d5b01800fdc.js"],"default"]
+8:I[97367,["/VansRouter/_next/static/chunks/ff1a16fafef87110.js","/VansRouter/_next/static/chunks/803a574de9eda7ae.js"],"OutletBoundary"]
+9:"$Sreact.suspense"
+4:T1670,# Cline Integration
+
+Integrate VansRouter with Cline VSCode extension to route your AI requests through VansRouter's intelligent routing system.
+
+## Prerequisites
+
+- Visual Studio Code installed
+- Cline extension installed from VSCode marketplace
+- VansRouter running locally or cloud endpoint configured
+- API key from VansRouter dashboard
+
+## Setup
+
+### 1. Open Cline Settings
+
+1. Open Visual Studio Code
+2. Open the Cline extension panel (click the Cline icon in the sidebar)
+3. Click the **Settings** icon (gear icon) in the Cline panel
+
+### 2. Select API Provider
+
+1. In the Cline settings, find **API Provider** dropdown
+2. Select **Ollama** from the list
+   - Note: We use Ollama provider type because it's compatible with OpenAI-style APIs
+
+### 3. Configure Base URL
+
+Set the base URL to your VansRouter endpoint:
+
+**For Local VansRouter:**
+```
+http://localhost:20128/v1
+```
+
+**For Cloud VansRouter:**
+```
+http://localhost:20128
+```
+
+**Steps:**
+1. In the **Base URL** field, enter your VansRouter endpoint
+2. Make sure to include `/v1` at the end
+
+### 4. Add API Key
+
+1. In the **API Key** field, enter your VansRouter API key
+2. You can find your API key in the VansRouter dashboard under **Settings → API Keys**
+3. The key should start with `sk-your-key-`
+
+### 5. Select Model
+
+1. In the **Model** dropdown, you can either:
+   - Select from available models (if Cline auto-detects them)
+   - Manually enter the model name from your VansRouter configuration
+
+2. Common model names:
+   - `gpt-4`
+   - `gpt-4o`
+   - `claude-opus-4-5`
+   - `claude-sonnet-4-5`
+   - `gemini-2.0-flash`
+
+### 6. Save Configuration
+
+Click **Save** or close the settings panel. Cline will automatically save your configuration.
+
+## Configuration Example
+
+Your Cline settings should look like this:
+
+```
+API Provider: Ollama
+Base URL: http://localhost:20128/v1
+API Key: sk-your-key-xxxxxxxxxxxxx
+Model: gpt-4
+```
+
+## Available Models
+
+You can use any model configured in your VansRouter dashboard. Common examples:
+
+| Model Name | Provider | Description |
+|------------|----------|-------------|
+| `gpt-4` | OpenAI | GPT-4 Turbo |
+| `gpt-4o` | OpenAI | GPT-4 Optimized |
+| `claude-opus-4-5` | Anthropic | Claude Opus 4.5 |
+| `claude-sonnet-4-5` | Anthropic | Claude Sonnet 4.5 |
+| `gemini-2.0-flash` | Google | Gemini 2.0 Flash |
+
+## Usage
+
+### Chat with AI
+
+1. Open the Cline panel in VSCode
+2. Type your message in the chat input
+3. Press Enter to send
+4. Cline will use VansRouter to process your request
+
+### Code Generation
+
+1. Ask Cline to generate code: "Create a React component for a login form"
+2. Cline will generate code using VansRouter
+3. Review and accept the generated code
+
+### Code Explanation
+
+1. Select code in your editor
+2. Ask Cline: "Explain this code"
+3. Get AI-powered explanations through VansRouter
+
+### File Operations
+
+1. Ask Cline to create, modify, or delete files
+2. Cline will use VansRouter to understand context and make changes
+3. Review changes before accepting
+
+## Troubleshooting
+
+### "Connection Failed" Error
+
+1. Verify VansRouter is running: `curl http://localhost:20128/health`
+2. Check that the base URL is correct and includes `/v1`
+3. Ensure no firewall is blocking port 20128
+4. Try restarting VSCode
+
+### "Invalid API Key" Error
+
+1. Verify your API key in VansRouter dashboard
+2. Make sure you copied the entire key including the `sk-your-key-` prefix
+3. Check that the API key has not expired
+4. Try regenerating a new API key
+
+### "Model Not Found" Error
+
+1. Verify the model name matches exactly with your VansRouter configuration
+2. Check that the provider connection is active in VansRouter dashboard
+3. Ensure the model is available in your connected providers
+4. Try using the full model name (e.g., `openai/gpt-4` instead of `gpt-4`)
+
+### Cline Not Responding
+
+1. Check the Cline output panel for error messages
+2. Verify your VansRouter instance is running and healthy
+3. Try reloading VSCode window (Cmd/Ctrl + Shift + P → "Reload Window")
+4. Check VansRouter logs for any errors
+
+## Advanced Configuration
+
+### Using Cloud Endpoint
+
+To use VansRouter cloud endpoint instead of localhost:
+
+1. In Cline settings, set Base URL to: `http://localhost:20128`
+2. Make sure you have configured your API key in the VansRouter cloud dashboard
+3. Ensure your cloud endpoint is active and accessible
+
+### Multiple Models
+
+You can quickly switch between models:
+
+1. Open Cline settings
+2. Change the **Model** field to a different model
+3. Save and continue chatting with the new model
+
+### Custom Timeout
+
+If you experience timeout issues with large requests:
+
+1. Open VSCode settings (Cmd/Ctrl + ,)
+2. Search for "Cline timeout"
+3. Increase the timeout value (default is usually 30 seconds)
+
+## Best Practices
+
+1. **Use Appropriate Models**: Choose faster models (like Haiku or Flash) for simple tasks, and more powerful models (like Opus or GPT-4) for complex tasks
+2. **Monitor Usage**: Check VansRouter dashboard for usage statistics and costs
+3. **Context Management**: Keep your conversations focused to reduce token usage
+4. **Model Switching**: Switch models based on task complexity to optimize cost and performance
+5. **API Key Security**: Never commit your API key to version control
+
+## Integration with VansRouter Features
+
+### Model Routing
+
+VansRouter automatically routes your requests to the best available provider based on:
+- Model availability
+- Provider health status
+- Cost optimization
+- Load balancing
+
+### Fallback Support
+
+If a provider fails, VansRouter automatically falls back to alternative providers configured in your dashboard.
+
+### Usage Tracking
+
+Monitor your Cline usage through VansRouter dashboard:
+- Total requests
+- Token usage
+- Cost per model
+- Provider distribution
+0:{"buildId":"PUpTBY-8r_zZtEM8SJOLp","rsc":["$","$1","c",{"children":[["$","$L2",null,{"headings":[{"level":2,"text":"Prerequisites","id":"prerequisites"},{"level":2,"text":"Setup","id":"setup"},{"level":3,"text":"1. Open Cline Settings","id":"1-open-cline-settings"},{"level":3,"text":"2. Select API Provider","id":"2-select-api-provider"},{"level":3,"text":"3. Configure Base URL","id":"3-configure-base-url"},{"level":3,"text":"4. Add API Key","id":"4-add-api-key"},{"level":3,"text":"5. Select Model","id":"5-select-model"},{"level":3,"text":"6. Save Configuration","id":"6-save-configuration"},{"level":2,"text":"Configuration Example","id":"configuration-example"},{"level":2,"text":"Available Models","id":"available-models"},{"level":2,"text":"Usage","id":"usage"},{"level":3,"text":"Chat with AI","id":"chat-with-ai"},{"level":3,"text":"Code Generation","id":"code-generation"},{"level":3,"text":"Code Explanation","id":"code-explanation"},{"level":3,"text":"File Operations","id":"file-operations"},{"level":2,"text":"Troubleshooting","id":"troubleshooting"},{"level":3,"text":"\"Connection Failed\" Error","id":"connection-failed-error"},{"level":3,"text":"\"Invalid API Key\" Error","id":"invalid-api-key-error"},{"level":3,"text":"\"Model Not Found\" Error","id":"model-not-found-error"},{"level":3,"text":"Cline Not Responding","id":"cline-not-responding"},{"level":2,"text":"Advanced Configuration","id":"advanced-configuration"},{"level":3,"text":"Using Cloud Endpoint","id":"using-cloud-endpoint"},{"level":3,"text":"Multiple Models","id":"multiple-models"},{"level":3,"text":"Custom Timeout","id":"custom-timeout"},{"level":2,"text":"Best Practices","id":"best-practices"},{"level":2,"text":"Integration with VansRouter Features","id":"integration-with-vansrouter-features"},{"level":3,"text":"Model Routing","id":"model-routing"},{"level":3,"text":"Fallback Support","id":"fallback-support"},{"level":3,"text":"Usage Tracking","id":"usage-tracking"}],"lang":"en","children":["$","$L3",null,{"content":"$4"}]}],["$L5","$L6"],"$L7"]}],"loading":null,"isPartial":false}
+5:["$","script","script-0",{"src":"/VansRouter/_next/static/chunks/ff1a16fafef87110.js","async":true}]
+6:["$","script","script-1",{"src":"/VansRouter/_next/static/chunks/3ba79d5b01800fdc.js","async":true}]
+7:["$","$L8",null,{"children":["$","$9",null,{"name":"Next.MetadataOutlet","children":"$@a"}]}]
+a:null

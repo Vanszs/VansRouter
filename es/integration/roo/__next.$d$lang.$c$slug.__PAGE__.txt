@@ -1,0 +1,137 @@
+1:"$Sreact.fragment"
+2:I[81956,["/VansRouter/_next/static/chunks/ff1a16fafef87110.js","/VansRouter/_next/static/chunks/3ba79d5b01800fdc.js"],"default"]
+3:I[22982,["/VansRouter/_next/static/chunks/ff1a16fafef87110.js","/VansRouter/_next/static/chunks/3ba79d5b01800fdc.js"],"default"]
+8:I[97367,["/VansRouter/_next/static/chunks/ff1a16fafef87110.js","/VansRouter/_next/static/chunks/803a574de9eda7ae.js"],"OutletBoundary"]
+9:"$Sreact.suspense"
+4:Tdbc,# Integración con Roo AI Assistant
+
+Integra VansRouter con Roo AI Assistant para acceder a múltiples modelos de IA a través de una interfaz unificada.
+
+## Requisitos previos
+
+- Roo AI Assistant instalado
+- API key de VansRouter desde el [dashboard](http://localhost:20128/dashboard)
+- VansRouter ejecutándose (local o en la nube)
+
+## Pasos de configuración
+
+### 1. Abrir la configuración de Roo
+
+Inicia Roo AI Assistant y abre el panel de configuración.
+
+### 2. Configurar el proveedor de API
+
+1. Navega a la configuración de **API Provider**
+2. Selecciona **Ollama** como tipo de proveedor
+3. Configura los siguientes ajustes:
+
+**Para VansRouter local:**
+```
+Base URL: http://localhost:20128/v1
+API Key: your-api-key-from-dashboard
+```
+
+**Para VansRouter en la nube:**
+```
+Base URL: http://localhost:20128/v1
+API Key: your-api-key-from-dashboard
+```
+
+### 3. Seleccionar modelo
+
+Elige entre los modelos disponibles de VansRouter:
+
+**Modelos Claude:**
+- `cc/claude-opus-4-5-20251101` - El más capaz
+- `cc/claude-sonnet-4-20250514` - Equilibrado
+- `cc/claude-haiku-4-20250514` - Rápido
+
+**Modelos DeepSeek:**
+- `cx/deepseek-chat` - Propósito general
+- `cx/deepseek-reasoner` - Razonamiento complejo
+
+**Modelos GLM:**
+- `glm/glm-4-plus` - Avanzado
+- `glm/glm-4-flash` - Respuestas rápidas
+
+### 4. Probar la conexión
+
+Envía un mensaje de prueba para verificar la integración:
+
+```
+Hello! Can you confirm you're connected through VansRouter?
+```
+
+## Ejemplos de uso
+
+### Chat básico
+```
+Pregunta a Roo: "Explain quantum computing in simple terms"
+Modelo: cc/claude-sonnet-4-20250514
+```
+
+### Generación de código
+```
+Pregunta a Roo: "Write a Python function to calculate Fibonacci numbers"
+Modelo: cx/deepseek-chat
+```
+
+### Razonamiento complejo
+```
+Pregunta a Roo: "Analyze the trade-offs between microservices and monolithic architecture"
+Modelo: cx/deepseek-reasoner
+```
+
+## Consejos de selección de modelo
+
+- **Tareas rápidas**: Usa `cc/claude-haiku-4-20250514` o `glm/glm-4-flash`
+- **Rendimiento equilibrado**: Usa `cc/claude-sonnet-4-20250514` o `cx/deepseek-chat`
+- **Razonamiento complejo**: Usa `cc/claude-opus-4-5-20251101` o `cx/deepseek-reasoner`
+- **Optimización de costos**: Usa modelos DeepSeek o GLM
+
+## Solución de problemas
+
+### Connection Failed
+- Verifica que VansRouter esté corriendo: `curl http://localhost:20128/health`
+- Verifica que la API key sea correcta
+- Asegúrate de que la Base URL incluya el sufijo `/v1`
+
+### Modelo no disponible
+- Verifica que el nombre del modelo coincida exactamente (sensible a mayúsculas)
+- Verifica que el modelo esté habilitado en tu plan de VansRouter
+- Intenta otro modelo de la lista
+
+### Respuestas lentas
+- Cambia a modelos más rápidos (haiku, flash)
+- Verifica la conexión de red
+- Monitorea los logs de VansRouter por problemas
+
+## Configuración avanzada
+
+### Aliases personalizados de modelos
+
+Puedes crear atajos para modelos usados con frecuencia en la configuración de Roo:
+
+```
+Alias: "fast" → cc/claude-haiku-4-20250514
+Alias: "smart" → cc/claude-opus-4-5-20251101
+Alias: "code" → cx/deepseek-chat
+```
+
+### Múltiples perfiles
+
+Configura diferentes perfiles para distintos casos de uso:
+- **Desarrollo**: Modelos DeepSeek para código
+- **Escritura**: Modelos Claude para contenido
+- **Investigación**: Modelos reasoner para análisis
+
+## Próximos pasos
+
+- [Configurar Cursor](cursor.md) para integración con IDE
+- [Configurar Continue](continue.md) para VSCode
+- [Explorar uso de CLI](../cli/basic-usage.md)
+0:{"buildId":"PUpTBY-8r_zZtEM8SJOLp","rsc":["$","$1","c",{"children":[["$","$L2",null,{"headings":[{"level":2,"text":"Requisitos previos","id":"requisitos-previos"},{"level":2,"text":"Pasos de configuración","id":"pasos-de-configuración"},{"level":3,"text":"1. Abrir la configuración de Roo","id":"1-abrir-la-configuración-de-roo"},{"level":3,"text":"2. Configurar el proveedor de API","id":"2-configurar-el-proveedor-de-api"},{"level":3,"text":"3. Seleccionar modelo","id":"3-seleccionar-modelo"},{"level":3,"text":"4. Probar la conexión","id":"4-probar-la-conexión"},{"level":2,"text":"Ejemplos de uso","id":"ejemplos-de-uso"},{"level":3,"text":"Chat básico","id":"chat-básico"},{"level":3,"text":"Generación de código","id":"generación-de-código"},{"level":3,"text":"Razonamiento complejo","id":"razonamiento-complejo"},{"level":2,"text":"Consejos de selección de modelo","id":"consejos-de-selección-de-modelo"},{"level":2,"text":"Solución de problemas","id":"solución-de-problemas"},{"level":3,"text":"Connection Failed","id":"connection-failed"},{"level":3,"text":"Modelo no disponible","id":"modelo-no-disponible"},{"level":3,"text":"Respuestas lentas","id":"respuestas-lentas"},{"level":2,"text":"Configuración avanzada","id":"configuración-avanzada"},{"level":3,"text":"Aliases personalizados de modelos","id":"aliases-personalizados-de-modelos"},{"level":3,"text":"Múltiples perfiles","id":"múltiples-perfiles"},{"level":2,"text":"Próximos pasos","id":"próximos-pasos"}],"lang":"es","children":["$","$L3",null,{"content":"$4"}]}],["$L5","$L6"],"$L7"]}],"loading":null,"isPartial":false}
+5:["$","script","script-0",{"src":"/VansRouter/_next/static/chunks/ff1a16fafef87110.js","async":true}]
+6:["$","script","script-1",{"src":"/VansRouter/_next/static/chunks/3ba79d5b01800fdc.js","async":true}]
+7:["$","$L8",null,{"children":["$","$9",null,{"name":"Next.MetadataOutlet","children":"$@a"}]}]
+a:null

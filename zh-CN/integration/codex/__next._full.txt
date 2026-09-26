@@ -1,0 +1,152 @@
+1:"$Sreact.fragment"
+2:I[39756,["/VansRouter/_next/static/chunks/ff1a16fafef87110.js","/VansRouter/_next/static/chunks/803a574de9eda7ae.js"],"default"]
+3:I[37457,["/VansRouter/_next/static/chunks/ff1a16fafef87110.js","/VansRouter/_next/static/chunks/803a574de9eda7ae.js"],"default"]
+5:I[97367,["/VansRouter/_next/static/chunks/ff1a16fafef87110.js","/VansRouter/_next/static/chunks/803a574de9eda7ae.js"],"OutletBoundary"]
+6:"$Sreact.suspense"
+8:I[97367,["/VansRouter/_next/static/chunks/ff1a16fafef87110.js","/VansRouter/_next/static/chunks/803a574de9eda7ae.js"],"ViewportBoundary"]
+a:I[97367,["/VansRouter/_next/static/chunks/ff1a16fafef87110.js","/VansRouter/_next/static/chunks/803a574de9eda7ae.js"],"MetadataBoundary"]
+c:I[68027,["/VansRouter/_next/static/chunks/ff1a16fafef87110.js","/VansRouter/_next/static/chunks/803a574de9eda7ae.js"],"default"]
+:HL["/VansRouter/_next/static/chunks/71d10a355cb8f2d7.css","style"]
+0:{"P":null,"b":"PUpTBY-8r_zZtEM8SJOLp","c":["","zh-CN","integration","codex",""],"q":"","i":false,"f":[[["",{"children":[["lang","zh-CN","d"],{"children":[["slug","integration/codex","c"],{"children":["__PAGE__",{}]}]}]},"$undefined","$undefined",true],[["$","$1","c",{"children":[[["$","link","0",{"rel":"stylesheet","href":"/VansRouter/_next/static/chunks/71d10a355cb8f2d7.css","precedence":"next","crossOrigin":"$undefined","nonce":"$undefined"}]],["$","html",null,{"lang":"en","children":[["$","head",null,{}],["$","body",null,{"className":"bg-[#FCFBF9] text-[#6B7280]","children":["$","$L2",null,{"parallelRouterKey":"children","error":"$undefined","errorStyles":"$undefined","errorScripts":"$undefined","template":["$","$L3",null,{}],"templateStyles":"$undefined","templateScripts":"$undefined","notFound":[[["$","title",null,{"children":"404: This page could not be found."}],["$","div",null,{"style":{"fontFamily":"system-ui,\"Segoe UI\",Roboto,Helvetica,Arial,sans-serif,\"Apple Color Emoji\",\"Segoe UI Emoji\"","height":"100vh","textAlign":"center","display":"flex","flexDirection":"column","alignItems":"center","justifyContent":"center"},"children":["$","div",null,{"children":[["$","style",null,{"dangerouslySetInnerHTML":{"__html":"body{color:#000;background:#fff;margin:0}.next-error-h1{border-right:1px solid rgba(0,0,0,.3)}@media (prefers-color-scheme:dark){body{color:#fff;background:#000}.next-error-h1{border-right:1px solid rgba(255,255,255,.3)}}"}}],["$","h1",null,{"className":"next-error-h1","style":{"display":"inline-block","margin":"0 20px 0 0","padding":"0 23px 0 0","fontSize":24,"fontWeight":500,"verticalAlign":"top","lineHeight":"49px"},"children":404}],["$","div",null,{"style":{"display":"inline-block"},"children":["$","h2",null,{"style":{"fontSize":14,"fontWeight":400,"lineHeight":"49px","margin":0},"children":"This page could not be found."}]}]]}]}]],[]],"forbidden":"$undefined","unauthorized":"$undefined"}]}]]}]]}],{"children":[["$","$1","c",{"children":[null,["$","$L2",null,{"parallelRouterKey":"children","error":"$undefined","errorStyles":"$undefined","errorScripts":"$undefined","template":["$","$L3",null,{}],"templateStyles":"$undefined","templateScripts":"$undefined","notFound":"$undefined","forbidden":"$undefined","unauthorized":"$undefined"}]]}],{"children":[["$","$1","c",{"children":[null,["$","$L2",null,{"parallelRouterKey":"children","error":"$undefined","errorStyles":"$undefined","errorScripts":"$undefined","template":["$","$L3",null,{}],"templateStyles":"$undefined","templateScripts":"$undefined","notFound":"$undefined","forbidden":"$undefined","unauthorized":"$undefined"}]]}],{"children":[["$","$1","c",{"children":["$L4",[["$","script","script-0",{"src":"/VansRouter/_next/static/chunks/ff1a16fafef87110.js","async":true,"nonce":"$undefined"}],["$","script","script-1",{"src":"/VansRouter/_next/static/chunks/3ba79d5b01800fdc.js","async":true,"nonce":"$undefined"}]],["$","$L5",null,{"children":["$","$6",null,{"name":"Next.MetadataOutlet","children":"$@7"}]}]]}],{},null,false,false]},null,false,false]},null,false,false]},null,false,false],["$","$1","h",{"children":[null,["$","$L8",null,{"children":"$L9"}],["$","div",null,{"hidden":true,"children":["$","$La",null,{"children":["$","$6",null,{"name":"Next.Metadata","children":"$Lb"}]}]}],null]}],false]],"m":"$undefined","G":["$c",[]],"S":true}
+d:I[81956,["/VansRouter/_next/static/chunks/ff1a16fafef87110.js","/VansRouter/_next/static/chunks/3ba79d5b01800fdc.js"],"default"]
+e:I[22982,["/VansRouter/_next/static/chunks/ff1a16fafef87110.js","/VansRouter/_next/static/chunks/3ba79d5b01800fdc.js"],"default"]
+f:Tad0,# OpenAI Codex CLI 集成
+
+将 VansRouter 与 OpenAI Codex CLI 集成,通过 VansRouter 的智能路由系统转发你的 OpenAI API 请求。
+
+## 前置要求
+
+- 已安装 OpenAI Codex CLI
+- VansRouter 本地运行或已配置云端 endpoint
+- 来自 VansRouter 仪表盘的 API key
+
+## 设置
+
+### 1. 配置环境变量
+
+在 shell 配置文件(`~/.bashrc`、`~/.zshrc` 或 `~/.bash_profile`)中设置以下环境变量:
+
+```bash
+# VansRouter 的 Base URL
+export OPENAI_BASE_URL="http://localhost:20128/v1"
+
+# 来自 VansRouter 仪表盘的 API Key
+export OPENAI_API_KEY="your-vansrouter-api-key"
+```
+
+### 2. 重新加载 Shell 配置
+
+```bash
+source ~/.zshrc  # 或 ~/.bashrc
+```
+
+### 3. 验证配置
+
+检查环境变量是否设置正确:
+
+```bash
+echo $OPENAI_BASE_URL
+echo $OPENAI_API_KEY
+```
+
+## 可用模型
+
+VansRouter 提供以下 Codex 模型:
+
+| 模型 ID | 描述 |
+|----------|-------------|
+| `cx/gpt-5.2-codex` | GPT-5.2 Codex - 最新版本 |
+| `cx/gpt-5.1-codex-max` | GPT-5.1 Codex Max - 扩展上下文 |
+
+## 使用示例
+
+### 基础用法
+
+```bash
+# 使用 GPT-5.2 Codex
+codex --model cx/gpt-5.2-codex "Write a function to sort an array"
+
+# 使用 GPT-5.1 Codex Max
+codex --model cx/gpt-5.1-codex-max "Explain this complex algorithm"
+```
+
+### 代码生成
+
+```bash
+codex --model cx/gpt-5.2-codex "Create a REST API endpoint for user authentication"
+```
+
+### 代码解释
+
+```bash
+codex --model cx/gpt-5.1-codex-max "Explain what this code does: $(cat myfile.js)"
+```
+
+## 配置文件
+
+也可以通过配置文件配置 Codex CLI。创建或编辑 `~/.codex/config.json`:
+
+```json
+{
+  "baseUrl": "http://localhost:20128/v1",
+  "apiKey": "your-vansrouter-api-key",
+  "defaultModel": "cx/gpt-5.2-codex"
+}
+```
+
+## 故障排除
+
+### 认证错误
+
+遇到认证错误时:
+
+1. 在 VansRouter 仪表盘中确认 API key 正确
+2. 检查 `OPENAI_API_KEY` 环境变量已设置
+3. 确认 API key 未过期
+
+### 连接问题
+
+遇到连接错误时:
+
+1. 确认 VansRouter 正在运行:`curl http://localhost:20128/health`
+2. 检查环境变量设置是否正确
+3. 确保防火墙没有阻止 20128 端口
+
+### 模型不可用
+
+出现 "model not available" 错误时:
+
+1. 确认模型名与 VansRouter 配置一致
+2. 检查 VansRouter 仪表盘中 OpenAI 提供商连接是否激活
+3. 确认连接的提供商中包含该模型
+
+## 云端 Endpoint
+
+使用 VansRouter 云端 endpoint 而非 localhost:
+
+```bash
+export OPENAI_BASE_URL="http://localhost:20128"
+```
+
+确保已在 VansRouter 云端仪表盘中配置 API key。
+
+## 高级配置
+
+### 自定义超时
+
+```bash
+export OPENAI_TIMEOUT=60  # 秒
+```
+
+### Debug 模式
+
+启用 debug 模式查看详细请求/响应日志:
+
+```bash
+export CODEX_DEBUG=true
+codex --model cx/gpt-5.2-codex "Your prompt"
+```
+4:["$","$Ld",null,{"headings":[{"level":2,"text":"前置要求","id":"前置要求"},{"level":2,"text":"设置","id":"设置"},{"level":3,"text":"1. 配置环境变量","id":"1-配置环境变量"},{"level":3,"text":"2. 重新加载 Shell 配置","id":"2-重新加载-shell-配置"},{"level":3,"text":"3. 验证配置","id":"3-验证配置"},{"level":2,"text":"可用模型","id":"可用模型"},{"level":2,"text":"使用示例","id":"使用示例"},{"level":3,"text":"基础用法","id":"基础用法"},{"level":3,"text":"代码生成","id":"代码生成"},{"level":3,"text":"代码解释","id":"代码解释"},{"level":2,"text":"配置文件","id":"配置文件"},{"level":2,"text":"故障排除","id":"故障排除"},{"level":3,"text":"认证错误","id":"认证错误"},{"level":3,"text":"连接问题","id":"连接问题"},{"level":3,"text":"模型不可用","id":"模型不可用"},{"level":2,"text":"云端 Endpoint","id":"云端-endpoint"},{"level":2,"text":"高级配置","id":"高级配置"},{"level":3,"text":"自定义超时","id":"自定义超时"},{"level":3,"text":"Debug 模式","id":"debug-模式"}],"lang":"zh-CN","children":["$","$Le",null,{"content":"$f"}]}]
+9:[["$","meta","0",{"charSet":"utf-8"}],["$","meta","1",{"name":"viewport","content":"width=device-width, initial-scale=1"}]]
+7:null
+b:[["$","title","0",{"children":"9Router Documentation"}],["$","meta","1",{"name":"description","content":"Smart AI model router - Maximize subscriptions, minimize costs"}]]

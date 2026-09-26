@@ -1,0 +1,488 @@
+1:"$Sreact.fragment"
+2:I[81956,["/VansRouter/_next/static/chunks/ff1a16fafef87110.js","/VansRouter/_next/static/chunks/3ba79d5b01800fdc.js"],"default"]
+3:I[22982,["/VansRouter/_next/static/chunks/ff1a16fafef87110.js","/VansRouter/_next/static/chunks/3ba79d5b01800fdc.js"],"default"]
+8:I[97367,["/VansRouter/_next/static/chunks/ff1a16fafef87110.js","/VansRouter/_next/static/chunks/803a574de9eda7ae.js"],"OutletBoundary"]
+9:"$Sreact.suspense"
+4:T1dc3,# 安装
+
+VansRouter 的详细安装指南,附故障排除技巧。
+
+---
+
+## 要求
+
+### 系统要求
+
+- **Node.js**:版本 20.0.0 或更高
+- **npm**:版本 10.0.0 或更高(随 Node.js 安装)
+- **OS**:macOS、Linux、Windows(推荐 WSL)
+- **磁盘空间**:安装约需 200MB
+
+### 查看版本
+
+```bash
+node --version
+# 应显示 v20.x.x 或更高
+
+npm --version
+# 应显示 10.x.x 或更高
+```
+
+**没有 Node.js?** 从 [nodejs.org](https://nodejs.org/) 安装
+
+---
+
+## 安装方式
+
+### 方式 1:全局安装(推荐)
+
+全局安装,任何位置都能使用:
+
+```bash
+npm install -g vansrouter
+```
+
+**启动 VansRouter:**
+
+```bash
+vansrouter
+```
+
+**优势:**
+- ✅ 任意目录均可运行
+- ✅ 命令简单:`9router`
+- ✅ 通过 `npm update -g vansrouter` 自动更新
+
+### 方式 2:本地安装
+
+在特定项目中安装:
+
+```bash
+mkdir my-9router
+cd my-9router
+npm install 9router
+```
+
+**启动 VansRouter:**
+
+```bash
+npx vansrouter
+```
+
+**优势:**
+- ✅ 项目隔离
+- ✅ 项目级版本控制
+- ✅ 不污染全局命名空间
+
+### 方式 3:源码安装(开发用)
+
+从 GitHub 克隆并构建:
+
+```bash
+git clone https://github.com/Vanszs/VansRouter.git
+cd VansRouter
+npm install
+npm run build
+npm start
+```
+
+**优势:**
+- ✅ 最新开发特性
+- ✅ 可参与开发
+- ✅ 可自定义修改
+
+---
+
+## 首次运行
+
+### 启动服务器
+
+```bash
+vansrouter
+```
+
+**发生了什么:**
+1. 服务器启动在 `http://localhost:20128`
+2. 仪表盘在浏览器中自动打开
+3. 数据目录创建在 `~/.9router`
+4. API key 自动生成
+
+### 仪表盘登录
+
+**默认凭据:**
+- 初始密码：设置随机强密码 `INITIAL_PASSWORD`
+
+**⚠️ 立即修改密码:**
+1. 登录仪表盘
+2. 设置 → 修改密码
+3. 使用强密码
+
+### 获取 API Key
+
+```
+仪表盘 → 设置 → API Keys
+→ 复制你的 API key
+→ 在 CLI 工具中使用
+```
+
+**API key 格式示例:**
+```
+9r_1234567890abcdef1234567890abcdef
+```
+
+---
+
+## 验证安装
+
+### 检查服务器状态
+
+```bash
+curl http://localhost:20128/health
+```
+
+**预期响应:**
+```json
+{
+  "status": "ok",
+  "version": "1.0.0"
+}
+```
+
+### 列出可用模型
+
+```bash
+curl http://localhost:20128/v1/models \
+  -H "Authorization: Bearer your-api-key"
+```
+
+**预期响应:**
+```json
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "cc/claude-opus-4-5-20251101",
+      "object": "model",
+      "created": 1234567890,
+      "owned_by": "claude-code"
+    }
+  ]
+}
+```
+
+### 测试 Chat Completion
+
+```bash
+curl http://localhost:20128/v1/chat/completions \
+  -H "Authorization: Bearer your-api-key" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "cc/claude-opus-4-5-20251101",
+    "messages": [
+      {"role": "user", "content": "Hello!"}
+    ]
+  }'
+```
+
+---
+
+## 配置
+
+### 环境变量
+
+创建 `.env` 文件或设置环境变量:
+
+```bash
+# Security (REQUIRED in production)
+export JWT_SECRET="your-secure-secret-change-this"
+export INITIAL_PASSWORD="$(openssl rand -base64 24)"
+
+# Storage
+export DATA_DIR="~/.9router"
+
+# Server
+export PORT="20128"
+export NODE_ENV="production"
+
+# Logging
+export ENABLE_REQUEST_LOGS="false"
+```
+
+### 数据目录
+
+**默认位置:** `~/.9router`
+
+**内容:**
+```
+~/.9router/
+  ├── db.json           # 数据库(提供商、组合、使用)
+  ├── api-keys.json     # API keys
+  └── logs/             # 请求日志(若启用)
+```
+
+**修改位置:**
+
+```bash
+export DATA_DIR="/custom/path"
+vansrouter
+```
+
+### 端口配置
+
+**默认端口:** `20128`
+
+**修改端口:**
+
+```bash
+export PORT="3000"
+vansrouter
+```
+
+**或用命令行:**
+
+```bash
+vansrouter --port 3000
+```
+
+---
+
+## 故障排除
+
+### 端口已被占用
+
+**错误:**
+```
+Error: listen EADDRINUSE: address already in use :::20128
+```
+
+**方案 1:杀掉占用进程**
+
+```bash
+# 找到使用 20128 端口的进程
+lsof -i :20128
+
+# 杀掉进程
+kill -9 <PID>
+```
+
+**方案 2:使用其他端口**
+
+```bash
+vansrouter --port 3000
+```
+
+### 权限被拒绝
+
+**错误:**
+```
+Error: EACCES: permission denied, mkdir '/usr/local/lib/node_modules/9router'
+```
+
+**方案:使用 sudo(不推荐)或修复 npm 权限**
+
+```bash
+# 修复 npm 权限(推荐)
+mkdir ~/.npm-global
+npm config set prefix '~/.npm-global'
+echo 'export PATH=~/.npm-global/bin:$PATH' >> ~/.bashrc
+source ~/.bashrc
+
+# 然后重新安装
+npm install -g vansrouter
+```
+
+### Node.js 版本过低
+
+**错误:**
+```
+Error: The engine "node" is incompatible with this module
+```
+
+**方案:更新 Node.js**
+
+```bash
+# 使用 nvm(推荐)
+nvm install 20
+nvm use 20
+
+# 或从 nodejs.org 下载
+```
+
+### 仪表盘无法打开
+
+**问题:** 仪表盘没有自动打开
+
+**方案 1:手动打开**
+
+```
+http://localhost:20128
+```
+
+**方案 2:检查防火墙**
+
+```bash
+# macOS: 在 System Preferences → Security 中允许 Node.js
+# Linux: 检查 iptables
+# Windows: 检查 Windows Firewall
+```
+
+### 无法连接提供商
+
+**问题:** OAuth 登录失败或 API key 无效
+
+**方案 1:检查网络连接**
+
+```bash
+ping google.com
+```
+
+**方案 2:检查提供商状态**
+
+- Claude Code: [status.anthropic.com](https://status.anthropic.com)
+- OpenAI: [status.openai.com](https://status.openai.com)
+- Gemini: [status.cloud.google.com](https://status.cloud.google.com)
+
+**方案 3:重新生成 API key**
+
+```
+仪表盘 → 提供商 → 断开 → 重新连接
+```
+
+### 内存占用过高
+
+**问题:** VansRouter 占用过多 RAM
+
+**方案:重启服务器**
+
+```bash
+# 停止
+pkill -f 9router
+
+# 启动
+vansrouter
+```
+
+**或用 PM2 自动重启:**
+
+```bash
+npm install -g pm2
+pm2 start vansrouter --name vansrouter
+pm2 save
+```
+
+---
+
+## 部署选项
+
+### 本地开发
+
+```bash
+npm install -g vansrouter
+vansrouter
+```
+
+**适用场景:** 个人编码、测试
+
+### VPS/云服务器
+
+```bash
+# 安装
+npm install -g vansrouter
+
+# 配置
+export JWT_SECRET="your-secure-secret"
+export INITIAL_PASSWORD="$(openssl rand -base64 24)"
+export NODE_ENV="production"
+
+# 用 PM2 启动
+npm install -g pm2
+pm2 start vansrouter --name vansrouter
+pm2 save
+pm2 startup
+```
+
+**适用场景:** 团队访问、远程编码
+
+### Docker
+
+```bash
+docker pull ghcr.io/vanszs/vansrouter:X.Y.Z
+
+docker run -d \
+  -p 20128:20128 \
+  -e JWT_SECRET="your-secure-secret" \
+  -e INITIAL_PASSWORD="$(openssl rand -base64 24)" \
+  -v 9router-data:/root/.9router \
+  --name vansrouter \
+  ghcr.io/vanszs/vansrouter:X.Y.Z
+```
+
+**适用场景:** 容器化部署、Kubernetes
+
+### 反向代理(Nginx)
+
+```nginx
+server {
+    listen 80;
+    server_name your-domain.com;
+
+    location / {
+        proxy_pass http://localhost:20128;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        
+        # SSE support for streaming
+        proxy_buffering off;
+        proxy_read_timeout 86400;
+    }
+}
+```
+
+**适用场景:** HTTPS、自定义域名、负载均衡
+
+---
+
+## 卸载
+
+### 移除全局安装
+
+```bash
+npm uninstall -g vansrouter
+```
+
+### 移除数据目录
+
+```bash
+rm -rf ~/.9router
+```
+
+### 移除配置
+
+```bash
+# 从 shell 配置中移除环境变量
+nano ~/.bashrc  # 或 ~/.zshrc
+# 删除 9router 相关的 export
+```
+
+---
+
+## 下一步
+
+- [入门指南](../getting-started.md) - 连接提供商并开始编码
+- [功能特性](../features/) - 探索配额跟踪、组合、部署
+- [故障排除](../troubleshooting.md) - 解决常见问题
+
+---
+
+## 需要帮助?
+
+- **网站**: [VansRouter dashboard](http://localhost:20128)
+- **GitHub**: [github.com/Vanszs/VansRouter](https://github.com/Vanszs/VansRouter)
+- **Issues**: [github.com/Vanszs/VansRouter/issues](https://github.com/Vanszs/VansRouter/issues)
+0:{"buildId":"PUpTBY-8r_zZtEM8SJOLp","rsc":["$","$1","c",{"children":[["$","$L2",null,{"headings":[{"level":2,"text":"要求","id":"要求"},{"level":3,"text":"系统要求","id":"系统要求"},{"level":3,"text":"查看版本","id":"查看版本"},{"level":2,"text":"安装方式","id":"安装方式"},{"level":3,"text":"方式 1:全局安装(推荐)","id":"方式-1全局安装推荐"},{"level":3,"text":"方式 2:本地安装","id":"方式-2本地安装"},{"level":3,"text":"方式 3:源码安装(开发用)","id":"方式-3源码安装开发用"},{"level":2,"text":"首次运行","id":"首次运行"},{"level":3,"text":"启动服务器","id":"启动服务器"},{"level":3,"text":"仪表盘登录","id":"仪表盘登录"},{"level":3,"text":"获取 API Key","id":"获取-api-key"},{"level":2,"text":"验证安装","id":"验证安装"},{"level":3,"text":"检查服务器状态","id":"检查服务器状态"},{"level":3,"text":"列出可用模型","id":"列出可用模型"},{"level":3,"text":"测试 Chat Completion","id":"测试-chat-completion"},{"level":2,"text":"配置","id":"配置"},{"level":3,"text":"环境变量","id":"环境变量"},{"level":3,"text":"数据目录","id":"数据目录"},{"level":3,"text":"端口配置","id":"端口配置"},{"level":2,"text":"故障排除","id":"故障排除"},{"level":3,"text":"端口已被占用","id":"端口已被占用"},{"level":3,"text":"权限被拒绝","id":"权限被拒绝"},{"level":3,"text":"Node.js 版本过低","id":"nodejs-版本过低"},{"level":3,"text":"仪表盘无法打开","id":"仪表盘无法打开"},{"level":3,"text":"无法连接提供商","id":"无法连接提供商"},{"level":3,"text":"内存占用过高","id":"内存占用过高"},{"level":2,"text":"部署选项","id":"部署选项"},{"level":3,"text":"本地开发","id":"本地开发"},{"level":3,"text":"VPS/云服务器","id":"vps云服务器"},{"level":3,"text":"Docker","id":"docker"},{"level":3,"text":"反向代理(Nginx)","id":"反向代理nginx"},{"level":2,"text":"卸载","id":"卸载"},{"level":3,"text":"移除全局安装","id":"移除全局安装"},{"level":3,"text":"移除数据目录","id":"移除数据目录"},{"level":3,"text":"移除配置","id":"移除配置"},{"level":2,"text":"下一步","id":"下一步"},{"level":2,"text":"需要帮助?","id":"需要帮助"}],"lang":"zh-CN","children":["$","$L3",null,{"content":"$4"}]}],["$L5","$L6"],"$L7"]}],"loading":null,"isPartial":false}
+5:["$","script","script-0",{"src":"/VansRouter/_next/static/chunks/ff1a16fafef87110.js","async":true}]
+6:["$","script","script-1",{"src":"/VansRouter/_next/static/chunks/3ba79d5b01800fdc.js","async":true}]
+7:["$","$L8",null,{"children":["$","$9",null,{"name":"Next.MetadataOutlet","children":"$@a"}]}]
+a:null

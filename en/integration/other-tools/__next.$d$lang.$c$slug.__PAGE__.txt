@@ -1,0 +1,426 @@
+1:"$Sreact.fragment"
+2:I[81956,["/VansRouter/_next/static/chunks/ff1a16fafef87110.js","/VansRouter/_next/static/chunks/3ba79d5b01800fdc.js"],"default"]
+3:I[22982,["/VansRouter/_next/static/chunks/ff1a16fafef87110.js","/VansRouter/_next/static/chunks/3ba79d5b01800fdc.js"],"default"]
+8:I[97367,["/VansRouter/_next/static/chunks/ff1a16fafef87110.js","/VansRouter/_next/static/chunks/803a574de9eda7ae.js"],"OutletBoundary"]
+9:"$Sreact.suspense"
+4:T232b,# Other Tools Integration
+
+VansRouter is compatible with any tool that supports the OpenAI API format. This guide covers generic integration patterns for various tools and custom applications.
+
+## Overview
+
+VansRouter provides an OpenAI-compatible API endpoint that works with:
+- Custom scripts and applications
+- API clients and testing tools
+- CLI tools and utilities
+- Third-party integrations
+- Development frameworks
+
+## Generic Setup Pattern
+
+Any OpenAI-compatible tool can connect to VansRouter using these settings:
+
+**Local VansRouter:**
+```
+Base URL: http://localhost:20128/v1
+API Key: your-api-key-from-dashboard
+Model: any VansRouter model (cc/*, cx/*, glm/*, etc.)
+```
+
+**Cloud VansRouter:**
+```
+Base URL: http://localhost:20128/v1
+API Key: your-api-key-from-dashboard
+Model: any VansRouter model (cc/*, cx/*, glm/*, etc.)
+```
+
+## Available Models
+
+### Claude Models (Anthropic)
+- `cc/claude-opus-4-5-20251101`
+- `cc/claude-sonnet-4-20250514`
+- `cc/claude-haiku-4-20250514`
+
+### DeepSeek Models
+- `cx/deepseek-chat`
+- `cx/deepseek-reasoner`
+
+### GLM Models (Zhipu AI)
+- `glm/glm-4-plus`
+- `glm/glm-4-flash`
+
+## Integration Examples
+
+### Python with OpenAI SDK
+
+```python
+from openai import OpenAI
+
+client = OpenAI(
+    api_key="your-api-key-from-dashboard",
+    base_url="http://localhost:20128/v1"
+)
+
+response = client.chat.completions.create(
+    model="cc/claude-sonnet-4-20250514",
+    messages=[
+        {"role": "user", "content": "Hello, how are you?"}
+    ]
+)
+
+print(response.choices[0].message.content)
+```
+
+### Node.js with OpenAI SDK
+
+```javascript
+import OpenAI from "openai";
+
+const client = new OpenAI({
+  apiKey: "your-api-key-from-dashboard",
+  baseURL: "http://localhost:20128/v1"
+});
+
+const response = await client.chat.completions.create({
+  model: "cc/claude-sonnet-4-20250514",
+  messages: [
+    { role: "user", content: "Hello, how are you?" }
+  ]
+});
+
+console.log(response.choices[0].message.content);
+```
+
+### cURL Command
+
+```bash
+curl http://localhost:20128/v1/chat/completions \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer your-api-key-from-dashboard" \
+  -d '{
+    "model": "cc/claude-sonnet-4-20250514",
+    "messages": [
+      {"role": "user", "content": "Hello, how are you?"}
+    ]
+  }'
+```
+
+### HTTP Client (Postman, Insomnia)
+
+**Request:**
+```
+POST http://localhost:20128/v1/chat/completions
+```
+
+**Headers:**
+```
+Content-Type: application/json
+Authorization: Bearer your-api-key-from-dashboard
+```
+
+**Body:**
+```json
+{
+  "model": "cc/claude-sonnet-4-20250514",
+  "messages": [
+    {"role": "user", "content": "Hello, how are you?"}
+  ],
+  "temperature": 0.7,
+  "max_tokens": 1000
+}
+```
+
+### LangChain Integration
+
+```python
+from langchain.chat_models import ChatOpenAI
+from langchain.schema import HumanMessage
+
+llm = ChatOpenAI(
+    model_name="cc/claude-sonnet-4-20250514",
+    openai_api_key="your-api-key-from-dashboard",
+    openai_api_base="http://localhost:20128/v1",
+    temperature=0.7
+)
+
+messages = [HumanMessage(content="Explain quantum computing")]
+response = llm(messages)
+print(response.content)
+```
+
+### LlamaIndex Integration
+
+```python
+from llama_index.llms import OpenAI
+
+llm = OpenAI(
+    model="cc/claude-sonnet-4-20250514",
+    api_key="your-api-key-from-dashboard",
+    api_base="http://localhost:20128/v1"
+)
+
+response = llm.complete("What is machine learning?")
+print(response.text)
+```
+
+## Custom Script Examples
+
+### Batch Processing Script
+
+```python
+import openai
+import json
+
+openai.api_key = "your-api-key-from-dashboard"
+openai.api_base = "http://localhost:20128/v1"
+
+def process_batch(prompts, model="cx/deepseek-chat"):
+    results = []
+    for prompt in prompts:
+        response = openai.ChatCompletion.create(
+            model=model,
+            messages=[{"role": "user", "content": prompt}]
+        )
+        results.append({
+            "prompt": prompt,
+            "response": response.choices[0].message.content
+        })
+    return results
+
+prompts = [
+    "Explain AI in one sentence",
+    "What is machine learning?",
+    "Define neural networks"
+]
+
+results = process_batch(prompts)
+print(json.dumps(results, indent=2))
+```
+
+### Streaming Response Handler
+
+```javascript
+import OpenAI from "openai";
+
+const client = new OpenAI({
+  apiKey: "your-api-key-from-dashboard",
+  baseURL: "http://localhost:20128/v1"
+});
+
+async function streamResponse(prompt) {
+  const stream = await client.chat.completions.create({
+    model: "cc/claude-sonnet-4-20250514",
+    messages: [{ role: "user", content: prompt }],
+    stream: true
+  });
+
+  for await (const chunk of stream) {
+    const content = chunk.choices[0]?.delta?.content || "";
+    process.stdout.write(content);
+  }
+}
+
+streamResponse("Write a short story about AI");
+```
+
+### Multi-Model Comparison
+
+```python
+from openai import OpenAI
+
+client = OpenAI(
+    api_key="your-api-key-from-dashboard",
+    base_url="http://localhost:20128/v1"
+)
+
+models = [
+    "cc/claude-sonnet-4-20250514",
+    "cx/deepseek-chat",
+    "glm/glm-4-plus"
+]
+
+prompt = "Explain quantum computing in simple terms"
+
+for model in models:
+    response = client.chat.completions.create(
+        model=model,
+        messages=[{"role": "user", "content": prompt}]
+    )
+    print(f"\n=== {model} ===")
+    print(response.choices[0].message.content)
+```
+
+## Common Integration Patterns
+
+### Environment Variables
+
+Store credentials securely:
+
+```bash
+# .env file
+ROUTER_API_KEY=your-api-key-from-dashboard
+ROUTER_BASE_URL=http://localhost:20128/v1
+ROUTER_MODEL=cc/claude-sonnet-4-20250514
+```
+
+```python
+import os
+from openai import OpenAI
+
+client = OpenAI(
+    api_key=os.getenv("ROUTER_API_KEY"),
+    base_url=os.getenv("ROUTER_BASE_URL")
+)
+```
+
+### Error Handling
+
+```python
+from openai import OpenAI, OpenAIError
+
+client = OpenAI(
+    api_key="your-api-key",
+    base_url="http://localhost:20128/v1"
+)
+
+try:
+    response = client.chat.completions.create(
+        model="cc/claude-sonnet-4-20250514",
+        messages=[{"role": "user", "content": "Hello"}]
+    )
+    print(response.choices[0].message.content)
+except OpenAIError as e:
+    print(f"Error: {e}")
+```
+
+### Retry Logic
+
+```python
+import time
+from openai import OpenAI, RateLimitError
+
+client = OpenAI(
+    api_key="your-api-key",
+    base_url="http://localhost:20128/v1"
+)
+
+def chat_with_retry(prompt, max_retries=3):
+    for attempt in range(max_retries):
+        try:
+            response = client.chat.completions.create(
+                model="cc/claude-sonnet-4-20250514",
+                messages=[{"role": "user", "content": prompt}]
+            )
+            return response.choices[0].message.content
+        except RateLimitError:
+            if attempt < max_retries - 1:
+                time.sleep(2 ** attempt)  # Exponential backoff
+            else:
+                raise
+```
+
+## Troubleshooting
+
+### Connection Issues
+
+**Problem:** Cannot connect to VansRouter
+```bash
+# Check if VansRouter is running
+curl http://localhost:20128/health
+
+# Expected response:
+{"status": "ok"}
+```
+
+**Solution:**
+- Verify VansRouter is running
+- Check port 20128 is not blocked
+- Ensure correct base URL (include `/v1`)
+
+### Authentication Errors
+
+**Problem:** 401 Unauthorized
+```
+Error: Invalid API key
+```
+
+**Solution:**
+- Verify API key from dashboard
+- Check Authorization header format: `Bearer your-api-key`
+- Ensure no extra spaces or newlines in API key
+
+### Model Not Found
+
+**Problem:** 404 Model not found
+```
+Error: Model 'cc/claude-opus' not found
+```
+
+**Solution:**
+- Use exact model name (case-sensitive)
+- Check available models: `curl http://localhost:20128/v1/models`
+- Verify model is enabled in your plan
+
+### Timeout Issues
+
+**Problem:** Request timeout
+```
+Error: Request timed out after 30s
+```
+
+**Solution:**
+- Increase timeout in client configuration
+- Use faster models for time-sensitive tasks
+- Check network connection to VansRouter
+
+### Rate Limiting
+
+**Problem:** 429 Too Many Requests
+```
+Error: Rate limit exceeded
+```
+
+**Solution:**
+- Implement exponential backoff
+- Reduce request frequency
+- Check rate limits in dashboard
+- Consider upgrading plan
+
+## Best Practices
+
+### Security
+- Store API keys in environment variables
+- Never commit API keys to version control
+- Use HTTPS for cloud deployments
+- Rotate API keys regularly
+
+### Performance
+- Use appropriate models for task complexity
+- Implement caching for repeated queries
+- Use streaming for long responses
+- Batch requests when possible
+
+### Error Handling
+- Always implement try-catch blocks
+- Add retry logic with exponential backoff
+- Log errors for debugging
+- Provide fallback mechanisms
+
+### Cost Optimization
+- Choose cost-effective models for simple tasks
+- Cache responses when appropriate
+- Monitor usage in dashboard
+- Set request limits in code
+
+## Next Steps
+
+- [Configure Cursor](cursor.md) for IDE integration
+- [Set up Continue](continue.md) for VSCode
+- [Explore CLI usage](../cli/basic-usage.md)
+- [Learn about model selection](../models/overview.md)
+- [API Reference](../api/reference.md)
+0:{"buildId":"PUpTBY-8r_zZtEM8SJOLp","rsc":["$","$1","c",{"children":[["$","$L2",null,{"headings":[{"level":2,"text":"Overview","id":"overview"},{"level":2,"text":"Generic Setup Pattern","id":"generic-setup-pattern"},{"level":2,"text":"Available Models","id":"available-models"},{"level":3,"text":"Claude Models (Anthropic)","id":"claude-models-anthropic"},{"level":3,"text":"DeepSeek Models","id":"deepseek-models"},{"level":3,"text":"GLM Models (Zhipu AI)","id":"glm-models-zhipu-ai"},{"level":2,"text":"Integration Examples","id":"integration-examples"},{"level":3,"text":"Python with OpenAI SDK","id":"python-with-openai-sdk"},{"level":3,"text":"Node.js with OpenAI SDK","id":"nodejs-with-openai-sdk"},{"level":3,"text":"cURL Command","id":"curl-command"},{"level":3,"text":"HTTP Client (Postman, Insomnia)","id":"http-client-postman-insomnia"},{"level":3,"text":"LangChain Integration","id":"langchain-integration"},{"level":3,"text":"LlamaIndex Integration","id":"llamaindex-integration"},{"level":2,"text":"Custom Script Examples","id":"custom-script-examples"},{"level":3,"text":"Batch Processing Script","id":"batch-processing-script"},{"level":3,"text":"Streaming Response Handler","id":"streaming-response-handler"},{"level":3,"text":"Multi-Model Comparison","id":"multi-model-comparison"},{"level":2,"text":"Common Integration Patterns","id":"common-integration-patterns"},{"level":3,"text":"Environment Variables","id":"environment-variables"},{"level":3,"text":"Error Handling","id":"error-handling"},{"level":3,"text":"Retry Logic","id":"retry-logic"},{"level":2,"text":"Troubleshooting","id":"troubleshooting"},{"level":3,"text":"Connection Issues","id":"connection-issues"},{"level":3,"text":"Authentication Errors","id":"authentication-errors"},{"level":3,"text":"Model Not Found","id":"model-not-found"},{"level":3,"text":"Timeout Issues","id":"timeout-issues"},{"level":3,"text":"Rate Limiting","id":"rate-limiting"},{"level":2,"text":"Best Practices","id":"best-practices"},{"level":3,"text":"Security","id":"security"},{"level":3,"text":"Performance","id":"performance"},{"level":3,"text":"Error Handling","id":"error-handling"},{"level":3,"text":"Cost Optimization","id":"cost-optimization"},{"level":2,"text":"Next Steps","id":"next-steps"}],"lang":"en","children":["$","$L3",null,{"content":"$4"}]}],["$L5","$L6"],"$L7"]}],"loading":null,"isPartial":false}
+5:["$","script","script-0",{"src":"/VansRouter/_next/static/chunks/ff1a16fafef87110.js","async":true}]
+6:["$","script","script-1",{"src":"/VansRouter/_next/static/chunks/3ba79d5b01800fdc.js","async":true}]
+7:["$","$L8",null,{"children":["$","$9",null,{"name":"Next.MetadataOutlet","children":"$@a"}]}]
+a:null

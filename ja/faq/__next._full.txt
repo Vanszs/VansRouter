@@ -1,0 +1,403 @@
+1:"$Sreact.fragment"
+2:I[39756,["/VansRouter/_next/static/chunks/ff1a16fafef87110.js","/VansRouter/_next/static/chunks/803a574de9eda7ae.js"],"default"]
+3:I[37457,["/VansRouter/_next/static/chunks/ff1a16fafef87110.js","/VansRouter/_next/static/chunks/803a574de9eda7ae.js"],"default"]
+5:I[97367,["/VansRouter/_next/static/chunks/ff1a16fafef87110.js","/VansRouter/_next/static/chunks/803a574de9eda7ae.js"],"OutletBoundary"]
+6:"$Sreact.suspense"
+8:I[97367,["/VansRouter/_next/static/chunks/ff1a16fafef87110.js","/VansRouter/_next/static/chunks/803a574de9eda7ae.js"],"ViewportBoundary"]
+a:I[97367,["/VansRouter/_next/static/chunks/ff1a16fafef87110.js","/VansRouter/_next/static/chunks/803a574de9eda7ae.js"],"MetadataBoundary"]
+c:I[68027,["/VansRouter/_next/static/chunks/ff1a16fafef87110.js","/VansRouter/_next/static/chunks/803a574de9eda7ae.js"],"default"]
+:HL["/VansRouter/_next/static/chunks/71d10a355cb8f2d7.css","style"]
+0:{"P":null,"b":"PUpTBY-8r_zZtEM8SJOLp","c":["","ja","faq",""],"q":"","i":false,"f":[[["",{"children":[["lang","ja","d"],{"children":[["slug","faq","c"],{"children":["__PAGE__",{}]}]}]},"$undefined","$undefined",true],[["$","$1","c",{"children":[[["$","link","0",{"rel":"stylesheet","href":"/VansRouter/_next/static/chunks/71d10a355cb8f2d7.css","precedence":"next","crossOrigin":"$undefined","nonce":"$undefined"}]],["$","html",null,{"lang":"en","children":[["$","head",null,{}],["$","body",null,{"className":"bg-[#FCFBF9] text-[#6B7280]","children":["$","$L2",null,{"parallelRouterKey":"children","error":"$undefined","errorStyles":"$undefined","errorScripts":"$undefined","template":["$","$L3",null,{}],"templateStyles":"$undefined","templateScripts":"$undefined","notFound":[[["$","title",null,{"children":"404: This page could not be found."}],["$","div",null,{"style":{"fontFamily":"system-ui,\"Segoe UI\",Roboto,Helvetica,Arial,sans-serif,\"Apple Color Emoji\",\"Segoe UI Emoji\"","height":"100vh","textAlign":"center","display":"flex","flexDirection":"column","alignItems":"center","justifyContent":"center"},"children":["$","div",null,{"children":[["$","style",null,{"dangerouslySetInnerHTML":{"__html":"body{color:#000;background:#fff;margin:0}.next-error-h1{border-right:1px solid rgba(0,0,0,.3)}@media (prefers-color-scheme:dark){body{color:#fff;background:#000}.next-error-h1{border-right:1px solid rgba(255,255,255,.3)}}"}}],["$","h1",null,{"className":"next-error-h1","style":{"display":"inline-block","margin":"0 20px 0 0","padding":"0 23px 0 0","fontSize":24,"fontWeight":500,"verticalAlign":"top","lineHeight":"49px"},"children":404}],["$","div",null,{"style":{"display":"inline-block"},"children":["$","h2",null,{"style":{"fontSize":14,"fontWeight":400,"lineHeight":"49px","margin":0},"children":"This page could not be found."}]}]]}]}]],[]],"forbidden":"$undefined","unauthorized":"$undefined"}]}]]}]]}],{"children":[["$","$1","c",{"children":[null,["$","$L2",null,{"parallelRouterKey":"children","error":"$undefined","errorStyles":"$undefined","errorScripts":"$undefined","template":["$","$L3",null,{}],"templateStyles":"$undefined","templateScripts":"$undefined","notFound":"$undefined","forbidden":"$undefined","unauthorized":"$undefined"}]]}],{"children":[["$","$1","c",{"children":[null,["$","$L2",null,{"parallelRouterKey":"children","error":"$undefined","errorStyles":"$undefined","errorScripts":"$undefined","template":["$","$L3",null,{}],"templateStyles":"$undefined","templateScripts":"$undefined","notFound":"$undefined","forbidden":"$undefined","unauthorized":"$undefined"}]]}],{"children":[["$","$1","c",{"children":["$L4",[["$","script","script-0",{"src":"/VansRouter/_next/static/chunks/ff1a16fafef87110.js","async":true,"nonce":"$undefined"}],["$","script","script-1",{"src":"/VansRouter/_next/static/chunks/3ba79d5b01800fdc.js","async":true,"nonce":"$undefined"}]],["$","$L5",null,{"children":["$","$6",null,{"name":"Next.MetadataOutlet","children":"$@7"}]}]]}],{},null,false,false]},null,false,false]},null,false,false]},null,false,false],["$","$1","h",{"children":[null,["$","$L8",null,{"children":"$L9"}],["$","div",null,{"hidden":true,"children":["$","$La",null,{"children":["$","$6",null,{"name":"Next.Metadata","children":"$Lb"}]}]}],null]}],false]],"m":"$undefined","G":["$c",[]],"S":true}
+d:I[81956,["/VansRouter/_next/static/chunks/ff1a16fafef87110.js","/VansRouter/_next/static/chunks/3ba79d5b01800fdc.js"],"default"]
+e:I[22982,["/VansRouter/_next/static/chunks/ff1a16fafef87110.js","/VansRouter/_next/static/chunks/3ba79d5b01800fdc.js"],"default"]
+f:T2e75,# よくある質問
+
+VansRouterに関する一般的な質問。
+
+---
+
+## VansRouterとは?
+
+**VansRouterは、サブスクリプションの価値を最大化し、コストを最小限に抑えるAIモデルルーターです。**
+
+3階層フォールバックシステムを使用して、複数のAIプロバイダー間でリクエストをインテリジェントにルーティングします:
+1. **サブスクリプション階層** - すでに支払っているClaude Code、Codex、Geminiのクォータを最大化
+2. **低価格階層** - 超低価格な代替手段(100万トークンあたり$0.20〜$0.60)
+3. **無料階層** - 無制限の無料モデルによる緊急バックアップ
+
+**主な利点:**
+- サブスクリプションのクォータを無駄にしない
+- クォータ消費時の自動フォールバック
+- リアルタイムクォータトラッキング
+- 直接API利用に対して90%のコスト削減
+
+---
+
+## 料金体系はどうなっていますか?
+
+**VansRouterは3階層の料金戦略を使用します:**
+
+### Tier 1: サブスクリプション(最初に最大化)
+- **Claude Code** (Pro/Max): 月$20〜100 - 5時間 + 週次クォータ
+- **OpenAI Codex** (Plus/Pro): 月$20〜200 - 5時間 + 週次クォータ
+- **Gemini CLI**: 無料 - 月18万コンプリーション + 1K/日
+- **GitHub Copilot**: 月$10〜19 - 月次リセット
+- **Antigravity**: 無料 - Geminiと同様
+
+**目標:** リセット前にクォータを余すことなく使用!
+
+### Tier 2: 低価格(バックアップ)
+- **GLM-4.7**: 100万トークンあたり$0.60/$2.20 - 毎日午前10時リセット
+- **MiniMax M2.1**: 100万トークンあたり$0.20/$1.00 - 5時間ローリング
+- **Kimi K2**: 月$9固定(1000万トークン)
+
+**目標:** ChatGPT API(100万あたり$20)より90%安い!
+
+### Tier 3: 無料(緊急時)
+- **iFlow**: 8モデル無料(Kimi K2、Qwen3、GLM、MiniMax...)
+- **Qwen**: 3モデル無料(Qwen3 Coder Plus/Flash、Vision)
+- **Kiro**: 2モデル無料(Claude Sonnet 4.5、Haiku 4.5)
+
+**目標:** 他のすべてがクォータ制限に達した時のゼロコストフォールバック!
+
+---
+
+## VansRouterは無料ですか?
+
+**はい、VansRouter自体は100%無料でオープンソースです。**
+
+**利用可能な無料階層プロバイダー:**
+- **Gemini CLI** - 月18万コンプリーション(無料Googleアカウント)
+- **iFlow** - 8モデル無制限(無料OAuth)
+- **Qwen** - 3モデル無制限(無料OAuth)
+- **Kiro** - Claude Sonnet/Haiku(無料AWS Builder ID)
+
+**無料階層プロバイダーのみを使用して永久に無料でコーディングできます!**
+
+**オプションの有料プロバイダー:**
+- すでに持っている可能性のあるサブスクリプションサービス(Claude Code、Codex、Copilot)
+- 超低価格な代替手段(100万トークンあたり$0.20〜$0.60)
+
+---
+
+## どのプロバイダーがサポートされていますか?
+
+### サブスクリプションプロバイダー
+- **Claude Code** (Pro/Max) - Claude 4.5 Opus/Sonnet/Haiku
+- **OpenAI Codex** (Plus/Pro) - GPT 5.2 Codex、GPT 5.1 Codex Max
+- **Gemini CLI** (無料) - Gemini 3 Flash/Pro、2.5 Pro/Flash
+- **GitHub Copilot** - GPT-5、Claude 4.5、Gemini 3
+- **Antigravity** (Google) - Gemini 3 Pro、Claude Sonnet 4.5
+
+### 低価格プロバイダー
+- **GLM** (Zhipu AI) - GLM 4.7、GLM 4.6V Vision
+- **MiniMax** - MiniMax M2.1
+- **Kimi** (Moonshot AI) - Kimi Latest
+- **OpenRouter** - 任意のOpenRouterモデルへのパススルー
+
+### 無料プロバイダー
+- **iFlow** - 8モデル(Kimi K2、Qwen3、GLM、MiniMax、DeepSeek...)
+- **Qwen** - 3モデル(Qwen3 Coder Plus/Flash、Vision)
+- **Kiro** - 2モデル(Claude Sonnet 4.5、Haiku 4.5)
+
+**合計: 15以上のプロバイダー、50以上のモデル**
+
+詳細は[プロバイダードキュメント](providers/subscription.md)を参照。
+
+---
+
+## 複数のプロバイダーを使用できますか?
+
+**はい! これはVansRouterのコア機能です。**
+
+**コンボにより、複数のプロバイダーを自動フォールバック付きで連鎖させることができます:**
+
+```
+コンボ例: "premium-coding"
+1. cc/claude-opus-4-5 (サブスクリプション優先)
+2. glm/glm-4.7 (低価格バックアップ)
+3. if/kimi-k2 (無料緊急時)
+
+→ クォータ消費時に自動切替
+→ コーディングが止まらない
+→ 最小の追加コスト
+```
+
+**コンボの作成方法:**
+```
+Dashboard → Combos → Create New
+→ 優先順位順にモデルを追加
+→ CLIでコンボ名を使用: "premium-coding"
+```
+
+**利点:**
+- クォータ切れ時のダウンタイムゼロ
+- 自動コスト最適化
+- すべてのツール用の単一モデル名
+
+例については[コンボドキュメント](features/combos.md)を参照。
+
+---
+
+## クォータトラッキングはどのように機能しますか?
+
+**VansRouterはすべてのプロバイダーのクォータをリアルタイムで追跡します:**
+
+**機能:**
+- **トークン消費** - リクエストごとの入出力トークン
+- **リセットカウントダウン** - クォータが更新されるまでの時間
+- **使用統計** - 日次/週次/月次レポート
+- **コスト見積もり** - 予測支出(有料階層)
+- **クォータアラート** - クォータが少ない時の通知
+
+**クォータタイプ:**
+- **5時間ローリング** - Claude Code、Codex、MiniMax
+- **日次リセット** - Gemini CLI(1K/日)、GLM(午前10時)
+- **週次リセット** - Claude Code、Codex(追加クォータ)
+- **月次リセット** - Gemini CLI(18万)、GitHub Copilot(1日)
+
+**クォータを表示:**
+```
+Dashboard → Providers → Quota Tracking
+→ リアルタイム使用量 + リセットカウントダウン
+```
+
+詳細は[クォータトラッキングドキュメント](features/quota-tracking.md)を参照。
+
+---
+
+## VansRouterはCursorで動作しますか?
+
+**はい、ただしCursorはクラウドエンドポイントが必要です。**
+
+**問題:** Cursor IDEはlocalhostエンドポイントをサポートしていません。
+
+**解決策:** VansRouterクラウドデプロイメントを使用:
+
+```
+Cursor Settings → Models → Advanced:
+  OpenAI API Base URL: http://localhost:20128/v1
+  OpenAI API Key: [ダッシュボードから取得]
+  Model: cc/claude-opus-4-5-20251101
+```
+
+**代替案:** パブリックドメインでVPSにセルフホスト:
+```bash
+# VPSへデプロイ
+git clone https://github.com/Vanszs/VansRouter.git
+cd VansRouter
+npm install && npm run build
+npm start
+
+# Nginxリバースプロキシを設定
+# Cursorを向ける: https://your-domain.com/v1
+```
+
+**他のCLIツールはlocalhostで動作:**
+- Cline ✅
+- Claude Desktop ✅
+- Codex CLI ✅
+- Continue ✅
+- RooCode ✅
+
+詳細は[Cursor統合ガイド](integration/cursor.md)を参照。
+
+---
+
+## VansRouterをセルフホストできますか?
+
+**はい! VansRouterは複数のデプロイメントオプションをサポートします:**
+
+### Localhost(デフォルト)
+```bash
+npm install -g vansrouter
+vansrouter
+→ Dashboard: http://localhost:3000
+→ API: http://localhost:20128/v1
+```
+
+### VPS/クラウド
+```bash
+git clone https://github.com/Vanszs/VansRouter.git
+cd VansRouter
+npm install && npm run build
+
+export JWT_SECRET="your-secure-secret"
+export INITIAL_PASSWORD="$(openssl rand -base64 24)"
+export NODE_ENV="production"
+
+npm start
+```
+
+### Docker
+```bash
+docker build -t 9router .
+docker run -d \
+  -p 3000:3000 \
+  -e JWT_SECRET="your-secret" \
+  -v 9router-data:/app/data \
+  vansrouter
+```
+
+### Cloudflare Workers
+```bash
+cd VansRouter
+npm run deploy:cloudflare
+```
+
+**環境変数:**
+- `JWT_SECRET` - **本番環境で必ず変更!**
+- `DATA_DIR` - データベース保存パス(デフォルト: `~/.9router`)
+- `INITIAL_PASSWORD` - ダッシュボードログイン（新規インストールは `123456`、公開前に強いランダム値を設定）
+- `NODE_ENV` - デプロイ時は`production`に設定
+
+詳細は[デプロイメントガイド](getting-started/installation.md#deployment)を参照。
+
+---
+
+## データは安全ですか?
+
+**はい、VansRouterはセキュリティとプライバシーを優先します:**
+
+**ローカルストレージ:**
+- すべてのデータは`~/.9router`(またはカスタム`DATA_DIR`)にローカル保存
+- VansRouterサーバーへのデータ送信なし
+- OAuthトークンはJWTで暗号化
+
+**テレメトリなし:**
+- 使用状況追跡なし
+- アナリティクスなし
+- フォンホームなし
+
+**オープンソース:**
+- 完全なソースコードがGitHubで利用可能
+- 自分でセキュリティを監査可能
+- コミュニティレビュー済み
+
+**ベストプラクティス:**
+- 本番環境で`JWT_SECRET`を変更
+- 強力な`INITIAL_PASSWORD`を使用
+- クラウドデプロイでHTTPSを有効化
+- APIキーを定期的にローテーション
+
+**VansRouterが保存するもの:**
+- プロバイダーOAuthトークン(暗号化)
+- APIキー(暗号化)
+- 使用統計(ローカルのみ)
+- コンボ設定
+
+**VansRouterが保存しないもの:**
+- プロンプトやレスポンス
+- 生成したコード
+- 個人情報
+
+---
+
+## VansRouterを更新するには?
+
+**更新方法はインストールタイプによって異なります:**
+
+### グローバルNPMインストール
+```bash
+npm update -g vansrouter
+```
+
+### ローカルインストール
+```bash
+cd VansRouter
+git pull origin main
+npm install
+npm run build
+npm start
+```
+
+### Docker
+```bash
+docker pull ghcr.io/vanszs/vansrouter:X.Y.Z
+docker stop 9router
+docker rm 9router
+docker run -d \
+  -p 3000:3000 \
+  -v 9router-data:/app/data \
+  ghcr.io/vanszs/vansrouter:X.Y.Z
+```
+
+**バージョンを確認:**
+```bash
+vansrouter --version
+```
+
+**破壊的変更:**
+- [CHANGELOG.md](https://github.com/Vanszs/VansRouter/blob/main/CHANGELOG.md)を確認
+- メジャー更新前に`~/.9router`をバックアップ
+- メジャーバージョンの移行ガイドを確認
+
+---
+
+## どのように貢献できますか?
+
+**貢献を歓迎します!**
+
+### 貢献方法:
+
+1. **バグを報告:**
+   - [GitHub Issues](https://github.com/Vanszs/VansRouter/issues)
+   - エラーログ、再現手順を含める
+
+2. **機能をリクエスト:**
+   - [GitHub Discussions](https://github.com/Vanszs/VansRouter/discussions)
+   - ユースケースと利点を説明
+
+3. **コードを提出:**
+   ```bash
+   # リポジトリをフォーク
+   git clone https://github.com/YOUR_USERNAME/9router.git
+   cd VansRouter
+   
+   # ブランチを作成
+   git checkout -b feature/your-feature
+   
+   # 変更を加える
+   npm install
+   npm run dev
+   
+   # テスト
+   npm test
+   
+   # コミットしてプッシュ
+   git add .
+   git commit -m "Add your feature"
+   git push origin feature/your-feature
+   
+   # GitHubでPull Requestを作成
+   ```
+
+4. **ドキュメントを改善:**
+   - 誤字の修正、例の追加
+   - 他言語への翻訳
+   - チュートリアルの執筆
+
+5. **プロバイダーを追加:**
+   - 新しいプロバイダーアダプターを実装
+   - 例については`app/lib/providers/`を参照
+
+**貢献ガイドライン:**
+- 既存のコードスタイルに従う
+- 新機能にはテストを追加
+- ドキュメントを更新
+- コミットは小さく、わかりやすく
+
+詳細は[CONTRIBUTING.md](https://github.com/Vanszs/VansRouter/blob/main/CONTRIBUTING.md)を参照。
+
+---
+
+## さらにヘルプが必要?
+
+- **ドキュメント:** [VansRouter docs](https://github.com/Vanszs/VansRouter/blob/main/README.md)
+- **GitHub:** [github.com/Vanszs/VansRouter](https://github.com/Vanszs/VansRouter)
+- **Issues:** [github.com/Vanszs/VansRouter/issues](https://github.com/Vanszs/VansRouter/issues)
+- **トラブルシューティング:** [troubleshooting.md](troubleshooting.md)
+4:["$","$Ld",null,{"headings":[{"level":2,"text":"VansRouterとは?","id":"vansrouterとは"},{"level":2,"text":"料金体系はどうなっていますか?","id":"料金体系はどうなっていますか"},{"level":3,"text":"Tier 1: サブスクリプション(最初に最大化)","id":"tier-1-サブスクリプション最初に最大化"},{"level":3,"text":"Tier 2: 低価格(バックアップ)","id":"tier-2-低価格バックアップ"},{"level":3,"text":"Tier 3: 無料(緊急時)","id":"tier-3-無料緊急時"},{"level":2,"text":"VansRouterは無料ですか?","id":"vansrouterは無料ですか"},{"level":2,"text":"どのプロバイダーがサポートされていますか?","id":"どのプロバイダーがサポートされていますか"},{"level":3,"text":"サブスクリプションプロバイダー","id":"サブスクリプションプロバイダー"},{"level":3,"text":"低価格プロバイダー","id":"低価格プロバイダー"},{"level":3,"text":"無料プロバイダー","id":"無料プロバイダー"},{"level":2,"text":"複数のプロバイダーを使用できますか?","id":"複数のプロバイダーを使用できますか"},{"level":2,"text":"クォータトラッキングはどのように機能しますか?","id":"クォータトラッキングはどのように機能しますか"},{"level":2,"text":"VansRouterはCursorで動作しますか?","id":"vansrouterはcursorで動作しますか"},{"level":2,"text":"VansRouterをセルフホストできますか?","id":"vansrouterをセルフホストできますか"},{"level":3,"text":"Localhost(デフォルト)","id":"localhostデフォルト"},{"level":3,"text":"VPS/クラウド","id":"vpsクラウド"},{"level":3,"text":"Docker","id":"docker"},{"level":3,"text":"Cloudflare Workers","id":"cloudflare-workers"},{"level":2,"text":"データは安全ですか?","id":"データは安全ですか"},{"level":2,"text":"VansRouterを更新するには?","id":"vansrouterを更新するには"},{"level":3,"text":"グローバルNPMインストール","id":"グローバルnpmインストール"},{"level":3,"text":"ローカルインストール","id":"ローカルインストール"},{"level":3,"text":"Docker","id":"docker"},{"level":2,"text":"どのように貢献できますか?","id":"どのように貢献できますか"},{"level":3,"text":"貢献方法:","id":"貢献方法"},{"level":2,"text":"さらにヘルプが必要?","id":"さらにヘルプが必要"}],"lang":"ja","children":["$","$Le",null,{"content":"$f"}]}]
+9:[["$","meta","0",{"charSet":"utf-8"}],["$","meta","1",{"name":"viewport","content":"width=device-width, initial-scale=1"}]]
+7:null
+b:[["$","title","0",{"children":"9Router Documentation"}],["$","meta","1",{"name":"description","content":"Smart AI model router - Maximize subscriptions, minimize costs"}]]

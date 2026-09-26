@@ -1,0 +1,432 @@
+1:"$Sreact.fragment"
+2:I[39756,["/VansRouter/_next/static/chunks/ff1a16fafef87110.js","/VansRouter/_next/static/chunks/803a574de9eda7ae.js"],"default"]
+3:I[37457,["/VansRouter/_next/static/chunks/ff1a16fafef87110.js","/VansRouter/_next/static/chunks/803a574de9eda7ae.js"],"default"]
+5:I[97367,["/VansRouter/_next/static/chunks/ff1a16fafef87110.js","/VansRouter/_next/static/chunks/803a574de9eda7ae.js"],"OutletBoundary"]
+6:"$Sreact.suspense"
+8:I[97367,["/VansRouter/_next/static/chunks/ff1a16fafef87110.js","/VansRouter/_next/static/chunks/803a574de9eda7ae.js"],"ViewportBoundary"]
+a:I[97367,["/VansRouter/_next/static/chunks/ff1a16fafef87110.js","/VansRouter/_next/static/chunks/803a574de9eda7ae.js"],"MetadataBoundary"]
+c:I[68027,["/VansRouter/_next/static/chunks/ff1a16fafef87110.js","/VansRouter/_next/static/chunks/803a574de9eda7ae.js"],"default"]
+:HL["/VansRouter/_next/static/chunks/71d10a355cb8f2d7.css","style"]
+0:{"P":null,"b":"PUpTBY-8r_zZtEM8SJOLp","c":["","ja","integration","other-tools",""],"q":"","i":false,"f":[[["",{"children":[["lang","ja","d"],{"children":[["slug","integration/other-tools","c"],{"children":["__PAGE__",{}]}]}]},"$undefined","$undefined",true],[["$","$1","c",{"children":[[["$","link","0",{"rel":"stylesheet","href":"/VansRouter/_next/static/chunks/71d10a355cb8f2d7.css","precedence":"next","crossOrigin":"$undefined","nonce":"$undefined"}]],["$","html",null,{"lang":"en","children":[["$","head",null,{}],["$","body",null,{"className":"bg-[#FCFBF9] text-[#6B7280]","children":["$","$L2",null,{"parallelRouterKey":"children","error":"$undefined","errorStyles":"$undefined","errorScripts":"$undefined","template":["$","$L3",null,{}],"templateStyles":"$undefined","templateScripts":"$undefined","notFound":[[["$","title",null,{"children":"404: This page could not be found."}],["$","div",null,{"style":{"fontFamily":"system-ui,\"Segoe UI\",Roboto,Helvetica,Arial,sans-serif,\"Apple Color Emoji\",\"Segoe UI Emoji\"","height":"100vh","textAlign":"center","display":"flex","flexDirection":"column","alignItems":"center","justifyContent":"center"},"children":["$","div",null,{"children":[["$","style",null,{"dangerouslySetInnerHTML":{"__html":"body{color:#000;background:#fff;margin:0}.next-error-h1{border-right:1px solid rgba(0,0,0,.3)}@media (prefers-color-scheme:dark){body{color:#fff;background:#000}.next-error-h1{border-right:1px solid rgba(255,255,255,.3)}}"}}],["$","h1",null,{"className":"next-error-h1","style":{"display":"inline-block","margin":"0 20px 0 0","padding":"0 23px 0 0","fontSize":24,"fontWeight":500,"verticalAlign":"top","lineHeight":"49px"},"children":404}],["$","div",null,{"style":{"display":"inline-block"},"children":["$","h2",null,{"style":{"fontSize":14,"fontWeight":400,"lineHeight":"49px","margin":0},"children":"This page could not be found."}]}]]}]}]],[]],"forbidden":"$undefined","unauthorized":"$undefined"}]}]]}]]}],{"children":[["$","$1","c",{"children":[null,["$","$L2",null,{"parallelRouterKey":"children","error":"$undefined","errorStyles":"$undefined","errorScripts":"$undefined","template":["$","$L3",null,{}],"templateStyles":"$undefined","templateScripts":"$undefined","notFound":"$undefined","forbidden":"$undefined","unauthorized":"$undefined"}]]}],{"children":[["$","$1","c",{"children":[null,["$","$L2",null,{"parallelRouterKey":"children","error":"$undefined","errorStyles":"$undefined","errorScripts":"$undefined","template":["$","$L3",null,{}],"templateStyles":"$undefined","templateScripts":"$undefined","notFound":"$undefined","forbidden":"$undefined","unauthorized":"$undefined"}]]}],{"children":[["$","$1","c",{"children":["$L4",[["$","script","script-0",{"src":"/VansRouter/_next/static/chunks/ff1a16fafef87110.js","async":true,"nonce":"$undefined"}],["$","script","script-1",{"src":"/VansRouter/_next/static/chunks/3ba79d5b01800fdc.js","async":true,"nonce":"$undefined"}]],["$","$L5",null,{"children":["$","$6",null,{"name":"Next.MetadataOutlet","children":"$@7"}]}]]}],{},null,false,false]},null,false,false]},null,false,false]},null,false,false],["$","$1","h",{"children":[null,["$","$L8",null,{"children":"$L9"}],["$","div",null,{"hidden":true,"children":["$","$La",null,{"children":["$","$6",null,{"name":"Next.Metadata","children":"$Lb"}]}]}],null]}],false]],"m":"$undefined","G":["$c",[]],"S":true}
+d:I[81956,["/VansRouter/_next/static/chunks/ff1a16fafef87110.js","/VansRouter/_next/static/chunks/3ba79d5b01800fdc.js"],"default"]
+e:I[22982,["/VansRouter/_next/static/chunks/ff1a16fafef87110.js","/VansRouter/_next/static/chunks/3ba79d5b01800fdc.js"],"default"]
+f:T26c3,# その他ツール統合
+
+VansRouterはOpenAI API形式をサポートする任意のツールと互換性があります。このガイドでは、様々なツールやカスタムアプリケーション向けの汎用統合パターンを説明します。
+
+## 概要
+
+VansRouterはOpenAI互換APIエンドポイントを提供し、以下と動作します:
+- カスタムスクリプトとアプリケーション
+- APIクライアントとテストツール
+- CLIツールとユーティリティ
+- サードパーティ統合
+- 開発フレームワーク
+
+## 汎用セットアップパターン
+
+任意のOpenAI互換ツールは以下の設定でVansRouterに接続できます:
+
+**ローカルVansRouter:**
+```
+Base URL: http://localhost:20128/v1
+API Key: your-api-key-from-dashboard
+Model: 任意のVansRouterモデル (cc/*, cx/*, glm/*など)
+```
+
+**クラウドVansRouter:**
+```
+Base URL: http://localhost:20128/v1
+API Key: your-api-key-from-dashboard
+Model: 任意のVansRouterモデル (cc/*, cx/*, glm/*など)
+```
+
+## 利用可能なモデル
+
+### Claudeモデル (Anthropic)
+- `cc/claude-opus-4-5-20251101`
+- `cc/claude-sonnet-4-20250514`
+- `cc/claude-haiku-4-20250514`
+
+### DeepSeekモデル
+- `cx/deepseek-chat`
+- `cx/deepseek-reasoner`
+
+### GLMモデル (Zhipu AI)
+- `glm/glm-4-plus`
+- `glm/glm-4-flash`
+
+## 統合例
+
+### PythonとOpenAI SDK
+
+```python
+from openai import OpenAI
+
+client = OpenAI(
+    api_key="your-api-key-from-dashboard",
+    base_url="http://localhost:20128/v1"
+)
+
+response = client.chat.completions.create(
+    model="cc/claude-sonnet-4-20250514",
+    messages=[
+        {"role": "user", "content": "Hello, how are you?"}
+    ]
+)
+
+print(response.choices[0].message.content)
+```
+
+### Node.jsとOpenAI SDK
+
+```javascript
+import OpenAI from "openai";
+
+const client = new OpenAI({
+  apiKey: "your-api-key-from-dashboard",
+  baseURL: "http://localhost:20128/v1"
+});
+
+const response = await client.chat.completions.create({
+  model: "cc/claude-sonnet-4-20250514",
+  messages: [
+    { role: "user", content: "Hello, how are you?" }
+  ]
+});
+
+console.log(response.choices[0].message.content);
+```
+
+### cURLコマンド
+
+```bash
+curl http://localhost:20128/v1/chat/completions \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer your-api-key-from-dashboard" \
+  -d '{
+    "model": "cc/claude-sonnet-4-20250514",
+    "messages": [
+      {"role": "user", "content": "Hello, how are you?"}
+    ]
+  }'
+```
+
+### HTTPクライアント (Postman、Insomnia)
+
+**Request:**
+```
+POST http://localhost:20128/v1/chat/completions
+```
+
+**Headers:**
+```
+Content-Type: application/json
+Authorization: Bearer your-api-key-from-dashboard
+```
+
+**Body:**
+```json
+{
+  "model": "cc/claude-sonnet-4-20250514",
+  "messages": [
+    {"role": "user", "content": "Hello, how are you?"}
+  ],
+  "temperature": 0.7,
+  "max_tokens": 1000
+}
+```
+
+### LangChain統合
+
+```python
+from langchain.chat_models import ChatOpenAI
+from langchain.schema import HumanMessage
+
+llm = ChatOpenAI(
+    model_name="cc/claude-sonnet-4-20250514",
+    openai_api_key="your-api-key-from-dashboard",
+    openai_api_base="http://localhost:20128/v1",
+    temperature=0.7
+)
+
+messages = [HumanMessage(content="Explain quantum computing")]
+response = llm(messages)
+print(response.content)
+```
+
+### LlamaIndex統合
+
+```python
+from llama_index.llms import OpenAI
+
+llm = OpenAI(
+    model="cc/claude-sonnet-4-20250514",
+    api_key="your-api-key-from-dashboard",
+    api_base="http://localhost:20128/v1"
+)
+
+response = llm.complete("What is machine learning?")
+print(response.text)
+```
+
+## カスタムスクリプトの例
+
+### バッチ処理スクリプト
+
+```python
+import openai
+import json
+
+openai.api_key = "your-api-key-from-dashboard"
+openai.api_base = "http://localhost:20128/v1"
+
+def process_batch(prompts, model="cx/deepseek-chat"):
+    results = []
+    for prompt in prompts:
+        response = openai.ChatCompletion.create(
+            model=model,
+            messages=[{"role": "user", "content": prompt}]
+        )
+        results.append({
+            "prompt": prompt,
+            "response": response.choices[0].message.content
+        })
+    return results
+
+prompts = [
+    "Explain AI in one sentence",
+    "What is machine learning?",
+    "Define neural networks"
+]
+
+results = process_batch(prompts)
+print(json.dumps(results, indent=2))
+```
+
+### ストリーミングレスポンスハンドラ
+
+```javascript
+import OpenAI from "openai";
+
+const client = new OpenAI({
+  apiKey: "your-api-key-from-dashboard",
+  baseURL: "http://localhost:20128/v1"
+});
+
+async function streamResponse(prompt) {
+  const stream = await client.chat.completions.create({
+    model: "cc/claude-sonnet-4-20250514",
+    messages: [{ role: "user", content: prompt }],
+    stream: true
+  });
+
+  for await (const chunk of stream) {
+    const content = chunk.choices[0]?.delta?.content || "";
+    process.stdout.write(content);
+  }
+}
+
+streamResponse("Write a short story about AI");
+```
+
+### マルチモデル比較
+
+```python
+from openai import OpenAI
+
+client = OpenAI(
+    api_key="your-api-key-from-dashboard",
+    base_url="http://localhost:20128/v1"
+)
+
+models = [
+    "cc/claude-sonnet-4-20250514",
+    "cx/deepseek-chat",
+    "glm/glm-4-plus"
+]
+
+prompt = "Explain quantum computing in simple terms"
+
+for model in models:
+    response = client.chat.completions.create(
+        model=model,
+        messages=[{"role": "user", "content": prompt}]
+    )
+    print(f"\n=== {model} ===")
+    print(response.choices[0].message.content)
+```
+
+## 一般的な統合パターン
+
+### 環境変数
+
+認証情報を安全に保存:
+
+```bash
+# .envファイル
+ROUTER_API_KEY=your-api-key-from-dashboard
+ROUTER_BASE_URL=http://localhost:20128/v1
+ROUTER_MODEL=cc/claude-sonnet-4-20250514
+```
+
+```python
+import os
+from openai import OpenAI
+
+client = OpenAI(
+    api_key=os.getenv("ROUTER_API_KEY"),
+    base_url=os.getenv("ROUTER_BASE_URL")
+)
+```
+
+### エラーハンドリング
+
+```python
+from openai import OpenAI, OpenAIError
+
+client = OpenAI(
+    api_key="your-api-key",
+    base_url="http://localhost:20128/v1"
+)
+
+try:
+    response = client.chat.completions.create(
+        model="cc/claude-sonnet-4-20250514",
+        messages=[{"role": "user", "content": "Hello"}]
+    )
+    print(response.choices[0].message.content)
+except OpenAIError as e:
+    print(f"Error: {e}")
+```
+
+### リトライロジック
+
+```python
+import time
+from openai import OpenAI, RateLimitError
+
+client = OpenAI(
+    api_key="your-api-key",
+    base_url="http://localhost:20128/v1"
+)
+
+def chat_with_retry(prompt, max_retries=3):
+    for attempt in range(max_retries):
+        try:
+            response = client.chat.completions.create(
+                model="cc/claude-sonnet-4-20250514",
+                messages=[{"role": "user", "content": prompt}]
+            )
+            return response.choices[0].message.content
+        except RateLimitError:
+            if attempt < max_retries - 1:
+                time.sleep(2 ** attempt)  # Exponential backoff
+            else:
+                raise
+```
+
+## トラブルシューティング
+
+### 接続の問題
+
+**問題:** VansRouterに接続できない
+```bash
+# VansRouterが動作中か確認
+curl http://localhost:20128/health
+
+# 期待されるレスポンス:
+{"status": "ok"}
+```
+
+**解決策:**
+- VansRouterが動作中か確認
+- ポート20128がブロックされていないか確認
+- 正しいbase URLを確認 (`/v1`を含む)
+
+### 認証エラー
+
+**問題:** 401 Unauthorized
+```
+Error: Invalid API key
+```
+
+**解決策:**
+- ダッシュボードからのAPIキーを確認
+- AuthorizationヘッダーフォーマットがBearer your-api-keyであることを確認
+- APIキーに余分なスペースや改行がないことを確認
+
+### モデルが見つからない
+
+**問題:** 404 Model not found
+```
+Error: Model 'cc/claude-opus' not found
+```
+
+**解決策:**
+- 正確なモデル名を使用 (大文字小文字を区別)
+- 利用可能なモデルを確認: `curl http://localhost:20128/v1/models`
+- プランでモデルが有効になっていることを確認
+
+### タイムアウトの問題
+
+**問題:** リクエストタイムアウト
+```
+Error: Request timed out after 30s
+```
+
+**解決策:**
+- クライアント設定でタイムアウトを増やす
+- 時間制約のあるタスクには高速モデルを使用
+- VansRouterへのネットワーク接続を確認
+
+### レート制限
+
+**問題:** 429 Too Many Requests
+```
+Error: Rate limit exceeded
+```
+
+**解決策:**
+- 指数バックオフを実装
+- リクエスト頻度を減らす
+- ダッシュボードでレート制限を確認
+- プランのアップグレードを検討
+
+## ベストプラクティス
+
+### セキュリティ
+- APIキーを環境変数に保存
+- APIキーをバージョン管理にコミットしない
+- クラウドデプロイにはHTTPSを使用
+- APIキーを定期的にローテーション
+
+### パフォーマンス
+- タスクの複雑さに応じて適切なモデルを使用
+- 繰り返しクエリにキャッシュを実装
+- 長い応答にはストリーミングを使用
+- 可能な場合はリクエストをバッチ処理
+
+### エラーハンドリング
+- 常にtry-catchブロックを実装
+- 指数バックオフでリトライロジックを追加
+- デバッグのためエラーをログ
+- フォールバックメカニズムを提供
+
+### コスト最適化
+- シンプルなタスクには費用対効果の高いモデルを選択
+- 適切な場合は応答をキャッシュ
+- ダッシュボードで使用量をモニター
+- コードでリクエスト制限を設定
+
+## 次のステップ
+
+- [Cursorを設定](cursor.md) IDE統合用
+- [Continueをセットアップ](continue.md) VSCode用
+- [CLI使用法を確認](../cli/basic-usage.md)
+- [モデル選択について学ぶ](../models/overview.md)
+- [APIリファレンス](../api/reference.md)
+4:["$","$Ld",null,{"headings":[{"level":2,"text":"概要","id":"概要"},{"level":2,"text":"汎用セットアップパターン","id":"汎用セットアップパターン"},{"level":2,"text":"利用可能なモデル","id":"利用可能なモデル"},{"level":3,"text":"Claudeモデル (Anthropic)","id":"claudeモデル-anthropic"},{"level":3,"text":"DeepSeekモデル","id":"deepseekモデル"},{"level":3,"text":"GLMモデル (Zhipu AI)","id":"glmモデル-zhipu-ai"},{"level":2,"text":"統合例","id":"統合例"},{"level":3,"text":"PythonとOpenAI SDK","id":"pythonとopenai-sdk"},{"level":3,"text":"Node.jsとOpenAI SDK","id":"nodejsとopenai-sdk"},{"level":3,"text":"cURLコマンド","id":"curlコマンド"},{"level":3,"text":"HTTPクライアント (Postman、Insomnia)","id":"httpクライアント-postmaninsomnia"},{"level":3,"text":"LangChain統合","id":"langchain統合"},{"level":3,"text":"LlamaIndex統合","id":"llamaindex統合"},{"level":2,"text":"カスタムスクリプトの例","id":"カスタムスクリプトの例"},{"level":3,"text":"バッチ処理スクリプト","id":"バッチ処理スクリプト"},{"level":3,"text":"ストリーミングレスポンスハンドラ","id":"ストリーミングレスポンスハンドラ"},{"level":3,"text":"マルチモデル比較","id":"マルチモデル比較"},{"level":2,"text":"一般的な統合パターン","id":"一般的な統合パターン"},{"level":3,"text":"環境変数","id":"環境変数"},{"level":3,"text":"エラーハンドリング","id":"エラーハンドリング"},{"level":3,"text":"リトライロジック","id":"リトライロジック"},{"level":2,"text":"トラブルシューティング","id":"トラブルシューティング"},{"level":3,"text":"接続の問題","id":"接続の問題"},{"level":3,"text":"認証エラー","id":"認証エラー"},{"level":3,"text":"モデルが見つからない","id":"モデルが見つからない"},{"level":3,"text":"タイムアウトの問題","id":"タイムアウトの問題"},{"level":3,"text":"レート制限","id":"レート制限"},{"level":2,"text":"ベストプラクティス","id":"ベストプラクティス"},{"level":3,"text":"セキュリティ","id":"セキュリティ"},{"level":3,"text":"パフォーマンス","id":"パフォーマンス"},{"level":3,"text":"エラーハンドリング","id":"エラーハンドリング"},{"level":3,"text":"コスト最適化","id":"コスト最適化"},{"level":2,"text":"次のステップ","id":"次のステップ"}],"lang":"ja","children":["$","$Le",null,{"content":"$f"}]}]
+9:[["$","meta","0",{"charSet":"utf-8"}],["$","meta","1",{"name":"viewport","content":"width=device-width, initial-scale=1"}]]
+7:null
+b:[["$","title","0",{"children":"9Router Documentation"}],["$","meta","1",{"name":"description","content":"Smart AI model router - Maximize subscriptions, minimize costs"}]]

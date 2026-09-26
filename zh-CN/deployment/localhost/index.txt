@@ -1,0 +1,180 @@
+1:"$Sreact.fragment"
+2:I[39756,["/VansRouter/_next/static/chunks/ff1a16fafef87110.js","/VansRouter/_next/static/chunks/803a574de9eda7ae.js"],"default"]
+3:I[37457,["/VansRouter/_next/static/chunks/ff1a16fafef87110.js","/VansRouter/_next/static/chunks/803a574de9eda7ae.js"],"default"]
+5:I[97367,["/VansRouter/_next/static/chunks/ff1a16fafef87110.js","/VansRouter/_next/static/chunks/803a574de9eda7ae.js"],"OutletBoundary"]
+6:"$Sreact.suspense"
+8:I[97367,["/VansRouter/_next/static/chunks/ff1a16fafef87110.js","/VansRouter/_next/static/chunks/803a574de9eda7ae.js"],"ViewportBoundary"]
+a:I[97367,["/VansRouter/_next/static/chunks/ff1a16fafef87110.js","/VansRouter/_next/static/chunks/803a574de9eda7ae.js"],"MetadataBoundary"]
+c:I[68027,["/VansRouter/_next/static/chunks/ff1a16fafef87110.js","/VansRouter/_next/static/chunks/803a574de9eda7ae.js"],"default"]
+:HL["/VansRouter/_next/static/chunks/71d10a355cb8f2d7.css","style"]
+0:{"P":null,"b":"PUpTBY-8r_zZtEM8SJOLp","c":["","zh-CN","deployment","localhost",""],"q":"","i":false,"f":[[["",{"children":[["lang","zh-CN","d"],{"children":[["slug","deployment/localhost","c"],{"children":["__PAGE__",{}]}]}]},"$undefined","$undefined",true],[["$","$1","c",{"children":[[["$","link","0",{"rel":"stylesheet","href":"/VansRouter/_next/static/chunks/71d10a355cb8f2d7.css","precedence":"next","crossOrigin":"$undefined","nonce":"$undefined"}]],["$","html",null,{"lang":"en","children":[["$","head",null,{}],["$","body",null,{"className":"bg-[#FCFBF9] text-[#6B7280]","children":["$","$L2",null,{"parallelRouterKey":"children","error":"$undefined","errorStyles":"$undefined","errorScripts":"$undefined","template":["$","$L3",null,{}],"templateStyles":"$undefined","templateScripts":"$undefined","notFound":[[["$","title",null,{"children":"404: This page could not be found."}],["$","div",null,{"style":{"fontFamily":"system-ui,\"Segoe UI\",Roboto,Helvetica,Arial,sans-serif,\"Apple Color Emoji\",\"Segoe UI Emoji\"","height":"100vh","textAlign":"center","display":"flex","flexDirection":"column","alignItems":"center","justifyContent":"center"},"children":["$","div",null,{"children":[["$","style",null,{"dangerouslySetInnerHTML":{"__html":"body{color:#000;background:#fff;margin:0}.next-error-h1{border-right:1px solid rgba(0,0,0,.3)}@media (prefers-color-scheme:dark){body{color:#fff;background:#000}.next-error-h1{border-right:1px solid rgba(255,255,255,.3)}}"}}],["$","h1",null,{"className":"next-error-h1","style":{"display":"inline-block","margin":"0 20px 0 0","padding":"0 23px 0 0","fontSize":24,"fontWeight":500,"verticalAlign":"top","lineHeight":"49px"},"children":404}],["$","div",null,{"style":{"display":"inline-block"},"children":["$","h2",null,{"style":{"fontSize":14,"fontWeight":400,"lineHeight":"49px","margin":0},"children":"This page could not be found."}]}]]}]}]],[]],"forbidden":"$undefined","unauthorized":"$undefined"}]}]]}]]}],{"children":[["$","$1","c",{"children":[null,["$","$L2",null,{"parallelRouterKey":"children","error":"$undefined","errorStyles":"$undefined","errorScripts":"$undefined","template":["$","$L3",null,{}],"templateStyles":"$undefined","templateScripts":"$undefined","notFound":"$undefined","forbidden":"$undefined","unauthorized":"$undefined"}]]}],{"children":[["$","$1","c",{"children":[null,["$","$L2",null,{"parallelRouterKey":"children","error":"$undefined","errorStyles":"$undefined","errorScripts":"$undefined","template":["$","$L3",null,{}],"templateStyles":"$undefined","templateScripts":"$undefined","notFound":"$undefined","forbidden":"$undefined","unauthorized":"$undefined"}]]}],{"children":[["$","$1","c",{"children":["$L4",[["$","script","script-0",{"src":"/VansRouter/_next/static/chunks/ff1a16fafef87110.js","async":true,"nonce":"$undefined"}],["$","script","script-1",{"src":"/VansRouter/_next/static/chunks/3ba79d5b01800fdc.js","async":true,"nonce":"$undefined"}]],["$","$L5",null,{"children":["$","$6",null,{"name":"Next.MetadataOutlet","children":"$@7"}]}]]}],{},null,false,false]},null,false,false]},null,false,false]},null,false,false],["$","$1","h",{"children":[null,["$","$L8",null,{"children":"$L9"}],["$","div",null,{"hidden":true,"children":["$","$La",null,{"children":["$","$6",null,{"name":"Next.Metadata","children":"$Lb"}]}]}],null]}],false]],"m":"$undefined","G":["$c",[]],"S":true}
+d:I[81956,["/VansRouter/_next/static/chunks/ff1a16fafef87110.js","/VansRouter/_next/static/chunks/3ba79d5b01800fdc.js"],"default"]
+e:I[22982,["/VansRouter/_next/static/chunks/ff1a16fafef87110.js","/VansRouter/_next/static/chunks/3ba79d5b01800fdc.js"],"default"]
+f:Ta3c,# 🏠 本地部署
+
+在本机运行 VansRouter,用于开发和个人使用。
+
+---
+
+## 📦 安装
+
+通过 npm 全局安装 VansRouter:
+
+```bash
+npm install -g vansrouter
+```
+
+**要求:**
+- Node.js 20 或更高
+- npm 9 或更高
+
+---
+
+## 🚀 启动服务器
+
+一条命令启动 VansRouter:
+
+```bash
+vansrouter
+```
+
+仪表盘会自动在浏览器中打开,地址为 `http://localhost:3000`
+
+**默认配置:**
+- **仪表盘**: `http://localhost:3000`
+- **API Endpoint**: `http://localhost:20128/v1`
+- **数据目录**: `~/.9router`
+
+---
+
+## 🔧 配置
+
+### 自定义数据目录
+
+通过环境变量设置自定义数据目录:
+
+```bash
+DATA_DIR=/path/to/data 9router
+```
+
+### 自定义端口
+
+API 端口(20128)和仪表盘端口(3000)在应用中配置。如需修改,你需要改源码或使用支持的环境变量(如果有)。
+
+---
+
+## 🛑 停止服务器
+
+在运行 VansRouter 的终端中按 `Ctrl+C`。
+
+```bash
+# 在运行 9router 的终端中
+^C  # 按 Ctrl+C
+```
+
+服务器会优雅关闭并保存所有数据。
+
+---
+
+## 🔄 重启服务器
+
+再次运行启动命令即可:
+
+```bash
+vansrouter
+```
+
+所有配置、API keys 和组合都保存在数据目录中。
+
+---
+
+## 📊 更新 VansRouter
+
+更新到最新版本:
+
+```bash
+npm update -g vansrouter
+```
+
+查看当前版本:
+
+```bash
+npm list -g vansrouter
+```
+
+---
+
+## 🔍 故障排除
+
+### 端口已被占用
+
+如果端口 20128 或 3000 已被占用:
+
+```bash
+# 找到使用该端口的进程(macOS/Linux)
+lsof -i :20128
+lsof -i :3000
+
+# 杀掉进程
+kill -9 <PID>
+```
+
+### 权限错误
+
+安装过程中遇到权限错误:
+
+```bash
+# 使用 sudo(不推荐)
+sudo npm install -g vansrouter
+
+# 或修复 npm 权限(推荐)
+mkdir ~/.npm-global
+npm config set prefix '~/.npm-global'
+echo 'export PATH=~/.npm-global/bin:$PATH' >> ~/.bashrc
+source ~/.bashrc
+```
+
+### 数据目录问题
+
+数据目录无法访问:
+
+```bash
+# 检查权限
+ls -la ~/.9router
+
+# 修复权限
+chmod 755 ~/.9router
+```
+
+---
+
+## 📁 数据目录结构
+
+```
+~/.9router/
+├── db.json           # 主数据库(提供商、组合、设置)
+├── logs/             # 应用日志
+└── cache/            # 临时缓存文件
+```
+
+**备份数据:**
+
+```bash
+# 备份
+cp -r ~/.9router ~/.9router.backup
+
+# 恢复
+cp -r ~/.9router.backup ~/.9router
+```
+
+---
+
+## 🔗 下一步
+
+- [连接提供商](/providers/subscription.md)
+- [创建组合](/features/combos.md)
+- [集成 CLI 工具](/integration/cursor.md)
+4:["$","$Ld",null,{"headings":[{"level":2,"text":"安装","id":"安装"},{"level":2,"text":"启动服务器","id":"启动服务器"},{"level":2,"text":"配置","id":"配置"},{"level":3,"text":"自定义数据目录","id":"自定义数据目录"},{"level":3,"text":"自定义端口","id":"自定义端口"},{"level":2,"text":"停止服务器","id":"停止服务器"},{"level":2,"text":"重启服务器","id":"重启服务器"},{"level":2,"text":"更新 VansRouter","id":"更新-vansrouter"},{"level":2,"text":"故障排除","id":"故障排除"},{"level":3,"text":"端口已被占用","id":"端口已被占用"},{"level":3,"text":"权限错误","id":"权限错误"},{"level":3,"text":"数据目录问题","id":"数据目录问题"},{"level":2,"text":"数据目录结构","id":"数据目录结构"},{"level":2,"text":"下一步","id":"下一步"}],"lang":"zh-CN","children":["$","$Le",null,{"content":"$f"}]}]
+9:[["$","meta","0",{"charSet":"utf-8"}],["$","meta","1",{"name":"viewport","content":"width=device-width, initial-scale=1"}]]
+7:null
+b:[["$","title","0",{"children":"9Router Documentation"}],["$","meta","1",{"name":"description","content":"Smart AI model router - Maximize subscriptions, minimize costs"}]]

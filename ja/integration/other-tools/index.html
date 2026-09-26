@@ -1,0 +1,357 @@
+<!DOCTYPE html><!--PUpTBY_8r_zZtEM8SJOLp--><html lang="en"><head><meta charSet="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/><link rel="stylesheet" href="/VansRouter/_next/static/chunks/71d10a355cb8f2d7.css" data-precedence="next"/><link rel="preload" as="script" fetchPriority="low" href="/VansRouter/_next/static/chunks/343aa45b5611d01d.js"/><script src="/VansRouter/_next/static/chunks/a0aa32a146625b3a.js" async=""></script><script src="/VansRouter/_next/static/chunks/3e45c79224336516.js" async=""></script><script src="/VansRouter/_next/static/chunks/turbopack-4db312a651dd60cf.js" async=""></script><script src="/VansRouter/_next/static/chunks/ff1a16fafef87110.js" async=""></script><script src="/VansRouter/_next/static/chunks/803a574de9eda7ae.js" async=""></script><script src="/VansRouter/_next/static/chunks/3ba79d5b01800fdc.js" async=""></script><title>9Router Documentation</title><meta name="description" content="Smart AI model router - Maximize subscriptions, minimize costs"/><script src="/VansRouter/_next/static/chunks/a6dad97d9634a72d.js" noModule=""></script></head><body class="bg-[#FCFBF9] text-[#6B7280]"><div hidden=""><!--$--><!--/$--></div><div class="min-h-screen flex flex-col bg-[#FCFBF9]"><header class="sticky top-0 z-50 w-full border-b bg-white/80 backdrop-blur-sm border-gray-200"><div class=" mx-auto px-4 h-16 flex items-center justify-between"><button type="button" class="lg:hidden p-2 rounded-lg hover:bg-gray-100 transition-colors" aria-label="Open menu"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-menu w-6 h-6 text-gray-600" aria-hidden="true"><path d="M4 5h16"></path><path d="M4 12h16"></path><path d="M4 19h16"></path></svg></button><a class="flex items-center gap-2 font-bold text-2xl text-black hover:opacity-80 transition-opacity" href="/VansRouter/ja/"><span>9</span><span class="text-[#E68A6E]">9Router<!-- --> Docs</span></a><div class="flex items-center gap-2 sm:gap-3"><button type="button" class="flex items-center gap-1.5 px-2.5 py-1.5 text-sm text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors" aria-label="Switch language"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-globe w-4 h-4" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"></path><path d="M2 12h20"></path></svg><span class="hidden sm:inline">🇯🇵<!-- --> <!-- -->日本語</span><span class="sm:hidden">🇯🇵</span></button><a target="_blank" rel="noopener noreferrer" class="flex items-center gap-2 px-3 sm:px-4 py-2 bg-[#E68A6E] text-white rounded-lg font-medium hover:bg-[#d67a5e] transition-colors text-sm" href="http://localhost:20128"><span class="hidden sm:inline">アプリへ</span><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-external-link w-4 h-4" aria-hidden="true"><path d="M15 3h6v6"></path><path d="M10 14 21 3"></path><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path></svg></a></div></div></header><div class="flex-1 flex"><div class="hidden lg:block"><aside class="w-64 border-r bg-white border-gray-200 h-[calc(100vh-4rem)] sticky top-16 overflow-y-auto"><nav class="p-4 space-y-6"><div><button type="button" class="flex items-center justify-between w-full text-sm font-semibold text-gray-900 mb-2 hover:text-[#E68A6E] transition-colors"><span class="flex items-center gap-2"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-rocket w-4 h-4" aria-hidden="true"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"></path><path d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"></path><path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"></path><path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"></path></svg>はじめに</span><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-right w-4 h-4" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg></button></div><div><button type="button" class="flex items-center justify-between w-full text-sm font-semibold text-gray-900 mb-2 hover:text-[#E68A6E] transition-colors"><span class="flex items-center gap-2"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-layers w-4 h-4" aria-hidden="true"><path d="M12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83z"></path><path d="M2 12a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 12"></path><path d="M2 17a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 17"></path></svg>プロバイダー</span><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-right w-4 h-4" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg></button></div><div><button type="button" class="flex items-center justify-between w-full text-sm font-semibold text-gray-900 mb-2 hover:text-[#E68A6E] transition-colors"><span class="flex items-center gap-2"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-zap w-4 h-4" aria-hidden="true"><path d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z"></path></svg>機能</span><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-right w-4 h-4" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg></button></div><div><button type="button" class="flex items-center justify-between w-full text-sm font-semibold text-gray-900 mb-2 hover:text-[#E68A6E] transition-colors"><span class="flex items-center gap-2"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-plug w-4 h-4" aria-hidden="true"><path d="M12 22v-5"></path><path d="M15 8V2"></path><path d="M17 8a1 1 0 0 1 1 1v4a4 4 0 0 1-4 4h-4a4 4 0 0 1-4-4V9a1 1 0 0 1 1-1z"></path><path d="M9 8V2"></path></svg>連携</span><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-right w-4 h-4" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg></button></div><div><button type="button" class="flex items-center justify-between w-full text-sm font-semibold text-gray-900 mb-2 hover:text-[#E68A6E] transition-colors"><span class="flex items-center gap-2"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-cloud w-4 h-4" aria-hidden="true"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"></path></svg>デプロイ</span><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-right w-4 h-4" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg></button></div><div><button type="button" class="flex items-center justify-between w-full text-sm font-semibold text-gray-900 mb-2 hover:text-[#E68A6E] transition-colors"><span class="flex items-center gap-2"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-circle-question-mark w-4 h-4" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><path d="M12 17h.01"></path></svg>ヘルプ</span><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-right w-4 h-4" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg></button></div></nav></aside></div><div class="flex-1 flex min-w-0"><main class="flex-1 min-w-0 overflow-x-hidden overflow-y-auto"><article class="max-w-4xl mx-auto px-4 sm:px-6 py-8"><div class="markdown-content"><h1 id="その他ツール統合">その他ツール統合</h1>
+<p>VansRouterはOpenAI API形式をサポートする任意のツールと互換性があります。このガイドでは、様々なツールやカスタムアプリケーション向けの汎用統合パターンを説明します。</p>
+<h2 id="概要">概要</h2>
+<p>VansRouterはOpenAI互換APIエンドポイントを提供し、以下と動作します:</p>
+<ul>
+<li>カスタムスクリプトとアプリケーション</li>
+<li>APIクライアントとテストツール</li>
+<li>CLIツールとユーティリティ</li>
+<li>サードパーティ統合</li>
+<li>開発フレームワーク</li>
+</ul>
+<h2 id="汎用セットアップパターン">汎用セットアップパターン</h2>
+<p>任意のOpenAI互換ツールは以下の設定でVansRouterに接続できます:</p>
+<p><strong>ローカルVansRouter:</strong></p>
+<pre><code>Base URL: http://localhost:20128/v1
+API Key: your-api-key-from-dashboard
+Model: 任意のVansRouterモデル (cc/*, cx/*, glm/*など)
+</code></pre>
+<p><strong>クラウドVansRouter:</strong></p>
+<pre><code>Base URL: http://localhost:20128/v1
+API Key: your-api-key-from-dashboard
+Model: 任意のVansRouterモデル (cc/*, cx/*, glm/*など)
+</code></pre>
+<h2 id="利用可能なモデル">利用可能なモデル</h2>
+<h3 id="claudeモデル-anthropic">Claudeモデル (Anthropic)</h3>
+<ul>
+<li><code>cc/claude-opus-4-5-20251101</code></li>
+<li><code>cc/claude-sonnet-4-20250514</code></li>
+<li><code>cc/claude-haiku-4-20250514</code></li>
+</ul>
+<h3 id="deepseekモデル">DeepSeekモデル</h3>
+<ul>
+<li><code>cx/deepseek-chat</code></li>
+<li><code>cx/deepseek-reasoner</code></li>
+</ul>
+<h3 id="glmモデル-zhipu-ai">GLMモデル (Zhipu AI)</h3>
+<ul>
+<li><code>glm/glm-4-plus</code></li>
+<li><code>glm/glm-4-flash</code></li>
+</ul>
+<h2 id="統合例">統合例</h2>
+<h3 id="pythonとopenai-sdk">PythonとOpenAI SDK</h3>
+<pre><code class="hljs language-python"><span class="hljs-keyword">from</span> openai <span class="hljs-keyword">import</span> OpenAI
+
+client = OpenAI(
+    api_key=<span class="hljs-string">&quot;your-api-key-from-dashboard&quot;</span>,
+    base_url=<span class="hljs-string">&quot;http://localhost:20128/v1&quot;</span>
+)
+
+response = client.chat.completions.create(
+    model=<span class="hljs-string">&quot;cc/claude-sonnet-4-20250514&quot;</span>,
+    messages=[
+        {<span class="hljs-string">&quot;role&quot;</span>: <span class="hljs-string">&quot;user&quot;</span>, <span class="hljs-string">&quot;content&quot;</span>: <span class="hljs-string">&quot;Hello, how are you?&quot;</span>}
+    ]
+)
+
+<span class="hljs-built_in">print</span>(response.choices[<span class="hljs-number">0</span>].message.content)
+</code></pre>
+<h3 id="nodejsとopenai-sdk">Node.jsとOpenAI SDK</h3>
+<pre><code class="hljs language-javascript"><span class="hljs-keyword">import</span> <span class="hljs-title class_">OpenAI</span> <span class="hljs-keyword">from</span> <span class="hljs-string">&quot;openai&quot;</span>;
+
+<span class="hljs-keyword">const</span> client = <span class="hljs-keyword">new</span> <span class="hljs-title class_">OpenAI</span>({
+  <span class="hljs-attr">apiKey</span>: <span class="hljs-string">&quot;your-api-key-from-dashboard&quot;</span>,
+  <span class="hljs-attr">baseURL</span>: <span class="hljs-string">&quot;http://localhost:20128/v1&quot;</span>
+});
+
+<span class="hljs-keyword">const</span> response = <span class="hljs-keyword">await</span> client.<span class="hljs-property">chat</span>.<span class="hljs-property">completions</span>.<span class="hljs-title function_">create</span>({
+  <span class="hljs-attr">model</span>: <span class="hljs-string">&quot;cc/claude-sonnet-4-20250514&quot;</span>,
+  <span class="hljs-attr">messages</span>: [
+    { <span class="hljs-attr">role</span>: <span class="hljs-string">&quot;user&quot;</span>, <span class="hljs-attr">content</span>: <span class="hljs-string">&quot;Hello, how are you?&quot;</span> }
+  ]
+});
+
+<span class="hljs-variable language_">console</span>.<span class="hljs-title function_">log</span>(response.<span class="hljs-property">choices</span>[<span class="hljs-number">0</span>].<span class="hljs-property">message</span>.<span class="hljs-property">content</span>);
+</code></pre>
+<h3 id="curlコマンド">cURLコマンド</h3>
+<pre><code class="hljs language-bash">curl http://localhost:20128/v1/chat/completions \
+  -H <span class="hljs-string">&quot;Content-Type: application/json&quot;</span> \
+  -H <span class="hljs-string">&quot;Authorization: Bearer your-api-key-from-dashboard&quot;</span> \
+  -d <span class="hljs-string">&#x27;{
+    &quot;model&quot;: &quot;cc/claude-sonnet-4-20250514&quot;,
+    &quot;messages&quot;: [
+      {&quot;role&quot;: &quot;user&quot;, &quot;content&quot;: &quot;Hello, how are you?&quot;}
+    ]
+  }&#x27;</span>
+</code></pre>
+<h3 id="httpクライアント-postmaninsomnia">HTTPクライアント (Postman、Insomnia)</h3>
+<p><strong>Request:</strong></p>
+<pre><code>POST http://localhost:20128/v1/chat/completions
+</code></pre>
+<p><strong>Headers:</strong></p>
+<pre><code>Content-Type: application/json
+Authorization: Bearer your-api-key-from-dashboard
+</code></pre>
+<p><strong>Body:</strong></p>
+<pre><code class="hljs language-json"><span class="hljs-punctuation">{</span>
+  <span class="hljs-attr">&quot;model&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;cc/claude-sonnet-4-20250514&quot;</span><span class="hljs-punctuation">,</span>
+  <span class="hljs-attr">&quot;messages&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">[</span>
+    <span class="hljs-punctuation">{</span><span class="hljs-attr">&quot;role&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;user&quot;</span><span class="hljs-punctuation">,</span> <span class="hljs-attr">&quot;content&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;Hello, how are you?&quot;</span><span class="hljs-punctuation">}</span>
+  <span class="hljs-punctuation">]</span><span class="hljs-punctuation">,</span>
+  <span class="hljs-attr">&quot;temperature&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-number">0.7</span><span class="hljs-punctuation">,</span>
+  <span class="hljs-attr">&quot;max_tokens&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-number">1000</span>
+<span class="hljs-punctuation">}</span>
+</code></pre>
+<h3 id="langchain統合">LangChain統合</h3>
+<pre><code class="hljs language-python"><span class="hljs-keyword">from</span> langchain.chat_models <span class="hljs-keyword">import</span> ChatOpenAI
+<span class="hljs-keyword">from</span> langchain.schema <span class="hljs-keyword">import</span> HumanMessage
+
+llm = ChatOpenAI(
+    model_name=<span class="hljs-string">&quot;cc/claude-sonnet-4-20250514&quot;</span>,
+    openai_api_key=<span class="hljs-string">&quot;your-api-key-from-dashboard&quot;</span>,
+    openai_api_base=<span class="hljs-string">&quot;http://localhost:20128/v1&quot;</span>,
+    temperature=<span class="hljs-number">0.7</span>
+)
+
+messages = [HumanMessage(content=<span class="hljs-string">&quot;Explain quantum computing&quot;</span>)]
+response = llm(messages)
+<span class="hljs-built_in">print</span>(response.content)
+</code></pre>
+<h3 id="llamaindex統合">LlamaIndex統合</h3>
+<pre><code class="hljs language-python"><span class="hljs-keyword">from</span> llama_index.llms <span class="hljs-keyword">import</span> OpenAI
+
+llm = OpenAI(
+    model=<span class="hljs-string">&quot;cc/claude-sonnet-4-20250514&quot;</span>,
+    api_key=<span class="hljs-string">&quot;your-api-key-from-dashboard&quot;</span>,
+    api_base=<span class="hljs-string">&quot;http://localhost:20128/v1&quot;</span>
+)
+
+response = llm.complete(<span class="hljs-string">&quot;What is machine learning?&quot;</span>)
+<span class="hljs-built_in">print</span>(response.text)
+</code></pre>
+<h2 id="カスタムスクリプトの例">カスタムスクリプトの例</h2>
+<h3 id="バッチ処理スクリプト">バッチ処理スクリプト</h3>
+<pre><code class="hljs language-python"><span class="hljs-keyword">import</span> openai
+<span class="hljs-keyword">import</span> json
+
+openai.api_key = <span class="hljs-string">&quot;your-api-key-from-dashboard&quot;</span>
+openai.api_base = <span class="hljs-string">&quot;http://localhost:20128/v1&quot;</span>
+
+<span class="hljs-keyword">def</span> <span class="hljs-title function_">process_batch</span>(<span class="hljs-params">prompts, model=<span class="hljs-string">&quot;cx/deepseek-chat&quot;</span></span>):
+    results = []
+    <span class="hljs-keyword">for</span> prompt <span class="hljs-keyword">in</span> prompts:
+        response = openai.ChatCompletion.create(
+            model=model,
+            messages=[{<span class="hljs-string">&quot;role&quot;</span>: <span class="hljs-string">&quot;user&quot;</span>, <span class="hljs-string">&quot;content&quot;</span>: prompt}]
+        )
+        results.append({
+            <span class="hljs-string">&quot;prompt&quot;</span>: prompt,
+            <span class="hljs-string">&quot;response&quot;</span>: response.choices[<span class="hljs-number">0</span>].message.content
+        })
+    <span class="hljs-keyword">return</span> results
+
+prompts = [
+    <span class="hljs-string">&quot;Explain AI in one sentence&quot;</span>,
+    <span class="hljs-string">&quot;What is machine learning?&quot;</span>,
+    <span class="hljs-string">&quot;Define neural networks&quot;</span>
+]
+
+results = process_batch(prompts)
+<span class="hljs-built_in">print</span>(json.dumps(results, indent=<span class="hljs-number">2</span>))
+</code></pre>
+<h3 id="ストリーミングレスポンスハンドラ">ストリーミングレスポンスハンドラ</h3>
+<pre><code class="hljs language-javascript"><span class="hljs-keyword">import</span> <span class="hljs-title class_">OpenAI</span> <span class="hljs-keyword">from</span> <span class="hljs-string">&quot;openai&quot;</span>;
+
+<span class="hljs-keyword">const</span> client = <span class="hljs-keyword">new</span> <span class="hljs-title class_">OpenAI</span>({
+  <span class="hljs-attr">apiKey</span>: <span class="hljs-string">&quot;your-api-key-from-dashboard&quot;</span>,
+  <span class="hljs-attr">baseURL</span>: <span class="hljs-string">&quot;http://localhost:20128/v1&quot;</span>
+});
+
+<span class="hljs-keyword">async</span> <span class="hljs-keyword">function</span> <span class="hljs-title function_">streamResponse</span>(<span class="hljs-params">prompt</span>) {
+  <span class="hljs-keyword">const</span> stream = <span class="hljs-keyword">await</span> client.<span class="hljs-property">chat</span>.<span class="hljs-property">completions</span>.<span class="hljs-title function_">create</span>({
+    <span class="hljs-attr">model</span>: <span class="hljs-string">&quot;cc/claude-sonnet-4-20250514&quot;</span>,
+    <span class="hljs-attr">messages</span>: [{ <span class="hljs-attr">role</span>: <span class="hljs-string">&quot;user&quot;</span>, <span class="hljs-attr">content</span>: prompt }],
+    <span class="hljs-attr">stream</span>: <span class="hljs-literal">true</span>
+  });
+
+  <span class="hljs-keyword">for</span> <span class="hljs-keyword">await</span> (<span class="hljs-keyword">const</span> chunk <span class="hljs-keyword">of</span> stream) {
+    <span class="hljs-keyword">const</span> content = chunk.<span class="hljs-property">choices</span>[<span class="hljs-number">0</span>]?.<span class="hljs-property">delta</span>?.<span class="hljs-property">content</span> || <span class="hljs-string">&quot;&quot;</span>;
+    process.<span class="hljs-property">stdout</span>.<span class="hljs-title function_">write</span>(content);
+  }
+}
+
+<span class="hljs-title function_">streamResponse</span>(<span class="hljs-string">&quot;Write a short story about AI&quot;</span>);
+</code></pre>
+<h3 id="マルチモデル比較">マルチモデル比較</h3>
+<pre><code class="hljs language-python"><span class="hljs-keyword">from</span> openai <span class="hljs-keyword">import</span> OpenAI
+
+client = OpenAI(
+    api_key=<span class="hljs-string">&quot;your-api-key-from-dashboard&quot;</span>,
+    base_url=<span class="hljs-string">&quot;http://localhost:20128/v1&quot;</span>
+)
+
+models = [
+    <span class="hljs-string">&quot;cc/claude-sonnet-4-20250514&quot;</span>,
+    <span class="hljs-string">&quot;cx/deepseek-chat&quot;</span>,
+    <span class="hljs-string">&quot;glm/glm-4-plus&quot;</span>
+]
+
+prompt = <span class="hljs-string">&quot;Explain quantum computing in simple terms&quot;</span>
+
+<span class="hljs-keyword">for</span> model <span class="hljs-keyword">in</span> models:
+    response = client.chat.completions.create(
+        model=model,
+        messages=[{<span class="hljs-string">&quot;role&quot;</span>: <span class="hljs-string">&quot;user&quot;</span>, <span class="hljs-string">&quot;content&quot;</span>: prompt}]
+    )
+    <span class="hljs-built_in">print</span>(<span class="hljs-string">f&quot;\n=== <span class="hljs-subst">{model}</span> ===&quot;</span>)
+    <span class="hljs-built_in">print</span>(response.choices[<span class="hljs-number">0</span>].message.content)
+</code></pre>
+<h2 id="一般的な統合パターン">一般的な統合パターン</h2>
+<h3 id="環境変数">環境変数</h3>
+<p>認証情報を安全に保存:</p>
+<pre><code class="hljs language-bash"><span class="hljs-comment"># .envファイル</span>
+ROUTER_API_KEY=your-api-key-from-dashboard
+ROUTER_BASE_URL=http://localhost:20128/v1
+ROUTER_MODEL=cc/claude-sonnet-4-20250514
+</code></pre>
+<pre><code class="hljs language-python"><span class="hljs-keyword">import</span> os
+<span class="hljs-keyword">from</span> openai <span class="hljs-keyword">import</span> OpenAI
+
+client = OpenAI(
+    api_key=os.getenv(<span class="hljs-string">&quot;ROUTER_API_KEY&quot;</span>),
+    base_url=os.getenv(<span class="hljs-string">&quot;ROUTER_BASE_URL&quot;</span>)
+)
+</code></pre>
+<h3 id="エラーハンドリング">エラーハンドリング</h3>
+<pre><code class="hljs language-python"><span class="hljs-keyword">from</span> openai <span class="hljs-keyword">import</span> OpenAI, OpenAIError
+
+client = OpenAI(
+    api_key=<span class="hljs-string">&quot;your-api-key&quot;</span>,
+    base_url=<span class="hljs-string">&quot;http://localhost:20128/v1&quot;</span>
+)
+
+<span class="hljs-keyword">try</span>:
+    response = client.chat.completions.create(
+        model=<span class="hljs-string">&quot;cc/claude-sonnet-4-20250514&quot;</span>,
+        messages=[{<span class="hljs-string">&quot;role&quot;</span>: <span class="hljs-string">&quot;user&quot;</span>, <span class="hljs-string">&quot;content&quot;</span>: <span class="hljs-string">&quot;Hello&quot;</span>}]
+    )
+    <span class="hljs-built_in">print</span>(response.choices[<span class="hljs-number">0</span>].message.content)
+<span class="hljs-keyword">except</span> OpenAIError <span class="hljs-keyword">as</span> e:
+    <span class="hljs-built_in">print</span>(<span class="hljs-string">f&quot;Error: <span class="hljs-subst">{e}</span>&quot;</span>)
+</code></pre>
+<h3 id="リトライロジック">リトライロジック</h3>
+<pre><code class="hljs language-python"><span class="hljs-keyword">import</span> time
+<span class="hljs-keyword">from</span> openai <span class="hljs-keyword">import</span> OpenAI, RateLimitError
+
+client = OpenAI(
+    api_key=<span class="hljs-string">&quot;your-api-key&quot;</span>,
+    base_url=<span class="hljs-string">&quot;http://localhost:20128/v1&quot;</span>
+)
+
+<span class="hljs-keyword">def</span> <span class="hljs-title function_">chat_with_retry</span>(<span class="hljs-params">prompt, max_retries=<span class="hljs-number">3</span></span>):
+    <span class="hljs-keyword">for</span> attempt <span class="hljs-keyword">in</span> <span class="hljs-built_in">range</span>(max_retries):
+        <span class="hljs-keyword">try</span>:
+            response = client.chat.completions.create(
+                model=<span class="hljs-string">&quot;cc/claude-sonnet-4-20250514&quot;</span>,
+                messages=[{<span class="hljs-string">&quot;role&quot;</span>: <span class="hljs-string">&quot;user&quot;</span>, <span class="hljs-string">&quot;content&quot;</span>: prompt}]
+            )
+            <span class="hljs-keyword">return</span> response.choices[<span class="hljs-number">0</span>].message.content
+        <span class="hljs-keyword">except</span> RateLimitError:
+            <span class="hljs-keyword">if</span> attempt &lt; max_retries - <span class="hljs-number">1</span>:
+                time.sleep(<span class="hljs-number">2</span> ** attempt)  <span class="hljs-comment"># Exponential backoff</span>
+            <span class="hljs-keyword">else</span>:
+                <span class="hljs-keyword">raise</span>
+</code></pre>
+<h2 id="トラブルシューティング">トラブルシューティング</h2>
+<h3 id="接続の問題">接続の問題</h3>
+<p><strong>問題:</strong> VansRouterに接続できない</p>
+<pre><code class="hljs language-bash"><span class="hljs-comment"># VansRouterが動作中か確認</span>
+curl http://localhost:20128/health
+
+<span class="hljs-comment"># 期待されるレスポンス:</span>
+{<span class="hljs-string">&quot;status&quot;</span>: <span class="hljs-string">&quot;ok&quot;</span>}
+</code></pre>
+<p><strong>解決策:</strong></p>
+<ul>
+<li>VansRouterが動作中か確認</li>
+<li>ポート20128がブロックされていないか確認</li>
+<li>正しいbase URLを確認 (<code>/v1</code>を含む)</li>
+</ul>
+<h3 id="認証エラー">認証エラー</h3>
+<p><strong>問題:</strong> 401 Unauthorized</p>
+<pre><code>Error: Invalid API key
+</code></pre>
+<p><strong>解決策:</strong></p>
+<ul>
+<li>ダッシュボードからのAPIキーを確認</li>
+<li>AuthorizationヘッダーフォーマットがBearer your-api-keyであることを確認</li>
+<li>APIキーに余分なスペースや改行がないことを確認</li>
+</ul>
+<h3 id="モデルが見つからない">モデルが見つからない</h3>
+<p><strong>問題:</strong> 404 Model not found</p>
+<pre><code>Error: Model &#x27;cc/claude-opus&#x27; not found
+</code></pre>
+<p><strong>解決策:</strong></p>
+<ul>
+<li>正確なモデル名を使用 (大文字小文字を区別)</li>
+<li>利用可能なモデルを確認: <code>curl http://localhost:20128/v1/models</code></li>
+<li>プランでモデルが有効になっていることを確認</li>
+</ul>
+<h3 id="タイムアウトの問題">タイムアウトの問題</h3>
+<p><strong>問題:</strong> リクエストタイムアウト</p>
+<pre><code>Error: Request timed out after 30s
+</code></pre>
+<p><strong>解決策:</strong></p>
+<ul>
+<li>クライアント設定でタイムアウトを増やす</li>
+<li>時間制約のあるタスクには高速モデルを使用</li>
+<li>VansRouterへのネットワーク接続を確認</li>
+</ul>
+<h3 id="レート制限">レート制限</h3>
+<p><strong>問題:</strong> 429 Too Many Requests</p>
+<pre><code>Error: Rate limit exceeded
+</code></pre>
+<p><strong>解決策:</strong></p>
+<ul>
+<li>指数バックオフを実装</li>
+<li>リクエスト頻度を減らす</li>
+<li>ダッシュボードでレート制限を確認</li>
+<li>プランのアップグレードを検討</li>
+</ul>
+<h2 id="ベストプラクティス">ベストプラクティス</h2>
+<h3 id="セキュリティ">セキュリティ</h3>
+<ul>
+<li>APIキーを環境変数に保存</li>
+<li>APIキーをバージョン管理にコミットしない</li>
+<li>クラウドデプロイにはHTTPSを使用</li>
+<li>APIキーを定期的にローテーション</li>
+</ul>
+<h3 id="パフォーマンス">パフォーマンス</h3>
+<ul>
+<li>タスクの複雑さに応じて適切なモデルを使用</li>
+<li>繰り返しクエリにキャッシュを実装</li>
+<li>長い応答にはストリーミングを使用</li>
+<li>可能な場合はリクエストをバッチ処理</li>
+</ul>
+<h3 id="エラーハンドリング">エラーハンドリング</h3>
+<ul>
+<li>常にtry-catchブロックを実装</li>
+<li>指数バックオフでリトライロジックを追加</li>
+<li>デバッグのためエラーをログ</li>
+<li>フォールバックメカニズムを提供</li>
+</ul>
+<h3 id="コスト最適化">コスト最適化</h3>
+<ul>
+<li>シンプルなタスクには費用対効果の高いモデルを選択</li>
+<li>適切な場合は応答をキャッシュ</li>
+<li>ダッシュボードで使用量をモニター</li>
+<li>コードでリクエスト制限を設定</li>
+</ul>
+<h2 id="次のステップ">次のステップ</h2>
+<ul>
+<li><a href="cursor.md">Cursorを設定</a> IDE統合用</li>
+<li><a href="continue.md">Continueをセットアップ</a> VSCode用</li>
+<li><a href="../cli/basic-usage.md">CLI使用法を確認</a></li>
+<li><a href="../models/overview.md">モデル選択について学ぶ</a></li>
+<li><a href="../api/reference.md">APIリファレンス</a></li>
+</ul></div></article></main><div class="hidden lg:block"><aside class="hidden xl:block w-64 border-l bg-white border-gray-200 h-[calc(100vh-4rem)] sticky top-16 overflow-y-auto"><nav class="p-4"><h3 class="flex items-center gap-2 text-sm font-semibold text-gray-900 mb-3"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-list w-4 h-4" aria-hidden="true"><path d="M3 5h.01"></path><path d="M3 12h.01"></path><path d="M3 19h.01"></path><path d="M8 5h13"></path><path d="M8 12h13"></path><path d="M8 19h13"></path></svg>このページ</h3><ul class="space-y-2"><li><a href="#概要" class="block text-sm transition-colors  text-gray-600 hover:text-gray-900">概要</a></li><li><a href="#汎用セットアップパターン" class="block text-sm transition-colors  text-gray-600 hover:text-gray-900">汎用セットアップパターン</a></li><li><a href="#利用可能なモデル" class="block text-sm transition-colors  text-gray-600 hover:text-gray-900">利用可能なモデル</a></li><li><a href="#claudeモデル-anthropic" class="block text-sm transition-colors pl-4 text-gray-600 hover:text-gray-900">Claudeモデル (Anthropic)</a></li><li><a href="#deepseekモデル" class="block text-sm transition-colors pl-4 text-gray-600 hover:text-gray-900">DeepSeekモデル</a></li><li><a href="#glmモデル-zhipu-ai" class="block text-sm transition-colors pl-4 text-gray-600 hover:text-gray-900">GLMモデル (Zhipu AI)</a></li><li><a href="#統合例" class="block text-sm transition-colors  text-gray-600 hover:text-gray-900">統合例</a></li><li><a href="#pythonとopenai-sdk" class="block text-sm transition-colors pl-4 text-gray-600 hover:text-gray-900">PythonとOpenAI SDK</a></li><li><a href="#nodejsとopenai-sdk" class="block text-sm transition-colors pl-4 text-gray-600 hover:text-gray-900">Node.jsとOpenAI SDK</a></li><li><a href="#curlコマンド" class="block text-sm transition-colors pl-4 text-gray-600 hover:text-gray-900">cURLコマンド</a></li><li><a href="#httpクライアント-postmaninsomnia" class="block text-sm transition-colors pl-4 text-gray-600 hover:text-gray-900">HTTPクライアント (Postman、Insomnia)</a></li><li><a href="#langchain統合" class="block text-sm transition-colors pl-4 text-gray-600 hover:text-gray-900">LangChain統合</a></li><li><a href="#llamaindex統合" class="block text-sm transition-colors pl-4 text-gray-600 hover:text-gray-900">LlamaIndex統合</a></li><li><a href="#カスタムスクリプトの例" class="block text-sm transition-colors  text-gray-600 hover:text-gray-900">カスタムスクリプトの例</a></li><li><a href="#バッチ処理スクリプト" class="block text-sm transition-colors pl-4 text-gray-600 hover:text-gray-900">バッチ処理スクリプト</a></li><li><a href="#ストリーミングレスポンスハンドラ" class="block text-sm transition-colors pl-4 text-gray-600 hover:text-gray-900">ストリーミングレスポンスハンドラ</a></li><li><a href="#マルチモデル比較" class="block text-sm transition-colors pl-4 text-gray-600 hover:text-gray-900">マルチモデル比較</a></li><li><a href="#一般的な統合パターン" class="block text-sm transition-colors  text-gray-600 hover:text-gray-900">一般的な統合パターン</a></li><li><a href="#環境変数" class="block text-sm transition-colors pl-4 text-gray-600 hover:text-gray-900">環境変数</a></li><li><a href="#エラーハンドリング" class="block text-sm transition-colors pl-4 text-gray-600 hover:text-gray-900">エラーハンドリング</a></li><li><a href="#リトライロジック" class="block text-sm transition-colors pl-4 text-gray-600 hover:text-gray-900">リトライロジック</a></li><li><a href="#トラブルシューティング" class="block text-sm transition-colors  text-gray-600 hover:text-gray-900">トラブルシューティング</a></li><li><a href="#接続の問題" class="block text-sm transition-colors pl-4 text-gray-600 hover:text-gray-900">接続の問題</a></li><li><a href="#認証エラー" class="block text-sm transition-colors pl-4 text-gray-600 hover:text-gray-900">認証エラー</a></li><li><a href="#モデルが見つからない" class="block text-sm transition-colors pl-4 text-gray-600 hover:text-gray-900">モデルが見つからない</a></li><li><a href="#タイムアウトの問題" class="block text-sm transition-colors pl-4 text-gray-600 hover:text-gray-900">タイムアウトの問題</a></li><li><a href="#レート制限" class="block text-sm transition-colors pl-4 text-gray-600 hover:text-gray-900">レート制限</a></li><li><a href="#ベストプラクティス" class="block text-sm transition-colors  text-gray-600 hover:text-gray-900">ベストプラクティス</a></li><li><a href="#セキュリティ" class="block text-sm transition-colors pl-4 text-gray-600 hover:text-gray-900">セキュリティ</a></li><li><a href="#パフォーマンス" class="block text-sm transition-colors pl-4 text-gray-600 hover:text-gray-900">パフォーマンス</a></li><li><a href="#エラーハンドリング" class="block text-sm transition-colors pl-4 text-gray-600 hover:text-gray-900">エラーハンドリング</a></li><li><a href="#コスト最適化" class="block text-sm transition-colors pl-4 text-gray-600 hover:text-gray-900">コスト最適化</a></li><li><a href="#次のステップ" class="block text-sm transition-colors  text-gray-600 hover:text-gray-900">次のステップ</a></li></ul></nav></aside></div></div></div></div><!--$--><!--/$--><script src="/VansRouter/_next/static/chunks/343aa45b5611d01d.js" id="_R_" async=""></script><script>(self.__next_f=self.__next_f||[]).push([0])</script><script>self.__next_f.push([1,"1:\"$Sreact.fragment\"\n2:I[39756,[\"/VansRouter/_next/static/chunks/ff1a16fafef87110.js\",\"/VansRouter/_next/static/chunks/803a574de9eda7ae.js\"],\"default\"]\n3:I[37457,[\"/VansRouter/_next/static/chunks/ff1a16fafef87110.js\",\"/VansRouter/_next/static/chunks/803a574de9eda7ae.js\"],\"default\"]\n5:I[97367,[\"/VansRouter/_next/static/chunks/ff1a16fafef87110.js\",\"/VansRouter/_next/static/chunks/803a574de9eda7ae.js\"],\"OutletBoundary\"]\n6:\"$Sreact.suspense\"\n8:I[97367,[\"/VansRouter/_next/static/chunks/ff1a16fafef87110.js\",\"/VansRouter/_next/static/chunks/803a574de9eda7ae.js\"],\"ViewportBoundary\"]\na:I[97367,[\"/VansRouter/_next/static/chunks/ff1a16fafef87110.js\",\"/VansRouter/_next/static/chunks/803a574de9eda7ae.js\"],\"MetadataBoundary\"]\nc:I[68027,[\"/VansRouter/_next/static/chunks/ff1a16fafef87110.js\",\"/VansRouter/_next/static/chunks/803a574de9eda7ae.js\"],\"default\"]\n:HL[\"/VansRouter/_next/static/chunks/71d10a355cb8f2d7.css\",\"style\"]\n"])</script><script>self.__next_f.push([1,"0:{\"P\":null,\"b\":\"PUpTBY-8r_zZtEM8SJOLp\",\"c\":[\"\",\"ja\",\"integration\",\"other-tools\",\"\"],\"q\":\"\",\"i\":false,\"f\":[[[\"\",{\"children\":[[\"lang\",\"ja\",\"d\"],{\"children\":[[\"slug\",\"integration/other-tools\",\"c\"],{\"children\":[\"__PAGE__\",{}]}]}]},\"$undefined\",\"$undefined\",true],[[\"$\",\"$1\",\"c\",{\"children\":[[[\"$\",\"link\",\"0\",{\"rel\":\"stylesheet\",\"href\":\"/VansRouter/_next/static/chunks/71d10a355cb8f2d7.css\",\"precedence\":\"next\",\"crossOrigin\":\"$undefined\",\"nonce\":\"$undefined\"}]],[\"$\",\"html\",null,{\"lang\":\"en\",\"children\":[[\"$\",\"head\",null,{}],[\"$\",\"body\",null,{\"className\":\"bg-[#FCFBF9] text-[#6B7280]\",\"children\":[\"$\",\"$L2\",null,{\"parallelRouterKey\":\"children\",\"error\":\"$undefined\",\"errorStyles\":\"$undefined\",\"errorScripts\":\"$undefined\",\"template\":[\"$\",\"$L3\",null,{}],\"templateStyles\":\"$undefined\",\"templateScripts\":\"$undefined\",\"notFound\":[[[\"$\",\"title\",null,{\"children\":\"404: This page could not be found.\"}],[\"$\",\"div\",null,{\"style\":{\"fontFamily\":\"system-ui,\\\"Segoe UI\\\",Roboto,Helvetica,Arial,sans-serif,\\\"Apple Color Emoji\\\",\\\"Segoe UI Emoji\\\"\",\"height\":\"100vh\",\"textAlign\":\"center\",\"display\":\"flex\",\"flexDirection\":\"column\",\"alignItems\":\"center\",\"justifyContent\":\"center\"},\"children\":[\"$\",\"div\",null,{\"children\":[[\"$\",\"style\",null,{\"dangerouslySetInnerHTML\":{\"__html\":\"body{color:#000;background:#fff;margin:0}.next-error-h1{border-right:1px solid rgba(0,0,0,.3)}@media (prefers-color-scheme:dark){body{color:#fff;background:#000}.next-error-h1{border-right:1px solid rgba(255,255,255,.3)}}\"}}],[\"$\",\"h1\",null,{\"className\":\"next-error-h1\",\"style\":{\"display\":\"inline-block\",\"margin\":\"0 20px 0 0\",\"padding\":\"0 23px 0 0\",\"fontSize\":24,\"fontWeight\":500,\"verticalAlign\":\"top\",\"lineHeight\":\"49px\"},\"children\":404}],[\"$\",\"div\",null,{\"style\":{\"display\":\"inline-block\"},\"children\":[\"$\",\"h2\",null,{\"style\":{\"fontSize\":14,\"fontWeight\":400,\"lineHeight\":\"49px\",\"margin\":0},\"children\":\"This page could not be found.\"}]}]]}]}]],[]],\"forbidden\":\"$undefined\",\"unauthorized\":\"$undefined\"}]}]]}]]}],{\"children\":[[\"$\",\"$1\",\"c\",{\"children\":[null,[\"$\",\"$L2\",null,{\"parallelRouterKey\":\"children\",\"error\":\"$undefined\",\"errorStyles\":\"$undefined\",\"errorScripts\":\"$undefined\",\"template\":[\"$\",\"$L3\",null,{}],\"templateStyles\":\"$undefined\",\"templateScripts\":\"$undefined\",\"notFound\":\"$undefined\",\"forbidden\":\"$undefined\",\"unauthorized\":\"$undefined\"}]]}],{\"children\":[[\"$\",\"$1\",\"c\",{\"children\":[null,[\"$\",\"$L2\",null,{\"parallelRouterKey\":\"children\",\"error\":\"$undefined\",\"errorStyles\":\"$undefined\",\"errorScripts\":\"$undefined\",\"template\":[\"$\",\"$L3\",null,{}],\"templateStyles\":\"$undefined\",\"templateScripts\":\"$undefined\",\"notFound\":\"$undefined\",\"forbidden\":\"$undefined\",\"unauthorized\":\"$undefined\"}]]}],{\"children\":[[\"$\",\"$1\",\"c\",{\"children\":[\"$L4\",[[\"$\",\"script\",\"script-0\",{\"src\":\"/VansRouter/_next/static/chunks/ff1a16fafef87110.js\",\"async\":true,\"nonce\":\"$undefined\"}],[\"$\",\"script\",\"script-1\",{\"src\":\"/VansRouter/_next/static/chunks/3ba79d5b01800fdc.js\",\"async\":true,\"nonce\":\"$undefined\"}]],[\"$\",\"$L5\",null,{\"children\":[\"$\",\"$6\",null,{\"name\":\"Next.MetadataOutlet\",\"children\":\"$@7\"}]}]]}],{},null,false,false]},null,false,false]},null,false,false]},null,false,false],[\"$\",\"$1\",\"h\",{\"children\":[null,[\"$\",\"$L8\",null,{\"children\":\"$L9\"}],[\"$\",\"div\",null,{\"hidden\":true,\"children\":[\"$\",\"$La\",null,{\"children\":[\"$\",\"$6\",null,{\"name\":\"Next.Metadata\",\"children\":\"$Lb\"}]}]}],null]}],false]],\"m\":\"$undefined\",\"G\":[\"$c\",[]],\"S\":true}\n"])</script><script>self.__next_f.push([1,"d:I[81956,[\"/VansRouter/_next/static/chunks/ff1a16fafef87110.js\",\"/VansRouter/_next/static/chunks/3ba79d5b01800fdc.js\"],\"default\"]\ne:I[22982,[\"/VansRouter/_next/static/chunks/ff1a16fafef87110.js\",\"/VansRouter/_next/static/chunks/3ba79d5b01800fdc.js\"],\"default\"]\nf:T26c3,"])</script><script>self.__next_f.push([1,"# その他ツール統合\n\nVansRouterはOpenAI API形式をサポートする任意のツールと互換性があります。このガイドでは、様々なツールやカスタムアプリケーション向けの汎用統合パターンを説明します。\n\n## 概要\n\nVansRouterはOpenAI互換APIエンドポイントを提供し、以下と動作します:\n- カスタムスクリプトとアプリケーション\n- APIクライアントとテストツール\n- CLIツールとユーティリティ\n- サードパーティ統合\n- 開発フレームワーク\n\n## 汎用セットアップパターン\n\n任意のOpenAI互換ツールは以下の設定でVansRouterに接続できます:\n\n**ローカルVansRouter:**\n```\nBase URL: http://localhost:20128/v1\nAPI Key: your-api-key-from-dashboard\nModel: 任意のVansRouterモデル (cc/*, cx/*, glm/*など)\n```\n\n**クラウドVansRouter:**\n```\nBase URL: http://localhost:20128/v1\nAPI Key: your-api-key-from-dashboard\nModel: 任意のVansRouterモデル (cc/*, cx/*, glm/*など)\n```\n\n## 利用可能なモデル\n\n### Claudeモデル (Anthropic)\n- `cc/claude-opus-4-5-20251101`\n- `cc/claude-sonnet-4-20250514`\n- `cc/claude-haiku-4-20250514`\n\n### DeepSeekモデル\n- `cx/deepseek-chat`\n- `cx/deepseek-reasoner`\n\n### GLMモデル (Zhipu AI)\n- `glm/glm-4-plus`\n- `glm/glm-4-flash`\n\n## 統合例\n\n### PythonとOpenAI SDK\n\n```python\nfrom openai import OpenAI\n\nclient = OpenAI(\n    api_key=\"your-api-key-from-dashboard\",\n    base_url=\"http://localhost:20128/v1\"\n)\n\nresponse = client.chat.completions.create(\n    model=\"cc/claude-sonnet-4-20250514\",\n    messages=[\n        {\"role\": \"user\", \"content\": \"Hello, how are you?\"}\n    ]\n)\n\nprint(response.choices[0].message.content)\n```\n\n### Node.jsとOpenAI SDK\n\n```javascript\nimport OpenAI from \"openai\";\n\nconst client = new OpenAI({\n  apiKey: \"your-api-key-from-dashboard\",\n  baseURL: \"http://localhost:20128/v1\"\n});\n\nconst response = await client.chat.completions.create({\n  model: \"cc/claude-sonnet-4-20250514\",\n  messages: [\n    { role: \"user\", content: \"Hello, how are you?\" }\n  ]\n});\n\nconsole.log(response.choices[0].message.content);\n```\n\n### cURLコマンド\n\n```bash\ncurl http://localhost:20128/v1/chat/completions \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer your-api-key-from-dashboard\" \\\n  -d '{\n    \"model\": \"cc/claude-sonnet-4-20250514\",\n    \"messages\": [\n      {\"role\": \"user\", \"content\": \"Hello, how are you?\"}\n    ]\n  }'\n```\n\n### HTTPクライアント (Postman、Insomnia)\n\n**Request:**\n```\nPOST http://localhost:20128/v1/chat/completions\n```\n\n**Headers:**\n```\nContent-Type: application/json\nAuthorization: Bearer your-api-key-from-dashboard\n```\n\n**Body:**\n```json\n{\n  \"model\": \"cc/claude-sonnet-4-20250514\",\n  \"messages\": [\n    {\"role\": \"user\", \"content\": \"Hello, how are you?\"}\n  ],\n  \"temperature\": 0.7,\n  \"max_tokens\": 1000\n}\n```\n\n### LangChain統合\n\n```python\nfrom langchain.chat_models import ChatOpenAI\nfrom langchain.schema import HumanMessage\n\nllm = ChatOpenAI(\n    model_name=\"cc/claude-sonnet-4-20250514\",\n    openai_api_key=\"your-api-key-from-dashboard\",\n    openai_api_base=\"http://localhost:20128/v1\",\n    temperature=0.7\n)\n\nmessages = [HumanMessage(content=\"Explain quantum computing\")]\nresponse = llm(messages)\nprint(response.content)\n```\n\n### LlamaIndex統合\n\n```python\nfrom llama_index.llms import OpenAI\n\nllm = OpenAI(\n    model=\"cc/claude-sonnet-4-20250514\",\n    api_key=\"your-api-key-from-dashboard\",\n    api_base=\"http://localhost:20128/v1\"\n)\n\nresponse = llm.complete(\"What is machine learning?\")\nprint(response.text)\n```\n\n## カスタムスクリプトの例\n\n### バッチ処理スクリプト\n\n```python\nimport openai\nimport json\n\nopenai.api_key = \"your-api-key-from-dashboard\"\nopenai.api_base = \"http://localhost:20128/v1\"\n\ndef process_batch(prompts, model=\"cx/deepseek-chat\"):\n    results = []\n    for prompt in prompts:\n        response = openai.ChatCompletion.create(\n            model=model,\n            messages=[{\"role\": \"user\", \"content\": prompt}]\n        )\n        results.append({\n            \"prompt\": prompt,\n            \"response\": response.choices[0].message.content\n        })\n    return results\n\nprompts = [\n    \"Explain AI in one sentence\",\n    \"What is machine learning?\",\n    \"Define neural networks\"\n]\n\nresults = process_batch(prompts)\nprint(json.dumps(results, indent=2))\n```\n\n### ストリーミングレスポンスハンドラ\n\n```javascript\nimport OpenAI from \"openai\";\n\nconst client = new OpenAI({\n  apiKey: \"your-api-key-from-dashboard\",\n  baseURL: \"http://localhost:20128/v1\"\n});\n\nasync function streamResponse(prompt) {\n  const stream = await client.chat.completions.create({\n    model: \"cc/claude-sonnet-4-20250514\",\n    messages: [{ role: \"user\", content: prompt }],\n    stream: true\n  });\n\n  for await (const chunk of stream) {\n    const content = chunk.choices[0]?.delta?.content || \"\";\n    process.stdout.write(content);\n  }\n}\n\nstreamResponse(\"Write a short story about AI\");\n```\n\n### マルチモデル比較\n\n```python\nfrom openai import OpenAI\n\nclient = OpenAI(\n    api_key=\"your-api-key-from-dashboard\",\n    base_url=\"http://localhost:20128/v1\"\n)\n\nmodels = [\n    \"cc/claude-sonnet-4-20250514\",\n    \"cx/deepseek-chat\",\n    \"glm/glm-4-plus\"\n]\n\nprompt = \"Explain quantum computing in simple terms\"\n\nfor model in models:\n    response = client.chat.completions.create(\n        model=model,\n        messages=[{\"role\": \"user\", \"content\": prompt}]\n    )\n    print(f\"\\n=== {model} ===\")\n    print(response.choices[0].message.content)\n```\n\n## 一般的な統合パターン\n\n### 環境変数\n\n認証情報を安全に保存:\n\n```bash\n# .envファイル\nROUTER_API_KEY=your-api-key-from-dashboard\nROUTER_BASE_URL=http://localhost:20128/v1\nROUTER_MODEL=cc/claude-sonnet-4-20250514\n```\n\n```python\nimport os\nfrom openai import OpenAI\n\nclient = OpenAI(\n    api_key=os.getenv(\"ROUTER_API_KEY\"),\n    base_url=os.getenv(\"ROUTER_BASE_URL\")\n)\n```\n\n### エラーハンドリング\n\n```python\nfrom openai import OpenAI, OpenAIError\n\nclient = OpenAI(\n    api_key=\"your-api-key\",\n    base_url=\"http://localhost:20128/v1\"\n)\n\ntry:\n    response = client.chat.completions.create(\n        model=\"cc/claude-sonnet-4-20250514\",\n        messages=[{\"role\": \"user\", \"content\": \"Hello\"}]\n    )\n    print(response.choices[0].message.content)\nexcept OpenAIError as e:\n    print(f\"Error: {e}\")\n```\n\n### リトライロジック\n\n```python\nimport time\nfrom openai import OpenAI, RateLimitError\n\nclient = OpenAI(\n    api_key=\"your-api-key\",\n    base_url=\"http://localhost:20128/v1\"\n)\n\ndef chat_with_retry(prompt, max_retries=3):\n    for attempt in range(max_retries):\n        try:\n            response = client.chat.completions.create(\n                model=\"cc/claude-sonnet-4-20250514\",\n                messages=[{\"role\": \"user\", \"content\": prompt}]\n            )\n            return response.choices[0].message.content\n        except RateLimitError:\n            if attempt \u003c max_retries - 1:\n                time.sleep(2 ** attempt)  # Exponential backoff\n            else:\n                raise\n```\n\n## トラブルシューティング\n\n### 接続の問題\n\n**問題:** VansRouterに接続できない\n```bash\n# VansRouterが動作中か確認\ncurl http://localhost:20128/health\n\n# 期待されるレスポンス:\n{\"status\": \"ok\"}\n```\n\n**解決策:**\n- VansRouterが動作中か確認\n- ポート20128がブロックされていないか確認\n- 正しいbase URLを確認 (`/v1`を含む)\n\n### 認証エラー\n\n**問題:** 401 Unauthorized\n```\nError: Invalid API key\n```\n\n**解決策:**\n- ダッシュボードからのAPIキーを確認\n- AuthorizationヘッダーフォーマットがBearer your-api-keyであることを確認\n- APIキーに余分なスペースや改行がないことを確認\n\n### モデルが見つからない\n\n**問題:** 404 Model not found\n```\nError: Model 'cc/claude-opus' not found\n```\n\n**解決策:**\n- 正確なモデル名を使用 (大文字小文字を区別)\n- 利用可能なモデルを確認: `curl http://localhost:20128/v1/models`\n- プランでモデルが有効になっていることを確認\n\n### タイムアウトの問題\n\n**問題:** リクエストタイムアウト\n```\nError: Request timed out after 30s\n```\n\n**解決策:**\n- クライアント設定でタイムアウトを増やす\n- 時間制約のあるタスクには高速モデルを使用\n- VansRouterへのネットワーク接続を確認\n\n### レート制限\n\n**問題:** 429 Too Many Requests\n```\nError: Rate limit exceeded\n```\n\n**解決策:**\n- 指数バックオフを実装\n- リクエスト頻度を減らす\n- ダッシュボードでレート制限を確認\n- プランのアップグレードを検討\n\n## ベストプラクティス\n\n### セキュリティ\n- APIキーを環境変数に保存\n- APIキーをバージョン管理にコミットしない\n- クラウドデプロイにはHTTPSを使用\n- APIキーを定期的にローテーション\n\n### パフォーマンス\n- タスクの複雑さに応じて適切なモデルを使用\n- 繰り返しクエリにキャッシュを実装\n- 長い応答にはストリーミングを使用\n- 可能な場合はリクエストをバッチ処理\n\n### エラーハンドリング\n- 常にtry-catchブロックを実装\n- 指数バックオフでリトライロジックを追加\n- デバッグのためエラーをログ\n- フォールバックメカニズムを提供\n\n### コスト最適化\n- シンプルなタスクには費用対効果の高いモデルを選択\n- 適切な場合は応答をキャッシュ\n- ダッシュボードで使用量をモニター\n- コードでリクエスト制限を設定\n\n## 次のステップ\n\n- [Cursorを設定](cursor.md) IDE統合用\n- [Continueをセットアップ](continue.md) VSCode用\n- [CLI使用法を確認](../cli/basic-usage.md)\n- [モデル選択について学ぶ](../models/overview.md)\n- [APIリファレンス](../api/reference.md)\n"])</script><script>self.__next_f.push([1,"4:[\"$\",\"$Ld\",null,{\"headings\":[{\"level\":2,\"text\":\"概要\",\"id\":\"概要\"},{\"level\":2,\"text\":\"汎用セットアップパターン\",\"id\":\"汎用セットアップパターン\"},{\"level\":2,\"text\":\"利用可能なモデル\",\"id\":\"利用可能なモデル\"},{\"level\":3,\"text\":\"Claudeモデル (Anthropic)\",\"id\":\"claudeモデル-anthropic\"},{\"level\":3,\"text\":\"DeepSeekモデル\",\"id\":\"deepseekモデル\"},{\"level\":3,\"text\":\"GLMモデル (Zhipu AI)\",\"id\":\"glmモデル-zhipu-ai\"},{\"level\":2,\"text\":\"統合例\",\"id\":\"統合例\"},{\"level\":3,\"text\":\"PythonとOpenAI SDK\",\"id\":\"pythonとopenai-sdk\"},{\"level\":3,\"text\":\"Node.jsとOpenAI SDK\",\"id\":\"nodejsとopenai-sdk\"},{\"level\":3,\"text\":\"cURLコマンド\",\"id\":\"curlコマンド\"},{\"level\":3,\"text\":\"HTTPクライアント (Postman、Insomnia)\",\"id\":\"httpクライアント-postmaninsomnia\"},{\"level\":3,\"text\":\"LangChain統合\",\"id\":\"langchain統合\"},{\"level\":3,\"text\":\"LlamaIndex統合\",\"id\":\"llamaindex統合\"},{\"level\":2,\"text\":\"カスタムスクリプトの例\",\"id\":\"カスタムスクリプトの例\"},{\"level\":3,\"text\":\"バッチ処理スクリプト\",\"id\":\"バッチ処理スクリプト\"},{\"level\":3,\"text\":\"ストリーミングレスポンスハンドラ\",\"id\":\"ストリーミングレスポンスハンドラ\"},{\"level\":3,\"text\":\"マルチモデル比較\",\"id\":\"マルチモデル比較\"},{\"level\":2,\"text\":\"一般的な統合パターン\",\"id\":\"一般的な統合パターン\"},{\"level\":3,\"text\":\"環境変数\",\"id\":\"環境変数\"},{\"level\":3,\"text\":\"エラーハンドリング\",\"id\":\"エラーハンドリング\"},{\"level\":3,\"text\":\"リトライロジック\",\"id\":\"リトライロジック\"},{\"level\":2,\"text\":\"トラブルシューティング\",\"id\":\"トラブルシューティング\"},{\"level\":3,\"text\":\"接続の問題\",\"id\":\"接続の問題\"},{\"level\":3,\"text\":\"認証エラー\",\"id\":\"認証エラー\"},{\"level\":3,\"text\":\"モデルが見つからない\",\"id\":\"モデルが見つからない\"},{\"level\":3,\"text\":\"タイムアウトの問題\",\"id\":\"タイムアウトの問題\"},{\"level\":3,\"text\":\"レート制限\",\"id\":\"レート制限\"},{\"level\":2,\"text\":\"ベストプラクティス\",\"id\":\"ベストプラクティス\"},{\"level\":3,\"text\":\"セキュリティ\",\"id\":\"セキュリティ\"},{\"level\":3,\"text\":\"パフォーマンス\",\"id\":\"パフォーマンス\"},{\"level\":3,\"text\":\"エラーハンドリング\",\"id\":\"エラーハンドリング\"},{\"level\":3,\"text\":\"コスト最適化\",\"id\":\"コスト最適化\"},{\"level\":2,\"text\":\"次のステップ\",\"id\":\"次のステップ\"}],\"lang\":\"ja\",\"children\":[\"$\",\"$Le\",null,{\"content\":\"$f\"}]}]\n"])</script><script>self.__next_f.push([1,"9:[[\"$\",\"meta\",\"0\",{\"charSet\":\"utf-8\"}],[\"$\",\"meta\",\"1\",{\"name\":\"viewport\",\"content\":\"width=device-width, initial-scale=1\"}]]\n"])</script><script>self.__next_f.push([1,"7:null\nb:[[\"$\",\"title\",\"0\",{\"children\":\"9Router Documentation\"}],[\"$\",\"meta\",\"1\",{\"name\":\"description\",\"content\":\"Smart AI model router - Maximize subscriptions, minimize costs\"}]]\n"])</script></body></html>

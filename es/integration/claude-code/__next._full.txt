@@ -1,0 +1,125 @@
+1:"$Sreact.fragment"
+2:I[39756,["/VansRouter/_next/static/chunks/ff1a16fafef87110.js","/VansRouter/_next/static/chunks/803a574de9eda7ae.js"],"default"]
+3:I[37457,["/VansRouter/_next/static/chunks/ff1a16fafef87110.js","/VansRouter/_next/static/chunks/803a574de9eda7ae.js"],"default"]
+5:I[97367,["/VansRouter/_next/static/chunks/ff1a16fafef87110.js","/VansRouter/_next/static/chunks/803a574de9eda7ae.js"],"OutletBoundary"]
+6:"$Sreact.suspense"
+8:I[97367,["/VansRouter/_next/static/chunks/ff1a16fafef87110.js","/VansRouter/_next/static/chunks/803a574de9eda7ae.js"],"ViewportBoundary"]
+a:I[97367,["/VansRouter/_next/static/chunks/ff1a16fafef87110.js","/VansRouter/_next/static/chunks/803a574de9eda7ae.js"],"MetadataBoundary"]
+c:I[68027,["/VansRouter/_next/static/chunks/ff1a16fafef87110.js","/VansRouter/_next/static/chunks/803a574de9eda7ae.js"],"default"]
+:HL["/VansRouter/_next/static/chunks/71d10a355cb8f2d7.css","style"]
+0:{"P":null,"b":"PUpTBY-8r_zZtEM8SJOLp","c":["","es","integration","claude-code",""],"q":"","i":false,"f":[[["",{"children":[["lang","es","d"],{"children":[["slug","integration/claude-code","c"],{"children":["__PAGE__",{}]}]}]},"$undefined","$undefined",true],[["$","$1","c",{"children":[[["$","link","0",{"rel":"stylesheet","href":"/VansRouter/_next/static/chunks/71d10a355cb8f2d7.css","precedence":"next","crossOrigin":"$undefined","nonce":"$undefined"}]],["$","html",null,{"lang":"en","children":[["$","head",null,{}],["$","body",null,{"className":"bg-[#FCFBF9] text-[#6B7280]","children":["$","$L2",null,{"parallelRouterKey":"children","error":"$undefined","errorStyles":"$undefined","errorScripts":"$undefined","template":["$","$L3",null,{}],"templateStyles":"$undefined","templateScripts":"$undefined","notFound":[[["$","title",null,{"children":"404: This page could not be found."}],["$","div",null,{"style":{"fontFamily":"system-ui,\"Segoe UI\",Roboto,Helvetica,Arial,sans-serif,\"Apple Color Emoji\",\"Segoe UI Emoji\"","height":"100vh","textAlign":"center","display":"flex","flexDirection":"column","alignItems":"center","justifyContent":"center"},"children":["$","div",null,{"children":[["$","style",null,{"dangerouslySetInnerHTML":{"__html":"body{color:#000;background:#fff;margin:0}.next-error-h1{border-right:1px solid rgba(0,0,0,.3)}@media (prefers-color-scheme:dark){body{color:#fff;background:#000}.next-error-h1{border-right:1px solid rgba(255,255,255,.3)}}"}}],["$","h1",null,{"className":"next-error-h1","style":{"display":"inline-block","margin":"0 20px 0 0","padding":"0 23px 0 0","fontSize":24,"fontWeight":500,"verticalAlign":"top","lineHeight":"49px"},"children":404}],["$","div",null,{"style":{"display":"inline-block"},"children":["$","h2",null,{"style":{"fontSize":14,"fontWeight":400,"lineHeight":"49px","margin":0},"children":"This page could not be found."}]}]]}]}]],[]],"forbidden":"$undefined","unauthorized":"$undefined"}]}]]}]]}],{"children":[["$","$1","c",{"children":[null,["$","$L2",null,{"parallelRouterKey":"children","error":"$undefined","errorStyles":"$undefined","errorScripts":"$undefined","template":["$","$L3",null,{}],"templateStyles":"$undefined","templateScripts":"$undefined","notFound":"$undefined","forbidden":"$undefined","unauthorized":"$undefined"}]]}],{"children":[["$","$1","c",{"children":[null,["$","$L2",null,{"parallelRouterKey":"children","error":"$undefined","errorStyles":"$undefined","errorScripts":"$undefined","template":["$","$L3",null,{}],"templateStyles":"$undefined","templateScripts":"$undefined","notFound":"$undefined","forbidden":"$undefined","unauthorized":"$undefined"}]]}],{"children":[["$","$1","c",{"children":["$L4",[["$","script","script-0",{"src":"/VansRouter/_next/static/chunks/ff1a16fafef87110.js","async":true,"nonce":"$undefined"}],["$","script","script-1",{"src":"/VansRouter/_next/static/chunks/3ba79d5b01800fdc.js","async":true,"nonce":"$undefined"}]],["$","$L5",null,{"children":["$","$6",null,{"name":"Next.MetadataOutlet","children":"$@7"}]}]]}],{},null,false,false]},null,false,false]},null,false,false]},null,false,false],["$","$1","h",{"children":[null,["$","$L8",null,{"children":"$L9"}],["$","div",null,{"hidden":true,"children":["$","$La",null,{"children":["$","$6",null,{"name":"Next.Metadata","children":"$Lb"}]}]}],null]}],false]],"m":"$undefined","G":["$c",[]],"S":true}
+d:I[81956,["/VansRouter/_next/static/chunks/ff1a16fafef87110.js","/VansRouter/_next/static/chunks/3ba79d5b01800fdc.js"],"default"]
+e:I[22982,["/VansRouter/_next/static/chunks/ff1a16fafef87110.js","/VansRouter/_next/static/chunks/3ba79d5b01800fdc.js"],"default"]
+f:Tbce,# Integración con Claude Code
+
+Integra VansRouter con Claude Code CLI para enrutar tus solicitudes de la API de Anthropic a través del sistema de enrutamiento inteligente de VansRouter.
+
+## Requisitos previos
+
+- Claude Code CLI instalado
+- VansRouter ejecutándose localmente o endpoint en la nube configurado
+- API key del dashboard de VansRouter
+
+## Configuración
+
+### 1. Configurar variables de entorno
+
+Establece las siguientes variables de entorno en tu archivo de configuración del shell (`~/.bashrc`, `~/.zshrc`, o `~/.bash_profile`):
+
+```bash
+# Base URL for VansRouter
+export ANTHROPIC_BASE_URL="http://localhost:20128/v1"
+
+# Optional: Set default models for aliases
+export ANTHROPIC_DEFAULT_OPUS_MODEL="cc/claude-opus-4-5-20251101"
+export ANTHROPIC_DEFAULT_SONNET_MODEL="cc/claude-sonnet-4-5-20250929"
+export ANTHROPIC_DEFAULT_HAIKU_MODEL="cc/claude-haiku-4-5-20251001"
+```
+
+### 2. Recargar la configuración del shell
+
+```bash
+source ~/.zshrc  # o ~/.bashrc
+```
+
+### 3. Verificar la configuración
+
+Verifica que las variables de entorno estén configuradas correctamente:
+
+```bash
+echo $ANTHROPIC_BASE_URL
+```
+
+## Aliases de modelos
+
+Claude Code soporta los siguientes aliases de modelos que mapean a modelos de VansRouter:
+
+| Alias | Modelo | Variable de entorno |
+|-------|-------|---------------------|
+| `opus` | Claude Opus 4.5 | `ANTHROPIC_DEFAULT_OPUS_MODEL` |
+| `sonnet` | Claude Sonnet 4.5 | `ANTHROPIC_DEFAULT_SONNET_MODEL` |
+| `haiku` | Claude Haiku 4.5 | `ANTHROPIC_DEFAULT_HAIKU_MODEL` |
+
+## Ejemplos de uso
+
+### Usando aliases de modelos
+
+```bash
+# Usar modelo Opus
+claude --model opus "Explain quantum computing"
+
+# Usar modelo Sonnet
+claude --model sonnet "Write a Python function"
+
+# Usar modelo Haiku
+claude --model haiku "Quick code review"
+```
+
+### Usando nombres completos de modelos
+
+```bash
+claude --model cc/claude-opus-4-5-20251101 "Your prompt here"
+```
+
+## Archivo de configuración
+
+Claude Code almacena su configuración en `~/.claude/settings.json`. Puedes editar este archivo manualmente si es necesario:
+
+```json
+{
+  "baseUrl": "http://localhost:20128/v1",
+  "defaultModel": "sonnet"
+}
+```
+
+## Solución de problemas
+
+### Problemas de conexión
+
+Si encuentras errores de conexión:
+
+1. Verifica que VansRouter esté corriendo: `curl http://localhost:20128/health`
+2. Verifica que las variables de entorno estén configuradas correctamente
+3. Asegúrate de que ningún firewall esté bloqueando el puerto 20128
+
+### Modelo no encontrado
+
+Si obtienes errores de "modelo no encontrado":
+
+1. Verifica que el nombre del modelo coincida con tu configuración de VansRouter
+2. Verifica que la conexión del proveedor esté activa en el dashboard de VansRouter
+3. Asegúrate de que el modelo esté disponible en tus proveedores conectados
+
+## Endpoint en la nube
+
+Para usar el endpoint en la nube de VansRouter en lugar de localhost:
+
+```bash
+export ANTHROPIC_BASE_URL="http://localhost:20128"
+```
+
+Asegúrate de haber configurado tu API key en el dashboard en la nube de VansRouter.
+4:["$","$Ld",null,{"headings":[{"level":2,"text":"Requisitos previos","id":"requisitos-previos"},{"level":2,"text":"Configuración","id":"configuración"},{"level":3,"text":"1. Configurar variables de entorno","id":"1-configurar-variables-de-entorno"},{"level":3,"text":"2. Recargar la configuración del shell","id":"2-recargar-la-configuración-del-shell"},{"level":3,"text":"3. Verificar la configuración","id":"3-verificar-la-configuración"},{"level":2,"text":"Aliases de modelos","id":"aliases-de-modelos"},{"level":2,"text":"Ejemplos de uso","id":"ejemplos-de-uso"},{"level":3,"text":"Usando aliases de modelos","id":"usando-aliases-de-modelos"},{"level":3,"text":"Usando nombres completos de modelos","id":"usando-nombres-completos-de-modelos"},{"level":2,"text":"Archivo de configuración","id":"archivo-de-configuración"},{"level":2,"text":"Solución de problemas","id":"solución-de-problemas"},{"level":3,"text":"Problemas de conexión","id":"problemas-de-conexión"},{"level":3,"text":"Modelo no encontrado","id":"modelo-no-encontrado"},{"level":2,"text":"Endpoint en la nube","id":"endpoint-en-la-nube"}],"lang":"es","children":["$","$Le",null,{"content":"$f"}]}]
+9:[["$","meta","0",{"charSet":"utf-8"}],["$","meta","1",{"name":"viewport","content":"width=device-width, initial-scale=1"}]]
+7:null
+b:[["$","title","0",{"children":"9Router Documentation"}],["$","meta","1",{"name":"description","content":"Smart AI model router - Maximize subscriptions, minimize costs"}]]

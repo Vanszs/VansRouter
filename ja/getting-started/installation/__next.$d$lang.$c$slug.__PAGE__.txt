@@ -1,0 +1,488 @@
+1:"$Sreact.fragment"
+2:I[81956,["/VansRouter/_next/static/chunks/ff1a16fafef87110.js","/VansRouter/_next/static/chunks/3ba79d5b01800fdc.js"],"default"]
+3:I[22982,["/VansRouter/_next/static/chunks/ff1a16fafef87110.js","/VansRouter/_next/static/chunks/3ba79d5b01800fdc.js"],"default"]
+8:I[97367,["/VansRouter/_next/static/chunks/ff1a16fafef87110.js","/VansRouter/_next/static/chunks/803a574de9eda7ae.js"],"OutletBoundary"]
+9:"$Sreact.suspense"
+4:T243c,# インストール
+
+トラブルシューティングのヒント付きのVansRouter詳細インストールガイド。
+
+---
+
+## 要件
+
+### システム要件
+
+- **Node.js**: バージョン 20.0.0以上
+- **npm**: バージョン 10.0.0以上 (Node.jsに付属)
+- **OS**: macOS、Linux、Windows (WSL推奨)
+- **ディスク容量**: インストールに約200MB
+
+### バージョンを確認
+
+```bash
+node --version
+# v20.x.x以上が表示されるはず
+
+npm --version
+# 10.x.x以上が表示されるはず
+```
+
+**Node.jsがない場合?** [nodejs.org](https://nodejs.org/)からインストール
+
+---
+
+## インストール方法
+
+### 方法1: グローバルインストール (推奨)
+
+どこからでも使用できるようにVansRouterをグローバルインストール:
+
+```bash
+npm install -g vansrouter
+```
+
+**VansRouterを起動:**
+
+```bash
+vansrouter
+```
+
+**利点:**
+- ✅ どのディレクトリからでも実行
+- ✅ シンプルなコマンド: `9router`
+- ✅ `npm update -g vansrouter` で自動更新
+
+### 方法2: ローカルインストール
+
+特定のプロジェクトにインストール:
+
+```bash
+mkdir my-9router
+cd my-9router
+npm install 9router
+```
+
+**VansRouterを起動:**
+
+```bash
+npx vansrouter
+```
+
+**利点:**
+- ✅ プロジェクトごとに分離
+- ✅ プロジェクトごとのバージョン管理
+- ✅ グローバル名前空間の汚染なし
+
+### 方法3: ソースから (開発)
+
+GitHubからクローンしてビルド:
+
+```bash
+git clone https://github.com/Vanszs/VansRouter.git
+cd VansRouter
+npm install
+npm run build
+npm start
+```
+
+**利点:**
+- ✅ 最新の開発機能
+- ✅ 開発に貢献可能
+- ✅ カスタム変更
+
+---
+
+## 初回実行
+
+### サーバーを起動
+
+```bash
+vansrouter
+```
+
+**何が起こるか:**
+1. サーバーが `http://localhost:20128` で起動
+2. ダッシュボードが自動的にブラウザで開く
+3. `~/.9router` にデータディレクトリが作成される
+4. APIキーが自動生成される
+
+### ダッシュボードログイン
+
+**デフォルト認証情報:**
+- 本番ログイン前にランダムで生成した `INITIAL_PASSWORD` を設定
+
+**⚠️ パスワードをすぐに変更:**
+1. ダッシュボードにログイン
+2. Settings → Change Password
+3. 強力なパスワードを使用
+
+### APIキーを取得
+
+```
+Dashboard → Settings → API Keys
+→ APIキーをコピー
+→ CLIツールで使用
+```
+
+**APIキー形式の例:**
+```
+9r_1234567890abcdef1234567890abcdef
+```
+
+---
+
+## インストールを確認
+
+### サーバーステータスを確認
+
+```bash
+curl http://localhost:20128/health
+```
+
+**期待されるレスポンス:**
+```json
+{
+  "status": "ok",
+  "version": "1.0.0"
+}
+```
+
+### 利用可能なモデルを一覧表示
+
+```bash
+curl http://localhost:20128/v1/models \
+  -H "Authorization: Bearer your-api-key"
+```
+
+**期待されるレスポンス:**
+```json
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "cc/claude-opus-4-5-20251101",
+      "object": "model",
+      "created": 1234567890,
+      "owned_by": "claude-code"
+    }
+  ]
+}
+```
+
+### チャットコンプリーションをテスト
+
+```bash
+curl http://localhost:20128/v1/chat/completions \
+  -H "Authorization: Bearer your-api-key" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "cc/claude-opus-4-5-20251101",
+    "messages": [
+      {"role": "user", "content": "Hello!"}
+    ]
+  }'
+```
+
+---
+
+## 設定
+
+### 環境変数
+
+`.env` ファイルを作成するか、環境変数を設定:
+
+```bash
+# セキュリティ (本番環境では必須)
+export JWT_SECRET="your-secure-secret-change-this"
+export INITIAL_PASSWORD="$(openssl rand -base64 24)"
+
+# ストレージ
+export DATA_DIR="~/.9router"
+
+# サーバー
+export PORT="20128"
+export NODE_ENV="production"
+
+# ロギング
+export ENABLE_REQUEST_LOGS="false"
+```
+
+### データディレクトリ
+
+**デフォルトの場所:** `~/.9router`
+
+**内容:**
+```
+~/.9router/
+  ├── db.json           # データベース (プロバイダー、コンボ、使用量)
+  ├── api-keys.json     # APIキー
+  └── logs/             # リクエストログ (有効化されている場合)
+```
+
+**場所を変更:**
+
+```bash
+export DATA_DIR="/custom/path"
+vansrouter
+```
+
+### ポート設定
+
+**デフォルトポート:** `20128`
+
+**ポートを変更:**
+
+```bash
+export PORT="3000"
+vansrouter
+```
+
+**またはコマンドラインで:**
+
+```bash
+vansrouter --port 3000
+```
+
+---
+
+## トラブルシューティング
+
+### ポートがすでに使用されている
+
+**エラー:**
+```
+Error: listen EADDRINUSE: address already in use :::20128
+```
+
+**解決策1: 既存のプロセスを終了**
+
+```bash
+# ポート20128を使用しているプロセスを検索
+lsof -i :20128
+
+# プロセスを終了
+kill -9 <PID>
+```
+
+**解決策2: 別のポートを使用**
+
+```bash
+vansrouter --port 3000
+```
+
+### Permission Denied
+
+**エラー:**
+```
+Error: EACCES: permission denied, mkdir '/usr/local/lib/node_modules/9router'
+```
+
+**解決策: sudoを使用 (非推奨) またはnpm権限を修正**
+
+```bash
+# npm権限を修正 (推奨)
+mkdir ~/.npm-global
+npm config set prefix '~/.npm-global'
+echo 'export PATH=~/.npm-global/bin:$PATH' >> ~/.bashrc
+source ~/.bashrc
+
+# 再度インストール
+npm install -g vansrouter
+```
+
+### Node.jsバージョンが古すぎる
+
+**エラー:**
+```
+Error: The engine "node" is incompatible with this module
+```
+
+**解決策: Node.jsを更新**
+
+```bash
+# nvmを使用 (推奨)
+nvm install 20
+nvm use 20
+
+# またはnodejs.orgからダウンロード
+```
+
+### ダッシュボードが開かない
+
+**問題:** ダッシュボードが自動的に開かない
+
+**解決策1: 手動で開く**
+
+```
+http://localhost:20128
+```
+
+**解決策2: ファイアウォールを確認**
+
+```bash
+# macOS: システム環境設定 → セキュリティでNode.jsを許可
+# Linux: iptablesを確認
+# Windows: Windowsファイアウォールを確認
+```
+
+### プロバイダーに接続できない
+
+**問題:** OAuthログインが失敗、またはAPIキーが無効
+
+**解決策1: インターネット接続を確認**
+
+```bash
+ping google.com
+```
+
+**解決策2: プロバイダーのステータスを確認**
+
+- Claude Code: [status.anthropic.com](https://status.anthropic.com)
+- OpenAI: [status.openai.com](https://status.openai.com)
+- Gemini: [status.cloud.google.com](https://status.cloud.google.com)
+
+**解決策3: APIキーを再生成**
+
+```
+Dashboard → Provider → Disconnect → Reconnect
+```
+
+### 高メモリ使用量
+
+**問題:** VansRouterがRAMを使いすぎている
+
+**解決策: サーバーを再起動**
+
+```bash
+# 停止
+pkill -f 9router
+
+# 起動
+vansrouter
+```
+
+**または自動再起動にPM2を使用:**
+
+```bash
+npm install -g pm2
+pm2 start vansrouter --name vansrouter
+pm2 save
+```
+
+---
+
+## デプロイメントオプション
+
+### ローカル開発
+
+```bash
+npm install -g vansrouter
+vansrouter
+```
+
+**ユースケース:** 個人コーディング、テスト
+
+### VPS/クラウドサーバー
+
+```bash
+# インストール
+npm install -g vansrouter
+
+# 設定
+export JWT_SECRET="your-secure-secret"
+export INITIAL_PASSWORD="$(openssl rand -base64 24)"
+export NODE_ENV="production"
+
+# PM2で起動
+npm install -g pm2
+pm2 start vansrouter --name vansrouter
+pm2 save
+pm2 startup
+```
+
+**ユースケース:** チームアクセス、リモートコーディング
+
+### Docker
+
+```bash
+docker pull ghcr.io/vanszs/vansrouter:X.Y.Z
+
+docker run -d \
+  -p 20128:20128 \
+  -e JWT_SECRET="your-secure-secret" \
+  -e INITIAL_PASSWORD="$(openssl rand -base64 24)" \
+  -v 9router-data:/root/.9router \
+  --name vansrouter \
+  ghcr.io/vanszs/vansrouter:X.Y.Z
+```
+
+**ユースケース:** コンテナデプロイ、Kubernetes
+
+### リバースプロキシ (Nginx)
+
+```nginx
+server {
+    listen 80;
+    server_name your-domain.com;
+
+    location / {
+        proxy_pass http://localhost:20128;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        
+        # SSE support for streaming
+        proxy_buffering off;
+        proxy_read_timeout 86400;
+    }
+}
+```
+
+**ユースケース:** HTTPS、カスタムドメイン、ロードバランシング
+
+---
+
+## アンインストール
+
+### グローバルインストールを削除
+
+```bash
+npm uninstall -g vansrouter
+```
+
+### データディレクトリを削除
+
+```bash
+rm -rf ~/.9router
+```
+
+### 設定を削除
+
+```bash
+# シェル設定から環境変数を削除
+nano ~/.bashrc  # または ~/.zshrc
+# 9router関連のエクスポートを削除
+```
+
+---
+
+## 次のステップ
+
+- [スタートガイド](../getting-started.md) - プロバイダーを接続してコーディング開始
+- [機能](../features/) - クォータトラッキング、コンボ、デプロイを確認
+- [トラブルシューティング](../troubleshooting.md) - 一般的な問題の修正
+
+---
+
+## ヘルプが必要?
+
+- **ウェブサイト**: [VansRouter dashboard](http://localhost:20128)
+- **GitHub**: [github.com/Vanszs/VansRouter](https://github.com/Vanszs/VansRouter)
+- **Issues**: [github.com/Vanszs/VansRouter/issues](https://github.com/Vanszs/VansRouter/issues)
+0:{"buildId":"PUpTBY-8r_zZtEM8SJOLp","rsc":["$","$1","c",{"children":[["$","$L2",null,{"headings":[{"level":2,"text":"要件","id":"要件"},{"level":3,"text":"システム要件","id":"システム要件"},{"level":3,"text":"バージョンを確認","id":"バージョンを確認"},{"level":2,"text":"インストール方法","id":"インストール方法"},{"level":3,"text":"方法1: グローバルインストール (推奨)","id":"方法1-グローバルインストール-推奨"},{"level":3,"text":"方法2: ローカルインストール","id":"方法2-ローカルインストール"},{"level":3,"text":"方法3: ソースから (開発)","id":"方法3-ソースから-開発"},{"level":2,"text":"初回実行","id":"初回実行"},{"level":3,"text":"サーバーを起動","id":"サーバーを起動"},{"level":3,"text":"ダッシュボードログイン","id":"ダッシュボードログイン"},{"level":3,"text":"APIキーを取得","id":"apiキーを取得"},{"level":2,"text":"インストールを確認","id":"インストールを確認"},{"level":3,"text":"サーバーステータスを確認","id":"サーバーステータスを確認"},{"level":3,"text":"利用可能なモデルを一覧表示","id":"利用可能なモデルを一覧表示"},{"level":3,"text":"チャットコンプリーションをテスト","id":"チャットコンプリーションをテスト"},{"level":2,"text":"設定","id":"設定"},{"level":3,"text":"環境変数","id":"環境変数"},{"level":3,"text":"データディレクトリ","id":"データディレクトリ"},{"level":3,"text":"ポート設定","id":"ポート設定"},{"level":2,"text":"トラブルシューティング","id":"トラブルシューティング"},{"level":3,"text":"ポートがすでに使用されている","id":"ポートがすでに使用されている"},{"level":3,"text":"Permission Denied","id":"permission-denied"},{"level":3,"text":"Node.jsバージョンが古すぎる","id":"nodejsバージョンが古すぎる"},{"level":3,"text":"ダッシュボードが開かない","id":"ダッシュボードが開かない"},{"level":3,"text":"プロバイダーに接続できない","id":"プロバイダーに接続できない"},{"level":3,"text":"高メモリ使用量","id":"高メモリ使用量"},{"level":2,"text":"デプロイメントオプション","id":"デプロイメントオプション"},{"level":3,"text":"ローカル開発","id":"ローカル開発"},{"level":3,"text":"VPS/クラウドサーバー","id":"vpsクラウドサーバー"},{"level":3,"text":"Docker","id":"docker"},{"level":3,"text":"リバースプロキシ (Nginx)","id":"リバースプロキシ-nginx"},{"level":2,"text":"アンインストール","id":"アンインストール"},{"level":3,"text":"グローバルインストールを削除","id":"グローバルインストールを削除"},{"level":3,"text":"データディレクトリを削除","id":"データディレクトリを削除"},{"level":3,"text":"設定を削除","id":"設定を削除"},{"level":2,"text":"次のステップ","id":"次のステップ"},{"level":2,"text":"ヘルプが必要?","id":"ヘルプが必要"}],"lang":"ja","children":["$","$L3",null,{"content":"$4"}]}],["$L5","$L6"],"$L7"]}],"loading":null,"isPartial":false}
+5:["$","script","script-0",{"src":"/VansRouter/_next/static/chunks/ff1a16fafef87110.js","async":true}]
+6:["$","script","script-1",{"src":"/VansRouter/_next/static/chunks/3ba79d5b01800fdc.js","async":true}]
+7:["$","$L8",null,{"children":["$","$9",null,{"name":"Next.MetadataOutlet","children":"$@a"}]}]
+a:null

@@ -1,0 +1,367 @@
+1:"$Sreact.fragment"
+2:I[39756,["/VansRouter/_next/static/chunks/ff1a16fafef87110.js","/VansRouter/_next/static/chunks/803a574de9eda7ae.js"],"default"]
+3:I[37457,["/VansRouter/_next/static/chunks/ff1a16fafef87110.js","/VansRouter/_next/static/chunks/803a574de9eda7ae.js"],"default"]
+5:I[97367,["/VansRouter/_next/static/chunks/ff1a16fafef87110.js","/VansRouter/_next/static/chunks/803a574de9eda7ae.js"],"OutletBoundary"]
+6:"$Sreact.suspense"
+8:I[97367,["/VansRouter/_next/static/chunks/ff1a16fafef87110.js","/VansRouter/_next/static/chunks/803a574de9eda7ae.js"],"ViewportBoundary"]
+a:I[97367,["/VansRouter/_next/static/chunks/ff1a16fafef87110.js","/VansRouter/_next/static/chunks/803a574de9eda7ae.js"],"MetadataBoundary"]
+c:I[68027,["/VansRouter/_next/static/chunks/ff1a16fafef87110.js","/VansRouter/_next/static/chunks/803a574de9eda7ae.js"],"default"]
+:HL["/VansRouter/_next/static/chunks/71d10a355cb8f2d7.css","style"]
+0:{"P":null,"b":"PUpTBY-8r_zZtEM8SJOLp","c":["","vi","troubleshooting",""],"q":"","i":false,"f":[[["",{"children":[["lang","vi","d"],{"children":[["slug","troubleshooting","c"],{"children":["__PAGE__",{}]}]}]},"$undefined","$undefined",true],[["$","$1","c",{"children":[[["$","link","0",{"rel":"stylesheet","href":"/VansRouter/_next/static/chunks/71d10a355cb8f2d7.css","precedence":"next","crossOrigin":"$undefined","nonce":"$undefined"}]],["$","html",null,{"lang":"en","children":[["$","head",null,{}],["$","body",null,{"className":"bg-[#FCFBF9] text-[#6B7280]","children":["$","$L2",null,{"parallelRouterKey":"children","error":"$undefined","errorStyles":"$undefined","errorScripts":"$undefined","template":["$","$L3",null,{}],"templateStyles":"$undefined","templateScripts":"$undefined","notFound":[[["$","title",null,{"children":"404: This page could not be found."}],["$","div",null,{"style":{"fontFamily":"system-ui,\"Segoe UI\",Roboto,Helvetica,Arial,sans-serif,\"Apple Color Emoji\",\"Segoe UI Emoji\"","height":"100vh","textAlign":"center","display":"flex","flexDirection":"column","alignItems":"center","justifyContent":"center"},"children":["$","div",null,{"children":[["$","style",null,{"dangerouslySetInnerHTML":{"__html":"body{color:#000;background:#fff;margin:0}.next-error-h1{border-right:1px solid rgba(0,0,0,.3)}@media (prefers-color-scheme:dark){body{color:#fff;background:#000}.next-error-h1{border-right:1px solid rgba(255,255,255,.3)}}"}}],["$","h1",null,{"className":"next-error-h1","style":{"display":"inline-block","margin":"0 20px 0 0","padding":"0 23px 0 0","fontSize":24,"fontWeight":500,"verticalAlign":"top","lineHeight":"49px"},"children":404}],["$","div",null,{"style":{"display":"inline-block"},"children":["$","h2",null,{"style":{"fontSize":14,"fontWeight":400,"lineHeight":"49px","margin":0},"children":"This page could not be found."}]}]]}]}]],[]],"forbidden":"$undefined","unauthorized":"$undefined"}]}]]}]]}],{"children":[["$","$1","c",{"children":[null,["$","$L2",null,{"parallelRouterKey":"children","error":"$undefined","errorStyles":"$undefined","errorScripts":"$undefined","template":["$","$L3",null,{}],"templateStyles":"$undefined","templateScripts":"$undefined","notFound":"$undefined","forbidden":"$undefined","unauthorized":"$undefined"}]]}],{"children":[["$","$1","c",{"children":[null,["$","$L2",null,{"parallelRouterKey":"children","error":"$undefined","errorStyles":"$undefined","errorScripts":"$undefined","template":["$","$L3",null,{}],"templateStyles":"$undefined","templateScripts":"$undefined","notFound":"$undefined","forbidden":"$undefined","unauthorized":"$undefined"}]]}],{"children":[["$","$1","c",{"children":["$L4",[["$","script","script-0",{"src":"/VansRouter/_next/static/chunks/ff1a16fafef87110.js","async":true,"nonce":"$undefined"}],["$","script","script-1",{"src":"/VansRouter/_next/static/chunks/3ba79d5b01800fdc.js","async":true,"nonce":"$undefined"}]],["$","$L5",null,{"children":["$","$6",null,{"name":"Next.MetadataOutlet","children":"$@7"}]}]]}],{},null,false,false]},null,false,false]},null,false,false]},null,false,false],["$","$1","h",{"children":[null,["$","$L8",null,{"children":"$L9"}],["$","div",null,{"hidden":true,"children":["$","$La",null,{"children":["$","$6",null,{"name":"Next.Metadata","children":"$Lb"}]}]}],null]}],false]],"m":"$undefined","G":["$c",[]],"S":true}
+d:I[81956,["/VansRouter/_next/static/chunks/ff1a16fafef87110.js","/VansRouter/_next/static/chunks/3ba79d5b01800fdc.js"],"default"]
+e:I[22982,["/VansRouter/_next/static/chunks/ff1a16fafef87110.js","/VansRouter/_next/static/chunks/3ba79d5b01800fdc.js"],"default"]
+f:T1cd8,# Troubleshooting
+
+Các vấn đề và giải pháp phổ biến khi dùng VansRouter.
+
+---
+
+## "Language model did not provide messages"
+
+**Vấn đề:** Request thất bại với phản hồi rỗng hoặc thông báo lỗi.
+
+**Nguyên nhân:**
+- Hết quota provider
+- API key không hợp lệ hoặc hết hạn
+- Model không khả dụng
+
+**Giải pháp:**
+
+1. **Kiểm tra trạng thái quota:**
+   ```
+   Dashboard → Providers → View quota tracker
+   ```
+   Nếu hết quota, đợi reset hoặc đổi provider.
+
+2. **Dùng fallback combo:**
+   ```
+   Dashboard → Combos → Create fallback chain
+   Example: cc/claude-opus → glm/glm-4.7 → if/kimi-k2
+   ```
+
+3. **Xác minh kết nối provider:**
+   ```
+   Dashboard → Providers → Reconnect if needed
+   ```
+
+---
+
+## Rate Limiting
+
+**Vấn đề:** Lỗi "Rate limit exceeded" hoặc "Too many requests".
+
+**Nguyên nhân:**
+- Hết quota subscription (giới hạn 5h/ngày/tuần)
+- Đạt API rate limit
+- Quá nhiều request đồng thời
+
+**Giải pháp:**
+
+1. **Kiểm tra thời gian reset:**
+   ```
+   Dashboard → Quota Tracking → View reset countdown
+   ```
+
+2. **Chuyển sang tier rẻ:**
+   ```
+   Use: glm/glm-4.7 ($0.6/1M tokens)
+        minimax/MiniMax-M2.1 ($0.20/1M tokens)
+   ```
+
+3. **Thêm fallback combo:**
+   ```
+   Dashboard → Combos → Add backup models
+   Primary: cc/claude-opus (subscription)
+   Backup: glm/glm-4.7 (cheap)
+   Emergency: if/kimi-k2 (free)
+   ```
+
+---
+
+## OAuth Token hết hạn
+
+**Vấn đề:** Lỗi "Unauthorized" hoặc "Token expired".
+
+**Nguyên nhân:**
+- OAuth token hết hạn (auto-refresh thất bại)
+- Session provider không hợp lệ
+- Vấn đề network khi refresh
+
+**Giải pháp:**
+
+1. **Auto-refresh (mặc định):**
+   VansRouter tự refresh tokens. Đợi 30 giây rồi thử lại.
+
+2. **Kết nối lại thủ công:**
+   ```
+   Dashboard → Providers → [Provider Name] → Reconnect
+   → Complete OAuth flow again
+   ```
+
+3. **Kiểm tra trạng thái provider:**
+   Xác minh provider service đang online (Claude Code, Codex, v.v.)
+
+---
+
+## Chi phí cao
+
+**Vấn đề:** Sử dụng hoặc chi phí cao bất ngờ.
+
+**Nguyên nhân:**
+- Dùng model đắt không cần thiết
+- Không fallback sang tier rẻ hơn
+- Context window lớn
+
+**Giải pháp:**
+
+1. **Kiểm tra usage stats:**
+   ```
+   Dashboard → Usage Stats → View token consumption
+   → Identify high-cost models
+   ```
+
+2. **Chuyển sang model rẻ hơn:**
+   ```
+   Replace: cc/claude-opus ($20-100/month subscription)
+   With: glm/glm-4.7 ($0.6/1M tokens)
+         minimax/MiniMax-M2.1 ($0.20/1M tokens)
+   ```
+
+3. **Dùng free tier:**
+   ```
+   if/kimi-k2-thinking (FREE)
+   qw/qwen3-coder-plus (FREE)
+   kr/claude-sonnet-4.5 (FREE)
+   gc/gemini-3-flash-preview (FREE 180K/month)
+   ```
+
+4. **Tối ưu prompt:**
+   - Giảm context size
+   - Dùng streaming cho phản hồi dài
+   - Cache prompt thường dùng
+
+---
+
+## Connection Refused
+
+**Vấn đề:** Lỗi "ECONNREFUSED" hoặc "Cannot connect to localhost:20128".
+
+**Nguyên nhân:**
+- VansRouter không chạy
+- Port 20128 bị chặn
+- Firewall chặn kết nối
+
+**Giải pháp:**
+
+1. **Khởi động VansRouter:**
+   ```bash
+   vansrouter
+   ```
+   Dashboard sẽ mở tại http://localhost:3000
+
+2. **Xác minh port 20128:**
+   ```bash
+   # Check if port is listening
+   lsof -i :20128
+   
+   # Or on Windows
+   netstat -ano | findstr :20128
+   ```
+
+3. **Kiểm tra firewall:**
+   - macOS: System Settings → Network → Firewall
+   - Windows: Windows Defender Firewall → Allow app
+   - Linux: `sudo ufw allow 20128`
+
+4. **Dùng cloud endpoint:**
+   Nếu localhost không hoạt động (ví dụ: Cursor IDE):
+   ```
+   Endpoint: http://localhost:20128/v1
+   ```
+
+---
+
+## Dashboard không mở
+
+**Vấn đề:** Dashboard không load tại http://localhost:3000.
+
+**Nguyên nhân:**
+- Port 3000 đã được dùng
+- VansRouter bị crash
+- Vấn đề cache browser
+
+**Giải pháp:**
+
+1. **Kiểm tra VansRouter có chạy không:**
+   ```bash
+   # Check process
+   ps aux | grep 9router
+   
+   # Check port 3000
+   lsof -i :3000
+   ```
+
+2. **Kill process xung đột:**
+   ```bash
+   # macOS/Linux
+   lsof -ti:3000 | xargs kill -9
+   
+   # Windows
+   netstat -ano | findstr :3000
+   taskkill /PID <PID> /F
+   ```
+
+3. **Khởi động lại VansRouter:**
+   ```bash
+   # Stop
+   pkill -f 9router
+   
+   # Start
+   vansrouter
+   ```
+
+4. **Xóa cache browser:**
+   - Chrome: Ctrl+Shift+Delete → Clear cache
+   - Thử chế độ ẩn danh
+
+5. **Kiểm tra cài đặt firewall:**
+   Đảm bảo port 3000 không bị chặn.
+
+---
+
+## Model Not Found
+
+**Vấn đề:** Lỗi "Model not found" hoặc "Invalid model".
+
+**Nguyên nhân:**
+- Provider chưa kết nối
+- Sai chính tả model ID
+- Provider không hoạt động
+
+**Giải pháp:**
+
+1. **Xác minh kết nối provider:**
+   ```
+   Dashboard → Providers → Check status (green = active)
+   ```
+
+2. **Kiểm tra format model ID:**
+   ```
+   Correct: cc/claude-opus-4-5-20251101
+   Wrong: claude-opus-4-5-20251101
+   
+   Format: [provider-prefix]/[model-name]
+   ```
+
+3. **Liệt kê model khả dụng:**
+   ```bash
+   curl http://localhost:20128/v1/models \
+     -H "Authorization: Bearer your-api-key"
+   ```
+
+4. **Kết nối lại provider:**
+   ```
+   Dashboard → Providers → [Provider] → Reconnect
+   ```
+
+---
+
+## Phản hồi chậm
+
+**Vấn đề:** Request mất quá lâu hoặc timeout.
+
+**Nguyên nhân:**
+- Độ trễ provider
+- Vấn đề network
+- Context/response lớn
+- Provider rate limiting
+
+**Giải pháp:**
+
+1. **Kiểm tra trạng thái provider:**
+   ```
+   Dashboard → Providers → View latency stats
+   ```
+
+2. **Chuyển sang model nhanh hơn:**
+   ```
+   Fast: cc/claude-haiku-4-5 (Haiku is faster than Opus)
+         gc/gemini-3-flash-preview
+         qw/qwen3-coder-flash
+   ```
+
+3. **Dùng streaming:**
+   ```json
+   {
+     "model": "cc/claude-opus-4-5",
+     "messages": [...],
+     "stream": true
+   }
+   ```
+
+4. **Kiểm tra network:**
+   ```bash
+   # Test latency
+   ping api.anthropic.com
+   ping api.openai.com
+   ```
+
+5. **Giảm context size:**
+   - Cắt bớt lịch sử tin nhắn
+   - Dùng prompt nhỏ hơn
+   - Bật context pruning trong CLI tool
+
+---
+
+## API Key không hợp lệ
+
+**Vấn đề:** Lỗi "Invalid API key" hoặc "Authentication failed".
+
+**Nguyên nhân:**
+- Sao chép sai API key
+- API key hết hạn
+- API key chưa được tạo
+
+**Giải pháp:**
+
+1. **Tạo lại API key:**
+   ```
+   Dashboard → Settings → API Keys → Generate New Key
+   → Copy and use new key
+   ```
+
+2. **Xác minh format key:**
+   ```
+   Correct: 9r_xxxxxxxxxxxxxxxxxxxxxxxx
+   Wrong: Missing 9r_ prefix
+   ```
+
+3. **Kiểm tra key trong CLI config:**
+   ```bash
+   # Cursor
+   Settings → Models → OpenAI API Key
+   
+   # Cline
+   Settings → API Key
+   
+   # Environment variable
+   export OPENAI_API_KEY="9r_your_key"
+   ```
+
+4. **Test API key:**
+   ```bash
+   curl http://localhost:20128/v1/models \
+     -H "Authorization: Bearer 9r_your_key"
+   ```
+
+---
+
+## Cần trợ giúp thêm?
+
+- **GitHub Issues:** [github.com/Vanszs/VansRouter/issues](https://github.com/Vanszs/VansRouter/issues)
+- **Documentation:** [VansRouter docs](https://github.com/Vanszs/VansRouter/blob/main/README.md)
+- **FAQ:** [faq.md](faq.md)
+4:["$","$Ld",null,{"headings":[{"level":2,"text":"\"Language model did not provide messages\"","id":"language-model-did-not-provide-messages"},{"level":2,"text":"Rate Limiting","id":"rate-limiting"},{"level":2,"text":"OAuth Token hết hạn","id":"oauth-token-hết-hạn"},{"level":2,"text":"Chi phí cao","id":"chi-phí-cao"},{"level":2,"text":"Connection Refused","id":"connection-refused"},{"level":2,"text":"Dashboard không mở","id":"dashboard-không-mở"},{"level":2,"text":"Model Not Found","id":"model-not-found"},{"level":2,"text":"Phản hồi chậm","id":"phản-hồi-chậm"},{"level":2,"text":"API Key không hợp lệ","id":"api-key-không-hợp-lệ"},{"level":2,"text":"Cần trợ giúp thêm?","id":"cần-trợ-giúp-thêm"}],"lang":"vi","children":["$","$Le",null,{"content":"$f"}]}]
+9:[["$","meta","0",{"charSet":"utf-8"}],["$","meta","1",{"name":"viewport","content":"width=device-width, initial-scale=1"}]]
+7:null
+b:[["$","title","0",{"children":"9Router Documentation"}],["$","meta","1",{"name":"description","content":"Smart AI model router - Maximize subscriptions, minimize costs"}]]

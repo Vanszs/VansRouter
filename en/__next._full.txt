@@ -1,0 +1,180 @@
+1:"$Sreact.fragment"
+2:I[39756,["/VansRouter/_next/static/chunks/ff1a16fafef87110.js","/VansRouter/_next/static/chunks/803a574de9eda7ae.js"],"default"]
+3:I[37457,["/VansRouter/_next/static/chunks/ff1a16fafef87110.js","/VansRouter/_next/static/chunks/803a574de9eda7ae.js"],"default"]
+5:I[97367,["/VansRouter/_next/static/chunks/ff1a16fafef87110.js","/VansRouter/_next/static/chunks/803a574de9eda7ae.js"],"OutletBoundary"]
+6:"$Sreact.suspense"
+8:I[97367,["/VansRouter/_next/static/chunks/ff1a16fafef87110.js","/VansRouter/_next/static/chunks/803a574de9eda7ae.js"],"ViewportBoundary"]
+a:I[97367,["/VansRouter/_next/static/chunks/ff1a16fafef87110.js","/VansRouter/_next/static/chunks/803a574de9eda7ae.js"],"MetadataBoundary"]
+c:I[68027,["/VansRouter/_next/static/chunks/ff1a16fafef87110.js","/VansRouter/_next/static/chunks/803a574de9eda7ae.js"],"default"]
+:HL["/VansRouter/_next/static/chunks/71d10a355cb8f2d7.css","style"]
+0:{"P":null,"b":"PUpTBY-8r_zZtEM8SJOLp","c":["","en",""],"q":"","i":false,"f":[[["",{"children":[["lang","en","d"],{"children":["__PAGE__",{}]}]},"$undefined","$undefined",true],[["$","$1","c",{"children":[[["$","link","0",{"rel":"stylesheet","href":"/VansRouter/_next/static/chunks/71d10a355cb8f2d7.css","precedence":"next","crossOrigin":"$undefined","nonce":"$undefined"}]],["$","html",null,{"lang":"en","children":[["$","head",null,{}],["$","body",null,{"className":"bg-[#FCFBF9] text-[#6B7280]","children":["$","$L2",null,{"parallelRouterKey":"children","error":"$undefined","errorStyles":"$undefined","errorScripts":"$undefined","template":["$","$L3",null,{}],"templateStyles":"$undefined","templateScripts":"$undefined","notFound":[[["$","title",null,{"children":"404: This page could not be found."}],["$","div",null,{"style":{"fontFamily":"system-ui,\"Segoe UI\",Roboto,Helvetica,Arial,sans-serif,\"Apple Color Emoji\",\"Segoe UI Emoji\"","height":"100vh","textAlign":"center","display":"flex","flexDirection":"column","alignItems":"center","justifyContent":"center"},"children":["$","div",null,{"children":[["$","style",null,{"dangerouslySetInnerHTML":{"__html":"body{color:#000;background:#fff;margin:0}.next-error-h1{border-right:1px solid rgba(0,0,0,.3)}@media (prefers-color-scheme:dark){body{color:#fff;background:#000}.next-error-h1{border-right:1px solid rgba(255,255,255,.3)}}"}}],["$","h1",null,{"className":"next-error-h1","style":{"display":"inline-block","margin":"0 20px 0 0","padding":"0 23px 0 0","fontSize":24,"fontWeight":500,"verticalAlign":"top","lineHeight":"49px"},"children":404}],["$","div",null,{"style":{"display":"inline-block"},"children":["$","h2",null,{"style":{"fontSize":14,"fontWeight":400,"lineHeight":"49px","margin":0},"children":"This page could not be found."}]}]]}]}]],[]],"forbidden":"$undefined","unauthorized":"$undefined"}]}]]}]]}],{"children":[["$","$1","c",{"children":[null,["$","$L2",null,{"parallelRouterKey":"children","error":"$undefined","errorStyles":"$undefined","errorScripts":"$undefined","template":["$","$L3",null,{}],"templateStyles":"$undefined","templateScripts":"$undefined","notFound":"$undefined","forbidden":"$undefined","unauthorized":"$undefined"}]]}],{"children":[["$","$1","c",{"children":["$L4",[["$","script","script-0",{"src":"/VansRouter/_next/static/chunks/ff1a16fafef87110.js","async":true,"nonce":"$undefined"}],["$","script","script-1",{"src":"/VansRouter/_next/static/chunks/3ba79d5b01800fdc.js","async":true,"nonce":"$undefined"}]],["$","$L5",null,{"children":["$","$6",null,{"name":"Next.MetadataOutlet","children":"$@7"}]}]]}],{},null,false,false]},null,false,false]},null,false,false],["$","$1","h",{"children":[null,["$","$L8",null,{"children":"$L9"}],["$","div",null,{"hidden":true,"children":["$","$La",null,{"children":["$","$6",null,{"name":"Next.Metadata","children":"$Lb"}]}]}],null]}],false]],"m":"$undefined","G":["$c",[]],"S":true}
+d:I[81956,["/VansRouter/_next/static/chunks/ff1a16fafef87110.js","/VansRouter/_next/static/chunks/3ba79d5b01800fdc.js"],"default"]
+e:I[22982,["/VansRouter/_next/static/chunks/ff1a16fafef87110.js","/VansRouter/_next/static/chunks/3ba79d5b01800fdc.js"],"default"]
+f:T10ec,# Welcome to VansRouter
+
+**Use Claude, Codex, Gemini for FREE • Ultra-cheap alternatives from $0.20/1M tokens**
+
+VansRouter is an AI model router that maximizes your subscription value and minimizes costs through intelligent routing and automatic fallback.
+
+---
+
+## What is VansRouter?
+
+VansRouter is a smart proxy that sits between your coding tools (Cursor, Cline, Claude Desktop) and AI providers. It automatically routes requests to the best available model based on quota, cost, and availability.
+
+**Stop wasting money:**
+- ❌ Subscription quota expires unused every month
+- ❌ Rate limits stop you mid-coding
+- ❌ Expensive APIs ($20-50/month per provider)
+- ❌ Manual switching between providers
+
+**Start maximizing value:**
+- ✅ **Maximize Subscriptions** - Track and use every bit of Claude Code, Codex, Gemini quota
+- ✅ **FREE Available** - Access iFlow, Qwen, Kiro models via CLI
+- ✅ **Ultra-Cheap Backup** - GLM ($0.6/1M), MiniMax M2.1 ($0.20/1M)
+- ✅ **Smart Fallback** - Subscription → Cheap → Free, automatic switching
+
+---
+
+## Key Features
+
+### 🔄 Smart 3-Tier Fallback
+
+```
+Setup once, never stop coding:
+
+Tier 1 (SUBSCRIPTION): Claude Code → Codex → Gemini
+  ↓ quota exhausted
+Tier 2 (CHEAP): GLM-4.7 → MiniMax M2.1 → Kimi
+  ↓ budget limit
+Tier 3 (FREE): iFlow → Qwen → Kiro
+
+→ Automatic switching, zero downtime!
+```
+
+### 📊 Quota Tracking
+
+- Real-time token consumption per provider
+- Reset countdown (5-hour, daily, weekly, monthly)
+- Cost estimation for paid tiers
+- Monthly spending reports
+
+### 🎯 Universal CLI Support
+
+Works with any tool that supports custom OpenAI endpoints:
+
+✅ **Cursor** • **Cline** • **Claude Desktop** • **Codex** • **RooCode** • **Continue** • **Any OpenAI-compatible tool**
+
+### 💰 Cost Optimization
+
+**Real example (100M tokens/month):**
+```
+60M via Gemini CLI: $0 (free tier)
+30M via Claude Code: $0 (subscription you already have)
+8M via GLM: $4.80
+2M via MiniMax: $0.40
+Total: $5.20/month vs $2000 on ChatGPT API!
+```
+
+---
+
+## Why Choose VansRouter?
+
+### Maximize Subscriptions
+
+Already paying for Claude Code ($20-100/month) or Codex ($20-200/month)? Get full value:
+
+- Track quota usage in real-time
+- Auto-switch when quota resets (5-hour, weekly)
+- Use every token before it expires
+- Gemini CLI: 180K completions/month **FREE**
+
+### Ultra-Cheap Backup
+
+When subscription quota runs out, pay pennies:
+
+| Provider | Cost per 1M tokens | Reset |
+|----------|-------------------|-------|
+| **GLM-4.7** | $0.60 input / $2.20 output | Daily 10:00 AM |
+| **MiniMax M2.1** | $0.20 input / $1.00 output | 5-hour rolling |
+| **Kimi K2** | $9/month (10M tokens) | Monthly |
+
+**~90% cheaper than ChatGPT API ($20/1M)!**
+
+### Free Forever Fallback
+
+Emergency backup when everything else is quota-limited:
+
+- **iFlow**: 8 models (Kimi K2, Qwen3 Coder Plus, GLM 4.7, MiniMax M2)
+- **Qwen**: 3 models (Qwen3 Coder Plus/Flash, Vision)
+- **Kiro**: Claude Sonnet 4.5, Haiku 4.5 (AWS Builder ID)
+
+---
+
+## Quick Start
+
+Get started in 2 minutes:
+
+```bash
+# Install globally
+npm install -g vansrouter
+
+# Start (dashboard opens automatically)
+vansrouter
+```
+
+🎉 **Dashboard opens** → Connect providers → Start coding!
+
+**Use in your CLI tool:**
+
+```
+Endpoint: http://localhost:20128/v1
+API Key: [from dashboard]
+Model: cc/claude-opus-4-5-20251101
+```
+
+[→ Full Getting Started Guide](getting-started.md)
+
+---
+
+## Use Cases
+
+### For Individual Developers
+
+- Maximize your Claude Code/Codex subscription
+- Use Gemini CLI free tier (180K/month)
+- Fallback to ultra-cheap models ($0.20/1M)
+- Code 24/7 without rate limits
+
+### For Teams
+
+- Deploy on VPS/Cloud for shared access
+- Track team spending in real-time
+- Set budget limits per tier
+- Centralized provider management
+
+### For Mobile/Remote Coding
+
+- Use cloud deployment (https://vansrouter.example)
+- Access from iPad, phone, anywhere
+- No localhost limitations
+- Cloudflare edge network (300+ locations)
+
+---
+
+## What's Next?
+
+- [Getting Started](getting-started.md) - Install and configure in 5 minutes
+- [Installation Guide](getting-started/installation.md) - Detailed setup instructions
+- [Features](features/) - Explore all capabilities
+- [FAQ](faq.md) - Common questions
+
+---
+
+<div align="center">
+  <sub>Built with ❤️ for developers maximizing AI value</sub>
+</div>
+4:["$","$Ld",null,{"headings":[{"level":2,"text":"What is VansRouter?","id":"what-is-vansrouter"},{"level":2,"text":"Key Features","id":"key-features"},{"level":3,"text":"Smart 3-Tier Fallback","id":"smart-3-tier-fallback"},{"level":3,"text":"Quota Tracking","id":"quota-tracking"},{"level":3,"text":"Universal CLI Support","id":"universal-cli-support"},{"level":3,"text":"Cost Optimization","id":"cost-optimization"},{"level":2,"text":"Why Choose VansRouter?","id":"why-choose-vansrouter"},{"level":3,"text":"Maximize Subscriptions","id":"maximize-subscriptions"},{"level":3,"text":"Ultra-Cheap Backup","id":"ultra-cheap-backup"},{"level":3,"text":"Free Forever Fallback","id":"free-forever-fallback"},{"level":2,"text":"Quick Start","id":"quick-start"},{"level":2,"text":"Use Cases","id":"use-cases"},{"level":3,"text":"For Individual Developers","id":"for-individual-developers"},{"level":3,"text":"For Teams","id":"for-teams"},{"level":3,"text":"For Mobile/Remote Coding","id":"for-mobileremote-coding"},{"level":2,"text":"What's Next?","id":"whats-next"}],"lang":"en","children":["$","$Le",null,{"content":"$f"}]}]
+9:[["$","meta","0",{"charSet":"utf-8"}],["$","meta","1",{"name":"viewport","content":"width=device-width, initial-scale=1"}]]
+7:null
+b:[["$","title","0",{"children":"9Router Documentation"}],["$","meta","1",{"name":"description","content":"Smart AI model router - Maximize subscriptions, minimize costs"}]]

@@ -1,0 +1,375 @@
+<!DOCTYPE html><!--PUpTBY_8r_zZtEM8SJOLp--><html lang="en"><head><meta charSet="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/><link rel="stylesheet" href="/VansRouter/_next/static/chunks/71d10a355cb8f2d7.css" data-precedence="next"/><link rel="preload" as="script" fetchPriority="low" href="/VansRouter/_next/static/chunks/343aa45b5611d01d.js"/><script src="/VansRouter/_next/static/chunks/a0aa32a146625b3a.js" async=""></script><script src="/VansRouter/_next/static/chunks/3e45c79224336516.js" async=""></script><script src="/VansRouter/_next/static/chunks/turbopack-4db312a651dd60cf.js" async=""></script><script src="/VansRouter/_next/static/chunks/ff1a16fafef87110.js" async=""></script><script src="/VansRouter/_next/static/chunks/803a574de9eda7ae.js" async=""></script><script src="/VansRouter/_next/static/chunks/3ba79d5b01800fdc.js" async=""></script><title>9Router Documentation</title><meta name="description" content="Smart AI model router - Maximize subscriptions, minimize costs"/><script src="/VansRouter/_next/static/chunks/a6dad97d9634a72d.js" noModule=""></script></head><body class="bg-[#FCFBF9] text-[#6B7280]"><div hidden=""><!--$--><!--/$--></div><div class="min-h-screen flex flex-col bg-[#FCFBF9]"><header class="sticky top-0 z-50 w-full border-b bg-white/80 backdrop-blur-sm border-gray-200"><div class=" mx-auto px-4 h-16 flex items-center justify-between"><button type="button" class="lg:hidden p-2 rounded-lg hover:bg-gray-100 transition-colors" aria-label="Open menu"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-menu w-6 h-6 text-gray-600" aria-hidden="true"><path d="M4 5h16"></path><path d="M4 12h16"></path><path d="M4 19h16"></path></svg></button><a class="flex items-center gap-2 font-bold text-2xl text-black hover:opacity-80 transition-opacity" href="/VansRouter/ja/"><span>9</span><span class="text-[#E68A6E]">9Router<!-- --> Docs</span></a><div class="flex items-center gap-2 sm:gap-3"><button type="button" class="flex items-center gap-1.5 px-2.5 py-1.5 text-sm text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors" aria-label="Switch language"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-globe w-4 h-4" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"></path><path d="M2 12h20"></path></svg><span class="hidden sm:inline">🇯🇵<!-- --> <!-- -->日本語</span><span class="sm:hidden">🇯🇵</span></button><a target="_blank" rel="noopener noreferrer" class="flex items-center gap-2 px-3 sm:px-4 py-2 bg-[#E68A6E] text-white rounded-lg font-medium hover:bg-[#d67a5e] transition-colors text-sm" href="http://localhost:20128"><span class="hidden sm:inline">アプリへ</span><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-external-link w-4 h-4" aria-hidden="true"><path d="M15 3h6v6"></path><path d="M10 14 21 3"></path><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path></svg></a></div></div></header><div class="flex-1 flex"><div class="hidden lg:block"><aside class="w-64 border-r bg-white border-gray-200 h-[calc(100vh-4rem)] sticky top-16 overflow-y-auto"><nav class="p-4 space-y-6"><div><button type="button" class="flex items-center justify-between w-full text-sm font-semibold text-gray-900 mb-2 hover:text-[#E68A6E] transition-colors"><span class="flex items-center gap-2"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-rocket w-4 h-4" aria-hidden="true"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"></path><path d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"></path><path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"></path><path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"></path></svg>はじめに</span><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-right w-4 h-4" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg></button></div><div><button type="button" class="flex items-center justify-between w-full text-sm font-semibold text-gray-900 mb-2 hover:text-[#E68A6E] transition-colors"><span class="flex items-center gap-2"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-layers w-4 h-4" aria-hidden="true"><path d="M12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83z"></path><path d="M2 12a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 12"></path><path d="M2 17a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 17"></path></svg>プロバイダー</span><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-right w-4 h-4" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg></button></div><div><button type="button" class="flex items-center justify-between w-full text-sm font-semibold text-gray-900 mb-2 hover:text-[#E68A6E] transition-colors"><span class="flex items-center gap-2"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-zap w-4 h-4" aria-hidden="true"><path d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z"></path></svg>機能</span><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-right w-4 h-4" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg></button></div><div><button type="button" class="flex items-center justify-between w-full text-sm font-semibold text-gray-900 mb-2 hover:text-[#E68A6E] transition-colors"><span class="flex items-center gap-2"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-plug w-4 h-4" aria-hidden="true"><path d="M12 22v-5"></path><path d="M15 8V2"></path><path d="M17 8a1 1 0 0 1 1 1v4a4 4 0 0 1-4 4h-4a4 4 0 0 1-4-4V9a1 1 0 0 1 1-1z"></path><path d="M9 8V2"></path></svg>連携</span><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-right w-4 h-4" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg></button></div><div><button type="button" class="flex items-center justify-between w-full text-sm font-semibold text-gray-900 mb-2 hover:text-[#E68A6E] transition-colors"><span class="flex items-center gap-2"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-cloud w-4 h-4" aria-hidden="true"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"></path></svg>デプロイ</span><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-right w-4 h-4" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg></button></div><div><button type="button" class="flex items-center justify-between w-full text-sm font-semibold text-gray-900 mb-2 hover:text-[#E68A6E] transition-colors"><span class="flex items-center gap-2"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-circle-question-mark w-4 h-4" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><path d="M12 17h.01"></path></svg>ヘルプ</span><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-right w-4 h-4" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg></button></div></nav></aside></div><div class="flex-1 flex min-w-0"><main class="flex-1 min-w-0 overflow-x-hidden overflow-y-auto"><article class="max-w-4xl mx-auto px-4 sm:px-6 py-8"><div class="markdown-content"><h1 id="コンボ---カスタムフォールバックチェーン">コンボ - カスタムフォールバックチェーン</h1>
+<p>自動フォールバック付きのカスタムモデル組み合わせを作成。コンボを使って、コスト、品質、可用性に基づく独自のルーティング戦略を定義できます。</p>
+<hr/>
+<h2 id="コンボとは">コンボとは?</h2>
+<p>コンボはダッシュボードで作成する<strong>カスタムフォールバックチェーン</strong>です。単一モデルを使う代わりに、VansRouterが順番に試すモデルのシーケンスを定義します。</p>
+<p><strong>例:</strong></p>
+<pre><code>コンボ名: premium-coding
+モデル:
+  1. cc/claude-opus-4-5-20251101 (最初に試行)
+  2. glm/glm-4.7 (#1のクォータ消費時)
+  3. minimax/MiniMax-M2.1 (#2のクォータ消費時)
+</code></pre>
+<p><strong>CLIでの使用:</strong></p>
+<pre><code>Model: premium-coding
+</code></pre>
+<p>VansRouterは成功するまで各モデルを順番に自動的に試します。</p>
+<hr/>
+<h2 id="なぜコンボを使うのか">なぜコンボを使うのか?</h2>
+<h3 id="1-サブスクリプション価値を最大化">1. サブスクリプション価値を最大化</h3>
+<pre><code>cc/claude-opus → glm/glm-4.7 → if/kimi-k2-thinking
+
+→ サブスクリプション優先、低価格バックアップ、無料緊急時
+→ すでに支払っているサブスクリプションから完全な価値を得る
+</code></pre>
+<h3 id="2-コストを最小化">2. コストを最小化</h3>
+<pre><code>glm/glm-4.7 → minimax/MiniMax-M2.1 → if/kimi-k2-thinking
+
+→ 最安の有料オプションから開始 (100万あたり$0.60)
+→ さらに安いものへフォールバック (100万あたり$0.20)
+→ 緊急時の無料階層
+→ 総コスト: 月$5〜10 vs ChatGPT APIの$2000
+</code></pre>
+<h3 id="3-24時間可用性を確保">3. 24時間可用性を確保</h3>
+<pre><code>cc/claude-opus → cx/gpt-5.2-codex → glm/glm-4.7 → if/kimi-k2-thinking
+
+→ 最後に常に無料階層を含める
+→ クォータ切れにならない
+→ いつでもどこでもコーディング
+</code></pre>
+<h3 id="4-品質に最適化">4. 品質に最適化</h3>
+<pre><code>cc/claude-opus-4-5 → cx/gpt-5.2-codex → gc/gemini-3-pro
+
+→ 最高のモデルが最初
+→ 他のプレミアムモデルへフォールバック
+→ フォールバックチェーン全体で高品質を維持
+</code></pre>
+<hr/>
+<h2 id="コンボの作成方法">コンボの作成方法</h2>
+<h3 id="ステップ1-ダッシュボードを開く">ステップ1: ダッシュボードを開く</h3>
+<pre><code>http://localhost:20128
+→ パスワードでログイン
+</code></pre>
+<h3 id="ステップ2-コンボへ移動">ステップ2: コンボへ移動</h3>
+<pre><code>Dashboard → Combos → Create New Combo
+</code></pre>
+<h3 id="ステップ3-コンボを設定">ステップ3: コンボを設定</h3>
+<p><strong>コンボ名:</strong></p>
+<pre><code>premium-coding
+</code></pre>
+<p><strong>説明(任意):</strong></p>
+<pre><code>サブスクリプション優先、低価格バックアップ、無料緊急時
+</code></pre>
+<p><strong>モデルを選択:</strong></p>
+<pre><code>1. cc/claude-opus-4-5-20251101
+2. glm/glm-4.7
+3. minimax/MiniMax-M2.1
+</code></pre>
+<p><strong>ドラッグで並べ替え</strong> - 上から下へ優先順位。</p>
+<h3 id="ステップ4-保存">ステップ4: 保存</h3>
+<pre><code>「Save Combo」をクリック
+→ コンボがモデルリストに表示
+</code></pre>
+<h3 id="ステップ5-cliで使用">ステップ5: CLIで使用</h3>
+<pre><code>Cursor/Cline/任意のツール:
+  Model: premium-coding
+</code></pre>
+<hr/>
+<h2 id="コンボの例">コンボの例</h2>
+<h3 id="例1-プレミアムコーディング-サブスク--低価格--無料">例1: プレミアムコーディング (サブスク → 低価格 → 無料)</h3>
+<p><strong>目標</strong>: サブスクリプション価値を最大化、追加コストを最小化。</p>
+<pre><code>Dashboard → Combos → Create New
+
+Name: premium-coding
+Models:
+  1. cc/claude-opus-4-5-20251101
+  2. glm/glm-4.7
+  3. minimax/MiniMax-M2.1
+</code></pre>
+<p><strong>使用法:</strong></p>
+<pre><code>Cursor IDE:
+  Model: premium-coding
+</code></pre>
+<p><strong>動作:</strong></p>
+<pre><code>朝 (新鮮なクォータ):
+  Request → cc/claude-opus-4-5 ✅
+
+午後 (Claudeクォータ切れ):
+  Request → glm/glm-4.7 ✅ (自動切替)
+
+夕方 (GLMクォータ切れ):
+  Request → minimax/MiniMax-M2.1 ✅ (自動切替)
+</code></pre>
+<p><strong>月コスト (1億トークン):</strong></p>
+<pre><code>Claude Code経由で8000万: $0 (サブスクリプション)
+GLM経由で1500万: $9
+MiniMax経由で500万: $1
+合計: $10 + サブスクリプション
+</code></pre>
+<p><strong>節約</strong>: ChatGPT API ($2000) に対して約99%。</p>
+<hr/>
+<h3 id="例2-バジェットコンボ-低価格--無料">例2: バジェットコンボ (低価格 → 無料)</h3>
+<p><strong>目標</strong>: コストを最小化、バックアップに無料階層を使用。</p>
+<pre><code>Dashboard → Combos → Create New
+
+Name: budget-combo
+Models:
+  1. glm/glm-4.7
+  2. minimax/MiniMax-M2.1
+  3. if/kimi-k2-thinking
+</code></pre>
+<p><strong>使用法:</strong></p>
+<pre><code>Cline:
+  Provider: OpenAI Compatible
+  Base URL: http://localhost:20128/v1
+  Model: budget-combo
+</code></pre>
+<p><strong>動作:</strong></p>
+<pre><code>Request → glm/glm-4.7
+  ✅ 日次クォータ利用可 → GLMを使用 (100万あたり$0.60)
+  ❌ クォータ消費 → MiniMaxを試行 (100万あたり$0.20)
+  ❌ MiniMaxクォータ切れ → iFlowを使用 (無料)
+</code></pre>
+<p><strong>月コスト (1億トークン):</strong></p>
+<pre><code>GLM経由で7000万: $42
+MiniMax経由で2000万: $4
+iFlow経由で1000万: $0
+合計: $46 vs ChatGPT APIの$2000
+</code></pre>
+<p><strong>節約</strong>: 97%。</p>
+<hr/>
+<h3 id="例3-フリーコンボ-ゼロコスト">例3: フリーコンボ (ゼロコスト)</h3>
+<p><strong>目標</strong>: 100%無料、コストはゼロ。</p>
+<pre><code>Dashboard → Combos → Create New
+
+Name: free-combo
+Models:
+  1. if/kimi-k2-thinking
+  2. qw/qwen3-coder-plus
+  3. kr/claude-sonnet-4.5
+</code></pre>
+<p><strong>使用法:</strong></p>
+<pre><code>Claude Desktop:
+  Model: free-combo
+</code></pre>
+<p><strong>動作:</strong></p>
+<pre><code>Request → if/kimi-k2-thinking
+  ✅ 利用可 → iFlowを使用
+  ❌ エラー → Qwenを試行
+  ❌ エラー → Kiroを試行
+</code></pre>
+<p><strong>月コスト:</strong></p>
+<pre><code>無料プロバイダー経由で1億トークン: $0
+合計: 永久に$0
+</code></pre>
+<p><strong>ユースケース</strong>: 個人プロジェクト、学習、実験。</p>
+<hr/>
+<h3 id="例4-品質優先-プレミアムモデルのみ">例4: 品質優先 (プレミアムモデルのみ)</h3>
+<p><strong>目標</strong>: 最高の品質、低価格フォールバックなし。</p>
+<pre><code>Dashboard → Combos → Create New
+
+Name: quality-first
+Models:
+  1. cc/claude-opus-4-5-20251101
+  2. cx/gpt-5.2-codex
+  3. gc/gemini-3-pro-preview
+</code></pre>
+<p><strong>使用法:</strong></p>
+<pre><code>Codex CLI:
+  export OPENAI_BASE_URL=&quot;http://localhost:20128&quot;
+  Model: quality-first
+</code></pre>
+<p><strong>動作:</strong></p>
+<pre><code>Request → cc/claude-opus-4-5
+  ❌ クォータ切れ → cx/gpt-5.2-codex
+  ❌ クォータ切れ → gc/gemini-3-pro-preview
+  ❌ すべて切れ → エラーを返す (低価格フォールバックなし)
+</code></pre>
+<p><strong>ユースケース</strong>: クリティカルな本番コード、複雑なリファクタリング。</p>
+<hr/>
+<h3 id="例5-マルチサブスクリプション-すべてを最大化">例5: マルチサブスクリプション (すべてを最大化)</h3>
+<p><strong>目標</strong>: 追加料金前にすべてのサブスクリプションを利用。</p>
+<pre><code>Dashboard → Combos → Create New
+
+Name: multi-sub
+Models:
+  1. gc/gemini-3-flash-preview (月18万無料)
+  2. cc/claude-opus-4-5-20251101 (Proサブスクリプション)
+  3. cx/gpt-5.2-codex (Plusサブスクリプション)
+  4. gh/gpt-5 (Copilotサブスクリプション)
+  5. glm/glm-4.7 (低価格バックアップ)
+  6. if/kimi-k2-thinking (無料緊急時)
+</code></pre>
+<p><strong>月コスト (2億トークン):</strong></p>
+<pre><code>Gemini CLI経由で5000万: $0 (無料プラン)
+Claude Code経由で8000万: $0 (サブスクリプション)
+Codex経由で4000万: $0 (サブスクリプション)
+Copilot経由で2000万: $0 (サブスクリプション)
+GLM経由で800万: $4.80
+iFlow経由で200万: $0
+合計: $4.80 + 既存サブスクリプション
+</code></pre>
+<p><strong>結果</strong>: サブスクリプションから1.9億トークン使用、わずか$4.80の追加料金。</p>
+<hr/>
+<h3 id="例6-クォータリセット最適化">例6: クォータリセット最適化</h3>
+<p><strong>目標</strong>: リセット時間に基づいて使用量を分散。</p>
+<pre><code>Dashboard → Combos → Create New
+
+Name: reset-optimized
+Models:
+  1. cc/claude-opus-4-5 (5時間リセット、朝に使用)
+  2. gc/gemini-3-flash (1K/日、午後に使用)
+  3. glm/glm-4.7 (毎日午前10時リセット、夕方に使用)
+  4. minimax/MiniMax-M2.1 (5時間ローリング、夜に使用)
+  5. if/kimi-k2-thinking (無制限、緊急時)
+</code></pre>
+<p><strong>日課:</strong></p>
+<pre><code>08:00 - 13:00: Claude Code (新鮮な5時間クォータ)
+13:00 - 18:00: Gemini CLI (1K/日クォータ)
+18:00 - 22:00: GLM (翌朝10時リセット)
+22:00 - 08:00: MiniMax (5時間ローリング) または iFlow
+</code></pre>
+<p><strong>結果</strong>: 最小コストで24時間コーディング。</p>
+<hr/>
+<h2 id="cliツールでコンボを使用">CLIツールでコンボを使用</h2>
+<h3 id="cursor-ide">Cursor IDE</h3>
+<pre><code>Settings → Models → Advanced:
+  OpenAI API Base URL: http://localhost:20128/v1
+  OpenAI API Key: [ダッシュボードから取得]
+  Model: premium-coding
+</code></pre>
+<h3 id="claude-desktop">Claude Desktop</h3>
+<p><code>~/.claude/config.json</code>を編集:</p>
+<pre><code class="hljs language-json"><span class="hljs-punctuation">{</span>
+  <span class="hljs-attr">&quot;anthropic_api_base&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;http://localhost:20128/v1&quot;</span><span class="hljs-punctuation">,</span>
+  <span class="hljs-attr">&quot;anthropic_api_key&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;your-vansrouter-api-key&quot;</span><span class="hljs-punctuation">,</span>
+  <span class="hljs-attr">&quot;model&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;budget-combo&quot;</span>
+<span class="hljs-punctuation">}</span>
+</code></pre>
+<h3 id="codex-cli">Codex CLI</h3>
+<pre><code class="hljs language-bash"><span class="hljs-built_in">export</span> OPENAI_BASE_URL=<span class="hljs-string">&quot;http://localhost:20128&quot;</span>
+<span class="hljs-built_in">export</span> OPENAI_API_KEY=<span class="hljs-string">&quot;your-vansrouter-api-key&quot;</span>
+
+codex --model quality-first <span class="hljs-string">&quot;your prompt&quot;</span>
+</code></pre>
+<h3 id="cline--continue--roocode">Cline / Continue / RooCode</h3>
+<pre><code>Provider: OpenAI Compatible
+Base URL: http://localhost:20128/v1
+API Key: [ダッシュボードから取得]
+Model: free-combo
+</code></pre>
+<h3 id="apiリクエスト">APIリクエスト</h3>
+<pre><code class="hljs language-bash">curl http://localhost:20128/v1/chat/completions \
+  -H <span class="hljs-string">&quot;Authorization: Bearer your-api-key&quot;</span> \
+  -H <span class="hljs-string">&quot;Content-Type: application/json&quot;</span> \
+  -d <span class="hljs-string">&#x27;{
+    &quot;model&quot;: &quot;premium-coding&quot;,
+    &quot;messages&quot;: [
+      {&quot;role&quot;: &quot;user&quot;, &quot;content&quot;: &quot;Write a function to...&quot;}
+    ],
+    &quot;stream&quot;: true
+  }&#x27;</span>
+</code></pre>
+<hr/>
+<h2 id="ベストプラクティス">ベストプラクティス</h2>
+<h3 id="1-常に無料階層を含める">1. 常に無料階層を含める</h3>
+<pre><code>✅ 良い:
+cc/claude-opus → glm/glm-4.7 → if/kimi-k2-thinking
+
+❌ 悪い:
+cc/claude-opus → glm/glm-4.7
+(無料フォールバックなし、クォータ切れの可能性)
+</code></pre>
+<p><strong>理由</strong>: 24時間可用性を確保、クォータでブロックされない。</p>
+<h3 id="2-コスト順に並べる-安価高価">2. コスト順に並べる (安価→高価)</h3>
+<pre><code>✅ 良い:
+glm/glm-4.7 → minimax/MiniMax-M2.1 → cc/claude-opus
+
+❌ 悪い:
+cc/claude-opus → glm/glm-4.7
+(シンプルなタスクにサブスクリプションクォータを浪費)
+</code></pre>
+<p><strong>例外</strong>: サブスクリプション価値を最大化したい場合は、サブスクリプションを最初に。</p>
+<h3 id="3-品質要件に合わせる">3. 品質要件に合わせる</h3>
+<pre><code>本番コードの場合:
+cc/claude-opus → cx/gpt-5.2-codex → glm/glm-4.7
+
+クイックタスクの場合:
+glm/glm-4.7 → if/kimi-k2-thinking
+
+実験用:
+if/kimi-k2-thinking → qw/qwen3-coder-plus
+</code></pre>
+<h3 id="4-クォータリセット時間を考慮">4. クォータリセット時間を考慮</h3>
+<pre><code>朝のコンボ (新鮮なクォータ):
+cc/claude-opus → cx/gpt-5.2-codex
+
+夕方のコンボ (クォータが消費されている可能性):
+glm/glm-4.7 → minimax/MiniMax-M2.1 → if/kimi-k2-thinking
+</code></pre>
+<h3 id="5-異なるユースケース用に複数のコンボを作成">5. 異なるユースケース用に複数のコンボを作成</h3>
+<pre><code>premium-coding: 複雑なタスク用
+budget-combo: シンプルなタスク用
+free-combo: 実験用
+quality-first: 本番コード用
+</code></pre>
+<p><strong>タスク要件に基づいてコンボを切り替え</strong>ます。</p>
+<h3 id="6-コンボパフォーマンスをモニター">6. コンボパフォーマンスをモニター</h3>
+<pre><code>Dashboard → Analytics → Combo Usage:
+  premium-coding:
+    80% cc/claude-opus経由 (良好、サブスクリプション使用)
+    15% glm/glm-4.7経由 (許容バックアップ)
+    5% minimax経由 (まれなフォールバック)
+</code></pre>
+<p><strong>最適化</strong>: フォールバック使用が多すぎる場合、プライマリクォータを増やすかモデルを並べ替え。</p>
+<hr/>
+<h2 id="高度な設定">高度な設定</h2>
+<h3 id="コンボごとに予算上限を設定">コンボごとに予算上限を設定</h3>
+<pre><code>Dashboard → Combos → Edit → Budget:
+  Daily limit: $5
+  Monthly limit: $50
+</code></pre>
+<p>上限に達すると、VansRouterは有料モデルをスキップして無料階層のみを使用。</p>
+<h3 id="コンボ内のモデルを有効無効">コンボ内のモデルを有効/無効</h3>
+<pre><code>Dashboard → Combos → Edit → Models:
+  ✅ cc/claude-opus-4-5 (有効)
+  ❌ glm/glm-4.7 (一時的に無効)
+  ✅ if/kimi-k2-thinking (有効)
+</code></pre>
+<p><strong>ユースケース</strong>: コンボを削除せずに高価なモデルを一時的に無効化。</p>
+<h3 id="既存のコンボを複製">既存のコンボを複製</h3>
+<pre><code>Dashboard → Combos → Clone &quot;premium-coding&quot;
+→ &quot;-copy&quot; サフィックス付きのコピーを作成
+→ 変更して新しいコンボとして保存
+</code></pre>
+<p><strong>ユースケース</strong>: 異なるシナリオ用のバリエーションを作成。</p>
+<hr/>
+<h2 id="トラブルシューティング">トラブルシューティング</h2>
+<p><strong>問題: コンボがモデルリストに表示されない</strong></p>
+<p><strong>解決策:</strong></p>
+<ol>
+<li>ダッシュボードを更新</li>
+<li>コンボが保存されていることを確認 (緑のチェック)</li>
+<li>CLIツールを再起動してモデルリストを更新</li>
+</ol>
+<p><strong>問題: コンボが常に最後のモデル (無料階層) を使用</strong></p>
+<p><strong>解決策:</strong></p>
+<ol>
+<li>プライマリモデルのクォータを確認 (Dashboard → Quota)</li>
+<li>APIキーが有効か確認 (Dashboard → Providers)</li>
+<li>予算上限を超えていないか確認</li>
+</ol>
+<p><strong>問題: コンボのコストが予想より高い</strong></p>
+<p><strong>解決策:</strong></p>
+<ol>
+<li>Dashboard → Analytics → コンボ使用量を確認</li>
+<li>プライマリモデルがクォータ切れか確認</li>
+<li>モデルを並べ替え (安価を先に)</li>
+<li>予算上限を設定</li>
+</ol>
+<hr/>
+<h2 id="関連">関連</h2>
+<ul>
+<li><a href="./smart-routing.md">スマートルーティング</a> - 自動フォールバックの仕組み</li>
+<li><a href="./quota-tracking.md">クォータトラッキング</a> - 使用量とコストを監視</li>
+</ul></div></article></main><div class="hidden lg:block"><aside class="hidden xl:block w-64 border-l bg-white border-gray-200 h-[calc(100vh-4rem)] sticky top-16 overflow-y-auto"><nav class="p-4"><h3 class="flex items-center gap-2 text-sm font-semibold text-gray-900 mb-3"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-list w-4 h-4" aria-hidden="true"><path d="M3 5h.01"></path><path d="M3 12h.01"></path><path d="M3 19h.01"></path><path d="M8 5h13"></path><path d="M8 12h13"></path><path d="M8 19h13"></path></svg>このページ</h3><ul class="space-y-2"><li><a href="#コンボとは" class="block text-sm transition-colors  text-gray-600 hover:text-gray-900">コンボとは?</a></li><li><a href="#なぜコンボを使うのか" class="block text-sm transition-colors  text-gray-600 hover:text-gray-900">なぜコンボを使うのか?</a></li><li><a href="#1-サブスクリプション価値を最大化" class="block text-sm transition-colors pl-4 text-gray-600 hover:text-gray-900">1. サブスクリプション価値を最大化</a></li><li><a href="#2-コストを最小化" class="block text-sm transition-colors pl-4 text-gray-600 hover:text-gray-900">2. コストを最小化</a></li><li><a href="#3-24時間可用性を確保" class="block text-sm transition-colors pl-4 text-gray-600 hover:text-gray-900">3. 24時間可用性を確保</a></li><li><a href="#4-品質に最適化" class="block text-sm transition-colors pl-4 text-gray-600 hover:text-gray-900">4. 品質に最適化</a></li><li><a href="#コンボの作成方法" class="block text-sm transition-colors  text-gray-600 hover:text-gray-900">コンボの作成方法</a></li><li><a href="#ステップ1-ダッシュボードを開く" class="block text-sm transition-colors pl-4 text-gray-600 hover:text-gray-900">ステップ1: ダッシュボードを開く</a></li><li><a href="#ステップ2-コンボへ移動" class="block text-sm transition-colors pl-4 text-gray-600 hover:text-gray-900">ステップ2: コンボへ移動</a></li><li><a href="#ステップ3-コンボを設定" class="block text-sm transition-colors pl-4 text-gray-600 hover:text-gray-900">ステップ3: コンボを設定</a></li><li><a href="#ステップ4-保存" class="block text-sm transition-colors pl-4 text-gray-600 hover:text-gray-900">ステップ4: 保存</a></li><li><a href="#ステップ5-cliで使用" class="block text-sm transition-colors pl-4 text-gray-600 hover:text-gray-900">ステップ5: CLIで使用</a></li><li><a href="#コンボの例" class="block text-sm transition-colors  text-gray-600 hover:text-gray-900">コンボの例</a></li><li><a href="#例1-プレミアムコーディング-サブスク--低価格--無料" class="block text-sm transition-colors pl-4 text-gray-600 hover:text-gray-900">例1: プレミアムコーディング (サブスク → 低価格 → 無料)</a></li><li><a href="#例2-バジェットコンボ-低価格--無料" class="block text-sm transition-colors pl-4 text-gray-600 hover:text-gray-900">例2: バジェットコンボ (低価格 → 無料)</a></li><li><a href="#例3-フリーコンボ-ゼロコスト" class="block text-sm transition-colors pl-4 text-gray-600 hover:text-gray-900">例3: フリーコンボ (ゼロコスト)</a></li><li><a href="#例4-品質優先-プレミアムモデルのみ" class="block text-sm transition-colors pl-4 text-gray-600 hover:text-gray-900">例4: 品質優先 (プレミアムモデルのみ)</a></li><li><a href="#例5-マルチサブスクリプション-すべてを最大化" class="block text-sm transition-colors pl-4 text-gray-600 hover:text-gray-900">例5: マルチサブスクリプション (すべてを最大化)</a></li><li><a href="#例6-クォータリセット最適化" class="block text-sm transition-colors pl-4 text-gray-600 hover:text-gray-900">例6: クォータリセット最適化</a></li><li><a href="#cliツールでコンボを使用" class="block text-sm transition-colors  text-gray-600 hover:text-gray-900">CLIツールでコンボを使用</a></li><li><a href="#cursor-ide" class="block text-sm transition-colors pl-4 text-gray-600 hover:text-gray-900">Cursor IDE</a></li><li><a href="#claude-desktop" class="block text-sm transition-colors pl-4 text-gray-600 hover:text-gray-900">Claude Desktop</a></li><li><a href="#codex-cli" class="block text-sm transition-colors pl-4 text-gray-600 hover:text-gray-900">Codex CLI</a></li><li><a href="#cline--continue--roocode" class="block text-sm transition-colors pl-4 text-gray-600 hover:text-gray-900">Cline / Continue / RooCode</a></li><li><a href="#apiリクエスト" class="block text-sm transition-colors pl-4 text-gray-600 hover:text-gray-900">APIリクエスト</a></li><li><a href="#ベストプラクティス" class="block text-sm transition-colors  text-gray-600 hover:text-gray-900">ベストプラクティス</a></li><li><a href="#1-常に無料階層を含める" class="block text-sm transition-colors pl-4 text-gray-600 hover:text-gray-900">1. 常に無料階層を含める</a></li><li><a href="#2-コスト順に並べる-安価高価" class="block text-sm transition-colors pl-4 text-gray-600 hover:text-gray-900">2. コスト順に並べる (安価→高価)</a></li><li><a href="#3-品質要件に合わせる" class="block text-sm transition-colors pl-4 text-gray-600 hover:text-gray-900">3. 品質要件に合わせる</a></li><li><a href="#4-クォータリセット時間を考慮" class="block text-sm transition-colors pl-4 text-gray-600 hover:text-gray-900">4. クォータリセット時間を考慮</a></li><li><a href="#5-異なるユースケース用に複数のコンボを作成" class="block text-sm transition-colors pl-4 text-gray-600 hover:text-gray-900">5. 異なるユースケース用に複数のコンボを作成</a></li><li><a href="#6-コンボパフォーマンスをモニター" class="block text-sm transition-colors pl-4 text-gray-600 hover:text-gray-900">6. コンボパフォーマンスをモニター</a></li><li><a href="#高度な設定" class="block text-sm transition-colors  text-gray-600 hover:text-gray-900">高度な設定</a></li><li><a href="#コンボごとに予算上限を設定" class="block text-sm transition-colors pl-4 text-gray-600 hover:text-gray-900">コンボごとに予算上限を設定</a></li><li><a href="#コンボ内のモデルを有効無効" class="block text-sm transition-colors pl-4 text-gray-600 hover:text-gray-900">コンボ内のモデルを有効/無効</a></li><li><a href="#既存のコンボを複製" class="block text-sm transition-colors pl-4 text-gray-600 hover:text-gray-900">既存のコンボを複製</a></li><li><a href="#トラブルシューティング" class="block text-sm transition-colors  text-gray-600 hover:text-gray-900">トラブルシューティング</a></li><li><a href="#関連" class="block text-sm transition-colors  text-gray-600 hover:text-gray-900">関連</a></li></ul></nav></aside></div></div></div></div><!--$--><!--/$--><script src="/VansRouter/_next/static/chunks/343aa45b5611d01d.js" id="_R_" async=""></script><script>(self.__next_f=self.__next_f||[]).push([0])</script><script>self.__next_f.push([1,"1:\"$Sreact.fragment\"\n2:I[39756,[\"/VansRouter/_next/static/chunks/ff1a16fafef87110.js\",\"/VansRouter/_next/static/chunks/803a574de9eda7ae.js\"],\"default\"]\n3:I[37457,[\"/VansRouter/_next/static/chunks/ff1a16fafef87110.js\",\"/VansRouter/_next/static/chunks/803a574de9eda7ae.js\"],\"default\"]\n5:I[97367,[\"/VansRouter/_next/static/chunks/ff1a16fafef87110.js\",\"/VansRouter/_next/static/chunks/803a574de9eda7ae.js\"],\"OutletBoundary\"]\n6:\"$Sreact.suspense\"\n8:I[97367,[\"/VansRouter/_next/static/chunks/ff1a16fafef87110.js\",\"/VansRouter/_next/static/chunks/803a574de9eda7ae.js\"],\"ViewportBoundary\"]\na:I[97367,[\"/VansRouter/_next/static/chunks/ff1a16fafef87110.js\",\"/VansRouter/_next/static/chunks/803a574de9eda7ae.js\"],\"MetadataBoundary\"]\nc:I[68027,[\"/VansRouter/_next/static/chunks/ff1a16fafef87110.js\",\"/VansRouter/_next/static/chunks/803a574de9eda7ae.js\"],\"default\"]\n:HL[\"/VansRouter/_next/static/chunks/71d10a355cb8f2d7.css\",\"style\"]\n"])</script><script>self.__next_f.push([1,"0:{\"P\":null,\"b\":\"PUpTBY-8r_zZtEM8SJOLp\",\"c\":[\"\",\"ja\",\"features\",\"combos\",\"\"],\"q\":\"\",\"i\":false,\"f\":[[[\"\",{\"children\":[[\"lang\",\"ja\",\"d\"],{\"children\":[[\"slug\",\"features/combos\",\"c\"],{\"children\":[\"__PAGE__\",{}]}]}]},\"$undefined\",\"$undefined\",true],[[\"$\",\"$1\",\"c\",{\"children\":[[[\"$\",\"link\",\"0\",{\"rel\":\"stylesheet\",\"href\":\"/VansRouter/_next/static/chunks/71d10a355cb8f2d7.css\",\"precedence\":\"next\",\"crossOrigin\":\"$undefined\",\"nonce\":\"$undefined\"}]],[\"$\",\"html\",null,{\"lang\":\"en\",\"children\":[[\"$\",\"head\",null,{}],[\"$\",\"body\",null,{\"className\":\"bg-[#FCFBF9] text-[#6B7280]\",\"children\":[\"$\",\"$L2\",null,{\"parallelRouterKey\":\"children\",\"error\":\"$undefined\",\"errorStyles\":\"$undefined\",\"errorScripts\":\"$undefined\",\"template\":[\"$\",\"$L3\",null,{}],\"templateStyles\":\"$undefined\",\"templateScripts\":\"$undefined\",\"notFound\":[[[\"$\",\"title\",null,{\"children\":\"404: This page could not be found.\"}],[\"$\",\"div\",null,{\"style\":{\"fontFamily\":\"system-ui,\\\"Segoe UI\\\",Roboto,Helvetica,Arial,sans-serif,\\\"Apple Color Emoji\\\",\\\"Segoe UI Emoji\\\"\",\"height\":\"100vh\",\"textAlign\":\"center\",\"display\":\"flex\",\"flexDirection\":\"column\",\"alignItems\":\"center\",\"justifyContent\":\"center\"},\"children\":[\"$\",\"div\",null,{\"children\":[[\"$\",\"style\",null,{\"dangerouslySetInnerHTML\":{\"__html\":\"body{color:#000;background:#fff;margin:0}.next-error-h1{border-right:1px solid rgba(0,0,0,.3)}@media (prefers-color-scheme:dark){body{color:#fff;background:#000}.next-error-h1{border-right:1px solid rgba(255,255,255,.3)}}\"}}],[\"$\",\"h1\",null,{\"className\":\"next-error-h1\",\"style\":{\"display\":\"inline-block\",\"margin\":\"0 20px 0 0\",\"padding\":\"0 23px 0 0\",\"fontSize\":24,\"fontWeight\":500,\"verticalAlign\":\"top\",\"lineHeight\":\"49px\"},\"children\":404}],[\"$\",\"div\",null,{\"style\":{\"display\":\"inline-block\"},\"children\":[\"$\",\"h2\",null,{\"style\":{\"fontSize\":14,\"fontWeight\":400,\"lineHeight\":\"49px\",\"margin\":0},\"children\":\"This page could not be found.\"}]}]]}]}]],[]],\"forbidden\":\"$undefined\",\"unauthorized\":\"$undefined\"}]}]]}]]}],{\"children\":[[\"$\",\"$1\",\"c\",{\"children\":[null,[\"$\",\"$L2\",null,{\"parallelRouterKey\":\"children\",\"error\":\"$undefined\",\"errorStyles\":\"$undefined\",\"errorScripts\":\"$undefined\",\"template\":[\"$\",\"$L3\",null,{}],\"templateStyles\":\"$undefined\",\"templateScripts\":\"$undefined\",\"notFound\":\"$undefined\",\"forbidden\":\"$undefined\",\"unauthorized\":\"$undefined\"}]]}],{\"children\":[[\"$\",\"$1\",\"c\",{\"children\":[null,[\"$\",\"$L2\",null,{\"parallelRouterKey\":\"children\",\"error\":\"$undefined\",\"errorStyles\":\"$undefined\",\"errorScripts\":\"$undefined\",\"template\":[\"$\",\"$L3\",null,{}],\"templateStyles\":\"$undefined\",\"templateScripts\":\"$undefined\",\"notFound\":\"$undefined\",\"forbidden\":\"$undefined\",\"unauthorized\":\"$undefined\"}]]}],{\"children\":[[\"$\",\"$1\",\"c\",{\"children\":[\"$L4\",[[\"$\",\"script\",\"script-0\",{\"src\":\"/VansRouter/_next/static/chunks/ff1a16fafef87110.js\",\"async\":true,\"nonce\":\"$undefined\"}],[\"$\",\"script\",\"script-1\",{\"src\":\"/VansRouter/_next/static/chunks/3ba79d5b01800fdc.js\",\"async\":true,\"nonce\":\"$undefined\"}]],[\"$\",\"$L5\",null,{\"children\":[\"$\",\"$6\",null,{\"name\":\"Next.MetadataOutlet\",\"children\":\"$@7\"}]}]]}],{},null,false,false]},null,false,false]},null,false,false]},null,false,false],[\"$\",\"$1\",\"h\",{\"children\":[null,[\"$\",\"$L8\",null,{\"children\":\"$L9\"}],[\"$\",\"div\",null,{\"hidden\":true,\"children\":[\"$\",\"$La\",null,{\"children\":[\"$\",\"$6\",null,{\"name\":\"Next.Metadata\",\"children\":\"$Lb\"}]}]}],null]}],false]],\"m\":\"$undefined\",\"G\":[\"$c\",[]],\"S\":true}\n"])</script><script>self.__next_f.push([1,"d:I[81956,[\"/VansRouter/_next/static/chunks/ff1a16fafef87110.js\",\"/VansRouter/_next/static/chunks/3ba79d5b01800fdc.js\"],\"default\"]\ne:I[22982,[\"/VansRouter/_next/static/chunks/ff1a16fafef87110.js\",\"/VansRouter/_next/static/chunks/3ba79d5b01800fdc.js\"],\"default\"]\nf:T33a7,"])</script><script>self.__next_f.push([1,"# コンボ - カスタムフォールバックチェーン\r\n\r\n自動フォールバック付きのカスタムモデル組み合わせを作成。コンボを使って、コスト、品質、可用性に基づく独自のルーティング戦略を定義できます。\r\n\r\n---\r\n\r\n## コンボとは?\r\n\r\nコンボはダッシュボードで作成する**カスタムフォールバックチェーン**です。単一モデルを使う代わりに、VansRouterが順番に試すモデルのシーケンスを定義します。\r\n\r\n**例:**\r\n```\r\nコンボ名: premium-coding\r\nモデル:\r\n  1. cc/claude-opus-4-5-20251101 (最初に試行)\r\n  2. glm/glm-4.7 (#1のクォータ消費時)\r\n  3. minimax/MiniMax-M2.1 (#2のクォータ消費時)\r\n```\r\n\r\n**CLIでの使用:**\r\n```\r\nModel: premium-coding\r\n```\r\n\r\nVansRouterは成功するまで各モデルを順番に自動的に試します。\r\n\r\n---\r\n\r\n## なぜコンボを使うのか?\r\n\r\n### 1. サブスクリプション価値を最大化\r\n```\r\ncc/claude-opus → glm/glm-4.7 → if/kimi-k2-thinking\r\n\r\n→ サブスクリプション優先、低価格バックアップ、無料緊急時\r\n→ すでに支払っているサブスクリプションから完全な価値を得る\r\n```\r\n\r\n### 2. コストを最小化\r\n```\r\nglm/glm-4.7 → minimax/MiniMax-M2.1 → if/kimi-k2-thinking\r\n\r\n→ 最安の有料オプションから開始 (100万あたり$0.60)\r\n→ さらに安いものへフォールバック (100万あたり$0.20)\r\n→ 緊急時の無料階層\r\n→ 総コスト: 月$5〜10 vs ChatGPT APIの$2000\r\n```\r\n\r\n### 3. 24時間可用性を確保\r\n```\r\ncc/claude-opus → cx/gpt-5.2-codex → glm/glm-4.7 → if/kimi-k2-thinking\r\n\r\n→ 最後に常に無料階層を含める\r\n→ クォータ切れにならない\r\n→ いつでもどこでもコーディング\r\n```\r\n\r\n### 4. 品質に最適化\r\n```\r\ncc/claude-opus-4-5 → cx/gpt-5.2-codex → gc/gemini-3-pro\r\n\r\n→ 最高のモデルが最初\r\n→ 他のプレミアムモデルへフォールバック\r\n→ フォールバックチェーン全体で高品質を維持\r\n```\r\n\r\n---\r\n\r\n## コンボの作成方法\r\n\r\n### ステップ1: ダッシュボードを開く\r\n\r\n```\r\nhttp://localhost:20128\r\n→ パスワードでログイン\r\n```\r\n\r\n### ステップ2: コンボへ移動\r\n\r\n```\r\nDashboard → Combos → Create New Combo\r\n```\r\n\r\n### ステップ3: コンボを設定\r\n\r\n**コンボ名:**\r\n```\r\npremium-coding\r\n```\r\n\r\n**説明(任意):**\r\n```\r\nサブスクリプション優先、低価格バックアップ、無料緊急時\r\n```\r\n\r\n**モデルを選択:**\r\n```\r\n1. cc/claude-opus-4-5-20251101\r\n2. glm/glm-4.7\r\n3. minimax/MiniMax-M2.1\r\n```\r\n\r\n**ドラッグで並べ替え** - 上から下へ優先順位。\r\n\r\n### ステップ4: 保存\r\n\r\n```\r\n「Save Combo」をクリック\r\n→ コンボがモデルリストに表示\r\n```\r\n\r\n### ステップ5: CLIで使用\r\n\r\n```\r\nCursor/Cline/任意のツール:\r\n  Model: premium-coding\r\n```\r\n\r\n---\r\n\r\n## コンボの例\r\n\r\n### 例1: プレミアムコーディング (サブスク → 低価格 → 無料)\r\n\r\n**目標**: サブスクリプション価値を最大化、追加コストを最小化。\r\n\r\n```\r\nDashboard → Combos → Create New\r\n\r\nName: premium-coding\r\nModels:\r\n  1. cc/claude-opus-4-5-20251101\r\n  2. glm/glm-4.7\r\n  3. minimax/MiniMax-M2.1\r\n```\r\n\r\n**使用法:**\r\n```\r\nCursor IDE:\r\n  Model: premium-coding\r\n```\r\n\r\n**動作:**\r\n```\r\n朝 (新鮮なクォータ):\r\n  Request → cc/claude-opus-4-5 ✅\r\n\r\n午後 (Claudeクォータ切れ):\r\n  Request → glm/glm-4.7 ✅ (自動切替)\r\n\r\n夕方 (GLMクォータ切れ):\r\n  Request → minimax/MiniMax-M2.1 ✅ (自動切替)\r\n```\r\n\r\n**月コスト (1億トークン):**\r\n```\r\nClaude Code経由で8000万: $0 (サブスクリプション)\r\nGLM経由で1500万: $9\r\nMiniMax経由で500万: $1\r\n合計: $10 + サブスクリプション\r\n```\r\n\r\n**節約**: ChatGPT API ($2000) に対して約99%。\r\n\r\n---\r\n\r\n### 例2: バジェットコンボ (低価格 → 無料)\r\n\r\n**目標**: コストを最小化、バックアップに無料階層を使用。\r\n\r\n```\r\nDashboard → Combos → Create New\r\n\r\nName: budget-combo\r\nModels:\r\n  1. glm/glm-4.7\r\n  2. minimax/MiniMax-M2.1\r\n  3. if/kimi-k2-thinking\r\n```\r\n\r\n**使用法:**\r\n```\r\nCline:\r\n  Provider: OpenAI Compatible\r\n  Base URL: http://localhost:20128/v1\r\n  Model: budget-combo\r\n```\r\n\r\n**動作:**\r\n```\r\nRequest → glm/glm-4.7\r\n  ✅ 日次クォータ利用可 → GLMを使用 (100万あたり$0.60)\r\n  ❌ クォータ消費 → MiniMaxを試行 (100万あたり$0.20)\r\n  ❌ MiniMaxクォータ切れ → iFlowを使用 (無料)\r\n```\r\n\r\n**月コスト (1億トークン):**\r\n```\r\nGLM経由で7000万: $42\r\nMiniMax経由で2000万: $4\r\niFlow経由で1000万: $0\r\n合計: $46 vs ChatGPT APIの$2000\r\n```\r\n\r\n**節約**: 97%。\r\n\r\n---\r\n\r\n### 例3: フリーコンボ (ゼロコスト)\r\n\r\n**目標**: 100%無料、コストはゼロ。\r\n\r\n```\r\nDashboard → Combos → Create New\r\n\r\nName: free-combo\r\nModels:\r\n  1. if/kimi-k2-thinking\r\n  2. qw/qwen3-coder-plus\r\n  3. kr/claude-sonnet-4.5\r\n```\r\n\r\n**使用法:**\r\n```\r\nClaude Desktop:\r\n  Model: free-combo\r\n```\r\n\r\n**動作:**\r\n```\r\nRequest → if/kimi-k2-thinking\r\n  ✅ 利用可 → iFlowを使用\r\n  ❌ エラー → Qwenを試行\r\n  ❌ エラー → Kiroを試行\r\n```\r\n\r\n**月コスト:**\r\n```\r\n無料プロバイダー経由で1億トークン: $0\r\n合計: 永久に$0\r\n```\r\n\r\n**ユースケース**: 個人プロジェクト、学習、実験。\r\n\r\n---\r\n\r\n### 例4: 品質優先 (プレミアムモデルのみ)\r\n\r\n**目標**: 最高の品質、低価格フォールバックなし。\r\n\r\n```\r\nDashboard → Combos → Create New\r\n\r\nName: quality-first\r\nModels:\r\n  1. cc/claude-opus-4-5-20251101\r\n  2. cx/gpt-5.2-codex\r\n  3. gc/gemini-3-pro-preview\r\n```\r\n\r\n**使用法:**\r\n```\r\nCodex CLI:\r\n  export OPENAI_BASE_URL=\"http://localhost:20128\"\r\n  Model: quality-first\r\n```\r\n\r\n**動作:**\r\n```\r\nRequest → cc/claude-opus-4-5\r\n  ❌ クォータ切れ → cx/gpt-5.2-codex\r\n  ❌ クォータ切れ → gc/gemini-3-pro-preview\r\n  ❌ すべて切れ → エラーを返す (低価格フォールバックなし)\r\n```\r\n\r\n**ユースケース**: クリティカルな本番コード、複雑なリファクタリング。\r\n\r\n---\r\n\r\n### 例5: マルチサブスクリプション (すべてを最大化)\r\n\r\n**目標**: 追加料金前にすべてのサブスクリプションを利用。\r\n\r\n```\r\nDashboard → Combos → Create New\r\n\r\nName: multi-sub\r\nModels:\r\n  1. gc/gemini-3-flash-preview (月18万無料)\r\n  2. cc/claude-opus-4-5-20251101 (Proサブスクリプション)\r\n  3. cx/gpt-5.2-codex (Plusサブスクリプション)\r\n  4. gh/gpt-5 (Copilotサブスクリプション)\r\n  5. glm/glm-4.7 (低価格バックアップ)\r\n  6. if/kimi-k2-thinking (無料緊急時)\r\n```\r\n\r\n**月コスト (2億トークン):**\r\n```\r\nGemini CLI経由で5000万: $0 (無料プラン)\r\nClaude Code経由で8000万: $0 (サブスクリプション)\r\nCodex経由で4000万: $0 (サブスクリプション)\r\nCopilot経由で2000万: $0 (サブスクリプション)\r\nGLM経由で800万: $4.80\r\niFlow経由で200万: $0\r\n合計: $4.80 + 既存サブスクリプション\r\n```\r\n\r\n**結果**: サブスクリプションから1.9億トークン使用、わずか$4.80の追加料金。\r\n\r\n---\r\n\r\n### 例6: クォータリセット最適化\r\n\r\n**目標**: リセット時間に基づいて使用量を分散。\r\n\r\n```\r\nDashboard → Combos → Create New\r\n\r\nName: reset-optimized\r\nModels:\r\n  1. cc/claude-opus-4-5 (5時間リセット、朝に使用)\r\n  2. gc/gemini-3-flash (1K/日、午後に使用)\r\n  3. glm/glm-4.7 (毎日午前10時リセット、夕方に使用)\r\n  4. minimax/MiniMax-M2.1 (5時間ローリング、夜に使用)\r\n  5. if/kimi-k2-thinking (無制限、緊急時)\r\n```\r\n\r\n**日課:**\r\n```\r\n08:00 - 13:00: Claude Code (新鮮な5時間クォータ)\r\n13:00 - 18:00: Gemini CLI (1K/日クォータ)\r\n18:00 - 22:00: GLM (翌朝10時リセット)\r\n22:00 - 08:00: MiniMax (5時間ローリング) または iFlow\r\n```\r\n\r\n**結果**: 最小コストで24時間コーディング。\r\n\r\n---\r\n\r\n## CLIツールでコンボを使用\r\n\r\n### Cursor IDE\r\n\r\n```\r\nSettings → Models → Advanced:\r\n  OpenAI API Base URL: http://localhost:20128/v1\r\n  OpenAI API Key: [ダッシュボードから取得]\r\n  Model: premium-coding\r\n```\r\n\r\n### Claude Desktop\r\n\r\n`~/.claude/config.json`を編集:\r\n```json\r\n{\r\n  \"anthropic_api_base\": \"http://localhost:20128/v1\",\r\n  \"anthropic_api_key\": \"your-vansrouter-api-key\",\r\n  \"model\": \"budget-combo\"\r\n}\r\n```\r\n\r\n### Codex CLI\r\n\r\n```bash\r\nexport OPENAI_BASE_URL=\"http://localhost:20128\"\r\nexport OPENAI_API_KEY=\"your-vansrouter-api-key\"\r\n\r\ncodex --model quality-first \"your prompt\"\r\n```\r\n\r\n### Cline / Continue / RooCode\r\n\r\n```\r\nProvider: OpenAI Compatible\r\nBase URL: http://localhost:20128/v1\r\nAPI Key: [ダッシュボードから取得]\r\nModel: free-combo\r\n```\r\n\r\n### APIリクエスト\r\n\r\n```bash\r\ncurl http://localhost:20128/v1/chat/completions \\\r\n  -H \"Authorization: Bearer your-api-key\" \\\r\n  -H \"Content-Type: application/json\" \\\r\n  -d '{\r\n    \"model\": \"premium-coding\",\r\n    \"messages\": [\r\n      {\"role\": \"user\", \"content\": \"Write a function to...\"}\r\n    ],\r\n    \"stream\": true\r\n  }'\r\n```\r\n\r\n---\r\n\r\n## ベストプラクティス\r\n\r\n### 1. 常に無料階層を含める\r\n\r\n```\r\n✅ 良い:\r\ncc/claude-opus → glm/glm-4.7 → if/kimi-k2-thinking\r\n\r\n❌ 悪い:\r\ncc/claude-opus → glm/glm-4.7\r\n(無料フォールバックなし、クォータ切れの可能性)\r\n```\r\n\r\n**理由**: 24時間可用性を確保、クォータでブロックされない。\r\n\r\n### 2. コスト順に並べる (安価→高価)\r\n\r\n```\r\n✅ 良い:\r\nglm/glm-4.7 → minimax/MiniMax-M2.1 → cc/claude-opus\r\n\r\n❌ 悪い:\r\ncc/claude-opus → glm/glm-4.7\r\n(シンプルなタスクにサブスクリプションクォータを浪費)\r\n```\r\n\r\n**例外**: サブスクリプション価値を最大化したい場合は、サブスクリプションを最初に。\r\n\r\n### 3. 品質要件に合わせる\r\n\r\n```\r\n本番コードの場合:\r\ncc/claude-opus → cx/gpt-5.2-codex → glm/glm-4.7\r\n\r\nクイックタスクの場合:\r\nglm/glm-4.7 → if/kimi-k2-thinking\r\n\r\n実験用:\r\nif/kimi-k2-thinking → qw/qwen3-coder-plus\r\n```\r\n\r\n### 4. クォータリセット時間を考慮\r\n\r\n```\r\n朝のコンボ (新鮮なクォータ):\r\ncc/claude-opus → cx/gpt-5.2-codex\r\n\r\n夕方のコンボ (クォータが消費されている可能性):\r\nglm/glm-4.7 → minimax/MiniMax-M2.1 → if/kimi-k2-thinking\r\n```\r\n\r\n### 5. 異なるユースケース用に複数のコンボを作成\r\n\r\n```\r\npremium-coding: 複雑なタスク用\r\nbudget-combo: シンプルなタスク用\r\nfree-combo: 実験用\r\nquality-first: 本番コード用\r\n```\r\n\r\n**タスク要件に基づいてコンボを切り替え**ます。\r\n\r\n### 6. コンボパフォーマンスをモニター\r\n\r\n```\r\nDashboard → Analytics → Combo Usage:\r\n  premium-coding:\r\n    80% cc/claude-opus経由 (良好、サブスクリプション使用)\r\n    15% glm/glm-4.7経由 (許容バックアップ)\r\n    5% minimax経由 (まれなフォールバック)\r\n```\r\n\r\n**最適化**: フォールバック使用が多すぎる場合、プライマリクォータを増やすかモデルを並べ替え。\r\n\r\n---\r\n\r\n## 高度な設定\r\n\r\n### コンボごとに予算上限を設定\r\n\r\n```\r\nDashboard → Combos → Edit → Budget:\r\n  Daily limit: $5\r\n  Monthly limit: $50\r\n```\r\n\r\n上限に達すると、VansRouterは有料モデルをスキップして無料階層のみを使用。\r\n\r\n### コンボ内のモデルを有効/無効\r\n\r\n```\r\nDashboard → Combos → Edit → Models:\r\n  ✅ cc/claude-opus-4-5 (有効)\r\n  ❌ glm/glm-4.7 (一時的に無効)\r\n  ✅ if/kimi-k2-thinking (有効)\r\n```\r\n\r\n**ユースケース**: コンボを削除せずに高価なモデルを一時的に無効化。\r\n\r\n### 既存のコンボを複製\r\n\r\n```\r\nDashboard → Combos → Clone \"premium-coding\"\r\n→ \"-copy\" サフィックス付きのコピーを作成\r\n→ 変更して新しいコンボとして保存\r\n```\r\n\r\n**ユースケース**: 異なるシナリオ用のバリエーションを作成。\r\n\r\n---\r\n\r\n## トラブルシューティング\r\n\r\n**問題: コンボがモデルリストに表示されない**\r\n\r\n**解決策:**\r\n1. ダッシュボードを更新\r\n2. コンボが保存されていることを確認 (緑のチェック)\r\n3. CLIツールを再起動してモデルリストを更新\r\n\r\n**問題: コンボが常に最後のモデル (無料階層) を使用**\r\n\r\n**解決策:**\r\n1. プライマリモデルのクォータを確認 (Dashboard → Quota)\r\n2. APIキーが有効か確認 (Dashboard → Providers)\r\n3. 予算上限を超えていないか確認\r\n\r\n**問題: コンボのコストが予想より高い**\r\n\r\n**解決策:**\r\n1. Dashboard → Analytics → コンボ使用量を確認\r\n2. プライマリモデルがクォータ切れか確認\r\n3. モデルを並べ替え (安価を先に)\r\n4. 予算上限を設定\r\n\r\n---\r\n\r\n## 関連\r\n\r\n- [スマートルーティング](./smart-routing.md) - 自動フォールバックの仕組み\r\n- [クォータトラッキング](./quota-tracking.md) - 使用量とコストを監視\r\n"])</script><script>self.__next_f.push([1,"4:[\"$\",\"$Ld\",null,{\"headings\":[{\"level\":2,\"text\":\"コンボとは?\",\"id\":\"コンボとは\"},{\"level\":2,\"text\":\"なぜコンボを使うのか?\",\"id\":\"なぜコンボを使うのか\"},{\"level\":3,\"text\":\"1. サブスクリプション価値を最大化\",\"id\":\"1-サブスクリプション価値を最大化\"},{\"level\":3,\"text\":\"2. コストを最小化\",\"id\":\"2-コストを最小化\"},{\"level\":3,\"text\":\"3. 24時間可用性を確保\",\"id\":\"3-24時間可用性を確保\"},{\"level\":3,\"text\":\"4. 品質に最適化\",\"id\":\"4-品質に最適化\"},{\"level\":2,\"text\":\"コンボの作成方法\",\"id\":\"コンボの作成方法\"},{\"level\":3,\"text\":\"ステップ1: ダッシュボードを開く\",\"id\":\"ステップ1-ダッシュボードを開く\"},{\"level\":3,\"text\":\"ステップ2: コンボへ移動\",\"id\":\"ステップ2-コンボへ移動\"},{\"level\":3,\"text\":\"ステップ3: コンボを設定\",\"id\":\"ステップ3-コンボを設定\"},{\"level\":3,\"text\":\"ステップ4: 保存\",\"id\":\"ステップ4-保存\"},{\"level\":3,\"text\":\"ステップ5: CLIで使用\",\"id\":\"ステップ5-cliで使用\"},{\"level\":2,\"text\":\"コンボの例\",\"id\":\"コンボの例\"},{\"level\":3,\"text\":\"例1: プレミアムコーディング (サブスク → 低価格 → 無料)\",\"id\":\"例1-プレミアムコーディング-サブスク--低価格--無料\"},{\"level\":3,\"text\":\"例2: バジェットコンボ (低価格 → 無料)\",\"id\":\"例2-バジェットコンボ-低価格--無料\"},{\"level\":3,\"text\":\"例3: フリーコンボ (ゼロコスト)\",\"id\":\"例3-フリーコンボ-ゼロコスト\"},{\"level\":3,\"text\":\"例4: 品質優先 (プレミアムモデルのみ)\",\"id\":\"例4-品質優先-プレミアムモデルのみ\"},{\"level\":3,\"text\":\"例5: マルチサブスクリプション (すべてを最大化)\",\"id\":\"例5-マルチサブスクリプション-すべてを最大化\"},{\"level\":3,\"text\":\"例6: クォータリセット最適化\",\"id\":\"例6-クォータリセット最適化\"},{\"level\":2,\"text\":\"CLIツールでコンボを使用\",\"id\":\"cliツールでコンボを使用\"},{\"level\":3,\"text\":\"Cursor IDE\",\"id\":\"cursor-ide\"},{\"level\":3,\"text\":\"Claude Desktop\",\"id\":\"claude-desktop\"},{\"level\":3,\"text\":\"Codex CLI\",\"id\":\"codex-cli\"},{\"level\":3,\"text\":\"Cline / Continue / RooCode\",\"id\":\"cline--continue--roocode\"},{\"level\":3,\"text\":\"APIリクエスト\",\"id\":\"apiリクエスト\"},{\"level\":2,\"text\":\"ベストプラクティス\",\"id\":\"ベストプラクティス\"},{\"level\":3,\"text\":\"1. 常に無料階層を含める\",\"id\":\"1-常に無料階層を含める\"},{\"level\":3,\"text\":\"2. コスト順に並べる (安価→高価)\",\"id\":\"2-コスト順に並べる-安価高価\"},{\"level\":3,\"text\":\"3. 品質要件に合わせる\",\"id\":\"3-品質要件に合わせる\"},{\"level\":3,\"text\":\"4. クォータリセット時間を考慮\",\"id\":\"4-クォータリセット時間を考慮\"},{\"level\":3,\"text\":\"5. 異なるユースケース用に複数のコンボを作成\",\"id\":\"5-異なるユースケース用に複数のコンボを作成\"},{\"level\":3,\"text\":\"6. コンボパフォーマンスをモニター\",\"id\":\"6-コンボパフォーマンスをモニター\"},{\"level\":2,\"text\":\"高度な設定\",\"id\":\"高度な設定\"},{\"level\":3,\"text\":\"コンボごとに予算上限を設定\",\"id\":\"コンボごとに予算上限を設定\"},{\"level\":3,\"text\":\"コンボ内のモデルを有効/無効\",\"id\":\"コンボ内のモデルを有効無効\"},{\"level\":3,\"text\":\"既存のコンボを複製\",\"id\":\"既存のコンボを複製\"},{\"level\":2,\"text\":\"トラブルシューティング\",\"id\":\"トラブルシューティング\"},{\"level\":2,\"text\":\"関連\",\"id\":\"関連\"}],\"lang\":\"ja\",\"children\":[\"$\",\"$Le\",null,{\"content\":\"$f\"}]}]\n"])</script><script>self.__next_f.push([1,"9:[[\"$\",\"meta\",\"0\",{\"charSet\":\"utf-8\"}],[\"$\",\"meta\",\"1\",{\"name\":\"viewport\",\"content\":\"width=device-width, initial-scale=1\"}]]\n"])</script><script>self.__next_f.push([1,"7:null\nb:[[\"$\",\"title\",\"0\",{\"children\":\"9Router Documentation\"}],[\"$\",\"meta\",\"1\",{\"name\":\"description\",\"content\":\"Smart AI model router - Maximize subscriptions, minimize costs\"}]]\n"])</script></body></html>

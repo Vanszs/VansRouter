@@ -1,0 +1,165 @@
+1:"$Sreact.fragment"
+2:I[39756,["/VansRouter/_next/static/chunks/ff1a16fafef87110.js","/VansRouter/_next/static/chunks/803a574de9eda7ae.js"],"default"]
+3:I[37457,["/VansRouter/_next/static/chunks/ff1a16fafef87110.js","/VansRouter/_next/static/chunks/803a574de9eda7ae.js"],"default"]
+5:I[97367,["/VansRouter/_next/static/chunks/ff1a16fafef87110.js","/VansRouter/_next/static/chunks/803a574de9eda7ae.js"],"OutletBoundary"]
+6:"$Sreact.suspense"
+8:I[97367,["/VansRouter/_next/static/chunks/ff1a16fafef87110.js","/VansRouter/_next/static/chunks/803a574de9eda7ae.js"],"ViewportBoundary"]
+a:I[97367,["/VansRouter/_next/static/chunks/ff1a16fafef87110.js","/VansRouter/_next/static/chunks/803a574de9eda7ae.js"],"MetadataBoundary"]
+c:I[68027,["/VansRouter/_next/static/chunks/ff1a16fafef87110.js","/VansRouter/_next/static/chunks/803a574de9eda7ae.js"],"default"]
+:HL["/VansRouter/_next/static/chunks/71d10a355cb8f2d7.css","style"]
+0:{"P":null,"b":"PUpTBY-8r_zZtEM8SJOLp","c":["","zh-CN","integration","cursor",""],"q":"","i":false,"f":[[["",{"children":[["lang","zh-CN","d"],{"children":[["slug","integration/cursor","c"],{"children":["__PAGE__",{}]}]}]},"$undefined","$undefined",true],[["$","$1","c",{"children":[[["$","link","0",{"rel":"stylesheet","href":"/VansRouter/_next/static/chunks/71d10a355cb8f2d7.css","precedence":"next","crossOrigin":"$undefined","nonce":"$undefined"}]],["$","html",null,{"lang":"en","children":[["$","head",null,{}],["$","body",null,{"className":"bg-[#FCFBF9] text-[#6B7280]","children":["$","$L2",null,{"parallelRouterKey":"children","error":"$undefined","errorStyles":"$undefined","errorScripts":"$undefined","template":["$","$L3",null,{}],"templateStyles":"$undefined","templateScripts":"$undefined","notFound":[[["$","title",null,{"children":"404: This page could not be found."}],["$","div",null,{"style":{"fontFamily":"system-ui,\"Segoe UI\",Roboto,Helvetica,Arial,sans-serif,\"Apple Color Emoji\",\"Segoe UI Emoji\"","height":"100vh","textAlign":"center","display":"flex","flexDirection":"column","alignItems":"center","justifyContent":"center"},"children":["$","div",null,{"children":[["$","style",null,{"dangerouslySetInnerHTML":{"__html":"body{color:#000;background:#fff;margin:0}.next-error-h1{border-right:1px solid rgba(0,0,0,.3)}@media (prefers-color-scheme:dark){body{color:#fff;background:#000}.next-error-h1{border-right:1px solid rgba(255,255,255,.3)}}"}}],["$","h1",null,{"className":"next-error-h1","style":{"display":"inline-block","margin":"0 20px 0 0","padding":"0 23px 0 0","fontSize":24,"fontWeight":500,"verticalAlign":"top","lineHeight":"49px"},"children":404}],["$","div",null,{"style":{"display":"inline-block"},"children":["$","h2",null,{"style":{"fontSize":14,"fontWeight":400,"lineHeight":"49px","margin":0},"children":"This page could not be found."}]}]]}]}]],[]],"forbidden":"$undefined","unauthorized":"$undefined"}]}]]}]]}],{"children":[["$","$1","c",{"children":[null,["$","$L2",null,{"parallelRouterKey":"children","error":"$undefined","errorStyles":"$undefined","errorScripts":"$undefined","template":["$","$L3",null,{}],"templateStyles":"$undefined","templateScripts":"$undefined","notFound":"$undefined","forbidden":"$undefined","unauthorized":"$undefined"}]]}],{"children":[["$","$1","c",{"children":[null,["$","$L2",null,{"parallelRouterKey":"children","error":"$undefined","errorStyles":"$undefined","errorScripts":"$undefined","template":["$","$L3",null,{}],"templateStyles":"$undefined","templateScripts":"$undefined","notFound":"$undefined","forbidden":"$undefined","unauthorized":"$undefined"}]]}],{"children":[["$","$1","c",{"children":["$L4",[["$","script","script-0",{"src":"/VansRouter/_next/static/chunks/ff1a16fafef87110.js","async":true,"nonce":"$undefined"}],["$","script","script-1",{"src":"/VansRouter/_next/static/chunks/3ba79d5b01800fdc.js","async":true,"nonce":"$undefined"}]],["$","$L5",null,{"children":["$","$6",null,{"name":"Next.MetadataOutlet","children":"$@7"}]}]]}],{},null,false,false]},null,false,false]},null,false,false]},null,false,false],["$","$1","h",{"children":[null,["$","$L8",null,{"children":"$L9"}],["$","div",null,{"hidden":true,"children":["$","$La",null,{"children":["$","$6",null,{"name":"Next.Metadata","children":"$Lb"}]}]}],null]}],false]],"m":"$undefined","G":["$c",[]],"S":true}
+d:I[81956,["/VansRouter/_next/static/chunks/ff1a16fafef87110.js","/VansRouter/_next/static/chunks/3ba79d5b01800fdc.js"],"default"]
+e:I[22982,["/VansRouter/_next/static/chunks/ff1a16fafef87110.js","/VansRouter/_next/static/chunks/3ba79d5b01800fdc.js"],"default"]
+f:T1071,# Cursor 集成
+
+将 VansRouter 与 Cursor IDE 集成,通过 VansRouter 的智能路由系统转发你的 AI 请求。
+
+## 前置要求
+
+- 已安装 Cursor IDE
+- Cursor Pro 账户(使用自定义 API endpoint 必需)
+- 已配置 VansRouter 云端 endpoint
+- 来自 VansRouter 仪表盘的 API key
+
+## ⚠️ 重要说明
+
+> **必须使用云端 Endpoint**:Cursor 会通过自己的服务器转发请求,不支持 localhost endpoint。你必须使用 VansRouter 云端 endpoint:`https://vansrouter.example`
+
+> **必须有 Cursor Pro**:此功能需要 Cursor Pro 账户才能使用自定义 API endpoint。
+
+## 设置
+
+### 1. 打开 Cursor 设置
+
+1. 打开 Cursor IDE
+2. 进入 **Settings**(Cmd/Ctrl + ,)
+3. 导航到 **Models** 部分
+
+### 2. 启用 OpenAI API
+
+1. 找到 **OpenAI API key** 选项
+2. 启用开关以激活自定义 API 配置
+
+### 3. 配置 Base URL
+
+将 base URL 设为 VansRouter 云端 endpoint:
+
+```
+https://vansrouter.example
+```
+
+**步骤:**
+1. 在 Models 设置中找到 **Base URL** 字段
+2. 输入:`https://vansrouter.example`
+3. 点击 **Save**
+
+### 4. 添加 API Key
+
+1. 在 **API Key** 字段中输入你的 VansRouter API key
+2. 可在 VansRouter 仪表盘 **Settings → API Keys** 中找到 API key
+3. 点击 **Save**
+
+### 5. 添加自定义模型
+
+1. 点击 **View All Models** 按钮
+2. 点击 **Add Custom Model**
+3. 输入 VansRouter 配置中的模型名(例如 `gpt-4`、`claude-opus-4-5` 等)
+4. 点击 **Add**
+
+### 6. 选择模型
+
+1. 在 Cursor 聊天界面,点击模型选择下拉菜单
+2. 从列表中选择你的自定义模型
+3. 开始在 Cursor 中使用 VansRouter!
+
+## 配置示例
+
+你的 Cursor 设置应如下所示:
+
+```
+OpenAI API: ✓ 已启用
+Base URL: https://vansrouter.example
+API Key: sk-your-key-xxxxxxxxxxxxx
+Custom Models: gpt-4, claude-opus-4-5, gemini-2.0-flash
+```
+
+## 可用模型
+
+你可以使用 VansRouter 仪表盘中配置的任意模型。常见示例:
+
+| 模型名 | 提供商 | 描述 |
+|------------|----------|-------------|
+| `gpt-4` | OpenAI | GPT-4 Turbo |
+| `gpt-4o` | OpenAI | GPT-4 Optimized |
+| `claude-opus-4-5` | Anthropic | Claude Opus 4.5 |
+| `claude-sonnet-4-5` | Anthropic | Claude Sonnet 4.5 |
+| `gemini-2.0-flash` | Google | Gemini 2.0 Flash |
+
+## 使用
+
+### 聊天界面
+
+1. 打开 Cursor 聊天(Cmd/Ctrl + L)
+2. 从下拉菜单中选择模型
+3. 通过 VansRouter 与 AI 对话
+
+### 内联代码生成
+
+1. 在编辑器中选中代码
+2. 按 Cmd/Ctrl + K
+3. 输入 prompt
+4. Cursor 会通过 VansRouter 生成代码
+
+### 代码解释
+
+1. 在编辑器中选中代码
+2. 按 Cmd/Ctrl + L
+3. 询问 "Explain this code"
+4. 通过 VansRouter 获得 AI 驱动的解释
+
+## 故障排除
+
+### "Invalid API Key" 错误
+
+1. 在 VansRouter 仪表盘中确认 API key
+2. 确保复制了包含 `sk-your-key-` 前缀在内的完整 key
+3. 检查 API key 是否过期
+4. 尝试重新生成 API key
+
+### "Model Not Found" 错误
+
+1. 确认模型名与 VansRouter 配置完全一致
+2. 检查 VansRouter 仪表盘中提供商连接是否激活
+3. 确认连接的提供商中包含该模型
+4. 尝试使用完整模型名(例如用 `openai/gpt-4` 代替 `gpt-4`)
+
+### 连接问题
+
+1. 确认使用的是云端 endpoint:`https://vansrouter.example`
+2. 检查网络连接
+3. 确认 VansRouter 云端服务运行正常
+4. 若启用了 VPN 或代理,尝试关闭
+
+### Localhost 无法使用
+
+> **请记住**:Cursor 不支持 localhost endpoint。你必须使用云端 endpoint `https://vansrouter.example`。如果需要使用本地 VansRouter 实例,可以考虑使用 ngrok 之类的隧道服务把本地 endpoint 暴露到公网。
+
+## 云端 Endpoint 设置
+
+如果你在本地运行 VansRouter 并希望搭配 Cursor 使用:
+
+1. 在 VansRouter 设置中启用云端 endpoint
+2. 在 VansRouter 仪表盘中配置云端 endpoint URL
+3. 在 Cursor 设置中使用该云端 URL
+4. 确保本地 VansRouter 实例可从互联网访问
+
+## 最佳实践
+
+1. **使用模型别名**:为常用模型在 VansRouter 中创建简短别名
+2. **监控使用**:在 VansRouter 仪表盘查看用量统计和成本
+3. **轮换 API Keys**:为安全起见定期轮换 API key
+4. **测试模型**:尝试不同模型,找到最适合你场景的那个
+4:["$","$Ld",null,{"headings":[{"level":2,"text":"前置要求","id":"前置要求"},{"level":2,"text":"重要说明","id":"重要说明"},{"level":2,"text":"设置","id":"设置"},{"level":3,"text":"1. 打开 Cursor 设置","id":"1-打开-cursor-设置"},{"level":3,"text":"2. 启用 OpenAI API","id":"2-启用-openai-api"},{"level":3,"text":"3. 配置 Base URL","id":"3-配置-base-url"},{"level":3,"text":"4. 添加 API Key","id":"4-添加-api-key"},{"level":3,"text":"5. 添加自定义模型","id":"5-添加自定义模型"},{"level":3,"text":"6. 选择模型","id":"6-选择模型"},{"level":2,"text":"配置示例","id":"配置示例"},{"level":2,"text":"可用模型","id":"可用模型"},{"level":2,"text":"使用","id":"使用"},{"level":3,"text":"聊天界面","id":"聊天界面"},{"level":3,"text":"内联代码生成","id":"内联代码生成"},{"level":3,"text":"代码解释","id":"代码解释"},{"level":2,"text":"故障排除","id":"故障排除"},{"level":3,"text":"\"Invalid API Key\" 错误","id":"invalid-api-key-错误"},{"level":3,"text":"\"Model Not Found\" 错误","id":"model-not-found-错误"},{"level":3,"text":"连接问题","id":"连接问题"},{"level":3,"text":"Localhost 无法使用","id":"localhost-无法使用"},{"level":2,"text":"云端 Endpoint 设置","id":"云端-endpoint-设置"},{"level":2,"text":"最佳实践","id":"最佳实践"}],"lang":"zh-CN","children":["$","$Le",null,{"content":"$f"}]}]
+9:[["$","meta","0",{"charSet":"utf-8"}],["$","meta","1",{"name":"viewport","content":"width=device-width, initial-scale=1"}]]
+7:null
+b:[["$","title","0",{"children":"9Router Documentation"}],["$","meta","1",{"name":"description","content":"Smart AI model router - Maximize subscriptions, minimize costs"}]]

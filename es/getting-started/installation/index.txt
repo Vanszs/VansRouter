@@ -1,0 +1,494 @@
+1:"$Sreact.fragment"
+2:I[39756,["/VansRouter/_next/static/chunks/ff1a16fafef87110.js","/VansRouter/_next/static/chunks/803a574de9eda7ae.js"],"default"]
+3:I[37457,["/VansRouter/_next/static/chunks/ff1a16fafef87110.js","/VansRouter/_next/static/chunks/803a574de9eda7ae.js"],"default"]
+5:I[97367,["/VansRouter/_next/static/chunks/ff1a16fafef87110.js","/VansRouter/_next/static/chunks/803a574de9eda7ae.js"],"OutletBoundary"]
+6:"$Sreact.suspense"
+8:I[97367,["/VansRouter/_next/static/chunks/ff1a16fafef87110.js","/VansRouter/_next/static/chunks/803a574de9eda7ae.js"],"ViewportBoundary"]
+a:I[97367,["/VansRouter/_next/static/chunks/ff1a16fafef87110.js","/VansRouter/_next/static/chunks/803a574de9eda7ae.js"],"MetadataBoundary"]
+c:I[68027,["/VansRouter/_next/static/chunks/ff1a16fafef87110.js","/VansRouter/_next/static/chunks/803a574de9eda7ae.js"],"default"]
+:HL["/VansRouter/_next/static/chunks/71d10a355cb8f2d7.css","style"]
+0:{"P":null,"b":"PUpTBY-8r_zZtEM8SJOLp","c":["","es","getting-started","installation",""],"q":"","i":false,"f":[[["",{"children":[["lang","es","d"],{"children":[["slug","getting-started/installation","c"],{"children":["__PAGE__",{}]}]}]},"$undefined","$undefined",true],[["$","$1","c",{"children":[[["$","link","0",{"rel":"stylesheet","href":"/VansRouter/_next/static/chunks/71d10a355cb8f2d7.css","precedence":"next","crossOrigin":"$undefined","nonce":"$undefined"}]],["$","html",null,{"lang":"en","children":[["$","head",null,{}],["$","body",null,{"className":"bg-[#FCFBF9] text-[#6B7280]","children":["$","$L2",null,{"parallelRouterKey":"children","error":"$undefined","errorStyles":"$undefined","errorScripts":"$undefined","template":["$","$L3",null,{}],"templateStyles":"$undefined","templateScripts":"$undefined","notFound":[[["$","title",null,{"children":"404: This page could not be found."}],["$","div",null,{"style":{"fontFamily":"system-ui,\"Segoe UI\",Roboto,Helvetica,Arial,sans-serif,\"Apple Color Emoji\",\"Segoe UI Emoji\"","height":"100vh","textAlign":"center","display":"flex","flexDirection":"column","alignItems":"center","justifyContent":"center"},"children":["$","div",null,{"children":[["$","style",null,{"dangerouslySetInnerHTML":{"__html":"body{color:#000;background:#fff;margin:0}.next-error-h1{border-right:1px solid rgba(0,0,0,.3)}@media (prefers-color-scheme:dark){body{color:#fff;background:#000}.next-error-h1{border-right:1px solid rgba(255,255,255,.3)}}"}}],["$","h1",null,{"className":"next-error-h1","style":{"display":"inline-block","margin":"0 20px 0 0","padding":"0 23px 0 0","fontSize":24,"fontWeight":500,"verticalAlign":"top","lineHeight":"49px"},"children":404}],["$","div",null,{"style":{"display":"inline-block"},"children":["$","h2",null,{"style":{"fontSize":14,"fontWeight":400,"lineHeight":"49px","margin":0},"children":"This page could not be found."}]}]]}]}]],[]],"forbidden":"$undefined","unauthorized":"$undefined"}]}]]}]]}],{"children":[["$","$1","c",{"children":[null,["$","$L2",null,{"parallelRouterKey":"children","error":"$undefined","errorStyles":"$undefined","errorScripts":"$undefined","template":["$","$L3",null,{}],"templateStyles":"$undefined","templateScripts":"$undefined","notFound":"$undefined","forbidden":"$undefined","unauthorized":"$undefined"}]]}],{"children":[["$","$1","c",{"children":[null,["$","$L2",null,{"parallelRouterKey":"children","error":"$undefined","errorStyles":"$undefined","errorScripts":"$undefined","template":["$","$L3",null,{}],"templateStyles":"$undefined","templateScripts":"$undefined","notFound":"$undefined","forbidden":"$undefined","unauthorized":"$undefined"}]]}],{"children":[["$","$1","c",{"children":["$L4",[["$","script","script-0",{"src":"/VansRouter/_next/static/chunks/ff1a16fafef87110.js","async":true,"nonce":"$undefined"}],["$","script","script-1",{"src":"/VansRouter/_next/static/chunks/3ba79d5b01800fdc.js","async":true,"nonce":"$undefined"}]],["$","$L5",null,{"children":["$","$6",null,{"name":"Next.MetadataOutlet","children":"$@7"}]}]]}],{},null,false,false]},null,false,false]},null,false,false]},null,false,false],["$","$1","h",{"children":[null,["$","$L8",null,{"children":"$L9"}],["$","div",null,{"hidden":true,"children":["$","$La",null,{"children":["$","$6",null,{"name":"Next.Metadata","children":"$Lb"}]}]}],null]}],false]],"m":"$undefined","G":["$c",[]],"S":true}
+d:I[81956,["/VansRouter/_next/static/chunks/ff1a16fafef87110.js","/VansRouter/_next/static/chunks/3ba79d5b01800fdc.js"],"default"]
+e:I[22982,["/VansRouter/_next/static/chunks/ff1a16fafef87110.js","/VansRouter/_next/static/chunks/3ba79d5b01800fdc.js"],"default"]
+f:T21ba,# Instalación
+
+Guía detallada de instalación de VansRouter con consejos de solución de problemas.
+
+---
+
+## Requisitos
+
+### Requisitos del sistema
+
+- **Node.js**: Versión 20.0.0 o superior
+- **npm**: Versión 10.0.0 o superior (viene con Node.js)
+- **OS**: macOS, Linux, Windows (WSL recomendado)
+- **Espacio en disco**: ~200MB para la instalación
+
+### Verifica tu versión
+
+```bash
+node --version
+# Debería mostrar v20.x.x o superior
+
+npm --version
+# Debería mostrar 10.x.x o superior
+```
+
+**¿No tienes Node.js?** Instálalo desde [nodejs.org](https://nodejs.org/)
+
+---
+
+## Métodos de instalación
+
+### Método 1: Instalación global (Recomendado)
+
+Instala VansRouter globalmente para usar desde cualquier lugar:
+
+```bash
+npm install -g vansrouter
+```
+
+**Iniciar VansRouter:**
+
+```bash
+vansrouter
+```
+
+**Beneficios:**
+- ✅ Ejecuta desde cualquier directorio
+- ✅ Comando simple: `9router`
+- ✅ Auto-actualizaciones con `npm update -g vansrouter`
+
+### Método 2: Instalación local
+
+Instala en un proyecto específico:
+
+```bash
+mkdir my-9router
+cd my-9router
+npm install 9router
+```
+
+**Iniciar VansRouter:**
+
+```bash
+npx vansrouter
+```
+
+**Beneficios:**
+- ✅ Aislado por proyecto
+- ✅ Control de versiones por proyecto
+- ✅ Sin contaminación del namespace global
+
+### Método 3: Desde el código fuente (Desarrollo)
+
+Clona y compila desde GitHub:
+
+```bash
+git clone https://github.com/Vanszs/VansRouter.git
+cd VansRouter
+npm install
+npm run build
+npm start
+```
+
+**Beneficios:**
+- ✅ Últimas características de desarrollo
+- ✅ Contribuir al desarrollo
+- ✅ Modificaciones personalizadas
+
+---
+
+## Primera ejecución
+
+### Iniciar el servidor
+
+```bash
+vansrouter
+```
+
+**Qué sucede:**
+1. El servidor inicia en `http://localhost:20128`
+2. El dashboard se abre automáticamente en el navegador
+3. Se crea el directorio de datos en `~/.9router`
+4. API key generada automáticamente
+
+### Login del dashboard
+
+**Credenciales por defecto:**
+- Contraseña inicial: configura un valor aleatorio fuerte en `INITIAL_PASSWORD`
+
+**⚠️ Cambia la contraseña inmediatamente:**
+1. Inicia sesión en el dashboard
+2. Settings → Change Password
+3. Usa una contraseña fuerte
+
+### Obtén tu API key
+
+```
+Dashboard → Settings → API Keys
+→ Copia tu API key
+→ Úsala en herramientas CLI
+```
+
+**Ejemplo de formato de API key:**
+```
+9r_1234567890abcdef1234567890abcdef
+```
+
+---
+
+## Verificar la instalación
+
+### Verifica el estado del servidor
+
+```bash
+curl http://localhost:20128/health
+```
+
+**Respuesta esperada:**
+```json
+{
+  "status": "ok",
+  "version": "1.0.0"
+}
+```
+
+### Lista los modelos disponibles
+
+```bash
+curl http://localhost:20128/v1/models \
+  -H "Authorization: Bearer your-api-key"
+```
+
+**Respuesta esperada:**
+```json
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "cc/claude-opus-4-5-20251101",
+      "object": "model",
+      "created": 1234567890,
+      "owned_by": "claude-code"
+    }
+  ]
+}
+```
+
+### Prueba el chat completion
+
+```bash
+curl http://localhost:20128/v1/chat/completions \
+  -H "Authorization: Bearer your-api-key" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "cc/claude-opus-4-5-20251101",
+    "messages": [
+      {"role": "user", "content": "Hello!"}
+    ]
+  }'
+```
+
+---
+
+## Configuración
+
+### Variables de entorno
+
+Crea un archivo `.env` o establece variables de entorno:
+
+```bash
+# Security (REQUIRED in production)
+export JWT_SECRET="your-secure-secret-change-this"
+export INITIAL_PASSWORD="$(openssl rand -base64 24)"
+
+# Storage
+export DATA_DIR="~/.9router"
+
+# Server
+export PORT="20128"
+export NODE_ENV="production"
+
+# Logging
+export ENABLE_REQUEST_LOGS="false"
+```
+
+### Directorio de datos
+
+**Ubicación por defecto:** `~/.9router`
+
+**Contenido:**
+```
+~/.9router/
+  ├── db.json           # Database (providers, combos, usage)
+  ├── api-keys.json     # API keys
+  └── logs/             # Request logs (if enabled)
+```
+
+**Cambiar ubicación:**
+
+```bash
+export DATA_DIR="/custom/path"
+vansrouter
+```
+
+### Configuración de puerto
+
+**Puerto por defecto:** `20128`
+
+**Cambiar puerto:**
+
+```bash
+export PORT="3000"
+vansrouter
+```
+
+**O usa la línea de comandos:**
+
+```bash
+vansrouter --port 3000
+```
+
+---
+
+## Solución de problemas
+
+### Puerto ya en uso
+
+**Error:**
+```
+Error: listen EADDRINUSE: address already in use :::20128
+```
+
+**Solución 1: Mata el proceso existente**
+
+```bash
+# Encuentra proceso usando el puerto 20128
+lsof -i :20128
+
+# Mata el proceso
+kill -9 <PID>
+```
+
+**Solución 2: Usa otro puerto**
+
+```bash
+vansrouter --port 3000
+```
+
+### Permiso denegado
+
+**Error:**
+```
+Error: EACCES: permission denied, mkdir '/usr/local/lib/node_modules/9router'
+```
+
+**Solución: Usa sudo (no recomendado) o corrige los permisos de npm**
+
+```bash
+# Corregir permisos de npm (recomendado)
+mkdir ~/.npm-global
+npm config set prefix '~/.npm-global'
+echo 'export PATH=~/.npm-global/bin:$PATH' >> ~/.bashrc
+source ~/.bashrc
+
+# Luego instalar nuevamente
+npm install -g vansrouter
+```
+
+### Versión de Node.js muy antigua
+
+**Error:**
+```
+Error: The engine "node" is incompatible with this module
+```
+
+**Solución: Actualizar Node.js**
+
+```bash
+# Usando nvm (recomendado)
+nvm install 20
+nvm use 20
+
+# O descargar desde nodejs.org
+```
+
+### El dashboard no se abre
+
+**Problema:** El dashboard no se abre automáticamente
+
+**Solución 1: Abrir manualmente**
+
+```
+http://localhost:20128
+```
+
+**Solución 2: Verifica el firewall**
+
+```bash
+# macOS: Permitir Node.js en System Preferences → Security
+# Linux: Verificar iptables
+# Windows: Verificar Windows Firewall
+```
+
+### No se puede conectar a proveedores
+
+**Problema:** El login OAuth falla o la API key es inválida
+
+**Solución 1: Verifica la conexión a internet**
+
+```bash
+ping google.com
+```
+
+**Solución 2: Verifica el estado del proveedor**
+
+- Claude Code: [status.anthropic.com](https://status.anthropic.com)
+- OpenAI: [status.openai.com](https://status.openai.com)
+- Gemini: [status.cloud.google.com](https://status.cloud.google.com)
+
+**Solución 3: Regenera la API key**
+
+```
+Dashboard → Provider → Disconnect → Reconnect
+```
+
+### Uso alto de memoria
+
+**Problema:** VansRouter usa demasiada RAM
+
+**Solución: Reinicia el servidor**
+
+```bash
+# Detener
+pkill -f 9router
+
+# Iniciar
+vansrouter
+```
+
+**O usa PM2 para auto-reinicio:**
+
+```bash
+npm install -g pm2
+pm2 start vansrouter --name vansrouter
+pm2 save
+```
+
+---
+
+## Opciones de despliegue
+
+### Desarrollo local
+
+```bash
+npm install -g vansrouter
+vansrouter
+```
+
+**Caso de uso:** Codificación personal, pruebas
+
+### Servidor VPS/Cloud
+
+```bash
+# Instalar
+npm install -g vansrouter
+
+# Configurar
+export JWT_SECRET="your-secure-secret"
+export INITIAL_PASSWORD="$(openssl rand -base64 24)"
+export NODE_ENV="production"
+
+# Iniciar con PM2
+npm install -g pm2
+pm2 start vansrouter --name vansrouter
+pm2 save
+pm2 startup
+```
+
+**Caso de uso:** Acceso de equipo, codificación remota
+
+### Docker
+
+```bash
+docker pull ghcr.io/vanszs/vansrouter:X.Y.Z
+
+docker run -d \
+  -p 20128:20128 \
+  -e JWT_SECRET="your-secure-secret" \
+  -e INITIAL_PASSWORD="$(openssl rand -base64 24)" \
+  -v 9router-data:/root/.9router \
+  --name vansrouter \
+  ghcr.io/vanszs/vansrouter:X.Y.Z
+```
+
+**Caso de uso:** Despliegue containerizado, Kubernetes
+
+### Proxy reverso (Nginx)
+
+```nginx
+server {
+    listen 80;
+    server_name your-domain.com;
+
+    location / {
+        proxy_pass http://localhost:20128;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        
+        # SSE support for streaming
+        proxy_buffering off;
+        proxy_read_timeout 86400;
+    }
+}
+```
+
+**Caso de uso:** HTTPS, dominio personalizado, balanceo de carga
+
+---
+
+## Desinstalación
+
+### Eliminar instalación global
+
+```bash
+npm uninstall -g vansrouter
+```
+
+### Eliminar el directorio de datos
+
+```bash
+rm -rf ~/.9router
+```
+
+### Eliminar la configuración
+
+```bash
+# Eliminar variables de entorno del archivo de configuración del shell
+nano ~/.bashrc  # o ~/.zshrc
+# Eliminar exports relacionados con 9router
+```
+
+---
+
+## Próximos pasos
+
+- [Guía para empezar](../getting-started.md) - Conecta proveedores y comienza a codificar
+- [Características](../features/) - Explora seguimiento de cuota, combos, despliegue
+- [Solución de problemas](../troubleshooting.md) - Resuelve problemas comunes
+
+---
+
+## ¿Necesitas ayuda?
+
+- **Sitio web**: [VansRouter dashboard](http://localhost:20128)
+- **GitHub**: [github.com/Vanszs/VansRouter](https://github.com/Vanszs/VansRouter)
+- **Issues**: [github.com/Vanszs/VansRouter/issues](https://github.com/Vanszs/VansRouter/issues)
+4:["$","$Ld",null,{"headings":[{"level":2,"text":"Requisitos","id":"requisitos"},{"level":3,"text":"Requisitos del sistema","id":"requisitos-del-sistema"},{"level":3,"text":"Verifica tu versión","id":"verifica-tu-versión"},{"level":2,"text":"Métodos de instalación","id":"métodos-de-instalación"},{"level":3,"text":"Método 1: Instalación global (Recomendado)","id":"método-1-instalación-global-recomendado"},{"level":3,"text":"Método 2: Instalación local","id":"método-2-instalación-local"},{"level":3,"text":"Método 3: Desde el código fuente (Desarrollo)","id":"método-3-desde-el-código-fuente-desarrollo"},{"level":2,"text":"Primera ejecución","id":"primera-ejecución"},{"level":3,"text":"Iniciar el servidor","id":"iniciar-el-servidor"},{"level":3,"text":"Login del dashboard","id":"login-del-dashboard"},{"level":3,"text":"Obtén tu API key","id":"obtén-tu-api-key"},{"level":2,"text":"Verificar la instalación","id":"verificar-la-instalación"},{"level":3,"text":"Verifica el estado del servidor","id":"verifica-el-estado-del-servidor"},{"level":3,"text":"Lista los modelos disponibles","id":"lista-los-modelos-disponibles"},{"level":3,"text":"Prueba el chat completion","id":"prueba-el-chat-completion"},{"level":2,"text":"Configuración","id":"configuración"},{"level":3,"text":"Variables de entorno","id":"variables-de-entorno"},{"level":3,"text":"Directorio de datos","id":"directorio-de-datos"},{"level":3,"text":"Configuración de puerto","id":"configuración-de-puerto"},{"level":2,"text":"Solución de problemas","id":"solución-de-problemas"},{"level":3,"text":"Puerto ya en uso","id":"puerto-ya-en-uso"},{"level":3,"text":"Permiso denegado","id":"permiso-denegado"},{"level":3,"text":"Versión de Node.js muy antigua","id":"versión-de-nodejs-muy-antigua"},{"level":3,"text":"El dashboard no se abre","id":"el-dashboard-no-se-abre"},{"level":3,"text":"No se puede conectar a proveedores","id":"no-se-puede-conectar-a-proveedores"},{"level":3,"text":"Uso alto de memoria","id":"uso-alto-de-memoria"},{"level":2,"text":"Opciones de despliegue","id":"opciones-de-despliegue"},{"level":3,"text":"Desarrollo local","id":"desarrollo-local"},{"level":3,"text":"Servidor VPS/Cloud","id":"servidor-vpscloud"},{"level":3,"text":"Docker","id":"docker"},{"level":3,"text":"Proxy reverso (Nginx)","id":"proxy-reverso-nginx"},{"level":2,"text":"Desinstalación","id":"desinstalación"},{"level":3,"text":"Eliminar instalación global","id":"eliminar-instalación-global"},{"level":3,"text":"Eliminar el directorio de datos","id":"eliminar-el-directorio-de-datos"},{"level":3,"text":"Eliminar la configuración","id":"eliminar-la-configuración"},{"level":2,"text":"Próximos pasos","id":"próximos-pasos"},{"level":2,"text":"¿Necesitas ayuda?","id":"necesitas-ayuda"}],"lang":"es","children":["$","$Le",null,{"content":"$f"}]}]
+9:[["$","meta","0",{"charSet":"utf-8"}],["$","meta","1",{"name":"viewport","content":"width=device-width, initial-scale=1"}]]
+7:null
+b:[["$","title","0",{"children":"9Router Documentation"}],["$","meta","1",{"name":"description","content":"Smart AI model router - Maximize subscriptions, minimize costs"}]]

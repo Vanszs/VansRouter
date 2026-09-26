@@ -1,0 +1,355 @@
+<!DOCTYPE html><!--PUpTBY_8r_zZtEM8SJOLp--><html lang="en"><head><meta charSet="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/><link rel="stylesheet" href="/VansRouter/_next/static/chunks/71d10a355cb8f2d7.css" data-precedence="next"/><link rel="preload" as="script" fetchPriority="low" href="/VansRouter/_next/static/chunks/343aa45b5611d01d.js"/><script src="/VansRouter/_next/static/chunks/a0aa32a146625b3a.js" async=""></script><script src="/VansRouter/_next/static/chunks/3e45c79224336516.js" async=""></script><script src="/VansRouter/_next/static/chunks/turbopack-4db312a651dd60cf.js" async=""></script><script src="/VansRouter/_next/static/chunks/ff1a16fafef87110.js" async=""></script><script src="/VansRouter/_next/static/chunks/803a574de9eda7ae.js" async=""></script><script src="/VansRouter/_next/static/chunks/3ba79d5b01800fdc.js" async=""></script><title>9Router Documentation</title><meta name="description" content="Smart AI model router - Maximize subscriptions, minimize costs"/><script src="/VansRouter/_next/static/chunks/a6dad97d9634a72d.js" noModule=""></script></head><body class="bg-[#FCFBF9] text-[#6B7280]"><div hidden=""><!--$--><!--/$--></div><div class="min-h-screen flex flex-col bg-[#FCFBF9]"><header class="sticky top-0 z-50 w-full border-b bg-white/80 backdrop-blur-sm border-gray-200"><div class=" mx-auto px-4 h-16 flex items-center justify-between"><button type="button" class="lg:hidden p-2 rounded-lg hover:bg-gray-100 transition-colors" aria-label="Open menu"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-menu w-6 h-6 text-gray-600" aria-hidden="true"><path d="M4 5h16"></path><path d="M4 12h16"></path><path d="M4 19h16"></path></svg></button><a class="flex items-center gap-2 font-bold text-2xl text-black hover:opacity-80 transition-opacity" href="/VansRouter/zh-CN/"><span>9</span><span class="text-[#E68A6E]">9Router<!-- --> Docs</span></a><div class="flex items-center gap-2 sm:gap-3"><button type="button" class="flex items-center gap-1.5 px-2.5 py-1.5 text-sm text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors" aria-label="Switch language"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-globe w-4 h-4" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"></path><path d="M2 12h20"></path></svg><span class="hidden sm:inline">🇨🇳<!-- --> <!-- -->简体中文</span><span class="sm:hidden">🇨🇳</span></button><a target="_blank" rel="noopener noreferrer" class="flex items-center gap-2 px-3 sm:px-4 py-2 bg-[#E68A6E] text-white rounded-lg font-medium hover:bg-[#d67a5e] transition-colors text-sm" href="http://localhost:20128"><span class="hidden sm:inline">前往应用</span><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-external-link w-4 h-4" aria-hidden="true"><path d="M15 3h6v6"></path><path d="M10 14 21 3"></path><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path></svg></a></div></div></header><div class="flex-1 flex"><div class="hidden lg:block"><aside class="w-64 border-r bg-white border-gray-200 h-[calc(100vh-4rem)] sticky top-16 overflow-y-auto"><nav class="p-4 space-y-6"><div><button type="button" class="flex items-center justify-between w-full text-sm font-semibold text-gray-900 mb-2 hover:text-[#E68A6E] transition-colors"><span class="flex items-center gap-2"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-rocket w-4 h-4" aria-hidden="true"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"></path><path d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"></path><path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"></path><path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"></path></svg>开始使用</span><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-right w-4 h-4" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg></button></div><div><button type="button" class="flex items-center justify-between w-full text-sm font-semibold text-gray-900 mb-2 hover:text-[#E68A6E] transition-colors"><span class="flex items-center gap-2"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-layers w-4 h-4" aria-hidden="true"><path d="M12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83z"></path><path d="M2 12a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 12"></path><path d="M2 17a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 17"></path></svg>提供商</span><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-right w-4 h-4" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg></button></div><div><button type="button" class="flex items-center justify-between w-full text-sm font-semibold text-gray-900 mb-2 hover:text-[#E68A6E] transition-colors"><span class="flex items-center gap-2"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-zap w-4 h-4" aria-hidden="true"><path d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z"></path></svg>功能</span><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-right w-4 h-4" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg></button></div><div><button type="button" class="flex items-center justify-between w-full text-sm font-semibold text-gray-900 mb-2 hover:text-[#E68A6E] transition-colors"><span class="flex items-center gap-2"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-plug w-4 h-4" aria-hidden="true"><path d="M12 22v-5"></path><path d="M15 8V2"></path><path d="M17 8a1 1 0 0 1 1 1v4a4 4 0 0 1-4 4h-4a4 4 0 0 1-4-4V9a1 1 0 0 1 1-1z"></path><path d="M9 8V2"></path></svg>集成</span><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-right w-4 h-4" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg></button></div><div><button type="button" class="flex items-center justify-between w-full text-sm font-semibold text-gray-900 mb-2 hover:text-[#E68A6E] transition-colors"><span class="flex items-center gap-2"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-cloud w-4 h-4" aria-hidden="true"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"></path></svg>部署</span><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-right w-4 h-4" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg></button></div><div><button type="button" class="flex items-center justify-between w-full text-sm font-semibold text-gray-900 mb-2 hover:text-[#E68A6E] transition-colors"><span class="flex items-center gap-2"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-circle-question-mark w-4 h-4" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><path d="M12 17h.01"></path></svg>帮助</span><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-right w-4 h-4" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg></button></div></nav></aside></div><div class="flex-1 flex min-w-0"><main class="flex-1 min-w-0 overflow-x-hidden overflow-y-auto"><article class="max-w-4xl mx-auto px-4 sm:px-6 py-8"><div class="markdown-content"><h1 id="故障排除">故障排除</h1>
+<p>使用 VansRouter 时常见的问题与解决方案。</p>
+<hr/>
+<h2 id="language-model-did-not-provide-messages">&quot;Language model did not provide messages&quot;</h2>
+<p><strong>问题:</strong> 请求失败,响应为空或返回错误。</p>
+<p><strong>原因:</strong></p>
+<ul>
+<li>提供商配额耗尽</li>
+<li>API key 无效或过期</li>
+<li>模型不可用</li>
+</ul>
+<p><strong>解决方案:</strong></p>
+<ol>
+<li>
+<p><strong>查看配额状态:</strong></p>
+<pre><code>仪表盘 → 提供商 → 查看配额跟踪
+</code></pre>
+<p>若配额耗尽,等待重置或切换提供商。</p>
+</li>
+<li>
+<p><strong>使用组合回退:</strong></p>
+<pre><code>仪表盘 → 组合 → 创建回退链
+示例: cc/claude-opus → glm/glm-4.7 → if/kimi-k2
+</code></pre>
+</li>
+<li>
+<p><strong>验证提供商连接:</strong></p>
+<pre><code>仪表盘 → 提供商 → 必要时重新连接
+</code></pre>
+</li>
+</ol>
+<hr/>
+<h2 id="速率限制">速率限制</h2>
+<p><strong>问题:</strong> 出现 &quot;Rate limit exceeded&quot; 或 &quot;Too many requests&quot; 错误。</p>
+<p><strong>原因:</strong></p>
+<ul>
+<li>订阅配额用完(5 小时/每日/每周限制)</li>
+<li>触发了 API 速率限制</li>
+<li>并发请求过多</li>
+</ul>
+<p><strong>解决方案:</strong></p>
+<ol>
+<li>
+<p><strong>查看重置时间:</strong></p>
+<pre><code>仪表盘 → 配额跟踪 → 查看重置倒计时
+</code></pre>
+</li>
+<li>
+<p><strong>切换到低价层:</strong></p>
+<pre><code>使用: glm/glm-4.7 (每 1M tokens $0.6)
+     minimax/MiniMax-M2.1 (每 1M tokens $0.20)
+</code></pre>
+</li>
+<li>
+<p><strong>添加回退组合:</strong></p>
+<pre><code>仪表盘 → 组合 → 添加备用模型
+主力: cc/claude-opus (订阅)
+备用: glm/glm-4.7 (低价)
+应急: if/kimi-k2 (免费)
+</code></pre>
+</li>
+</ol>
+<hr/>
+<h2 id="oauth-token-过期">OAuth Token 过期</h2>
+<p><strong>问题:</strong> 出现 &quot;Unauthorized&quot; 或 &quot;Token expired&quot; 错误。</p>
+<p><strong>原因:</strong></p>
+<ul>
+<li>OAuth token 过期(自动刷新失败)</li>
+<li>提供商会话失效</li>
+<li>刷新过程中出现网络问题</li>
+</ul>
+<p><strong>解决方案:</strong></p>
+<ol>
+<li>
+<p><strong>自动刷新(默认):</strong>
+VansRouter 会自动刷新 token。等待 30 秒后重试。</p>
+</li>
+<li>
+<p><strong>手动重连:</strong></p>
+<pre><code>仪表盘 → 提供商 → [提供商名称] → 重新连接
+→ 再次完成 OAuth 流程
+</code></pre>
+</li>
+<li>
+<p><strong>检查提供商状态:</strong>
+确认提供商服务在线(Claude Code、Codex 等)。</p>
+</li>
+</ol>
+<hr/>
+<h2 id="成本过高">成本过高</h2>
+<p><strong>问题:</strong> 出现意外的高用量或高成本。</p>
+<p><strong>原因:</strong></p>
+<ul>
+<li>不必要地使用了昂贵模型</li>
+<li>没有回退到便宜层级</li>
+<li>上下文窗口过大</li>
+</ul>
+<p><strong>解决方案:</strong></p>
+<ol>
+<li>
+<p><strong>查看使用统计:</strong></p>
+<pre><code>仪表盘 → 使用统计 → 查看 token 消耗
+→ 找出高成本模型
+</code></pre>
+</li>
+<li>
+<p><strong>切换到更便宜的模型:</strong></p>
+<pre><code>替换: cc/claude-opus ($20-100/月 订阅)
+为: glm/glm-4.7 (每 1M tokens $0.6)
+    minimax/MiniMax-M2.1 (每 1M tokens $0.20)
+</code></pre>
+</li>
+<li>
+<p><strong>使用免费层:</strong></p>
+<pre><code>if/kimi-k2-thinking (免费)
+qw/qwen3-coder-plus (免费)
+kr/claude-sonnet-4.5 (免费)
+gc/gemini-3-flash-preview (每月免费 180K)
+</code></pre>
+</li>
+<li>
+<p><strong>优化 prompt:</strong></p>
+<ul>
+<li>减少上下文大小</li>
+<li>长响应使用流式输出</li>
+<li>缓存常用 prompt</li>
+</ul>
+</li>
+</ol>
+<hr/>
+<h2 id="连接被拒绝">连接被拒绝</h2>
+<p><strong>问题:</strong> 出现 &quot;ECONNREFUSED&quot; 或 &quot;Cannot connect to localhost:20128&quot;。</p>
+<p><strong>原因:</strong></p>
+<ul>
+<li>VansRouter 未运行</li>
+<li>端口 20128 被阻止</li>
+<li>防火墙拦截连接</li>
+</ul>
+<p><strong>解决方案:</strong></p>
+<ol>
+<li>
+<p><strong>启动 VansRouter:</strong></p>
+<pre><code class="hljs language-bash">vansrouter
+</code></pre>
+<p>仪表盘应该在 <a href="http://localhost:3000">http://localhost:3000</a> 打开。</p>
+</li>
+<li>
+<p><strong>检查端口 20128:</strong></p>
+<pre><code class="hljs language-bash"><span class="hljs-comment"># 检查端口是否监听</span>
+lsof -i :20128
+
+<span class="hljs-comment"># Windows</span>
+netstat -ano | findstr :20128
+</code></pre>
+</li>
+<li>
+<p><strong>检查防火墙:</strong></p>
+<ul>
+<li>macOS: 系统设置 → 网络 → 防火墙</li>
+<li>Windows: Windows Defender 防火墙 → 允许应用</li>
+<li>Linux: <code>sudo ufw allow 20128</code></li>
+</ul>
+</li>
+<li>
+<p><strong>使用云端 endpoint:</strong>
+如果 localhost 不行(例如 Cursor IDE):</p>
+<pre><code>Endpoint: http://localhost:20128/v1
+</code></pre>
+</li>
+</ol>
+<hr/>
+<h2 id="仪表盘无法打开">仪表盘无法打开</h2>
+<p><strong>问题:</strong> 仪表盘无法在 <a href="http://localhost:3000">http://localhost:3000</a> 加载。</p>
+<p><strong>原因:</strong></p>
+<ul>
+<li>端口 3000 被占用</li>
+<li>VansRouter 崩溃</li>
+<li>浏览器缓存问题</li>
+</ul>
+<p><strong>解决方案:</strong></p>
+<ol>
+<li>
+<p><strong>确认 VansRouter 是否运行:</strong></p>
+<pre><code class="hljs language-bash"><span class="hljs-comment"># 检查进程</span>
+ps aux | grep 9router
+
+<span class="hljs-comment"># 检查端口 3000</span>
+lsof -i :3000
+</code></pre>
+</li>
+<li>
+<p><strong>杀掉冲突进程:</strong></p>
+<pre><code class="hljs language-bash"><span class="hljs-comment"># macOS/Linux</span>
+lsof -ti:3000 | xargs <span class="hljs-built_in">kill</span> -9
+
+<span class="hljs-comment"># Windows</span>
+netstat -ano | findstr :3000
+taskkill /PID &lt;PID&gt; /F
+</code></pre>
+</li>
+<li>
+<p><strong>重启 VansRouter:</strong></p>
+<pre><code class="hljs language-bash"><span class="hljs-comment"># 停止</span>
+pkill -f 9router
+
+<span class="hljs-comment"># 启动</span>
+vansrouter
+</code></pre>
+</li>
+<li>
+<p><strong>清除浏览器缓存:</strong></p>
+<ul>
+<li>Chrome: Ctrl+Shift+Delete → 清除缓存</li>
+<li>尝试无痕模式</li>
+</ul>
+</li>
+<li>
+<p><strong>检查防火墙设置:</strong>
+确认端口 3000 未被阻止。</p>
+</li>
+</ol>
+<hr/>
+<h2 id="模型未找到">模型未找到</h2>
+<p><strong>问题:</strong> 出现 &quot;Model not found&quot; 或 &quot;Invalid model&quot; 错误。</p>
+<p><strong>原因:</strong></p>
+<ul>
+<li>提供商未连接</li>
+<li>模型 ID 拼写错误</li>
+<li>提供商未激活</li>
+</ul>
+<p><strong>解决方案:</strong></p>
+<ol>
+<li>
+<p><strong>验证提供商连接:</strong></p>
+<pre><code>仪表盘 → 提供商 → 检查状态(绿色 = 已激活)
+</code></pre>
+</li>
+<li>
+<p><strong>检查模型 ID 格式:</strong></p>
+<pre><code>正确: cc/claude-opus-4-5-20251101
+错误: claude-opus-4-5-20251101
+
+格式: [provider-prefix]/[model-name]
+</code></pre>
+</li>
+<li>
+<p><strong>列出可用模型:</strong></p>
+<pre><code class="hljs language-bash">curl http://localhost:20128/v1/models \
+  -H <span class="hljs-string">&quot;Authorization: Bearer your-api-key&quot;</span>
+</code></pre>
+</li>
+<li>
+<p><strong>重新连接提供商:</strong></p>
+<pre><code>仪表盘 → 提供商 → [提供商] → 重新连接
+</code></pre>
+</li>
+</ol>
+<hr/>
+<h2 id="响应缓慢">响应缓慢</h2>
+<p><strong>问题:</strong> 请求耗时过长或超时。</p>
+<p><strong>原因:</strong></p>
+<ul>
+<li>提供商延迟</li>
+<li>网络问题</li>
+<li>上下文/响应过大</li>
+<li>提供商速率限制</li>
+</ul>
+<p><strong>解决方案:</strong></p>
+<ol>
+<li>
+<p><strong>查看提供商状态:</strong></p>
+<pre><code>仪表盘 → 提供商 → 查看延迟统计
+</code></pre>
+</li>
+<li>
+<p><strong>切换到更快的模型:</strong></p>
+<pre><code>快速: cc/claude-haiku-4-5 (Haiku 比 Opus 快)
+      gc/gemini-3-flash-preview
+      qw/qwen3-coder-flash
+</code></pre>
+</li>
+<li>
+<p><strong>使用流式响应:</strong></p>
+<pre><code class="hljs language-json"><span class="hljs-punctuation">{</span>
+  <span class="hljs-attr">&quot;model&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;cc/claude-opus-4-5&quot;</span><span class="hljs-punctuation">,</span>
+  <span class="hljs-attr">&quot;messages&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">[</span>...<span class="hljs-punctuation">]</span><span class="hljs-punctuation">,</span>
+  <span class="hljs-attr">&quot;stream&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-literal"><span class="hljs-keyword">true</span></span>
+<span class="hljs-punctuation">}</span>
+</code></pre>
+</li>
+<li>
+<p><strong>检查网络:</strong></p>
+<pre><code class="hljs language-bash"><span class="hljs-comment"># 测试延迟</span>
+ping api.anthropic.com
+ping api.openai.com
+</code></pre>
+</li>
+<li>
+<p><strong>减小上下文:</strong></p>
+<ul>
+<li>精简消息历史</li>
+<li>使用更短的 prompt</li>
+<li>在 CLI 工具中启用上下文裁剪</li>
+</ul>
+</li>
+</ol>
+<hr/>
+<h2 id="api-key-无效">API Key 无效</h2>
+<p><strong>问题:</strong> 出现 &quot;Invalid API key&quot; 或 &quot;Authentication failed&quot; 错误。</p>
+<p><strong>原因:</strong></p>
+<ul>
+<li>复制了错误的 API key</li>
+<li>API key 已过期</li>
+<li>未生成 API key</li>
+</ul>
+<p><strong>解决方案:</strong></p>
+<ol>
+<li>
+<p><strong>重新生成 API key:</strong></p>
+<pre><code>仪表盘 → 设置 → API Keys → 生成新 Key
+→ 复制并使用新 key
+</code></pre>
+</li>
+<li>
+<p><strong>检查 key 格式:</strong></p>
+<pre><code>正确: 9r_xxxxxxxxxxxxxxxxxxxxxxxx
+错误: 缺少 9r_ 前缀
+</code></pre>
+</li>
+<li>
+<p><strong>检查 CLI 配置中的 key:</strong></p>
+<pre><code class="hljs language-bash"><span class="hljs-comment"># Cursor</span>
+Settings → Models → OpenAI API Key
+
+<span class="hljs-comment"># Cline</span>
+Settings → API Key
+
+<span class="hljs-comment"># 环境变量</span>
+<span class="hljs-built_in">export</span> OPENAI_API_KEY=<span class="hljs-string">&quot;9r_your_key&quot;</span>
+</code></pre>
+</li>
+<li>
+<p><strong>测试 API key:</strong></p>
+<pre><code class="hljs language-bash">curl http://localhost:20128/v1/models \
+  -H <span class="hljs-string">&quot;Authorization: Bearer 9r_your_key&quot;</span>
+</code></pre>
+</li>
+</ol>
+<hr/>
+<h2 id="需要更多帮助">需要更多帮助?</h2>
+<ul>
+<li><strong>GitHub Issues:</strong> <a href="https://github.com/Vanszs/VansRouter/issues">github.com/Vanszs/VansRouter/issues</a></li>
+<li><strong>文档:</strong> <a href="https://github.com/Vanszs/VansRouter/blob/main/README.md">VansRouter docs</a></li>
+<li><strong>常见问题:</strong> <a href="faq.md">faq.md</a></li>
+</ul></div></article></main><div class="hidden lg:block"><aside class="hidden xl:block w-64 border-l bg-white border-gray-200 h-[calc(100vh-4rem)] sticky top-16 overflow-y-auto"><nav class="p-4"><h3 class="flex items-center gap-2 text-sm font-semibold text-gray-900 mb-3"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-list w-4 h-4" aria-hidden="true"><path d="M3 5h.01"></path><path d="M3 12h.01"></path><path d="M3 19h.01"></path><path d="M8 5h13"></path><path d="M8 12h13"></path><path d="M8 19h13"></path></svg>本页内容</h3><ul class="space-y-2"><li><a href="#language-model-did-not-provide-messages" class="block text-sm transition-colors  text-gray-600 hover:text-gray-900">&quot;Language model did not provide messages&quot;</a></li><li><a href="#速率限制" class="block text-sm transition-colors  text-gray-600 hover:text-gray-900">速率限制</a></li><li><a href="#oauth-token-过期" class="block text-sm transition-colors  text-gray-600 hover:text-gray-900">OAuth Token 过期</a></li><li><a href="#成本过高" class="block text-sm transition-colors  text-gray-600 hover:text-gray-900">成本过高</a></li><li><a href="#连接被拒绝" class="block text-sm transition-colors  text-gray-600 hover:text-gray-900">连接被拒绝</a></li><li><a href="#仪表盘无法打开" class="block text-sm transition-colors  text-gray-600 hover:text-gray-900">仪表盘无法打开</a></li><li><a href="#模型未找到" class="block text-sm transition-colors  text-gray-600 hover:text-gray-900">模型未找到</a></li><li><a href="#响应缓慢" class="block text-sm transition-colors  text-gray-600 hover:text-gray-900">响应缓慢</a></li><li><a href="#api-key-无效" class="block text-sm transition-colors  text-gray-600 hover:text-gray-900">API Key 无效</a></li><li><a href="#需要更多帮助" class="block text-sm transition-colors  text-gray-600 hover:text-gray-900">需要更多帮助?</a></li></ul></nav></aside></div></div></div></div><!--$--><!--/$--><script src="/VansRouter/_next/static/chunks/343aa45b5611d01d.js" id="_R_" async=""></script><script>(self.__next_f=self.__next_f||[]).push([0])</script><script>self.__next_f.push([1,"1:\"$Sreact.fragment\"\n2:I[39756,[\"/VansRouter/_next/static/chunks/ff1a16fafef87110.js\",\"/VansRouter/_next/static/chunks/803a574de9eda7ae.js\"],\"default\"]\n3:I[37457,[\"/VansRouter/_next/static/chunks/ff1a16fafef87110.js\",\"/VansRouter/_next/static/chunks/803a574de9eda7ae.js\"],\"default\"]\n5:I[97367,[\"/VansRouter/_next/static/chunks/ff1a16fafef87110.js\",\"/VansRouter/_next/static/chunks/803a574de9eda7ae.js\"],\"OutletBoundary\"]\n6:\"$Sreact.suspense\"\n8:I[97367,[\"/VansRouter/_next/static/chunks/ff1a16fafef87110.js\",\"/VansRouter/_next/static/chunks/803a574de9eda7ae.js\"],\"ViewportBoundary\"]\na:I[97367,[\"/VansRouter/_next/static/chunks/ff1a16fafef87110.js\",\"/VansRouter/_next/static/chunks/803a574de9eda7ae.js\"],\"MetadataBoundary\"]\nc:I[68027,[\"/VansRouter/_next/static/chunks/ff1a16fafef87110.js\",\"/VansRouter/_next/static/chunks/803a574de9eda7ae.js\"],\"default\"]\n:HL[\"/VansRouter/_next/static/chunks/71d10a355cb8f2d7.css\",\"style\"]\n"])</script><script>self.__next_f.push([1,"0:{\"P\":null,\"b\":\"PUpTBY-8r_zZtEM8SJOLp\",\"c\":[\"\",\"zh-CN\",\"troubleshooting\",\"\"],\"q\":\"\",\"i\":false,\"f\":[[[\"\",{\"children\":[[\"lang\",\"zh-CN\",\"d\"],{\"children\":[[\"slug\",\"troubleshooting\",\"c\"],{\"children\":[\"__PAGE__\",{}]}]}]},\"$undefined\",\"$undefined\",true],[[\"$\",\"$1\",\"c\",{\"children\":[[[\"$\",\"link\",\"0\",{\"rel\":\"stylesheet\",\"href\":\"/VansRouter/_next/static/chunks/71d10a355cb8f2d7.css\",\"precedence\":\"next\",\"crossOrigin\":\"$undefined\",\"nonce\":\"$undefined\"}]],[\"$\",\"html\",null,{\"lang\":\"en\",\"children\":[[\"$\",\"head\",null,{}],[\"$\",\"body\",null,{\"className\":\"bg-[#FCFBF9] text-[#6B7280]\",\"children\":[\"$\",\"$L2\",null,{\"parallelRouterKey\":\"children\",\"error\":\"$undefined\",\"errorStyles\":\"$undefined\",\"errorScripts\":\"$undefined\",\"template\":[\"$\",\"$L3\",null,{}],\"templateStyles\":\"$undefined\",\"templateScripts\":\"$undefined\",\"notFound\":[[[\"$\",\"title\",null,{\"children\":\"404: This page could not be found.\"}],[\"$\",\"div\",null,{\"style\":{\"fontFamily\":\"system-ui,\\\"Segoe UI\\\",Roboto,Helvetica,Arial,sans-serif,\\\"Apple Color Emoji\\\",\\\"Segoe UI Emoji\\\"\",\"height\":\"100vh\",\"textAlign\":\"center\",\"display\":\"flex\",\"flexDirection\":\"column\",\"alignItems\":\"center\",\"justifyContent\":\"center\"},\"children\":[\"$\",\"div\",null,{\"children\":[[\"$\",\"style\",null,{\"dangerouslySetInnerHTML\":{\"__html\":\"body{color:#000;background:#fff;margin:0}.next-error-h1{border-right:1px solid rgba(0,0,0,.3)}@media (prefers-color-scheme:dark){body{color:#fff;background:#000}.next-error-h1{border-right:1px solid rgba(255,255,255,.3)}}\"}}],[\"$\",\"h1\",null,{\"className\":\"next-error-h1\",\"style\":{\"display\":\"inline-block\",\"margin\":\"0 20px 0 0\",\"padding\":\"0 23px 0 0\",\"fontSize\":24,\"fontWeight\":500,\"verticalAlign\":\"top\",\"lineHeight\":\"49px\"},\"children\":404}],[\"$\",\"div\",null,{\"style\":{\"display\":\"inline-block\"},\"children\":[\"$\",\"h2\",null,{\"style\":{\"fontSize\":14,\"fontWeight\":400,\"lineHeight\":\"49px\",\"margin\":0},\"children\":\"This page could not be found.\"}]}]]}]}]],[]],\"forbidden\":\"$undefined\",\"unauthorized\":\"$undefined\"}]}]]}]]}],{\"children\":[[\"$\",\"$1\",\"c\",{\"children\":[null,[\"$\",\"$L2\",null,{\"parallelRouterKey\":\"children\",\"error\":\"$undefined\",\"errorStyles\":\"$undefined\",\"errorScripts\":\"$undefined\",\"template\":[\"$\",\"$L3\",null,{}],\"templateStyles\":\"$undefined\",\"templateScripts\":\"$undefined\",\"notFound\":\"$undefined\",\"forbidden\":\"$undefined\",\"unauthorized\":\"$undefined\"}]]}],{\"children\":[[\"$\",\"$1\",\"c\",{\"children\":[null,[\"$\",\"$L2\",null,{\"parallelRouterKey\":\"children\",\"error\":\"$undefined\",\"errorStyles\":\"$undefined\",\"errorScripts\":\"$undefined\",\"template\":[\"$\",\"$L3\",null,{}],\"templateStyles\":\"$undefined\",\"templateScripts\":\"$undefined\",\"notFound\":\"$undefined\",\"forbidden\":\"$undefined\",\"unauthorized\":\"$undefined\"}]]}],{\"children\":[[\"$\",\"$1\",\"c\",{\"children\":[\"$L4\",[[\"$\",\"script\",\"script-0\",{\"src\":\"/VansRouter/_next/static/chunks/ff1a16fafef87110.js\",\"async\":true,\"nonce\":\"$undefined\"}],[\"$\",\"script\",\"script-1\",{\"src\":\"/VansRouter/_next/static/chunks/3ba79d5b01800fdc.js\",\"async\":true,\"nonce\":\"$undefined\"}]],[\"$\",\"$L5\",null,{\"children\":[\"$\",\"$6\",null,{\"name\":\"Next.MetadataOutlet\",\"children\":\"$@7\"}]}]]}],{},null,false,false]},null,false,false]},null,false,false]},null,false,false],[\"$\",\"$1\",\"h\",{\"children\":[null,[\"$\",\"$L8\",null,{\"children\":\"$L9\"}],[\"$\",\"div\",null,{\"hidden\":true,\"children\":[\"$\",\"$La\",null,{\"children\":[\"$\",\"$6\",null,{\"name\":\"Next.Metadata\",\"children\":\"$Lb\"}]}]}],null]}],false]],\"m\":\"$undefined\",\"G\":[\"$c\",[]],\"S\":true}\n"])</script><script>self.__next_f.push([1,"d:I[81956,[\"/VansRouter/_next/static/chunks/ff1a16fafef87110.js\",\"/VansRouter/_next/static/chunks/3ba79d5b01800fdc.js\"],\"default\"]\ne:I[22982,[\"/VansRouter/_next/static/chunks/ff1a16fafef87110.js\",\"/VansRouter/_next/static/chunks/3ba79d5b01800fdc.js\"],\"default\"]\nf:T1a70,"])</script><script>self.__next_f.push([1,"# 故障排除\n\n使用 VansRouter 时常见的问题与解决方案。\n\n---\n\n## \"Language model did not provide messages\"\n\n**问题:** 请求失败,响应为空或返回错误。\n\n**原因:**\n- 提供商配额耗尽\n- API key 无效或过期\n- 模型不可用\n\n**解决方案:**\n\n1. **查看配额状态:**\n   ```\n   仪表盘 → 提供商 → 查看配额跟踪\n   ```\n   若配额耗尽,等待重置或切换提供商。\n\n2. **使用组合回退:**\n   ```\n   仪表盘 → 组合 → 创建回退链\n   示例: cc/claude-opus → glm/glm-4.7 → if/kimi-k2\n   ```\n\n3. **验证提供商连接:**\n   ```\n   仪表盘 → 提供商 → 必要时重新连接\n   ```\n\n---\n\n## 速率限制\n\n**问题:** 出现 \"Rate limit exceeded\" 或 \"Too many requests\" 错误。\n\n**原因:**\n- 订阅配额用完(5 小时/每日/每周限制)\n- 触发了 API 速率限制\n- 并发请求过多\n\n**解决方案:**\n\n1. **查看重置时间:**\n   ```\n   仪表盘 → 配额跟踪 → 查看重置倒计时\n   ```\n\n2. **切换到低价层:**\n   ```\n   使用: glm/glm-4.7 (每 1M tokens $0.6)\n        minimax/MiniMax-M2.1 (每 1M tokens $0.20)\n   ```\n\n3. **添加回退组合:**\n   ```\n   仪表盘 → 组合 → 添加备用模型\n   主力: cc/claude-opus (订阅)\n   备用: glm/glm-4.7 (低价)\n   应急: if/kimi-k2 (免费)\n   ```\n\n---\n\n## OAuth Token 过期\n\n**问题:** 出现 \"Unauthorized\" 或 \"Token expired\" 错误。\n\n**原因:**\n- OAuth token 过期(自动刷新失败)\n- 提供商会话失效\n- 刷新过程中出现网络问题\n\n**解决方案:**\n\n1. **自动刷新(默认):**\n   VansRouter 会自动刷新 token。等待 30 秒后重试。\n\n2. **手动重连:**\n   ```\n   仪表盘 → 提供商 → [提供商名称] → 重新连接\n   → 再次完成 OAuth 流程\n   ```\n\n3. **检查提供商状态:**\n   确认提供商服务在线(Claude Code、Codex 等)。\n\n---\n\n## 成本过高\n\n**问题:** 出现意外的高用量或高成本。\n\n**原因:**\n- 不必要地使用了昂贵模型\n- 没有回退到便宜层级\n- 上下文窗口过大\n\n**解决方案:**\n\n1. **查看使用统计:**\n   ```\n   仪表盘 → 使用统计 → 查看 token 消耗\n   → 找出高成本模型\n   ```\n\n2. **切换到更便宜的模型:**\n   ```\n   替换: cc/claude-opus ($20-100/月 订阅)\n   为: glm/glm-4.7 (每 1M tokens $0.6)\n       minimax/MiniMax-M2.1 (每 1M tokens $0.20)\n   ```\n\n3. **使用免费层:**\n   ```\n   if/kimi-k2-thinking (免费)\n   qw/qwen3-coder-plus (免费)\n   kr/claude-sonnet-4.5 (免费)\n   gc/gemini-3-flash-preview (每月免费 180K)\n   ```\n\n4. **优化 prompt:**\n   - 减少上下文大小\n   - 长响应使用流式输出\n   - 缓存常用 prompt\n\n---\n\n## 连接被拒绝\n\n**问题:** 出现 \"ECONNREFUSED\" 或 \"Cannot connect to localhost:20128\"。\n\n**原因:**\n- VansRouter 未运行\n- 端口 20128 被阻止\n- 防火墙拦截连接\n\n**解决方案:**\n\n1. **启动 VansRouter:**\n   ```bash\n   vansrouter\n   ```\n   仪表盘应该在 http://localhost:3000 打开。\n\n2. **检查端口 20128:**\n   ```bash\n   # 检查端口是否监听\n   lsof -i :20128\n   \n   # Windows\n   netstat -ano | findstr :20128\n   ```\n\n3. **检查防火墙:**\n   - macOS: 系统设置 → 网络 → 防火墙\n   - Windows: Windows Defender 防火墙 → 允许应用\n   - Linux: `sudo ufw allow 20128`\n\n4. **使用云端 endpoint:**\n   如果 localhost 不行(例如 Cursor IDE):\n   ```\n   Endpoint: http://localhost:20128/v1\n   ```\n\n---\n\n## 仪表盘无法打开\n\n**问题:** 仪表盘无法在 http://localhost:3000 加载。\n\n**原因:**\n- 端口 3000 被占用\n- VansRouter 崩溃\n- 浏览器缓存问题\n\n**解决方案:**\n\n1. **确认 VansRouter 是否运行:**\n   ```bash\n   # 检查进程\n   ps aux | grep 9router\n   \n   # 检查端口 3000\n   lsof -i :3000\n   ```\n\n2. **杀掉冲突进程:**\n   ```bash\n   # macOS/Linux\n   lsof -ti:3000 | xargs kill -9\n   \n   # Windows\n   netstat -ano | findstr :3000\n   taskkill /PID \u003cPID\u003e /F\n   ```\n\n3. **重启 VansRouter:**\n   ```bash\n   # 停止\n   pkill -f 9router\n   \n   # 启动\n   vansrouter\n   ```\n\n4. **清除浏览器缓存:**\n   - Chrome: Ctrl+Shift+Delete → 清除缓存\n   - 尝试无痕模式\n\n5. **检查防火墙设置:**\n   确认端口 3000 未被阻止。\n\n---\n\n## 模型未找到\n\n**问题:** 出现 \"Model not found\" 或 \"Invalid model\" 错误。\n\n**原因:**\n- 提供商未连接\n- 模型 ID 拼写错误\n- 提供商未激活\n\n**解决方案:**\n\n1. **验证提供商连接:**\n   ```\n   仪表盘 → 提供商 → 检查状态(绿色 = 已激活)\n   ```\n\n2. **检查模型 ID 格式:**\n   ```\n   正确: cc/claude-opus-4-5-20251101\n   错误: claude-opus-4-5-20251101\n   \n   格式: [provider-prefix]/[model-name]\n   ```\n\n3. **列出可用模型:**\n   ```bash\n   curl http://localhost:20128/v1/models \\\n     -H \"Authorization: Bearer your-api-key\"\n   ```\n\n4. **重新连接提供商:**\n   ```\n   仪表盘 → 提供商 → [提供商] → 重新连接\n   ```\n\n---\n\n## 响应缓慢\n\n**问题:** 请求耗时过长或超时。\n\n**原因:**\n- 提供商延迟\n- 网络问题\n- 上下文/响应过大\n- 提供商速率限制\n\n**解决方案:**\n\n1. **查看提供商状态:**\n   ```\n   仪表盘 → 提供商 → 查看延迟统计\n   ```\n\n2. **切换到更快的模型:**\n   ```\n   快速: cc/claude-haiku-4-5 (Haiku 比 Opus 快)\n         gc/gemini-3-flash-preview\n         qw/qwen3-coder-flash\n   ```\n\n3. **使用流式响应:**\n   ```json\n   {\n     \"model\": \"cc/claude-opus-4-5\",\n     \"messages\": [...],\n     \"stream\": true\n   }\n   ```\n\n4. **检查网络:**\n   ```bash\n   # 测试延迟\n   ping api.anthropic.com\n   ping api.openai.com\n   ```\n\n5. **减小上下文:**\n   - 精简消息历史\n   - 使用更短的 prompt\n   - 在 CLI 工具中启用上下文裁剪\n\n---\n\n## API Key 无效\n\n**问题:** 出现 \"Invalid API key\" 或 \"Authentication failed\" 错误。\n\n**原因:**\n- 复制了错误的 API key\n- API key 已过期\n- 未生成 API key\n\n**解决方案:**\n\n1. **重新生成 API key:**\n   ```\n   仪表盘 → 设置 → API Keys → 生成新 Key\n   → 复制并使用新 key\n   ```\n\n2. **检查 key 格式:**\n   ```\n   正确: 9r_xxxxxxxxxxxxxxxxxxxxxxxx\n   错误: 缺少 9r_ 前缀\n   ```\n\n3. **检查 CLI 配置中的 key:**\n   ```bash\n   # Cursor\n   Settings → Models → OpenAI API Key\n   \n   # Cline\n   Settings → API Key\n   \n   # 环境变量\n   export OPENAI_API_KEY=\"9r_your_key\"\n   ```\n\n4. **测试 API key:**\n   ```bash\n   curl http://localhost:20128/v1/models \\\n     -H \"Authorization: Bearer 9r_your_key\"\n   ```\n\n---\n\n## 需要更多帮助?\n\n- **GitHub Issues:** [github.com/Vanszs/VansRouter/issues](https://github.com/Vanszs/VansRouter/issues)\n- **文档:** [VansRouter docs](https://github.com/Vanszs/VansRouter/blob/main/README.md)\n- **常见问题:** [faq.md](faq.md)\n"])</script><script>self.__next_f.push([1,"4:[\"$\",\"$Ld\",null,{\"headings\":[{\"level\":2,\"text\":\"\\\"Language model did not provide messages\\\"\",\"id\":\"language-model-did-not-provide-messages\"},{\"level\":2,\"text\":\"速率限制\",\"id\":\"速率限制\"},{\"level\":2,\"text\":\"OAuth Token 过期\",\"id\":\"oauth-token-过期\"},{\"level\":2,\"text\":\"成本过高\",\"id\":\"成本过高\"},{\"level\":2,\"text\":\"连接被拒绝\",\"id\":\"连接被拒绝\"},{\"level\":2,\"text\":\"仪表盘无法打开\",\"id\":\"仪表盘无法打开\"},{\"level\":2,\"text\":\"模型未找到\",\"id\":\"模型未找到\"},{\"level\":2,\"text\":\"响应缓慢\",\"id\":\"响应缓慢\"},{\"level\":2,\"text\":\"API Key 无效\",\"id\":\"api-key-无效\"},{\"level\":2,\"text\":\"需要更多帮助?\",\"id\":\"需要更多帮助\"}],\"lang\":\"zh-CN\",\"children\":[\"$\",\"$Le\",null,{\"content\":\"$f\"}]}]\n"])</script><script>self.__next_f.push([1,"9:[[\"$\",\"meta\",\"0\",{\"charSet\":\"utf-8\"}],[\"$\",\"meta\",\"1\",{\"name\":\"viewport\",\"content\":\"width=device-width, initial-scale=1\"}]]\n"])</script><script>self.__next_f.push([1,"7:null\nb:[[\"$\",\"title\",\"0\",{\"children\":\"9Router Documentation\"}],[\"$\",\"meta\",\"1\",{\"name\":\"description\",\"content\":\"Smart AI model router - Maximize subscriptions, minimize costs\"}]]\n"])</script></body></html>

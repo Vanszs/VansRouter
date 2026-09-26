@@ -1,0 +1,143 @@
+1:"$Sreact.fragment"
+2:I[81956,["/VansRouter/_next/static/chunks/ff1a16fafef87110.js","/VansRouter/_next/static/chunks/3ba79d5b01800fdc.js"],"default"]
+3:I[22982,["/VansRouter/_next/static/chunks/ff1a16fafef87110.js","/VansRouter/_next/static/chunks/3ba79d5b01800fdc.js"],"default"]
+5:I[97367,["/VansRouter/_next/static/chunks/ff1a16fafef87110.js","/VansRouter/_next/static/chunks/803a574de9eda7ae.js"],"OutletBoundary"]
+6:"$Sreact.suspense"
+4:Tddb,# OpenAI Codex CLI統合
+
+VansRouterをOpenAI Codex CLIと統合し、OpenAI APIリクエストをVansRouterのインテリジェントルーティングシステム経由でルーティングします。
+
+## 前提条件
+
+- OpenAI Codex CLIがインストール済み
+- VansRouterがローカルで動作中、またはクラウドエンドポイントが設定済み
+- VansRouterダッシュボードからのAPIキー
+
+## セットアップ
+
+### 1. 環境変数を設定
+
+シェル設定ファイル (`~/.bashrc`、`~/.zshrc`、または `~/.bash_profile`) で以下の環境変数を設定:
+
+```bash
+# VansRouter用Base URL
+export OPENAI_BASE_URL="http://localhost:20128/v1"
+
+# VansRouterダッシュボードからのAPIキー
+export OPENAI_API_KEY="your-vansrouter-api-key"
+```
+
+### 2. シェル設定をリロード
+
+```bash
+source ~/.zshrc  # または ~/.bashrc
+```
+
+### 3. 設定を確認
+
+環境変数が正しく設定されているか確認:
+
+```bash
+echo $OPENAI_BASE_URL
+echo $OPENAI_API_KEY
+```
+
+## 利用可能なモデル
+
+VansRouterは以下のCodexモデルを提供します:
+
+| モデルID | 説明 |
+|----------|-------------|
+| `cx/gpt-5.2-codex` | GPT-5.2 Codex - 最新バージョン |
+| `cx/gpt-5.1-codex-max` | GPT-5.1 Codex Max - 拡張コンテキスト |
+
+## 使用例
+
+### 基本的な使用法
+
+```bash
+# GPT-5.2 Codexを使用
+codex --model cx/gpt-5.2-codex "Write a function to sort an array"
+
+# GPT-5.1 Codex Maxを使用
+codex --model cx/gpt-5.1-codex-max "Explain this complex algorithm"
+```
+
+### コード生成
+
+```bash
+codex --model cx/gpt-5.2-codex "Create a REST API endpoint for user authentication"
+```
+
+### コード説明
+
+```bash
+codex --model cx/gpt-5.1-codex-max "Explain what this code does: $(cat myfile.js)"
+```
+
+## 設定ファイル
+
+設定ファイルを使ってCodex CLIを設定することもできます。`~/.codex/config.json` を作成または編集:
+
+```json
+{
+  "baseUrl": "http://localhost:20128/v1",
+  "apiKey": "your-vansrouter-api-key",
+  "defaultModel": "cx/gpt-5.2-codex"
+}
+```
+
+## トラブルシューティング
+
+### 認証エラー
+
+認証エラーが発生した場合:
+
+1. VansRouterダッシュボードでAPIキーが正しいか確認
+2. `OPENAI_API_KEY` 環境変数が設定されているか確認
+3. APIキーが期限切れでないか確認
+
+### 接続の問題
+
+接続エラーが発生した場合:
+
+1. VansRouterが動作中か確認: `curl http://localhost:20128/health`
+2. 環境変数が正しく設定されているか確認
+3. ファイアウォールがポート20128をブロックしていないか確認
+
+### モデルが利用不可
+
+「model not available」エラーが発生した場合:
+
+1. モデル名がVansRouter設定と一致するか確認
+2. VansRouterダッシュボードでOpenAIプロバイダー接続がアクティブか確認
+3. 接続されたプロバイダーでモデルが利用可能か確認
+
+## クラウドエンドポイント
+
+localhostの代わりにVansRouterクラウドエンドポイントを使用するには:
+
+```bash
+export OPENAI_BASE_URL="http://localhost:20128"
+```
+
+VansRouterクラウドダッシュボードでAPIキーが設定されていることを確認してください。
+
+## 高度な設定
+
+### カスタムタイムアウト
+
+```bash
+export OPENAI_TIMEOUT=60  # 秒
+```
+
+### デバッグモード
+
+詳細なリクエスト/レスポンスログを表示するため、デバッグモードを有効化:
+
+```bash
+export CODEX_DEBUG=true
+codex --model cx/gpt-5.2-codex "Your prompt"
+```
+0:{"buildId":"PUpTBY-8r_zZtEM8SJOLp","rsc":["$","$1","c",{"children":[["$","$L2",null,{"headings":[{"level":2,"text":"前提条件","id":"前提条件"},{"level":2,"text":"セットアップ","id":"セットアップ"},{"level":3,"text":"1. 環境変数を設定","id":"1-環境変数を設定"},{"level":3,"text":"2. シェル設定をリロード","id":"2-シェル設定をリロード"},{"level":3,"text":"3. 設定を確認","id":"3-設定を確認"},{"level":2,"text":"利用可能なモデル","id":"利用可能なモデル"},{"level":2,"text":"使用例","id":"使用例"},{"level":3,"text":"基本的な使用法","id":"基本的な使用法"},{"level":3,"text":"コード生成","id":"コード生成"},{"level":3,"text":"コード説明","id":"コード説明"},{"level":2,"text":"設定ファイル","id":"設定ファイル"},{"level":2,"text":"トラブルシューティング","id":"トラブルシューティング"},{"level":3,"text":"認証エラー","id":"認証エラー"},{"level":3,"text":"接続の問題","id":"接続の問題"},{"level":3,"text":"モデルが利用不可","id":"モデルが利用不可"},{"level":2,"text":"クラウドエンドポイント","id":"クラウドエンドポイント"},{"level":2,"text":"高度な設定","id":"高度な設定"},{"level":3,"text":"カスタムタイムアウト","id":"カスタムタイムアウト"},{"level":3,"text":"デバッグモード","id":"デバッグモード"}],"lang":"ja","children":["$","$L3",null,{"content":"$4"}]}],[["$","script","script-0",{"src":"/VansRouter/_next/static/chunks/ff1a16fafef87110.js","async":true}],["$","script","script-1",{"src":"/VansRouter/_next/static/chunks/3ba79d5b01800fdc.js","async":true}]],["$","$L5",null,{"children":["$","$6",null,{"name":"Next.MetadataOutlet","children":"$@7"}]}]]}],"loading":null,"isPartial":false}
+7:null

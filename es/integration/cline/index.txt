@@ -1,0 +1,217 @@
+1:"$Sreact.fragment"
+2:I[39756,["/VansRouter/_next/static/chunks/ff1a16fafef87110.js","/VansRouter/_next/static/chunks/803a574de9eda7ae.js"],"default"]
+3:I[37457,["/VansRouter/_next/static/chunks/ff1a16fafef87110.js","/VansRouter/_next/static/chunks/803a574de9eda7ae.js"],"default"]
+5:I[97367,["/VansRouter/_next/static/chunks/ff1a16fafef87110.js","/VansRouter/_next/static/chunks/803a574de9eda7ae.js"],"OutletBoundary"]
+6:"$Sreact.suspense"
+8:I[97367,["/VansRouter/_next/static/chunks/ff1a16fafef87110.js","/VansRouter/_next/static/chunks/803a574de9eda7ae.js"],"ViewportBoundary"]
+a:I[97367,["/VansRouter/_next/static/chunks/ff1a16fafef87110.js","/VansRouter/_next/static/chunks/803a574de9eda7ae.js"],"MetadataBoundary"]
+c:I[68027,["/VansRouter/_next/static/chunks/ff1a16fafef87110.js","/VansRouter/_next/static/chunks/803a574de9eda7ae.js"],"default"]
+:HL["/VansRouter/_next/static/chunks/71d10a355cb8f2d7.css","style"]
+0:{"P":null,"b":"PUpTBY-8r_zZtEM8SJOLp","c":["","es","integration","cline",""],"q":"","i":false,"f":[[["",{"children":[["lang","es","d"],{"children":[["slug","integration/cline","c"],{"children":["__PAGE__",{}]}]}]},"$undefined","$undefined",true],[["$","$1","c",{"children":[[["$","link","0",{"rel":"stylesheet","href":"/VansRouter/_next/static/chunks/71d10a355cb8f2d7.css","precedence":"next","crossOrigin":"$undefined","nonce":"$undefined"}]],["$","html",null,{"lang":"en","children":[["$","head",null,{}],["$","body",null,{"className":"bg-[#FCFBF9] text-[#6B7280]","children":["$","$L2",null,{"parallelRouterKey":"children","error":"$undefined","errorStyles":"$undefined","errorScripts":"$undefined","template":["$","$L3",null,{}],"templateStyles":"$undefined","templateScripts":"$undefined","notFound":[[["$","title",null,{"children":"404: This page could not be found."}],["$","div",null,{"style":{"fontFamily":"system-ui,\"Segoe UI\",Roboto,Helvetica,Arial,sans-serif,\"Apple Color Emoji\",\"Segoe UI Emoji\"","height":"100vh","textAlign":"center","display":"flex","flexDirection":"column","alignItems":"center","justifyContent":"center"},"children":["$","div",null,{"children":[["$","style",null,{"dangerouslySetInnerHTML":{"__html":"body{color:#000;background:#fff;margin:0}.next-error-h1{border-right:1px solid rgba(0,0,0,.3)}@media (prefers-color-scheme:dark){body{color:#fff;background:#000}.next-error-h1{border-right:1px solid rgba(255,255,255,.3)}}"}}],["$","h1",null,{"className":"next-error-h1","style":{"display":"inline-block","margin":"0 20px 0 0","padding":"0 23px 0 0","fontSize":24,"fontWeight":500,"verticalAlign":"top","lineHeight":"49px"},"children":404}],["$","div",null,{"style":{"display":"inline-block"},"children":["$","h2",null,{"style":{"fontSize":14,"fontWeight":400,"lineHeight":"49px","margin":0},"children":"This page could not be found."}]}]]}]}]],[]],"forbidden":"$undefined","unauthorized":"$undefined"}]}]]}]]}],{"children":[["$","$1","c",{"children":[null,["$","$L2",null,{"parallelRouterKey":"children","error":"$undefined","errorStyles":"$undefined","errorScripts":"$undefined","template":["$","$L3",null,{}],"templateStyles":"$undefined","templateScripts":"$undefined","notFound":"$undefined","forbidden":"$undefined","unauthorized":"$undefined"}]]}],{"children":[["$","$1","c",{"children":[null,["$","$L2",null,{"parallelRouterKey":"children","error":"$undefined","errorStyles":"$undefined","errorScripts":"$undefined","template":["$","$L3",null,{}],"templateStyles":"$undefined","templateScripts":"$undefined","notFound":"$undefined","forbidden":"$undefined","unauthorized":"$undefined"}]]}],{"children":[["$","$1","c",{"children":["$L4",[["$","script","script-0",{"src":"/VansRouter/_next/static/chunks/ff1a16fafef87110.js","async":true,"nonce":"$undefined"}],["$","script","script-1",{"src":"/VansRouter/_next/static/chunks/3ba79d5b01800fdc.js","async":true,"nonce":"$undefined"}]],["$","$L5",null,{"children":["$","$6",null,{"name":"Next.MetadataOutlet","children":"$@7"}]}]]}],{},null,false,false]},null,false,false]},null,false,false]},null,false,false],["$","$1","h",{"children":[null,["$","$L8",null,{"children":"$L9"}],["$","div",null,{"hidden":true,"children":["$","$La",null,{"children":["$","$6",null,{"name":"Next.Metadata","children":"$Lb"}]}]}],null]}],false]],"m":"$undefined","G":["$c",[]],"S":true}
+d:I[81956,["/VansRouter/_next/static/chunks/ff1a16fafef87110.js","/VansRouter/_next/static/chunks/3ba79d5b01800fdc.js"],"default"]
+e:I[22982,["/VansRouter/_next/static/chunks/ff1a16fafef87110.js","/VansRouter/_next/static/chunks/3ba79d5b01800fdc.js"],"default"]
+f:T1953,# Integración con Cline
+
+Integra VansRouter con la extensión Cline de VSCode para enrutar tus solicitudes de IA a través del sistema de enrutamiento inteligente de VansRouter.
+
+## Requisitos previos
+
+- Visual Studio Code instalado
+- Extensión Cline instalada desde el marketplace de VSCode
+- VansRouter ejecutándose localmente o endpoint en la nube configurado
+- API key del dashboard de VansRouter
+
+## Configuración
+
+### 1. Abrir la configuración de Cline
+
+1. Abre Visual Studio Code
+2. Abre el panel de la extensión Cline (clic en el ícono de Cline en la barra lateral)
+3. Clic en el ícono de **Settings** (engranaje) en el panel de Cline
+
+### 2. Seleccionar el proveedor de API
+
+1. En la configuración de Cline, encuentra el dropdown **API Provider**
+2. Selecciona **Ollama** de la lista
+   - Nota: Usamos el tipo de proveedor Ollama porque es compatible con APIs estilo OpenAI
+
+### 3. Configurar Base URL
+
+Establece la URL base a tu endpoint de VansRouter:
+
+**Para VansRouter local:**
+```
+http://localhost:20128/v1
+```
+
+**Para VansRouter en la nube:**
+```
+http://localhost:20128
+```
+
+**Pasos:**
+1. En el campo **Base URL**, ingresa tu endpoint de VansRouter
+2. Asegúrate de incluir `/v1` al final
+
+### 4. Agregar API Key
+
+1. En el campo **API Key**, ingresa tu API key de VansRouter
+2. Puedes encontrar tu API key en el dashboard de VansRouter en **Settings → API Keys**
+3. La key debe comenzar con `sk-your-key-`
+
+### 5. Seleccionar modelo
+
+1. En el dropdown **Model**, puedes:
+   - Seleccionar de los modelos disponibles (si Cline los auto-detecta)
+   - Ingresar manualmente el nombre del modelo desde tu configuración de VansRouter
+
+2. Nombres comunes de modelos:
+   - `gpt-4`
+   - `gpt-4o`
+   - `claude-opus-4-5`
+   - `claude-sonnet-4-5`
+   - `gemini-2.0-flash`
+
+### 6. Guardar la configuración
+
+Clic en **Save** o cierra el panel de configuración. Cline guardará automáticamente tu configuración.
+
+## Ejemplo de configuración
+
+Tu configuración de Cline debería verse así:
+
+```
+API Provider: Ollama
+Base URL: http://localhost:20128/v1
+API Key: sk-your-key-xxxxxxxxxxxxx
+Model: gpt-4
+```
+
+## Modelos disponibles
+
+Puedes usar cualquier modelo configurado en tu dashboard de VansRouter. Ejemplos comunes:
+
+| Nombre del modelo | Proveedor | Descripción |
+|------------|----------|-------------|
+| `gpt-4` | OpenAI | GPT-4 Turbo |
+| `gpt-4o` | OpenAI | GPT-4 Optimized |
+| `claude-opus-4-5` | Anthropic | Claude Opus 4.5 |
+| `claude-sonnet-4-5` | Anthropic | Claude Sonnet 4.5 |
+| `gemini-2.0-flash` | Google | Gemini 2.0 Flash |
+
+## Uso
+
+### Chat con IA
+
+1. Abre el panel de Cline en VSCode
+2. Escribe tu mensaje en el input del chat
+3. Presiona Enter para enviar
+4. Cline usará VansRouter para procesar tu solicitud
+
+### Generación de código
+
+1. Pide a Cline que genere código: "Create a React component for a login form"
+2. Cline generará código usando VansRouter
+3. Revisa y acepta el código generado
+
+### Explicación de código
+
+1. Selecciona código en tu editor
+2. Pregunta a Cline: "Explain this code"
+3. Obtén explicaciones potenciadas por IA a través de VansRouter
+
+### Operaciones con archivos
+
+1. Pide a Cline que cree, modifique o elimine archivos
+2. Cline usará VansRouter para entender el contexto y hacer cambios
+3. Revisa los cambios antes de aceptar
+
+## Solución de problemas
+
+### Error "Connection Failed"
+
+1. Verifica que VansRouter esté corriendo: `curl http://localhost:20128/health`
+2. Verifica que la URL base sea correcta e incluya `/v1`
+3. Asegúrate de que ningún firewall esté bloqueando el puerto 20128
+4. Intenta reiniciar VSCode
+
+### Error "Invalid API Key"
+
+1. Verifica tu API key en el dashboard de VansRouter
+2. Asegúrate de haber copiado la key completa incluyendo el prefijo `sk-your-key-`
+3. Verifica que la API key no haya expirado
+4. Intenta regenerar una nueva API key
+
+### Error "Model Not Found"
+
+1. Verifica que el nombre del modelo coincida exactamente con tu configuración de VansRouter
+2. Verifica que la conexión del proveedor esté activa en el dashboard de VansRouter
+3. Asegúrate de que el modelo esté disponible en tus proveedores conectados
+4. Intenta usar el nombre completo del modelo (ej. `openai/gpt-4` en lugar de `gpt-4`)
+
+### Cline no responde
+
+1. Revisa el panel de output de Cline para mensajes de error
+2. Verifica que tu instancia de VansRouter esté ejecutándose y saludable
+3. Intenta recargar la ventana de VSCode (Cmd/Ctrl + Shift + P → "Reload Window")
+4. Revisa los logs de VansRouter para cualquier error
+
+## Configuración avanzada
+
+### Usar endpoint en la nube
+
+Para usar el endpoint en la nube de VansRouter en lugar de localhost:
+
+1. En la configuración de Cline, establece Base URL a: `http://localhost:20128`
+2. Asegúrate de haber configurado tu API key en el dashboard en la nube de VansRouter
+3. Asegúrate de que tu endpoint en la nube esté activo y accesible
+
+### Múltiples modelos
+
+Puedes cambiar rápidamente entre modelos:
+
+1. Abre la configuración de Cline
+2. Cambia el campo **Model** a otro modelo
+3. Guarda y continúa chateando con el nuevo modelo
+
+### Timeout personalizado
+
+Si experimentas problemas de timeout con solicitudes grandes:
+
+1. Abre la configuración de VSCode (Cmd/Ctrl + ,)
+2. Busca "Cline timeout"
+3. Aumenta el valor de timeout (por defecto suele ser 30 segundos)
+
+## Mejores prácticas
+
+1. **Usa modelos apropiados**: Elige modelos rápidos (como Haiku o Flash) para tareas simples, y modelos más potentes (como Opus o GPT-4) para tareas complejas
+2. **Monitorea el uso**: Revisa el dashboard de VansRouter para estadísticas de uso y costos
+3. **Gestión de contexto**: Mantén tus conversaciones enfocadas para reducir el uso de tokens
+4. **Cambio de modelo**: Cambia modelos según la complejidad de la tarea para optimizar costo y rendimiento
+5. **Seguridad de API Key**: Nunca subas tu API key al control de versiones
+
+## Integración con características de VansRouter
+
+### Enrutamiento de modelos
+
+VansRouter enruta automáticamente tus solicitudes al mejor proveedor disponible según:
+- Disponibilidad del modelo
+- Estado de salud del proveedor
+- Optimización de costos
+- Balanceo de carga
+
+### Soporte de fallback
+
+Si un proveedor falla, VansRouter automáticamente cambia a proveedores alternativos configurados en tu dashboard.
+
+### Seguimiento de uso
+
+Monitorea tu uso de Cline a través del dashboard de VansRouter:
+- Total de solicitudes
+- Uso de tokens
+- Costo por modelo
+- Distribución por proveedor
+4:["$","$Ld",null,{"headings":[{"level":2,"text":"Requisitos previos","id":"requisitos-previos"},{"level":2,"text":"Configuración","id":"configuración"},{"level":3,"text":"1. Abrir la configuración de Cline","id":"1-abrir-la-configuración-de-cline"},{"level":3,"text":"2. Seleccionar el proveedor de API","id":"2-seleccionar-el-proveedor-de-api"},{"level":3,"text":"3. Configurar Base URL","id":"3-configurar-base-url"},{"level":3,"text":"4. Agregar API Key","id":"4-agregar-api-key"},{"level":3,"text":"5. Seleccionar modelo","id":"5-seleccionar-modelo"},{"level":3,"text":"6. Guardar la configuración","id":"6-guardar-la-configuración"},{"level":2,"text":"Ejemplo de configuración","id":"ejemplo-de-configuración"},{"level":2,"text":"Modelos disponibles","id":"modelos-disponibles"},{"level":2,"text":"Uso","id":"uso"},{"level":3,"text":"Chat con IA","id":"chat-con-ia"},{"level":3,"text":"Generación de código","id":"generación-de-código"},{"level":3,"text":"Explicación de código","id":"explicación-de-código"},{"level":3,"text":"Operaciones con archivos","id":"operaciones-con-archivos"},{"level":2,"text":"Solución de problemas","id":"solución-de-problemas"},{"level":3,"text":"Error \"Connection Failed\"","id":"error-connection-failed"},{"level":3,"text":"Error \"Invalid API Key\"","id":"error-invalid-api-key"},{"level":3,"text":"Error \"Model Not Found\"","id":"error-model-not-found"},{"level":3,"text":"Cline no responde","id":"cline-no-responde"},{"level":2,"text":"Configuración avanzada","id":"configuración-avanzada"},{"level":3,"text":"Usar endpoint en la nube","id":"usar-endpoint-en-la-nube"},{"level":3,"text":"Múltiples modelos","id":"múltiples-modelos"},{"level":3,"text":"Timeout personalizado","id":"timeout-personalizado"},{"level":2,"text":"Mejores prácticas","id":"mejores-prácticas"},{"level":2,"text":"Integración con características de VansRouter","id":"integración-con-características-de-vansrouter"},{"level":3,"text":"Enrutamiento de modelos","id":"enrutamiento-de-modelos"},{"level":3,"text":"Soporte de fallback","id":"soporte-de-fallback"},{"level":3,"text":"Seguimiento de uso","id":"seguimiento-de-uso"}],"lang":"es","children":["$","$Le",null,{"content":"$f"}]}]
+9:[["$","meta","0",{"charSet":"utf-8"}],["$","meta","1",{"name":"viewport","content":"width=device-width, initial-scale=1"}]]
+7:null
+b:[["$","title","0",{"children":"9Router Documentation"}],["$","meta","1",{"name":"description","content":"Smart AI model router - Maximize subscriptions, minimize costs"}]]
