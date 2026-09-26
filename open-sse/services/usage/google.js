@@ -138,9 +138,18 @@ export async function getAntigravityUsage(accessToken, providerSpecificData, pro
     }, 10000, proxyOptions);
 
     if (response.status === 403) {
+      // A plain 403 here usually only means the quota endpoint is closed off and
+      // chat still works. VALIDATION_REQUIRED is the exception: Google has marked
+      // the account itself ineligible, and every generateContent call will 403
+      // too. Say which, so the caller does not report a healthy account.
+      const detail = await response.text().catch(() => "");
+      const ineligible = /VALIDATION_REQUIRED|not eligible for Gemini Code Assist/i.test(detail);
       return {
-        message: "Antigravity quota API access forbidden. Chat may still work.",
-        quotas: {}
+        message: ineligible
+          ? "Antigravity: Google marked this account ineligible (VALIDATION_REQUIRED). Chat will fail with 403 until the account owner completes verification."
+          : "Antigravity quota API access forbidden. Chat may still work.",
+        quotas: {},
+        ineligible,
       };
     }
 
