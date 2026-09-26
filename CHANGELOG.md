@@ -1,5 +1,14 @@
 # v0.91.34 (2026-09-25)
 
+## Fixed
+
+- **NVIDIA NIM combo 404 (issue #146, PR #145)** — A combo member built from a registry id that already carries its org prefix (`nvidia/nvidia/nemotron-…`) was rejected. Two independent sites assumed one canonical string: the allowlist from `buildConnectedProviderIds` strips one prefix while the registry stores it prefixed, so neither form resolved. `chat.js` now probes both forms, as `embeddings.js` already did, and `findModel` retries as `<alias>/<id>`. No registry carries a bare id colliding with another entry's prefixed tail, so the retry is unambiguous. Verified across `nvidia`, `poolside` and `fal-ai`.
+- **Antigravity 400 on nested array tool schemas (issue #144)** — `cleanJSONSchemaForAntigravity` inferred a missing `type=object` but had no equivalent for arrays, so a nested array reached Google without `items` and was rejected with `items.items: missing field`. Added `ensureArrayItems`, filling the innermost gap with `{type: "string"}`.
+
+## Corrections
+
+- **Dead-model list was over-broad** — Both `muse-spark-*-contributor-free` models answer `200` through our own `/v1/chat/completions`; they had been recorded as `500` after a `400` about the `max_tokens` floor was misread as a dead model, which hid two working models from the dashboard. Removed, with a note on how to re-measure.
+
 ## Reliability & Upstream Parity
 
 - **OpenCode dead-model filter (upstream parity)** — Restored `DEAD_FREE_OPENCODE_MODELS` in `src/app/api/providers/suggested-models/filters.js` with `deepseek-v4-flash-free` (upstream backend dead since 2026-09-02) and `hy3-free` (decommissioned), so the dashboard no longer suggests models upstream will reject.
