@@ -24,6 +24,7 @@ import { validateAgentRouterConnection } from "open-sse/executors/agentrouter.js
 import { getKimchiUserAgent } from "open-sse/utils/kimchiUserAgent.js";
 import { assertValidKiroRegion } from "open-sse/config/awsRegion.js";
 import { deriveValidateUrl } from "open-sse/providers/schema.js";
+import { ANTHROPIC_API_VERSION } from "open-sse/providers/shared.js";
 
 // OAuth provider test endpoints
 const OAUTH_TEST_CONFIG = {
@@ -574,7 +575,7 @@ async function testApiKeyConnection(connection, effectiveProxy = null) {
         method: "POST",
         headers: {
           "x-api-key": connection.apiKey,
-          "anthropic-version": "2023-06-01",
+          "anthropic-version": ANTHROPIC_API_VERSION,
           "content-type": "application/json",
           "Authorization": `Bearer ${connection.apiKey}`,
         },
@@ -633,7 +634,7 @@ async function testApiKeyConnection(connection, effectiveProxy = null) {
       case "anthropic": {
         const res = await fetchWithConnectionProxy("https://api.anthropic.com/v1/messages", {
           method: "POST",
-          headers: { "x-api-key": connection.apiKey, "anthropic-version": "2023-06-01", "content-type": "application/json" },
+          headers: { "x-api-key": connection.apiKey, "anthropic-version": ANTHROPIC_API_VERSION, "content-type": "application/json" },
           body: JSON.stringify({ model: "claude-3-haiku-20240307", max_tokens: 1, messages: [{ role: "user", content: "test" }] }),
         }, effectiveProxy);
         const valid = res.status !== 401;
@@ -650,7 +651,7 @@ async function testApiKeyConnection(connection, effectiveProxy = null) {
       case "glm": {
         const res = await fetchWithConnectionProxy("https://api.z.ai/api/anthropic/v1/messages", {
           method: "POST",
-          headers: { "x-api-key": connection.apiKey, "anthropic-version": "2023-06-01", "content-type": "application/json" },
+          headers: { "x-api-key": connection.apiKey, "anthropic-version": ANTHROPIC_API_VERSION, "content-type": "application/json" },
           body: JSON.stringify({ model: "glm-4.7", max_tokens: 1, messages: [{ role: "user", content: "test" }] }),
         }, effectiveProxy);
         const valid = res.status !== 401 && res.status !== 403;
@@ -670,7 +671,7 @@ async function testApiKeyConnection(connection, effectiveProxy = null) {
         const endpoints = { minimax: "https://api.minimax.io/anthropic/v1/messages", "minimax-cn": "https://api.minimaxi.com/anthropic/v1/messages" };
         const res = await fetchWithConnectionProxy(endpoints[connection.provider], {
           method: "POST",
-          headers: { "x-api-key": connection.apiKey, "anthropic-version": "2023-06-01", "content-type": "application/json" },
+          headers: { "x-api-key": connection.apiKey, "anthropic-version": ANTHROPIC_API_VERSION, "content-type": "application/json" },
           body: JSON.stringify({ model: "minimax-m2", max_tokens: 1, messages: [{ role: "user", content: "test" }] }),
         }, effectiveProxy);
         const valid = res.status !== 401 && res.status !== 403;
@@ -679,7 +680,7 @@ async function testApiKeyConnection(connection, effectiveProxy = null) {
       case "kimi": {
         const res = await fetchWithConnectionProxy("https://api.kimi.com/coding/v1/messages", {
           method: "POST",
-          headers: { "x-api-key": connection.apiKey, "anthropic-version": "2023-06-01", "content-type": "application/json" },
+          headers: { "x-api-key": connection.apiKey, "anthropic-version": ANTHROPIC_API_VERSION, "content-type": "application/json" },
           body: JSON.stringify({ model: "kimi-latest", max_tokens: 1, messages: [{ role: "user", content: "test" }] }),
         }, effectiveProxy);
         const valid = res.status !== 401 && res.status !== 403;
