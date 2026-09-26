@@ -1,5 +1,9 @@
 # v0.91.50 (2026-09-26)
 
+## Release Infrastructure
+
+- **Container smoke no longer fails to clean up its bind mount** — `scripts/smoke-container.cjs` deleted its temporary data directory with `force: true`, but the image sets no `USER`, so the container writes as root and leaves root-owned files behind. `force` does not bypass an OS permission error, so the step failed with `EACCES` on hosted runners, where the script is invoked as a non-root user. The tree is now made removable before deletion. This step had never run green in CI: the file arrived in `dd9a1f3d`, after the last passing Core CI run, so this is the first execution of it.
+
 ## Fixed
 
 - **Release activation now works on Windows** — `activate()` wrote a temporary junction and renamed it over the live `current` link, and Windows refuses to rename over an existing junction (`EPERM`), so every deployment on Windows threw before the link was swapped. Pre-existing rather than new: before `dd9a1f3d` the junction creation itself failed there, so the function was already broken on Windows and that commit only moved the failure. POSIX keeps the atomic replace; Windows removes the link first, which leaves a brief window where it does not exist — unavoidable, since Windows has no `RENAME_EXCHANGE` and a text-file indirection hits the same limit.
