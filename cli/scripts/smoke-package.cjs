@@ -37,6 +37,7 @@ const child = spawn(process.execPath, [serverPath], {
   env: {
     ...process.env,
     DATA_DIR: dataDir,
+    DATA_DIR_ALLOW_TEMP: "1",
     HOSTNAME: "127.0.0.1",
     NODE_ENV: "production",
     NODE_PATH: bundledModules,

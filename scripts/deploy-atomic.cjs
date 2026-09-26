@@ -30,11 +30,15 @@ function collectSymlinks(root, platform = process.platform) {
 
   // A Windows junction is reported as a directory, so isSymbolicLink() is false
   // for it and walking into it would follow the link into the build tree this
-  // pass exists to detach from — leaving the rewrite count at zero. lstat and
-  // stat disagree on inode for any link, which spots one without guessing.
+  // pass exists to detach from — leaving the rewrite count at zero. readlink is
+  // the portable test: it returns a target for a link of either kind and throws
+  // EINVAL for a real directory. Inode comparison was tried first and is not
+  // usable here, because NTFS can report the same index for a reparse point and
+  // its target.
   const isLinkDirectory = (entryPath) => {
     try {
-      return fs.lstatSync(entryPath).ino !== fs.statSync(entryPath).ino;
+      fs.readlinkSync(entryPath);
+      return true;
     } catch {
       return false;
     }
@@ -674,6 +678,7 @@ async function smokeRelease(releasePath, distDir = null) {
       ...process.env,
       APPDATA: path.join(homeDir, "AppData", "Roaming"),
       DATA_DIR: dataDir,
+      DATA_DIR_ALLOW_TEMP: "1",
       HOME: homeDir,
       NODE_PATH: "",
       NODE_ENV: "production",
