@@ -14,6 +14,13 @@ const tempRoots = [];
 // /private/var while os.tmpdir() still reports /var. Compare resolved to resolved.
 const real = (p) => fs.realpathSync(p);
 
+// A Windows junction is a reparse point, so lstat reports it as a directory
+// rather than a symbolic link. Accept either shape as "a link".
+const isLink = (p) => {
+  const st = fs.lstatSync(p);
+  return st.isSymbolicLink() || (process.platform === "win32" && st.isDirectory());
+};
+
 function makeRelease(root, name, chunk = "chunk.js") {
   const release = path.join(root, name);
   const nextDir = path.join(release, ".next");
@@ -173,7 +180,7 @@ describe("atomic deployment artifact", () => {
 
     fs.cpSync(source, staged, { recursive: true, verbatimSymlinks: true });
     const stagedLink = path.join(staged, "node_modules", "next");
-    expect(fs.lstatSync(stagedLink).isSymbolicLink()).toBe(true);
+    expect(isLink(stagedLink)).toBe(true);
     expect(makeReleaseSelfContained(staged, source)).toBe(1);
     expect(fs.readlinkSync(stagedLink)).not.toContain(source);
 
@@ -237,7 +244,7 @@ describe("atomic deployment artifact", () => {
     fs.rmSync(path.join(root, "build"), { recursive: true, force: true });
     fs.renameSync(staged, release);
     expect(finalizeReleaseSymlinks(release)).toBe(1);
-    expect(fs.lstatSync(path.join(release, "node_modules", "next")).isSymbolicLink()).toBe(true);
+    expect(isLink(path.join(release, "node_modules", "next"))).toBe(true);
     expect(fs.existsSync(path.join(release, "node_modules", "next", "package.json"))).toBe(true);
   });
 
@@ -308,7 +315,9 @@ describe("atomic deployment artifact", () => {
     const incomplete = path.join(root, "2026-01-03T00-00-00-000Z-3");
     fs.mkdirSync(incomplete);
 
-    expect(selectRollbackRelease(root)).toBe(real(valid));
+    // selectRollbackRelease returns the raw directory path, unlike readCurrentTarget
+    // which resolves the symlink — so this side must stay unresolved.
+    expect(selectRollbackRelease(root)).toBe(valid);
   });
 
   it("serializes deployment locks and removes the lock on release", () => {
