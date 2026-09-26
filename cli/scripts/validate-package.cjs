@@ -60,7 +60,8 @@ if (entries.some((entry) => /(^|\/)better_sqlite3\.node$/.test(entry))) {
   throw new Error("native better-sqlite3 leaked into final CLI package");
 }
 
-const packageJson = JSON.parse(execFileSync("tar", ["-xOf", tarball, "package/package.json"], {
+const packageJson = JSON.parse(execFileSync("tar", ["-xzO", "package/package.json"], {
+  input: fs.readFileSync(tarball),
   encoding: "utf8",
 }));
 if (packageJson.name !== "vansrouter") {
