@@ -11,6 +11,7 @@ import { cleanCookie } from "open-sse/utils/cookie.js";
 import { validateMuseSparkConnection } from "open-sse/executors/muse-spark-web.js";
 import { validateAgentRouterConnection } from "open-sse/executors/agentrouter.js";
 import { deriveValidateUrl } from "open-sse/providers/schema.js";
+import { ANTHROPIC_API_VERSION } from "open-sse/providers/shared.js";
 
 // Probe a webSearch/webFetch provider using its searchConfig/fetchConfig.
 // Returns true if API key is accepted (status !== 401 && !== 403).
@@ -170,7 +171,7 @@ export async function POST(request) {
           method: "POST",
           headers: {
             "x-api-key": apiKey,
-            "anthropic-version": "2023-06-01",
+            "anthropic-version": ANTHROPIC_API_VERSION,
             "content-type": "application/json",
             "Authorization": `Bearer ${apiKey}`,
           },
@@ -295,7 +296,7 @@ export async function POST(request) {
             method: "POST",
             headers: {
               "x-api-key": apiKey,
-              "anthropic-version": "2023-06-01",
+              "anthropic-version": ANTHROPIC_API_VERSION,
               "content-type": "application/json",
             },
             body: JSON.stringify({
@@ -345,7 +346,7 @@ export async function POST(request) {
               method: "POST",
               headers: {
                 "x-api-key": apiKey,
-                "anthropic-version": "2023-06-01",
+                "anthropic-version": ANTHROPIC_API_VERSION,
                 "content-type": "application/json",
                 ...(cfg.headers || {}),
               },

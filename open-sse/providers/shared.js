@@ -23,6 +23,10 @@ export function mapStainlessArch() {
 // Anthropic API version (single source — reused across claude-format providers/executors)
 export const ANTHROPIC_API_VERSION = "2023-06-01";
 
+// Matched pair from one Cursor release — bump together.
+export const CURSOR_IDE_VERSION = "3.13.25";
+export const CURSOR_IDE_COMMIT = "d5c0e77a0214208f36b56d42e8e787de88d02ea4";
+
 // Shared Claude-compatible API headers (reused across claude-format providers)
 export const CLAUDE_API_HEADERS = {
   "Anthropic-Version": ANTHROPIC_API_VERSION,

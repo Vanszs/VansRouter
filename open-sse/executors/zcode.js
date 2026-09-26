@@ -7,6 +7,7 @@ import { randomUUID } from "node:crypto";
 import { proxyAwareFetch } from "../utils/proxyFetch.js";
 import { injectReasoningContent } from "../utils/reasoningContentInjector.js";
 import { dbg } from "../utils/debugLog.js";
+import { ANTHROPIC_API_VERSION } from "../providers/shared.js";
 
 const ZCODE_PLAN_BASE = "https://zcode.z.ai/api/v1/zcode-plan/anthropic";
 const CAPTCHA_TTL_MS = 4 * 60 * 1000;
@@ -142,7 +143,7 @@ export class ZcodeExecutor extends BaseExecutor {
       ...this.config.headers,
       ...buildZCodeSourceHeaders(),
       "Authorization": `Bearer ${zcodeJwtToken}`,
-      "anthropic-version": "2023-06-01",
+      "anthropic-version": ANTHROPIC_API_VERSION,
       "x-request-id": randomUUID(),
     };
     if (captchaParam) {

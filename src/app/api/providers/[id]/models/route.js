@@ -12,6 +12,7 @@ import { resolveGrokCliModels } from "open-sse/services/grokCliModels.js";
 import { resolveConnectionProxyConfig } from "@/lib/network/connectionProxy";
 import { resolveCursorModels } from "open-sse/services/cursorModels.js";
 import { getKimchiUserAgent } from "open-sse/utils/kimchiUserAgent.js";
+import { ANTHROPIC_API_VERSION } from "open-sse/providers/shared.js";
 
 const GEMINI_CLI_MODELS_URL = "https://cloudcode-pa.googleapis.com/v1internal:fetchAvailableModels";
 
@@ -135,7 +136,7 @@ const PROVIDER_MODELS_CONFIG = {
     url: "https://api.anthropic.com/v1/models",
     method: "GET",
     headers: {
-      "Anthropic-Version": "2023-06-01",
+      "Anthropic-Version": ANTHROPIC_API_VERSION,
       "Content-Type": "application/json"
     },
     authHeader: "x-api-key",
@@ -216,7 +217,7 @@ const PROVIDER_MODELS_CONFIG = {
     url: "https://api.anthropic.com/v1/models",
     method: "GET",
     headers: {
-      "Anthropic-Version": "2023-06-01",
+      "Anthropic-Version": ANTHROPIC_API_VERSION,
       "Content-Type": "application/json"
     },
     authHeader: "x-api-key",
@@ -504,7 +505,7 @@ export async function GET(request, { params }) {
         headers: {
           "Content-Type": "application/json",
           "x-api-key": connection.apiKey,
-          "anthropic-version": "2023-06-01",
+          "anthropic-version": ANTHROPIC_API_VERSION,
           "Authorization": `Bearer ${connection.apiKey}`
         },
       });

@@ -1,10 +1,11 @@
 import { DefaultExecutor } from "./default.js";
 import { randomUUID } from "node:crypto";
+import { ANTHROPIC_API_VERSION } from "../providers/shared.js";
 
 export function buildAgentRouterHeaders(apiKey, stream = true) {
   return {
     "Content-Type": "application/json",
-    "anthropic-version": "2023-06-01",
+    "anthropic-version": ANTHROPIC_API_VERSION,
     "anthropic-beta": "claude-code-20250219,interleaved-thinking-2025-05-14,effort-2025-11-24",
     "anthropic-dangerous-direct-browser-access": "true",
     "x-app": "cli",

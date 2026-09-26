@@ -52,12 +52,9 @@ export const MAX_RATE_LIMIT_COOLDOWN_MS = 30 * 60 * 1000;
 const COOLDOWN = {
   long: 2 * 60 * 1000,
   short: 5 * 1000,
-  // Google flags an account for a human to verify in a browser and keeps
-  // refusing every generateContent call until they do. Retrying after 2 minutes
-  // just burns another fallback slot on the same broken account, so hold it out
-  // of rotation far longer. Flat, not progressive: the fix is a human action with
-  // no known duration, and a stale lock only costs one skipped account.
-  verification: 60 * 60 * 1000,
+  // Google wants a human to verify the account; it keeps 403ing until they do, so
+  // a short retry just burns a fallback slot. 24h = top of the plugin's ladder.
+  verification: 24 * 60 * 60 * 1000,
 };
 
 /**

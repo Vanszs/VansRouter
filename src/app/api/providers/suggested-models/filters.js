@@ -1,19 +1,9 @@
 // Free OpenCode models that don't use the "-free" id suffix
 const KNOWN_FREE_OPENCODE_MODELS = ["big-pickle"];
 
-// Upstream rejects these ids, so the dashboard must not suggest them. Measured
-// through our own /v1/chat/completions on 2026-09-26:
-//   deepseek-v4-flash-free   -> 503   muse-spark-1.2/1.3-contributor-free -> 200 (alive)
-//   hy3-free                 -> 404   jev-1.13-free       -> 500 (served via
-//   deepseek-v4.1-flash:free -> 404     /zen/v1/systemone, a lane this fork has no route for)
-// space-bunny-free answers, so it stays offered. Re-measure before adding an id:
-// a low max_tokens returns 400 about the token floor, which looks like a dead model.
-const DEAD_FREE_OPENCODE_MODELS = new Set([
-  "deepseek-v4-flash-free",
-  "hy3-free",
-  "jev-1.13-free",
-  "deepseek-v4.1-flash:free",
-]);
+// No dead-model list: upstream's rejections are volatile and a hardcoded snapshot
+// cannot expire. A bad id fails loudly on use instead. (One existed; it hid two
+// live models and had an unreachable entry.)
 
 // NVIDIA NIM free-tier models whitelist.
 // This is statically defined to prevent Next.js standalone dependency-splitting failures
@@ -44,7 +34,7 @@ export const FILTERS = {
 
   "opencode-free": (models) =>
     models
-      .filter((m) => (m.id?.endsWith("-free") || KNOWN_FREE_OPENCODE_MODELS.includes(m.id)) && !DEAD_FREE_OPENCODE_MODELS.has(m.id))
+      .filter((m) => m.id?.endsWith("-free") || KNOWN_FREE_OPENCODE_MODELS.includes(m.id))
       .map((m) => ({ id: m.id, name: m.id })),
 
   // models.dev returns a large catalog; keep only mimo models

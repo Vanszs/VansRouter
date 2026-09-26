@@ -1,3 +1,5 @@
+import { ANTHROPIC_API_VERSION } from "../shared.js";
+
 export default {
   id: "anthropic",
   priority: 30,
@@ -17,7 +19,7 @@ export default {
     baseUrl: "https://api.anthropic.com/v1/messages",
     format: "claude",
     headers: {
-      "anthropic-version": "2023-06-01",
+      "anthropic-version": ANTHROPIC_API_VERSION,
       "Anthropic-Beta": "claude-code-20250219,interleaved-thinking-2025-05-14",
     },
   },

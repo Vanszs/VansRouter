@@ -6,6 +6,7 @@
  */
 
 import crypto from "node:crypto";
+import { CURSOR_IDE_COMMIT, CURSOR_IDE_VERSION } from "../providers/shared.js";
 
 const UUID_DNS = "6ba7b810-9dad-11d1-80b4-00c04fd430c8";
 
@@ -121,8 +122,8 @@ export function buildCursorHeaders(accessToken, machineId = null, ghostMode = tr
     "x-amzn-trace-id": `Root=${crypto.randomUUID()}`,
     "x-client-key": clientKey,
     "x-cursor-checksum": checksum,
-    "x-cursor-client-version": "3.13.25",
-    "x-cursor-client-commit": "d5c0e77a0214208f36b56d42e8e787de88d02ea4",
+    "x-cursor-client-version": CURSOR_IDE_VERSION,
+    "x-cursor-client-commit": CURSOR_IDE_COMMIT,
     "x-cursor-client-type": "ide",
     "x-cursor-client-os": os,
     "x-cursor-client-arch": arch,

@@ -27,6 +27,7 @@ import { resolveConnectionProxyConfig } from "@/lib/network/connectionProxy";
 import { capabilitiesFromServiceKind, getCapabilitiesForModel } from "open-sse/providers/capabilities.js";
 import { aggregateComboCapabilities } from "open-sse/services/combo.js";
 import { guardedFetch } from "@/shared/utils/ssrfGuard.js";
+import { ANTHROPIC_API_VERSION } from "open-sse/providers/shared.js";
 
 const UPSTREAM_CONNECTION_RE = /[-_][0-9a-f]{8,}$/i;
 const LLM_KIND = "llm";
@@ -321,7 +322,7 @@ async function fetchCompatibleModelIds(connection) {
       url = `${url.slice(0, -9)}/models`;
     }
     headers["x-api-key"] = connection.apiKey;
-    headers["anthropic-version"] = "2023-06-01";
+    headers["anthropic-version"] = ANTHROPIC_API_VERSION;
     headers.Authorization = `Bearer ${connection.apiKey}`;
   } else {
     return [];

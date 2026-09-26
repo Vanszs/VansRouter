@@ -1,4 +1,5 @@
 import { CLAUDE_CLI_SPOOF_HEADERS } from "../shared.js";
+import { ANTHROPIC_API_VERSION } from "../shared.js";
 
 export default {
   id: "claude",
@@ -22,7 +23,7 @@ export default {
     format: "claude",
     urlSuffix: "?beta=true",
     headers: {
-      "Anthropic-Version": "2023-06-01",
+      "Anthropic-Version": ANTHROPIC_API_VERSION,
       "Anthropic-Beta": "claude-code-20250219,oauth-2025-04-20,interleaved-thinking-2025-05-14,context-management-2025-06-27,prompt-caching-scope-2026-01-05,advanced-tool-use-2025-11-20,effort-2025-11-24,structured-outputs-2025-12-15,fast-mode-2026-02-01,redact-thinking-2026-02-12,token-efficient-tools-2026-03-28",
       "Anthropic-Dangerous-Direct-Browser-Access": "true",
       "User-Agent": "claude-cli/2.1.92 (external, sdk-cli)",

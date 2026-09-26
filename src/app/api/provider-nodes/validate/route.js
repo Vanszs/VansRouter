@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { assertPublicUrl } from "@/shared/utils/ssrfGuard.js";
 import { isLocalRequest } from "@/dashboardGuard";
+import { ANTHROPIC_API_VERSION } from "open-sse/providers/shared.js";
 
 // Fetch with timeout wrapper
 const fetchWithTimeout = (url, options, timeout = 10000) => {
@@ -129,7 +130,7 @@ export async function POST(request) {
         method: "GET",
         headers: {
           "x-api-key": apiKey,
-          "anthropic-version": "2023-06-01",
+          "anthropic-version": ANTHROPIC_API_VERSION,
           "Authorization": `Bearer ${apiKey}`
         }
       });
@@ -149,7 +150,7 @@ export async function POST(request) {
             "Authorization": `Bearer ${apiKey}`,
             "Content-Type": "application/json",
             "x-api-key": apiKey,
-            "anthropic-version": "2023-06-01"
+            "anthropic-version": ANTHROPIC_API_VERSION
           },
           body: JSON.stringify({
             model: modelId,
