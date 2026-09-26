@@ -136,11 +136,23 @@ backupProductionDb();
 
 console.log(`▶ next build --webpack  (HOME=${fakeHome})`);
 // execFileSync throws on a non-zero exit, which propagates build failure correctly.
-execFileSync(process.execPath, [nextBin, "build", "--webpack"], {
-  stdio: "inherit",
-  cwd: appDir,
-  env,
-});
+try {
+  execFileSync(process.execPath, [nextBin, "build", "--webpack"], {
+    stdio: "inherit",
+    cwd: appDir,
+    env,
+  });
+} catch (err) {
+  // SIGKILL with no exit status is the kernel OOM killer, not a build error.
+  // Without this the failure reads as a plain Next.js error and sends you
+  // hunting for a regression that does not exist.
+  if (err?.signal === "SIGKILL" && err?.status === null) {
+    console.error("\n✖ next build was OOM-killed (SIGKILL) — it did not fail on its own.");
+    console.error("  Retry with fewer static-generation workers: NEXT_BUILD_CPUS=2 npm run build");
+    console.error("  The no-undef pre-step can also be skipped: SKIP_PREBUILD_LINT=1");
+  }
+  throw err;
+}
 
 // Copy static assets into the standalone output.
 // Respect NEXT_DIST_DIR like next.config.mjs does (used by CLI builds).

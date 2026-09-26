@@ -10,6 +10,9 @@ allowBuilds:
 # Supply-chain hardening (see react-doctor require-pnpm-hardening):
 # minimumReleaseAge delays installs of freshly-published versions (minutes; 10080 = 7 days)
 # so malware caught & unpublished within hours never gets installed.
+# INERT on the pinned pnpm@9.15.9 — the key is silently ignored there and only
+# takes effect from pnpm 10.16. Bumping pnpm is the only way to make this real;
+# until then treat the 7-day window as NOT in force.
 # trustPolicy: no-downgrade rejects packages whose provenance/signature weakens between updates.
 minimumReleaseAge: 10080
 minimumReleaseAgeExclude:

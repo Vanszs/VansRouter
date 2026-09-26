@@ -31,10 +31,12 @@ describe("Post-merge: chat.js ACL enforcement preserved", () => {
     expect(src).toContain("allowedModels.js");
   });
 
-  it("propagates apiKeyInfo to handleSingleModelChat", () => {
-    // Both combo handlers must pass apiKeyInfo
-    const apiKeyInfoPassCount = (src.match(/apiKeyInfo\)/g) || []).length;
-    expect(apiKeyInfoPassCount).toBeGreaterThanOrEqual(4);
+  it("propagates apiKeyInfo to the model ACL and the combo handlers", () => {
+    // isModelAllowed must receive the key's ACL context, or a restricted key
+    // could use any model. Counting `apiKeyInfo)` occurrences was a proxy for
+    // that and broke the moment the ACL check became a candidate loop.
+    expect(src).toMatch(/isModelAllowed\(\s*c\s*,\s*apiKeyInfo\s*\)/);
+    expect(src).toMatch(/isProviderAllowed\(apiKeyInfo/);
   });
 
   it("checks isKindAllowed for 'llm' kind", () => {

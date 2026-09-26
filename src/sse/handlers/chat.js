@@ -265,13 +265,27 @@ async function handleSingleModelChat(body, modelStr, clientRawRequest = null, re
     return errorResponse(HTTP_STATUS.FORBIDDEN, `Provider "${provider}" is not allowed for this API key`);
   }
 
-  // ACL: check if model is in available models list
+  // ACL: check if model is in available models list.
+  // A registry id can already carry its org prefix (nvidia/nvidia/nemotron-…),
+  // while the allowlist built by buildConnectedProviderIds strips one prefix
+  // (nvidia/nemotron-…). Probe both forms, like embeddings.js does.
   const resolvedModelStr = `${provider}/${model}`;
-  const isAllowed = (modelStr === resolvedModelStr)
-    ? await isModelAllowed(resolvedModelStr, apiKeyInfo)
-    : (await isModelAllowed(modelStr, apiKeyInfo) || await isModelAllowed(resolvedModelStr, apiKeyInfo));
-  if (!isAllowed) {
-    log.warn("CHAT", `Model not in available models list`, { model: resolvedModelStr });
+  const candidates = [resolvedModelStr];
+  if (model.startsWith(`${provider}/`)) {
+    candidates.push(`${provider}/${model.slice(provider.length + 1)}`);
+  }
+  if (modelStr !== resolvedModelStr && !candidates.includes(modelStr)) {
+    candidates.push(modelStr);
+  }
+  let allowedModelStr = null;
+  for (const c of candidates) {
+    if (await isModelAllowed(c, apiKeyInfo)) {
+      allowedModelStr = c;
+      break;
+    }
+  }
+  if (!allowedModelStr) {
+    log.warn("CHAT", `Model not in available models list`, { model: resolvedModelStr, candidates });
     return errorResponse(HTTP_STATUS.NOT_FOUND, `Model "${resolvedModelStr}" is not available. Only models listed in /v1/models can be used.`);
   }
 

@@ -609,6 +609,15 @@ function startServer(updatePromise) {
   if (host === DEFAULT_HOST) {
     const lanIp = getLanIp();
     if (lanIp) console.log(`\x1b[33m⚠ Network-exposed: reachable at http://${lanIp}:${port} (bound 0.0.0.0). Use --host 127.0.0.1 for local-only.\x1b[0m`);
+    // "Network-exposed" alone understates it: the default dashboard password is
+    // public (README / .env.example), and a remote login with it yields a
+    // password-change grant, not a 403 — so a LAN peer that guesses it can take
+    // the instance over. Say so, or the first warning reads as harmless.
+    if (lanIp) {
+      // Mirrors src/lib/auth/password.js — separate process, so it cannot import it.
+      const initialPassword = (process.env.INITIAL_PASSWORD || "").trim() || "123456";
+      console.log(`\x1b[31m  Until you change it, anyone on this network who tries "${initialPassword}" can change the password and take over this router.\x1b[0m`);
+    }
   }
 
   let restartCount = 0;

@@ -2,19 +2,16 @@
 const KNOWN_FREE_OPENCODE_MODELS = ["big-pickle"];
 
 // Upstream rejects these ids, so the dashboard must not suggest them. Measured
-// against https://opencode.ai/zen/v1 on 2026-09-25:
-//   deepseek-v4-flash-free         -> 400 "Model is unavailable"
-//   hy3-free                        -> decommissioned upstream
-//   jev-1.13-free                   -> 500 (upstream serves it via /zen/v1/systemone, a lane this fork has no route for)
-//   muse-spark-1.2/1.3-contributor-free -> 500 "Internal server error"
-//   deepseek-v4.1-flash:free        -> 429 free-lane quota
-// space-bunny-free answers, so it stays offered.
+// through our own /v1/chat/completions on 2026-09-26:
+//   deepseek-v4-flash-free   -> 503   muse-spark-1.2/1.3-contributor-free -> 200 (alive)
+//   hy3-free                 -> 404   jev-1.13-free       -> 500 (served via
+//   deepseek-v4.1-flash:free -> 404     /zen/v1/systemone, a lane this fork has no route for)
+// space-bunny-free answers, so it stays offered. Re-measure before adding an id:
+// a low max_tokens returns 400 about the token floor, which looks like a dead model.
 const DEAD_FREE_OPENCODE_MODELS = new Set([
   "deepseek-v4-flash-free",
   "hy3-free",
   "jev-1.13-free",
-  "muse-spark-1.2-contributor-free",
-  "muse-spark-1.3-contributor-free",
   "deepseek-v4.1-flash:free",
 ]);
 
