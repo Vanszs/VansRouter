@@ -226,8 +226,35 @@ async function runContainerSmoke({ image, expectedVersion, platform = "linux/amd
     try {
       docker(["rm", "-f", name], { stdio: "ignore" });
     } catch {}
-    fs.rmSync(root, { recursive: true, force: true });
+    removeTree(root);
   }
+}
+
+// The image sets no USER, so the container writes as root and anything it leaves
+// in the bind mount is root-owned. force:true does not bypass an OS permission
+// error, so the tree is made removable before deleting it. Smoke runs on hosted
+// runners where the invoking user is not root, which is where this surfaced.
+function removeTree(root) {
+  const makeRemovable = (dir) => {
+    let entries;
+    try {
+      entries = fs.readdirSync(dir, { withFileTypes: true });
+    } catch {
+      return;
+    }
+    for (const entry of entries) {
+      const entryPath = path.join(dir, entry.name);
+      try {
+        fs.chmodSync(entryPath, 0o777);
+      } catch {}
+      if (entry.isDirectory()) makeRemovable(entryPath);
+    }
+    try {
+      fs.chmodSync(dir, 0o777);
+    } catch {}
+  };
+  makeRemovable(root);
+  fs.rmSync(root, { recursive: true, force: true });
 }
 
 module.exports = {
