@@ -658,8 +658,7 @@ async function smokeRelease(releasePath, distDir = null) {
   const child = spawn(process.execPath, [path.join(releasePath, releaseEntry)], {
     cwd: releasePath,
     env: {
-      ...process.env,
-      APPDATA: path.join(homeDir, "AppData", "Roaming"),
+      ...process.env,      APPDATA: path.join(homeDir, "AppData", "Roaming"),
       DATA_DIR: dataDir,
       DATA_DIR_ALLOW_TEMP: "1",
       HOME: homeDir,
@@ -670,13 +669,26 @@ async function smokeRelease(releasePath, distDir = null) {
       USERPROFILE: homeDir,
       XDG_CONFIG_HOME: path.join(homeDir, ".config"),
     },
-    stdio: "ignore",
+    stdio: ["ignore", "pipe", "pipe"],
   });
+  // A smoke failure that cannot be explained is a smoke failure that has to be
+  // reproduced by hand, so keep the tail of what the release printed. Pipes are
+  // drained as they fill; a full pipe would stall the server.
+  const serverLog = [];
+  for (const stream of [child.stdout, child.stderr]) {
+    stream.on("data", (chunk) => {
+      serverLog.push(chunk.toString());
+      if (serverLog.length > 60) serverLog.shift();
+    });
+  }
   try {
     await verifyRunningApp(checkPort, child, release.buildId);
     if (!fs.existsSync(path.join(dataDir, "db"))) {
       throw new Error("Smoke server did not use the isolated DATA_DIR");
     }
+  } catch (error) {
+    error.message += `\n--- smoke server output ---\n${serverLog.join("").trim().slice(-4000)}`;
+    throw error;
   } finally {
     child.kill("SIGTERM");
     await sleep(100);

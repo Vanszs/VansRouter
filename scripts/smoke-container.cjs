@@ -179,17 +179,23 @@ function ensureImageForPlatform(image, platform, {
   }
 }
 
-async function runContainerSmoke({ image, expectedVersion, platform = "linux/amd64", pull = false }) {
-  const root = fs.mkdtempSync(path.join(os.tmpdir(), "vansrouter-container-smoke-"));
-  const dataDir = path.join(root, "data");
-  const name = `vansrouter-release-smoke-${process.pid}-${Date.now()}`;
-  fs.mkdirSync(dataDir, { recursive: true });
+async function runContainerSmoke({
+  image,
+  expectedVersion,
+  platform = "linux/amd64",
+  pull = false,
+  dockerFn = docker,
+  inspectFn = inspectLocalPlatform,
+}) {
+  const slug = `${process.pid}-${Date.now()}`;
+  const name = `vansrouter-release-smoke-${slug}`;
+  const volume = `vansrouter-release-smoke-${slug}`;
   const port = await getFreePort();
   if (!port) throw new Error("Could not allocate a local smoke-test port");
 
   try {
-    ensureImageForPlatform(image, platform, { pull });
-    docker([
+    ensureImageForPlatform(image, platform, { pull, dockerFn, inspectFn });
+    dockerFn([
       "run", "--rm", "-d", "--name", name, "--platform", platform,
       "-p", `127.0.0.1:${port}:20128`,
       "-e", "DATA_DIR=/app/data",
@@ -200,13 +206,13 @@ async function runContainerSmoke({ image, expectedVersion, platform = "linux/amd
       "-e", "NEXT_TELEMETRY_DISABLED=1",
       "-e", "VANSROUTER_SKIP_UPDATE_CHECK=1",
       "-e", "VANROUTER_SKIP_UPDATE_CHECK=1",
-      "-v", `${dataDir}:/app/data`,
+      "-v", `${volume}:/app/data`,
       image,
     ], { stdio: "inherit" });
 
     const baseUrl = `http://127.0.0.1:${port}`;
     await waitForJson(`${baseUrl}/api/ready`, (body) => body?.ok === true && body?.database === "ready");
-    verifyContainerOpenClosure(name);
+    verifyContainerOpenClosure(name, dockerFn);
     const health = await requestJson(`${baseUrl}/api/health`);
     if (health.status !== 200) throw new Error(`Health check failed: ${health.status}`);
     await verifyProductionLogin(baseUrl, "123456");
@@ -219,42 +225,16 @@ async function runContainerSmoke({ image, expectedVersion, platform = "linux/amd
   } catch (error) {
     let logs = "";
     try {
-      logs = docker(["logs", name], { stdio: ["ignore", "pipe", "pipe"] });
+      logs = dockerFn(["logs", name], { stdio: ["ignore", "pipe", "pipe"] });
     } catch {}
     throw new Error(`${error.message}${logs ? `\nContainer logs:\n${logs}` : ""}`);
   } finally {
-    try {
-      docker(["rm", "-f", name], { stdio: "ignore" });
-    } catch {}
-    removeTree(root);
-  }
-}
-
-// The image sets no USER, so the container writes as root and anything it leaves
-// in the bind mount is root-owned. force:true does not bypass an OS permission
-// error, so the tree is made removable before deleting it. Smoke runs on hosted
-// runners where the invoking user is not root, which is where this surfaced.
-function removeTree(root) {
-  const makeRemovable = (dir) => {
-    let entries;
-    try {
-      entries = fs.readdirSync(dir, { withFileTypes: true });
-    } catch {
-      return;
-    }
-    for (const entry of entries) {
-      const entryPath = path.join(dir, entry.name);
+    for (const args of [["rm", "-f", name], ["volume", "rm", "-f", volume]]) {
       try {
-        fs.chmodSync(entryPath, 0o777);
+        dockerFn(args, { stdio: "ignore" });
       } catch {}
-      if (entry.isDirectory()) makeRemovable(entryPath);
     }
-    try {
-      fs.chmodSync(dir, 0o777);
-    } catch {}
-  };
-  makeRemovable(root);
-  fs.rmSync(root, { recursive: true, force: true });
+  }
 }
 
 module.exports = {

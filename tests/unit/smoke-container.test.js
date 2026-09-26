@@ -1,4 +1,5 @@
 import fs from "node:fs";
+import os from "node:os";
 import { createRequire } from "node:module";
 
 const require = createRequire(import.meta.url);
@@ -7,6 +8,7 @@ const {
   waitForJson,
   platformPair,
   ensureImageForPlatform,
+  runContainerSmoke,
   verifyContainerOpenClosure,
   verifyProductionLogin,
   verifyRemoteLoginIsGrantOnly,
@@ -86,6 +88,35 @@ describe("container release smoke test", () => {
     expect(calls).toHaveLength(1);
     expect(calls[0].args.slice(0, 3)).toEqual(["exec", "smoke-container", "node"]);
     expect(calls[0].args[4]).toContain("wsl-utils");
+  });
+
+  it("gives the container a named volume, never a host directory it cannot delete", async () => {
+    // The image sets no USER, so the container writes as root. Anything it leaves
+    // in a host bind mount is root-owned, and a non-root runner cannot chmod or
+    // unlink it -- POSIX refuses both, so no host-side cleanup can succeed. A
+    // named volume leaves nothing on the host to clean.
+    const before = fs.readdirSync(os.tmpdir()).filter((n) => n.startsWith("vansrouter-container-smoke-"));
+    const calls = [];
+    const dockerFn = (args) => {
+      calls.push(args);
+      if (args[0] === "run") throw new Error("stop here");
+      return "";
+    };
+
+    await expect(runContainerSmoke({
+      image: "vansrouter:ci",
+      expectedVersion: "0.0.0",
+      dockerFn,
+      inspectFn: () => "linux/amd64",
+    })).rejects.toThrow();
+
+    const after = fs.readdirSync(os.tmpdir()).filter((n) => n.startsWith("vansrouter-container-smoke-"));
+    expect(after).toEqual(before);
+
+    const mounts = calls.flatMap((args) => args.filter((a) => a.includes(":/app/data")));
+    expect(mounts).toHaveLength(1);
+    expect(mounts[0]).toMatch(/^vansrouter-release-smoke-[^:]+:\/app\/data$/);
+    expect(calls.some((args) => args[0] === "volume" && args[1] === "rm")).toBe(true);
   });
 
   it("retries transient HTTP failures and returns validated JSON", async () => {
