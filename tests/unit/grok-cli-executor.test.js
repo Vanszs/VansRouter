@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, vi } from "vitest";
 import {
   GrokCliExecutor,
   countGrokCliUserTurns,
@@ -12,7 +12,53 @@ import { getExecutor, hasSpecializedExecutor } from "../../open-sse/executors/in
 import { PROVIDERS, PROVIDER_OAUTH, PROVIDER_MODELS } from "../../open-sse/providers/index.js";
 import { getModelUpstreamId } from "../../open-sse/config/providerModels.js";
 import { getModelInfoCore, resolveProviderAlias } from "../../open-sse/services/model.js";
+import { GROK_CLI_VERSION } from "../../open-sse/config/grokCli.js";
 import { OAUTH_PROVIDERS } from "../../src/shared/constants/providers.js";
+
+describe("grok-cli client version gate", () => {
+  // cli-chat-proxy.grok.com answers HTTP 426 Upgrade Required below this version.
+  const UPSTREAM_MIN_VERSION = "1.0.13";
+
+  const parse = (v) => v.split(".").map(Number);
+
+  it("defaults to a version the upstream still accepts", () => {
+    const actual = parse(GROK_CLI_VERSION);
+    const min = parse(UPSTREAM_MIN_VERSION);
+    for (let i = 0; i < min.length; i++) {
+      if (actual[i] !== min[i]) {
+        expect(actual[i]).toBeGreaterThan(min[i]);
+        return;
+      }
+    }
+    expect(GROK_CLI_VERSION).toBe(UPSTREAM_MIN_VERSION);
+  });
+
+  it("lets GROK_CLI_VERSION override the advertised version", async () => {
+    vi.resetModules();
+    process.env.GROK_CLI_VERSION = "9.9.9";
+    try {
+      const mod = await import("../../open-sse/config/grokCli.js");
+      expect(mod.GROK_CLI_VERSION).toBe("9.9.9");
+      // User-Agent must track the override, not the default.
+      expect(mod.GROK_CLI_USER_AGENT).toContain("9.9.9");
+    } finally {
+      delete process.env.GROK_CLI_VERSION;
+      vi.resetModules();
+    }
+  });
+
+  it("falls back to the default when the override is malformed", async () => {
+    vi.resetModules();
+    process.env.GROK_CLI_VERSION = "not-a-version";
+    try {
+      const mod = await import("../../open-sse/config/grokCli.js");
+      expect(mod.GROK_CLI_VERSION).toBe("1.0.13");
+    } finally {
+      delete process.env.GROK_CLI_VERSION;
+      vi.resetModules();
+    }
+  });
+});
 
 describe("grok-cli registry", () => {
   it("registers transport + oauth + models", () => {
@@ -103,7 +149,7 @@ describe("GrokCliExecutor", () => {
     expect(headers.Accept).toBe("text/event-stream");
     expect(headers["x-xai-token-auth"]).toBeUndefined();
     expect(headers["x-grok-client-identifier"]).toBe("grok-shell");
-    expect(headers["x-grok-client-version"]).toBe("0.2.99");
+    expect(headers["x-grok-client-version"]).toBe(GROK_CLI_VERSION);
     expect(headers["x-grok-session-id"]).toBe("sess-abc");
     expect(headers["x-grok-conv-id"]).toBe("sess-abc");
     expect(headers["x-grok-req-id"]).toBe("req-xyz");

@@ -1,8 +1,11 @@
 /**
  * Grok CLI / Grok Build (cli-chat-proxy.grok.com)
  *
- * Source of truth: wire capture of official @xai-official/grok 0.2.99
- * talking to https://cli-chat-proxy.grok.com (OpenAI Responses API).
+ * Wire capture of official @xai-official/grok 0.2.99 talking to
+ * https://cli-chat-proxy.grok.com (OpenAI Responses API). The advertised client
+ * version is pinned in config/grokCli.js and is now ahead of that capture: the
+ * upstream enforces a minimum version, so the header is bumped to clear the
+ * gate while the request/response shape still mirrors 0.2.99.
  *
  * Distinct from:
  *  - `xai`      → api.x.ai (API key / xAI API OAuth PKCE)

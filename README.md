@@ -175,6 +175,7 @@ VansRouter is configured via environment variables:
 | `INITIAL_PASSWORD` | `123456` for a new installation | Initial dashboard password; set a strong value before public exposure. |
 | `HTTP_PROXY`, `HTTPS_PROXY` | `""` | Outbound proxy for upstream provider requests. |
 | `SEARXNG_URL` | `http://127.0.0.1:8888/search` | Endpoint for the local SearXNG search provider. |
+| `GROK_CLI_VERSION` | `1.0.13` | Grok CLI version advertised to `cli-chat-proxy.grok.com`. The upstream answers `426 Upgrade Required` below its minimum; raise this to clear a future gate without a code change. Read at startup — restart to apply. |
 
 ---
 
