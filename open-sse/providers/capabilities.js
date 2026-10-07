@@ -708,118 +708,43 @@ export const PROVIDER_CAPABILITIES = {
   // (see registry thinkingFormat). `onlyReasoning` models can't turn thinking
   // off → thinkingCanDisable:false (clamped to minimal instead of disabled).
   "codebuddy-cn": {
-    "glm-5.2": {
-      reasoning: true,
-      thinkingFormat: "openai",
-      thinkingCanDisable: false,
-      contextWindow: 1000000,
-      maxOutput: 48000,
-    },
-    "glm-5.1": {
-      reasoning: true,
-      thinkingFormat: "openai",
-      thinkingCanDisable: false,
-      contextWindow: 200000,
-      maxOutput: 48000,
-    },
-    "glm-5.0": {
-      reasoning: true,
-      thinkingFormat: "openai",
-      contextWindow: 200000,
-      maxOutput: 48000,
-    },
-    "glm-5.0-turbo": {
-      reasoning: true,
-      thinkingFormat: "openai",
-      thinkingCanDisable: false,
-      contextWindow: 200000,
-      maxOutput: 48000,
-    },
-    "glm-5v-turbo": {
-      vision: true,
-      reasoning: true,
-      thinkingFormat: "openai",
-      thinkingCanDisable: false,
-      contextWindow: 200000,
-      maxOutput: 38000,
-    },
-    "glm-4.7": {
-      reasoning: true,
-      thinkingFormat: "openai",
-      contextWindow: 200000,
-      maxOutput: 48000,
-    },
-    "minimax-m3": {
-      vision: true,
-      reasoning: true,
-      thinkingFormat: "openai",
-      thinkingCanDisable: false,
-      contextWindow: 512000,
-      maxOutput: 48000,
-    },
-    "minimax-m2.7": {
-      vision: true,
-      reasoning: true,
-      thinkingFormat: "openai",
-      thinkingCanDisable: false,
-      contextWindow: 200000,
-      maxOutput: 48000,
-    },
-    "kimi-k2.7": {
-      vision: true,
-      reasoning: true,
-      thinkingFormat: "openai",
-      thinkingCanDisable: false,
-      contextWindow: 256000,
-      maxOutput: 32000,
-    },
-    "kimi-k2.6": {
-      vision: true,
-      reasoning: true,
-      thinkingFormat: "openai",
-      thinkingCanDisable: false,
-      contextWindow: 256000,
-      maxOutput: 32000,
-    },
-    "kimi-k2.5": {
-      vision: true,
-      reasoning: true,
-      thinkingFormat: "openai",
-      thinkingCanDisable: false,
-      contextWindow: 164000,
-      maxOutput: 32000,
-    },
-    "hy3-preview": {
-      vision: true,
-      reasoning: true,
-      thinkingFormat: "openai",
-      thinkingCanDisable: false,
-      contextWindow: 192000,
-      maxOutput: 64000,
-    },
-    "deepseek-v4-pro": {
-      vision: true,
-      reasoning: true,
-      thinkingFormat: "openai",
-      thinkingCanDisable: false,
-      contextWindow: 1000000,
-      maxOutput: 50000,
-    },
-    "deepseek-v4.1-flash": {
-      vision: true,
-      reasoning: true,
-      thinkingFormat: "openai",
-      thinkingCanDisable: false,
-      contextWindow: 1000000,
-      maxOutput: 128000,
-    },
-    "deepseek-v3-2-volc": {
-      reasoning: true,
-      thinkingFormat: "openai",
-      thinkingCanDisable: false,
-      contextWindow: 96000,
-      maxOutput: 32000,
-    },
+    "glm-5.2":            { vision: true, reasoning: true, thinkingFormat: "openai", thinkingCanDisable: true, contextWindow: 1000000, maxOutput: 131072 },
+    "glm-5.1":            { vision: true, reasoning: true, thinkingFormat: "openai", thinkingCanDisable: false, contextWindow: 200000, maxOutput: 48000 },
+    "glm-5.0":            { reasoning: true, thinkingFormat: "openai", contextWindow: 200000, maxOutput: 48000 },
+    // maxOutput 64000 per both the plugin-baked fallback and the live server
+    // table (the old 38000 had no source and truncated output).
+    "glm-4.7":            { reasoning: true, thinkingFormat: "openai", contextWindow: 200000, maxOutput: 48000 },
+    "minimax-m3":         { vision: true, reasoning: true, thinkingFormat: "openai", thinkingCanDisable: false, contextWindow: 512000, maxOutput: 524288 },
+    "kimi-k2.5":          { vision: true, reasoning: true, thinkingFormat: "openai", thinkingCanDisable: false, contextWindow: 164000, maxOutput: 32000 },
+    "hy3-preview":        { vision: true, reasoning: true, thinkingFormat: "openai", thinkingCanDisable: false, contextWindow: 192000, maxOutput: 64000 },
+    "deepseek-v4-flash":  { reasoning: true, thinkingFormat: "openai", thinkingCanDisable: false, contextWindow: 1000000, maxOutput: 50000 },
+    "deepseek-v3-2-volc": { reasoning: true, thinkingFormat: "openai", thinkingCanDisable: false, contextWindow: 96000, maxOutput: 32000 },
+    // Per-model values mirror the server's product-config payload (the plugin
+    // fetches it from copilot.tencent.com; the `models[]` entries carry
+    // maxInputTokens/maxOutputTokens/supportsImages). contextWindow =
+    // maxInputTokens, maxOutput = maxOutputTokens. Where the server and the
+    // plugin-baked fallback disagree, the server table wins.
+    // ⚠️ thinkingCanDisable maps to the server's reasoning.canDisableThinking —
+    // it is NOT the inverse of onlyReasoning. onlyReasoning means "thinking is
+    // on by default"; canDisableThinking means "it CAN be turned off". glm-5.3
+    // and glm-5.3-flash are onlyReasoning:true BUT canDisableThinking:true, so
+    // their thinking is switchable; the hy* models are forced always-on.
+    "hy3":                { vision: true, reasoning: true, thinkingFormat: "openai", thinkingCanDisable: false, contextWindow: 192000, maxOutput: 64000 },
+    "hy4-preview":        { vision: true, reasoning: true, thinkingFormat: "openai", thinkingCanDisable: false, contextWindow: 1000000, maxOutput: 64000 },
+    "glm-5.3":            { vision: true, reasoning: true, thinkingFormat: "openai", thinkingCanDisable: true, contextWindow: 1000000, maxOutput: 131072 },
+    "glm-5.3-flash":      { vision: true, reasoning: true, thinkingFormat: "openai", thinkingCanDisable: true, contextWindow: 1000000, maxOutput: 131072 },
+    "kimi-k3-1":          { vision: true, reasoning: true, thinkingFormat: "openai", thinkingCanDisable: false, contextWindow: 1000000, maxOutput: 1048576 },
+    // contextWindow is the server's contextWindow.defaultLength (300000), NOT
+    // maxInputTokens — k2.8 publishes supportedLengths [300000, 1000000] and the
+    // gateway only gives 1M when the request opts in (this executor never does).
+    // Using 1000000 here would let the capacity adapter budget history for a
+    // window the model doesn't actually have.
+    "kimi-k2.8-preview":  { vision: true, reasoning: true, thinkingFormat: "openai", thinkingCanDisable: true, contextWindow: 300000, maxOutput: 131072 },
+    "deepseek-v4-pro":    { vision: true, reasoning: true, thinkingFormat: "openai", thinkingCanDisable: true, contextWindow: 1000000, maxOutput: 393216 },
+    // deepseek-v4.1-flash replaced v4-flash on the server list. The 2026-09-30
+    // snapshot raised maxOutput to 393216 (matching v4-pro) and changed the
+    // published efforts from low/high/xhigh to low/high/max.
+    "deepseek-v4.1-flash": { vision: true, reasoning: true, thinkingFormat: "openai", thinkingCanDisable: true, contextWindow: 1000000, maxOutput: 393216 },
   },
   // CodeBuddy intl — same gateway catalog as CN, so deepseek-v4.1-flash mirrors
   // the codebuddy-cn entry (the openai-style reasoning_effort format matters:
