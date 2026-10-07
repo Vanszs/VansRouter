@@ -138,6 +138,7 @@ export default function ProxyPoolsPage() {
   const [showVercelModal, setShowVercelModal] = useState(false);
   const [showCloudflareModal, setShowCloudflareModal] = useState(false);
   const [showDenoModal, setShowDenoModal] = useState(false);
+  const [showNetlifyModal, setShowNetlifyModal] = useState(false);
   const [showRelayMenu, setShowRelayMenu] = useState(false);
   const [editingProxyPool, setEditingProxyPool] = useState(null);
   const [formData, setFormData] = useState(() => normalizeFormData());
@@ -145,6 +146,7 @@ export default function ProxyPoolsPage() {
   const [vercelForm, setVercelForm] = useState({ vercelToken: "", projectName: "vercel-relay" });
   const [cloudflareForm, setCloudflareForm] = useState({ accountId: "", apiToken: "", projectName: "cloudflare-relay" });
   const [denoForm, setDenoForm] = useState({ denoToken: "", orgDomain: "", projectName: "" });
+  const [netlifyForm, setNetlifyForm] = useState({ netlifyToken: "", projectName: "netlify-relay" });
   const [saving, setSaving] = useState(false);
   const [importing, setImporting] = useState(false);
   const [deploying, setDeploying] = useState(false);
@@ -473,6 +475,16 @@ export default function ProxyPoolsPage() {
     setShowDenoModal(false);
   };
 
+  const openNetlifyModal = () => {
+    setNetlifyForm({ netlifyToken: "", projectName: "netlify-relay" });
+    setShowNetlifyModal(true);
+  };
+
+  const closeNetlifyModal = () => {
+    if (deploying) return;
+    setShowNetlifyModal(false);
+  };
+
   const handleVercelDeploy = async () => {
     if (!vercelForm.vercelToken.trim()) return;
     setDeploying(true);
@@ -689,6 +701,16 @@ export default function ProxyPoolsPage() {
                 >
                   <span className="material-symbols-outlined text-[20px] text-green-500">terminal</span>
                   Deno Relay
+                </button>
+                <button
+                  onClick={() => {
+                    openNetlifyModal();
+                    setShowRelayMenu(false);
+                  }}
+                  className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-text-main transition-colors hover:bg-black/5 dark:hover:bg-white/5"
+                >
+                  <span className="material-symbols-outlined text-[20px] text-teal-500">deployed_code</span>
+                  Netlify Relay
                 </button>
               </div>
             )}
