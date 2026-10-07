@@ -60,6 +60,21 @@ export const FILTERS = {
       .filter((m) => m.id?.startsWith("mimo") || m.name?.toLowerCase().includes("mimo"))
       .map((m) => ({ id: m.id, name: m.name || m.id })),
 
+  // MiniMax Code (mcode) live catalog: {providers:[{providerId:"minimax",
+  // config:{models:{<id>:{name, limit, modalities, thinking_config}}}}]} —
+  // arrives wrapped in a single-element array (see route normalization).
+  "minimax-code": (raw) => {
+    const env = Array.isArray(raw) ? raw[0] : raw;
+    const p = (Array.isArray(env?.providers) ? env.providers : []).find((x) => x?.providerId === "minimax");
+    const ms = p?.config?.models;
+    if (!ms || typeof ms !== "object") return [];
+    return Object.entries(ms)
+      .filter(([id, m]) => typeof id === "string" && id.trim() !== "" && m && typeof m === "object")
+      .map(([id, m]) => ({ id, name: m?.name || id, contextLength: Number(m?.limit?.context) || undefined }))
+      .sort((a, b) => (b.contextLength || 0) - (a.contextLength || 0));
+  },
+
+
   // NVIDIA NIM: filter only free-tier models by ID whitelist.
   // The NVIDIA /v1/models endpoint does not expose pricing/is_free fields,
   // so we cannot filter server-side. Whitelist is the source of truth.

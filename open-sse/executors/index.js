@@ -22,10 +22,14 @@ import { ZcodeExecutor } from "./zcode.js";
 import { CodeBuddyExecutor } from "./codebuddy-cn.js";
 import { AgentRouterExecutor } from "./agentrouter.js";
 import { MuseSparkWebExecutor } from "./muse-spark-web.js";
-import { DevinCliExecutor } from "./devin-cli.js";
+
 import { CodeBuddyIntlExecutor } from "./codebuddy-intl.js";
-import FreebuffExecutor from "./freebuff.js";
 import { DefaultExecutor } from "./default.js";
+import { MinimaxCodeExecutor } from "./minimax-code.js";
+import { DevinCliExecutor } from "./devin-cli.js";
+
+import FreebuffExecutor from "./freebuff.js";
+
 
 const executors = {
   antigravity: new AntigravityExecutor(),
@@ -60,8 +64,12 @@ const executors = {
   "codebuddy-cn": new CodeBuddyExecutor(),
   agentrouter: new AgentRouterExecutor(),
   "muse-spark-web": new MuseSparkWebExecutor(),
-  "devin-cli": new DevinCliExecutor(),
+
   "codebuddy-intl": new CodeBuddyIntlExecutor(),
+  "minimax-code": new MinimaxCodeExecutor("minimax-code"),
+  "minimax-code-global": new MinimaxCodeExecutor("minimax-code-global"),
+  "devin-cli": new DevinCliExecutor(),
+
   freebuff: new FreebuffExecutor(),
 };
 
