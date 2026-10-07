@@ -63,6 +63,14 @@ const PATTERN_THINKING = [
   { provider: "ollama", pattern: "*deepseek-v4.1-flash*", levels: ["none", "low", "medium", "high", "xhigh", "max"] },
   // codebuddy-intl rides the same gateway catalog, so its deepseek levels match.
   { provider: "codebuddy-intl", pattern: "deepseek-v4*", levels: ["low", "high", "xhigh"] },
+  // MiniMax Code (mcode) — adaptive effort via output_config.effort. M3.1
+  // always thinks (no none); M3 is switchable with none/high only, per the
+  // magpie static catalog. M2.7 pair falls through to the claude-adaptive
+  // set minus none (canDisable: false).
+  { provider: "minimax-code", pattern: "MiniMax-M3.1*", levels: ["low", "medium", "high", "xhigh", "max"] },
+  { provider: "minimax-code", pattern: "MiniMax-M3", levels: ["none", "high"] },
+  { provider: "minimax-code-global", pattern: "MiniMax-M3.1*", levels: ["low", "medium", "high", "xhigh", "max"] },
+  { provider: "minimax-code-global", pattern: "MiniMax-M3", levels: ["none", "high"] },
 ];
 
 // Returns valid thinking levels for a model, or null when the model has no reasoning.

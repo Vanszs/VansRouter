@@ -25,6 +25,7 @@ import { MuseSparkWebExecutor } from "./muse-spark-web.js";
 import { DevinCliExecutor } from "./devin-cli.js";
 import { CodeBuddyIntlExecutor } from "./codebuddy-intl.js";
 import FreebuffExecutor from "./freebuff.js";
+import { MinimaxCodeExecutor } from "./minimax-code.js";
 import { DefaultExecutor } from "./default.js";
 
 const executors = {
@@ -60,6 +61,8 @@ const executors = {
   "codebuddy-cn": new CodeBuddyExecutor(),
   agentrouter: new AgentRouterExecutor(),
   "muse-spark-web": new MuseSparkWebExecutor(),
+  "minimax-code": new MinimaxCodeExecutor("minimax-code"),
+  "minimax-code-global": new MinimaxCodeExecutor("minimax-code-global"),
   "devin-cli": new DevinCliExecutor(),
   "codebuddy-intl": new CodeBuddyIntlExecutor(),
   freebuff: new FreebuffExecutor(),

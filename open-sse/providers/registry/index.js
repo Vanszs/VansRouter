@@ -158,14 +158,10 @@ import p155 from "./bai.js";
 import p156 from "./tinyfish.js";
 import p157 from "./muse.js";
 import p158 from "./v1m.js";
+import p159 from "./minimax-code.js";
+import p160 from "./minimax-code-global.js";
 
 // Auto-generated: static imports for all registry entries
-import p68z from "./opencode-zen.js";
-// Temporarily hidden — no tool calling support (trae SOLO agent / windsurf gRPC skip ToolCallChunk).
-// Re-enable by uncommenting both the import and the array entry below.
-// import p102 from "./trae.js";
-// import p114 from "./devin-cli.js";
-// import p104 from "./windsurf.js";
 export default [
   p0,
   p1,
@@ -304,27 +300,8 @@ export default [
   p133,
   p134,
   p135,
-  p136,
-  p137,
-  p138,
-  p139,
-  p140,
-  p141,
-  p142,
-  p143,
-  p144,
-  p145,
-  p146,
-  p147,
-  p148,
-  p149,
-  p150,
-  p151,
-  p152,
-  p153,
-  p154,
-  p155,
-  p156,
   p157,
-  p158
+  p158,
+  p159,
+  p160,
 ];
