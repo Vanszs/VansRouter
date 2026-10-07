@@ -148,7 +148,16 @@ export async function handleChatCore({ body, modelInfo, credentials, log, onCred
   // sourceFormat-matched transport if that format is declared (opencode-go models
   // differ — kimi/glm only do /chat/completions). Undeclared models keep the
   // upstream default (use the transport), preserving behavior for glm/deepseek/...
-  const useTransport = (!supportedFormats || supportedFormats.includes(sourceFormat)) ? runtimeTransport : null;
+  // When the client's wire format is NOT among the model's supportedFormats, fall
+  // back to the transport for the model's declared targetFormat so the URL always
+  // matches the translated body. Without this, a Responses-only model (e.g. Muse
+  // Spark: supportedFormats ["openai-responses"]) requested by an OpenAI client is
+  // translated to the Responses body (`input`) yet POSTed to the default Chat
+  // Completions URL, and upstream rejects it: "unknown parameter `input`".
+  const modelTargetTransport = modelTargetFormat ? resolveTransport(provider, modelTargetFormat) : null;
+  const useTransport = (!supportedFormats || supportedFormats.includes(sourceFormat))
+    ? runtimeTransport
+    : modelTargetTransport;
   // A source-format-matched endpoint keeps the request lossless. Prefer it
   // over a model-level targetFormat, which is only the fallback for clients
   // whose wire format has no supported transport (for example MiniMax-M3:
@@ -662,9 +671,12 @@ const { isContentFilter } = checkFallbackError(statusCode, message);
     return { success: true, response: sseResponse };
   }
 
-  // Provider forced streaming but client wants JSON
-  if (!clientRequestedStreaming && providerRequiresStreaming) {
-    const result = await handleForcedSSEToJson({ ...sharedCtx, providerResponse, sourceFormat, toolNameMap, trackDone, appendLog });
+  // Provider forced streaming but client wants JSON. The Responses wire always
+  // streams upstream (openaiToOpenAIResponsesRequest pins stream:true), so a
+  // non-stream OpenAI/native client behind a Responses upstream must also take
+  // this path — handleForcedSSEToJson returns null when the body is not SSE.
+  if (!clientRequestedStreaming && (providerRequiresStreaming || providerResponseFormat === FORMATS.OPENAI_RESPONSES)) {
+    const result = await handleForcedSSEToJson({ ...sharedCtx, providerResponse, sourceFormat, targetFormat: providerResponseFormat, toolNameMap, trackDone, appendLog });
     if (result) { streamController.handleComplete(); return result; }
   }
 
