@@ -17,6 +17,163 @@ const inflightRefresh = new Map();
 
 const MIN_REFRESH_INTERVAL_MS = 30_000; // 30s between refreshes per connection
 
+// Strike-based circuit breaker (#3681): Google's quota API can report remaining
+// quota while generation endpoints keep returning 429 (sprint/weekly dual-pool
+// mismatch). After STRIKE_THRESHOLD 429s within the window for the same
+// connection+model, treat the optimistic quota reading as untrusted and
+// cache-block that pair instead of retry-storming upstream.
+const STRIKE_WINDOW_MS = 60_000; // strikes older than this reset the count
+const STRIKE_THRESHOLD = 3;
+const STRIKE_BLOCK_MS = 15 * 60_000;
+const strikeCounts = new Map(); // "connectionId|model" → { count, windowStart (anchored at first strike) }
+const strikeBlocks = new Map(); // "connectionId|model" → blockedUntil ms
+
+/**
+ * Re-apply active strike blocks onto a fresh quotas snapshot so the auth
+ * pre-filter (which reads this cache) keeps skipping the blocked pair across
+ * requests until the block expires — same channel as the exhausted-0% path.
+ */
+function applyActiveStrikeBlocks(connectionId, quotas) {
+  const now = Date.now();
+  for (const [key, until] of strikeBlocks) {
+    if (!key.startsWith(`${connectionId}|`)) continue;
+    if (until <= now) {
+      strikeBlocks.delete(key);
+      continue;
+    }
+    quotas[key.slice(connectionId.length + 1)] = {
+      remainingPercentage: 0,
+      resetAt: new Date(until).toISOString(),
+    };
+  }
+  return quotas;
+}
+
+/**
+ * Get model family for Antigravity models ("claude_gpt" or "gemini").
+ */
+export function getAntigravityModelFamily(model) {
+  if (!model || typeof model !== "string") return null;
+  const clean = (model.includes("/") ? model.slice(model.indexOf("/") + 1) : model).toLowerCase();
+  if (clean.startsWith("claude-") || clean.startsWith("gpt-") || clean === "claude") {
+    return "claude_gpt";
+  }
+  if ((clean.startsWith("gemini-") && !clean.includes("image")) || clean === "gemini") {
+    return "gemini";
+  }
+  return null;
+}
+
+/**
+ * Resolve quota info for a given model from the connection quotas map.
+ * Checks direct model entry, tier aliases, and shared family summary buckets
+ * (session 5h and weekly limits).
+ */
+export function getAntigravityModelQuota(quotas, model) {
+  if (!quotas || typeof quotas !== "object" || !model) return null;
+
+  const cleanModel = typeof model === "string"
+    ? (model.includes("/") ? model.slice(model.indexOf("/") + 1) : model).replace(/\([^()]+\)\s*$/, "").trim()
+    : "";
+
+  const family = getAntigravityModelFamily(cleanModel);
+  const candidates = [];
+
+  // 1. Direct entry in quotas map (e.g. per-model quota if present)
+  if (quotas[cleanModel]) {
+    candidates.push(quotas[cleanModel]);
+  }
+
+  // 2. Direct tier aliases if base model was passed
+  if (cleanModel === "claude-sonnet-5-5" && quotas["claude-sonnet-5-5-high"]) {
+    candidates.push(quotas["claude-sonnet-5-5-high"]);
+  }
+  if (cleanModel === "claude-opus-5-5" && quotas["claude-opus-5-5-high"]) {
+    candidates.push(quotas["claude-opus-5-5-high"]);
+  }
+  if (cleanModel === "gemini-3.8-flash" && quotas["gemini-3.8-flash-medium"]) {
+    candidates.push(quotas["gemini-3.8-flash-medium"]);
+  }
+  if (cleanModel === "gemini-3.7-flash" && quotas["gemini-3.7-flash-medium"]) {
+    candidates.push(quotas["gemini-3.7-flash-medium"]);
+  }
+  if (cleanModel === "gemini-3.6-flash" && quotas["gemini-3.6-flash-medium"]) {
+    candidates.push(quotas["gemini-3.6-flash-medium"]);
+  }
+
+  // 3. Shared family summary buckets (5h session & Weekly)
+  if (family === "claude_gpt") {
+    if (quotas.claude_gpt_session) candidates.push(quotas.claude_gpt_session);
+    if (quotas.claude_gpt_weekly) candidates.push(quotas.claude_gpt_weekly);
+  } else if (family === "gemini") {
+    if (quotas.gemini_session) candidates.push(quotas.gemini_session);
+    if (quotas.gemini_weekly) candidates.push(quotas.gemini_weekly);
+  }
+
+  if (candidates.length === 0) return null;
+
+  const now = Date.now();
+  const exhausted = [];
+
+  for (const c of candidates) {
+    if (c && typeof c === "object" && typeof c.remainingPercentage === "number" && c.remainingPercentage <= 0) {
+      if (c.resetAt) {
+        const resetMs = new Date(c.resetAt).getTime();
+        if (resetMs > now) {
+          exhausted.push({ ...c, resetMs });
+        }
+      } else {
+        exhausted.push({ ...c, resetMs: 0 });
+      }
+    }
+  }
+
+  // If any bucket is exhausted (0%), the model is exhausted.
+  // Use the longest (latest) resetAt so we do not unblock prematurely.
+  if (exhausted.length > 0) {
+    exhausted.sort((a, b) => b.resetMs - a.resetMs);
+    const primary = exhausted[0];
+    return {
+      used: primary.used ?? 1000,
+      total: primary.total ?? 1000,
+      remainingPercentage: 0,
+      resetAt: primary.resetAt,
+      displayName: primary.displayName || cleanModel,
+    };
+  }
+
+  // If none exhausted, return the most constrained available bucket
+  const valid = candidates.filter(c => c && typeof c.remainingPercentage === "number");
+  if (valid.length === 0) return null;
+  valid.sort((a, b) => a.remainingPercentage - b.remainingPercentage);
+  return valid[0];
+}
+
+/**
+ * Clear strike state for a connection|model after a successful request, so
+ * "consecutive" strikes means consecutive. Only removes a synthesized cache
+ * entry (resetAt == our block deadline); a real upstream 0% reading stays.
+ */
+export function clearAntigravityStrikes(connectionId, model) {
+  const key = `${connectionId}|${model}`;
+  strikeCounts.delete(key);
+  const until = strikeBlocks.get(key);
+  if (until === undefined) return;
+  strikeBlocks.delete(key);
+  const cached = quotaCache.get(connectionId);
+  const iso = new Date(until).toISOString();
+  if (cached?.[model]?.resetAt === iso) {
+    delete cached[model];
+  }
+  const family = getAntigravityModelFamily(model);
+  if (family === "claude_gpt" && cached?.claude_gpt_session?.resetAt === iso) {
+    delete cached.claude_gpt_session;
+  } else if (family === "gemini" && cached?.gemini_session?.resetAt === iso) {
+    delete cached.gemini_session;
+  }
+  quotaCache.set(connectionId, cached);
+}
+
 /**
  * Get the quota cache (read-only reference for auth.js pre-filter).
  */
@@ -97,11 +254,53 @@ export async function handleAntigravityQuotaError(connectionId, status, model, a
 
   // Throttle applies to error paths too: one quota request per account/30s.
   // The first 409/429 populates cache; concurrent or repeated errors reuse it.
-  const quota = (await refreshAntigravityQuota(connectionId, accessToken, providerSpecificData))?.[model];
-  if (!quota || quota.remainingPercentage > 0 || !quota.resetAt) return null;
+  const quotas = await refreshAntigravityQuota(connectionId, accessToken, providerSpecificData);
+  const quota = getAntigravityModelQuota(quotas, model);
+
+  // Strike breaker: count every 429 whose quota reading is either optimistic
+  // (remaining > 0) or unavailable (quota API 403/error). 3 within the window
+  // => the pair is unhealthy regardless of what the API claims; block 15m.
+  // 409 counts too by design: Antigravity signals pool exhaustion with 409 as
+  // well (see #3561 — "skip exhausted account/model quota before upstream
+  // retry" was motivated by 409/429 pairs), and poisoning by transient 409s
+  // requires 3 of them inside 60 seconds on the same pair.
+  if (!quota || quota.remainingPercentage > 0) {
+    const key = `${connectionId}|${model}`;
+    const now = Date.now();
+    const strike = strikeCounts.get(key);
+    // Fixed window anchored at the FIRST qualifying strike: three 429s must
+    // all land within 60s of that first one, not within 60s of each other.
+    const windowStart = strike && now - strike.windowStart <= STRIKE_WINDOW_MS ? strike.windowStart : now;
+    const count = strike && windowStart === strike.windowStart ? strike.count + 1 : 1;
+    strikeCounts.set(key, { count, windowStart });
+    if (count >= STRIKE_THRESHOLD) {
+      strikeCounts.delete(key);
+      const blockedUntil = now + STRIKE_BLOCK_MS;
+      const reading = quota ? `${Math.round(quota.remainingPercentage)}%` : "unknown";
+      log.warn("AG_QUOTA", `${connectionId.slice(0, 8)} | STRIKE_${status} ${model} — ${count}x 429 (quota ${reading}); CACHE_BLOCK 15m`);
+      // Synthesize a 0% entry in the shared cache so the auth pre-filter skips
+      // this pair on subsequent requests too, not just the current retry loop
+      // (the chat handler does not persist modelLock_* for this path).
+      const cached = quotaCache.get(connectionId) || {};
+      cached[model] = { remainingPercentage: 0, resetAt: new Date(blockedUntil).toISOString() };
+      quotaCache.set(connectionId, cached);
+      strikeBlocks.set(key, blockedUntil);
+      return blockedUntil;
+    }
+    return null;
+  }
+
+  // Healthy-but-exhausted reading: clear strikes and use the exact resetAt.
+  strikeCounts.delete(`${connectionId}|${model}`);
+  if (!quota.resetAt) return null;
 
   const resetMs = new Date(quota.resetAt).getTime();
   if (resetMs <= Date.now()) return null;
+
+  // Cache-block the requested model under its model name
+  const cached = quotaCache.get(connectionId) || {};
+  cached[model] = { remainingPercentage: 0, resetAt: quota.resetAt };
+  quotaCache.set(connectionId, cached);
 
   log.warn("AG_QUOTA", `${connectionId.slice(0, 8)} | UPSTREAM_${status} ${model} — quota exhausted; CACHE_BLOCK until ${quota.resetAt}`);
   return resetMs;

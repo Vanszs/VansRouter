@@ -301,7 +301,9 @@ function applyFormat(fmt, body, cfg, caps, supportedLevels, display) {
       body.thinking = { type: "adaptive", ...(display ? { display } : {}) };
       const level = toLevel(eff);
       // xhigh is model-gated (Opus/Sonnet 4.6 reject it) — clamp when not advertised.
+      // Claude effort has no "minimal" (always-on models clamp "none" to it).
       body.output_config = { effort: level === "auto" ? "high"
+        : level === "minimal" ? "low"
         : level === "xhigh" && !supportedLevels?.includes("xhigh") ? "high" : level };
       break;
     }
