@@ -652,6 +652,12 @@ export class CursorExecutor extends BaseExecutor {
 
     const consume = async (onEvent) => {
       let trailerErrorOccurred = false;
+      const finishTurn = () => {
+        flushThinkingFallback(onEvent);
+        finished = true;
+        if (emittedText) onEvent({ type: "done" });
+        else onEvent({ type: "error", value: "Cursor AgentService returned an empty turn" });
+      };
       try {
         while (!finished) {
           const { done, value } = await session.read();
@@ -709,9 +715,7 @@ export class CursorExecutor extends BaseExecutor {
               }
               // Keep unsigned reasoning upstream-only for Anthropic clients.
               if (update.has(14)) {
-                flushThinkingFallback(onEvent);
-                finished = true;
-                onEvent({ type: "done" });
+                finishTurn();
               }
             }
 
@@ -769,12 +773,12 @@ export class CursorExecutor extends BaseExecutor {
             }
           });
         }
+        if (!finished) finishTurn();
       } finally {
         try { session.end(); } catch {}
         try { session.close(); } catch {}
         if (!finished && !trailerErrorOccurred) {
-          flushThinkingFallback(onEvent);
-          onEvent({ type: "done" });
+          finishTurn();
         }
       }
     };
