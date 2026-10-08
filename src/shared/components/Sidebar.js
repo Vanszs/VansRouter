@@ -10,7 +10,6 @@ import { MEDIA_PROVIDER_KINDS } from "@/shared/constants/providers";
 import { useCopyToClipboard } from "@/shared/hooks/useCopyToClipboard";
 import Button from "./Button";
 import { ConfirmModal } from "./Modal";
-import NineRemotePromoModal from "./NineRemotePromoModal";
 const ChangelogModal = dynamic(() => import("./ChangelogModal"), { ssr: false });
 
 // const VISIBLE_MEDIA_KINDS = ["embedding", "image", "imageToText", "tts", "stt", "webSearch", "webFetch", "video", "music"];
@@ -43,7 +42,6 @@ const systemItems = [
 export default function Sidebar({ onClose }) {
   const pathname = usePathname();
   const [mediaOpen, setMediaOpen] = useState(false);
-  const [showRemoteModal, setShowRemoteModal] = useState(false);
   const [showChangelogModal, setShowChangelogModal] = useState(false);
   const [isDisconnected, setIsDisconnected] = useState(false);
   const [updateInfo, setUpdateInfo] = useState(null);
@@ -307,8 +305,11 @@ export default function Sidebar({ onClose }) {
             })}
 
             {/* Remote */}
-            <button
-              onClick={() => setShowRemoteModal(true)}
+            <a
+              href="https://9remote.cc"
+              target="_blank"
+              rel="noreferrer"
+              onClick={onClose}
               className={cn(
                 "flex items-center gap-3 px-3 py-1 rounded-lg transition-all group w-full",
                 "text-text-muted hover:bg-surface-2 hover:text-text-main"
@@ -317,8 +318,11 @@ export default function Sidebar({ onClose }) {
               <span className="material-symbols-outlined text-[18px] group-hover:text-primary transition-colors">
                 computer
               </span>
-              <span className="text-[13px] font-medium">Remote</span>
-            </button>
+              <span className="text-[13px] font-medium">9Remote</span>
+              <span className="ml-auto text-[10px] font-semibold px-1 py-0.5 rounded-[3px] bg-orange-500/15 text-orange-400">
+                HOT
+              </span>
+            </a>
 
             {/* Settings */}
             <Link
@@ -346,8 +350,6 @@ export default function Sidebar({ onClose }) {
 
       </aside>
 
-      {/* Remote Promo Modal */}
-      <NineRemotePromoModal isOpen={showRemoteModal} onClose={() => setShowRemoteModal(false)} />
 
       {/* Changelog Modal */}
       <ChangelogModal isOpen={showChangelogModal} onClose={() => setShowChangelogModal(false)} />
