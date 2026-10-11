@@ -250,7 +250,7 @@ function rejectExecRequest(execRequest) {
   return wrapExecClientMessage(id, execId, resultField, rejected);
 }
 
-function encodeKvClientMessage(kvId, resultField, resultPayload, metadata) {
+export function encodeKvClientMessage(kvId, resultField, resultPayload, metadata) {
   const parts = [];
   if (kvId) parts.push(encodeField(1, PROTOBUF_VARINT, kvId));
   parts.push(encodeField(resultField, PROTOBUF_LEN, resultPayload || new Uint8Array()));
