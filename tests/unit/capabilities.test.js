@@ -132,3 +132,44 @@ describe("opencode-go glm-5.3-flash", () => {
     ]);
   });
 });
+
+describe("OpenCode Free ids newer than the capability tables", () => {
+  // ids missing here fall through to DEFAULT_CAPABILITIES (reasoning: false),
+  // and applyThinking() then deletes the client's reasoning_effort — see #2690.
+  // Modalities/limits are taken verbatim from models.dev.
+  it("reports reasoning and the models.dev limits for space-bunny", () => {
+    expect(getCapabilitiesForModel(undefined, "space-bunny-free")).toMatchObject({
+      reasoning: true,
+      thinkingFormat: "openai",
+      contextWindow: 1048576,
+      maxOutput: 524288,
+    });
+    expect(getCapabilitiesForModel("opencode-go", "space-bunny")).toMatchObject({
+      reasoning: true,
+      contextWindow: 1048576,
+      maxOutput: 524288,
+    });
+  });
+
+  it("keeps per-id modalities and limits instead of a generic floor", () => {
+    // text-only, small context — a shared pattern rule would overstate both.
+    expect(getCapabilitiesForModel(undefined, "big-pickle")).toMatchObject({
+      reasoning: true,
+      vision: false,
+      contextWindow: 200000,
+      maxOutput: 32000,
+    });
+    expect(getCapabilitiesForModel(undefined, "ring-2.6-1t-free")).toMatchObject({
+      reasoning: true,
+      vision: false,
+      contextWindow: 262000,
+      maxOutput: 66000,
+    });
+    expect(getCapabilitiesForModel(undefined, "exo-free")).toMatchObject({
+      reasoning: true,
+      vision: true,
+      contextWindow: 1048576,
+      maxOutput: 131072,
+    });
+  });
+});
