@@ -11,6 +11,7 @@ import {
   decodeMcpArgs,
 } from "../utils/cursorProtobuf.js";
 import { buildCursorHeaders } from "../utils/cursorChecksum.js";
+import { resolveCursorModels, resolveAutoModelSelection } from "../services/cursorModels.js";
 import { estimateUsage } from "../utils/usageTracking.js";
 import { SSE_DONE, SSE_HEADERS } from "../utils/sseConstants.js";
 import { chatChunkSse, sseChunk } from "../utils/sse.js";
@@ -654,10 +655,21 @@ export class CursorExecutor extends BaseExecutor {
     const originalMessages = body.messages || [];
     let workingMessages = originalMessages;
     const tools = body.tools || [];
-    const upstreamModel = resolveCursorUpstreamModel(model);
+    let runModel = resolveCursorUpstreamModel(model);
+    if (model === "default" || model === "auto") {
+      const catalog = await resolveCursorModels(credentials, { signal, log });
+      const selection = resolveAutoModelSelection(catalog?.models);
+      if (selection) {
+        log?.info?.("CURSOR", `auto model resolved: ${model} → ${selection.modelId} (${selection.matchedBy})`);
+        runModel = resolveCursorUpstreamModel(selection.modelId);
+      }
+    }
+
     const openAgentSession = (frameMessages) => {
       const session = this.openAgentHttp2Stream(url, headers, requestController.signal);
-      session.write(buildAgentRunFrame(frameMessages, upstreamModel, tools, body.reasoning_effort || body.reasoning?.effort));
+      session.write(buildAgentRunFrame(frameMessages, runModel, tools, body.reasoning_effort || body.reasoning?.effort));
+      return session;
+    };
       return session;
     };
 
