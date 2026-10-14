@@ -96,8 +96,11 @@ function openaiToGeminiBase(model, body, stream, signature = DEFAULT_THINKING_AG
     result.generationConfig.maxOutputTokens = body.max_tokens;
   }
 
-  // Build tool_call_id -> name map
-  const tcID2Name = {};
+  // Build tool_call_id -> name map.
+  // Null-prototype: these are keyed by a client-supplied id, so a literal
+  // tool_call_id of "constructor"/"toString" would otherwise read an inherited
+  // Object.prototype member instead of the map's own entry.
+  const tcID2Name = Object.create(null);
   if (body.messages && Array.isArray(body.messages)) {
     for (const msg of body.messages) {
       if (msg.role === ROLE.ASSISTANT && msg.tool_calls) {
@@ -118,7 +121,10 @@ function openaiToGeminiBase(model, body, stream, signature = DEFAULT_THINKING_AG
   // LAST one, and the earlier turn would then be answered with the later
   // turn's output. Each functionCall consumes the oldest unconsumed result for
   // its id instead. #4273
-  const toolResponses = {};
+  // Null-prototype for the same reason as tcID2Name above: `||=` reads the key
+  // first, so a reserved id would read Object.prototype's function and then throw
+  // on `.push` (TypeError: not a function), failing the whole request.
+  const toolResponses = Object.create(null);
   if (body.messages && Array.isArray(body.messages)) {
     for (const msg of body.messages) {
       if (msg.role === ROLE.TOOL && msg.tool_call_id) {
@@ -126,7 +132,7 @@ function openaiToGeminiBase(model, body, stream, signature = DEFAULT_THINKING_AG
       }
     }
   }
-  const toolResponseCursor = {};
+  const toolResponseCursor = Object.create(null);
 
   // Gemini validates that functionCall ids are unique across the WHOLE history,
   // and rejects the entire request with 400 INVALID_ARGUMENT when one repeats.

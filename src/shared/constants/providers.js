@@ -32,6 +32,10 @@ function buildProviderEntry(r) {
     ...(r.hasProviderSpecificData ? { hasProviderSpecificData: true } : {}),
     ...(r.noAuth ? { noAuth: true } : {}),
     ...(r.passthroughModels ? { passthroughModels: true } : {}),
+    // Explicit opt-in for feeding the chat allowlist from the live catalogue;
+    // declared per provider so the fetcher merge is not implied by noAuth or by
+    // merely declaring modelsFetcher (see allowedModels.js).
+    ...(r.liveCatalog ? { liveCatalog: true } : {}),
     ...(r.hasOAuth ? { hasOAuth: true } : {}),
     ...(r.authModes ? { authModes: r.authModes } : {}),
     ...(r.authType ? { authType: r.authType } : {}),

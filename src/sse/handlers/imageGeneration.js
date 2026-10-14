@@ -33,6 +33,10 @@ function recordImageRequestUsage({ provider, model, connectionId, apiKey, endpoi
       !Number.isSafeInteger(completionTokens) || completionTokens < 0) {
     return;
   }
+  // Same floor as the canonical writer (chatCore/requestDetail.js): a 0/0
+  // completion is not a billable event, and saveRequestUsage bumps the request
+  // counters unconditionally, so recording it inflates them.
+  if (promptTokens === 0 && completionTokens === 0) return;
 
   saveRequestUsage({
     provider,

@@ -32,5 +32,6 @@ export default {
     { id: "union-alpha", name: "Union Alpha Free", targetFormat: "claude" },
   ],
   modelsFetcher: { url: "https://opencode.ai/zen/v1/models", type: "opencode-free" },
+  liveCatalog: true,
   passthroughModels: true,
 };

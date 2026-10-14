@@ -94,27 +94,30 @@ function digestBase62(digest) {
 // Translated ids are stable per input: replaying the same session value must
 // reuse one upstream session. Callers that carry credentials also persist the id
 // on `runtimeOpencodeSession`; this covers the ones that do not.
-// Key = `${kind}\0${clientTool}\0${value}`, Value = id. Eviction is
-// insertion-ordered (oldest id first); entries are small and never need
-// per-entry recency, so this stays a plain Map rather than an LRU.
-const translatedIdStore = new Map();
+// Split per kind: request ids are high-cardinality (one per turn) while session
+// ids are bounded by live conversations, and a shared pool let request churn
+// evict a session id — re-minting the upstream session mid-conversation, which
+// is exactly the state the cache exists to preserve. Value = id; eviction is
+// insertion-ordered and entries are small, so a plain Map is enough.
+const translatedIdStores = { session: new Map(), request: new Map() };
 const MAX_TRANSLATED_IDS = 5000;
 
 function translateCanonicalId(value, pattern, prefix, kind, inverted, clientTool = "") {
   const trimmed = typeof value === "string" ? value.trim() : "";
   if (pattern.test(trimmed)) return trimmed;
-  const cacheKey = `${kind}\0${clientTool || "generic"}\0${value ?? ""}`;
-  const cached = translatedIdStore.get(cacheKey);
+  const store = translatedIdStores[kind];
+  const cacheKey = `${clientTool || "generic"}\0${value ?? ""}`;
+  const cached = store.get(cacheKey);
   if (cached) return cached;
   const digest = crypto
     .createHash("sha256")
     .update(`opencode\0${kind}\0${clientTool || "generic"}\0${value ?? ""}`)
     .digest();
   const id = `${prefix}${stampHex(inverted, BigInt(Date.now()))}${digestBase62(digest)}`;
-  if (translatedIdStore.size >= MAX_TRANSLATED_IDS) {
-    translatedIdStore.delete(translatedIdStore.keys().next().value);
+  if (store.size >= MAX_TRANSLATED_IDS) {
+    store.delete(store.keys().next().value);
   }
-  translatedIdStore.set(cacheKey, id);
+  store.set(cacheKey, id);
   return id;
 }
 

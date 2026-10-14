@@ -48,6 +48,13 @@ const AGENT_RUN_PATH = "/agent.v1.AgentService/Run";
 const PROTOBUF_LEN = 2;
 const PROTOBUF_VARINT = 0;
 
+// A client may send the effort either flat (reasoning_effort) or nested
+// (reasoning.effort). Both Cursor paths must read it the same way, or the same
+// body would carry effort in Agent mode but silently drop it in classic mode.
+function reasoningEffortOf(body) {
+  return body?.reasoning_effort || body?.reasoning?.effort || null;
+}
+
 function concatBuffers(...parts) {
   const length = parts.reduce((total, part) => total + part.length, 0);
   const result = new Uint8Array(length);
@@ -403,7 +410,7 @@ export class CursorExecutor extends BaseExecutor {
     // Do NOT call openaiToCursorRequest again — double-translation drops tool_results
     const messages = body.messages || [];
     const tools = body.tools || [];
-    const reasoningEffort = body.reasoning_effort || null;
+    const reasoningEffort = reasoningEffortOf(body);
     // Detect Claude Code UA to force Agent mode (issue #643)
     const ua = credentials?.rawHeaders?.["user-agent"] || "";
     // cu/default + cu/auto must also run through Agent mode, otherwise Cursor
@@ -603,7 +610,7 @@ export class CursorExecutor extends BaseExecutor {
     const upstreamModel = resolveCursorUpstreamModel(model);
     try {
       session = this.openAgentHttp2Stream(url, headers, requestController.signal);
-      session.write(buildAgentRunFrame(body.messages || [], upstreamModel, tools, body.reasoning_effort || body.reasoning?.effort));
+      session.write(buildAgentRunFrame(body.messages || [], upstreamModel, tools, reasoningEffortOf(body)));
     } catch (error) {
       throw new Error(`Cursor AgentService request failed: ${error.message}`);
     }
@@ -662,10 +669,9 @@ export class CursorExecutor extends BaseExecutor {
     };
 
     const consume = async (onEvent) => {
-      // Fork: a trailer frame marks the turn spent, so the completion path must
-      // not also emit a duplicate `done`. Upstream: an empty turn with no text is
-      // an error, not a silent success. Both guards are load-bearing.
-      let trailerErrorOccurred = false;
+      // A turn that produced no text is an error, not a silent success. A trailer
+      // frame sets `finished` before emitting its own error, so finishTurn only
+      // runs for the paths that still owe the client a terminal event.
       const finishTurn = () => {
         flushThinkingFallback(onEvent);
         finished = true;
@@ -689,7 +695,6 @@ export class CursorExecutor extends BaseExecutor {
                 }
               })();
               finished = true;
-              trailerErrorOccurred = true;
               const errorValue = {
                 ...meta?.raw,
                 error: trailerError,
@@ -791,13 +796,6 @@ export class CursorExecutor extends BaseExecutor {
       } finally {
         try { session.end(); } catch {}
         try { session.close(); } catch {}
-        // Upstream's finishTurn already ran for the normal path (and emitted the
-        // empty-turn error). This fork-side guard still covers a trailer error,
-        // where `finished` is set by the trailer branch and no done should follow.
-        if (!finished && !trailerErrorOccurred) {
-          flushThinkingFallback(onEvent);
-          onEvent({ type: "done" });
-        }
       }
     };
 

@@ -274,6 +274,11 @@ export async function handleSttCore({ provider, model, formData, credentials, st
   const file = formData.get("file");
   if (!file) return createErrorResult(HTTP_STATUS.BAD_REQUEST, "Missing required field: file");
 
+  // Support guard first: it must judge the registry config, not a connection
+  // override. Checking after applying the override would let a connection with a
+  // baseUrl synthesise a cfg for a provider that has no STT support at all.
+  if (!sttConfig) return createErrorResult(HTTP_STATUS.BAD_REQUEST, `Provider '${provider}' does not support STT`);
+
   // A connection may point a provider at a different host (e.g. the EU
   // ElevenLabs endpoint); that override must win over the registry default,
   // which is what providerSpecificData.baseUrl is for. Trailing slashes are
@@ -283,7 +288,6 @@ export async function handleSttCore({ provider, model, formData, credentials, st
   const cfg = typeof baseUrlOverride === "string" && baseUrlOverride.trim()
     ? { ...sttConfig, baseUrl: baseUrlOverride.trim().replace(/\/+$/, "") }
     : sttConfig;
-  if (!cfg) return createErrorResult(HTTP_STATUS.BAD_REQUEST, `Provider '${provider}' does not support STT`);
 
   const token = cfg.authType === "none" ? null : (credentials?.apiKey || credentials?.accessToken);
   if (cfg.authType !== "none" && !token) {

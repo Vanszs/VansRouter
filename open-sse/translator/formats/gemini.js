@@ -428,15 +428,28 @@ export function cleanJSONSchemaForAntigravity(schema) {
 // "The referenced name `#/$defs/...` in function_response.response does not match
 // to a display_name in the function_response.parts". Tool results that carry a
 // JSON Schema / OpenAPI document (webfetch, read, MCP) hit this, so rename the key.
-export const GEMINI_RESERVED_RESPONSE_KEYS = { "$ref": "_ref" };
+// Renames reserved keys a Gemini parser rejects. Not exported: the only consumer
+// is sanitizeFunctionResponsePayload right below.
+const GEMINI_RESERVED_RESPONSE_KEYS = { "$ref": "_ref" };
 
-// Recursively rename reserved keys in a tool-result payload (arrays/objects only)
+const hasReservedKey = (value) =>
+  Object.keys(value).some((key) => Object.hasOwn(GEMINI_RESERVED_RESPONSE_KEYS, key));
+
+// Recursively rename reserved keys in a tool-result payload (arrays/objects only).
+// The map is read with Object.hasOwn: a payload key named "constructor" must stay
+// "constructor", not be rewritten to Object.prototype's function source via `??`
+// on an inherited hit.
 export function sanitizeFunctionResponsePayload(value) {
   if (Array.isArray(value)) return value.map(sanitizeFunctionResponsePayload);
   if (!value || typeof value !== "object") return value;
+  // Untouched payloads are returned by reference; only copy when a rename is due.
+  if (!hasReservedKey(value) && !Object.values(value).some((v) => v && typeof v === "object")) return value;
   const out = {};
   for (const [key, val] of Object.entries(value)) {
-    out[GEMINI_RESERVED_RESPONSE_KEYS[key] ?? key] = sanitizeFunctionResponsePayload(val);
+    const mapped = Object.hasOwn(GEMINI_RESERVED_RESPONSE_KEYS, key)
+      ? GEMINI_RESERVED_RESPONSE_KEYS[key]
+      : key;
+    out[mapped] = sanitizeFunctionResponsePayload(val);
   }
   return out;
 }

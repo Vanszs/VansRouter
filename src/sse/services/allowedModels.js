@@ -556,7 +556,6 @@ async function buildConnectedProviderIds(providerId, conn, kindFilter, customMod
   const hasExplicitEnabledModels = Array.isArray(enabledModels) && enabledModels.length > 0;
   const isCompatibleProvider =
     isOpenAICompatibleProvider(providerId) || isAnthropicCompatibleProvider(providerId);
-  const isPassthroughProvider = AI_PROVIDERS[providerId]?.passthroughModels === true;
 
   const staticModelKindById = new Map(providerModels.map((m) => [m.id, modelKind(m)]));
 
@@ -570,18 +569,15 @@ async function buildConnectedProviderIds(providerId, conn, kindFilter, customMod
 
   const providerInfo = AI_PROVIDERS[providerId];
 
-  if (isPassthroughProvider && !hasExplicitEnabledModels) {
-    rawModelIds = providerModels.map((m) => m.id);
-  }
-
   // A provider that publishes a live catalogue owns ids the static registry
-  // cannot know. This merge must come after the passthrough reset above, which
-  // otherwise discards them; it must NOT be gated on noAuth, because that
-  // silently excluded every OAuth provider declaring a fetcher (cline), leaving
-  // its catalogue models listed in /v1/models but rejected by the chat gate.
-  // An explicit enabledModels allowlist still wins, matching the live resolver
-  // below, and callers may opt out wholesale with skipDynamicFetch.
-  if (providerInfo?.modelsFetcher && !hasExplicitEnabledModels && !skipDynamicFetch) {
+  // cannot know, and isModelAllowed() runs this on every chat request — so the
+  // merge must be opt-in per provider, not implied by declaring a fetcher.
+  // Gating on noAuth alone (the previous rule) silently excluded OAuth
+  // providers such as cline, which is how issue #159 happened; gating on
+  // modelsFetcher alone would instead pull 15 unrelated catalogues (openrouter,
+  // venice, nvidia, ...) into the allowlist with an 8s outbound fetch each.
+  // liveCatalog makes the intent explicit. skipDynamicFetch opts out wholesale.
+  if (providerInfo?.liveCatalog === true && providerInfo?.modelsFetcher && !hasExplicitEnabledModels && !skipDynamicFetch) {
     const fetcherIds = await fetchModelsFetcherIds(providerId, providerInfo);
     rawModelIds = Array.from(new Set([...rawModelIds, ...fetcherIds]));
   }
