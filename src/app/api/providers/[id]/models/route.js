@@ -12,11 +12,19 @@ import { resolveGrokCliModels } from "open-sse/services/grokCliModels.js";
 import { resolveConnectionProxyConfig } from "@/lib/network/connectionProxy";
 import { resolveCursorModels } from "open-sse/services/cursorModels.js";
 import { getKimchiUserAgent } from "open-sse/utils/kimchiUserAgent.js";
-import { ANTHROPIC_API_VERSION } from "open-sse/providers/shared.js";
+import { ANTHROPIC_API_VERSION, ANTIGRAVITY_OAUTH_CLIENT } from "open-sse/providers/shared.js";
 import codexProvider from "open-sse/providers/registry/codex.js";
 import clineProvider from "open-sse/providers/registry/cline.js";
+import antigravityProvider from "open-sse/providers/registry/antigravity.js";
 
 const GEMINI_CLI_MODELS_URL = "https://cloudcode-pa.googleapis.com/v1internal:fetchAvailableModels";
+
+// The sandbox host / `v1internal:models` path used previously answers 404 with an
+// HTML error page, so discovery never returned a single model. The live catalogue
+// lives on the production host behind `v1internal:fetchAvailableModels` (POST,
+// `{project}` body) and requires the Antigravity IDE User-Agent — without it the
+// same request is rejected with 403 PERMISSION_DENIED.
+const ANTIGRAVITY_MODELS_URL = "https://daily-cloudcode-pa.googleapis.com/v1internal:fetchAvailableModels";
 
 // Model discovery must identify as the same Codex CLI version as inference.
 const CODEX_MODELS_URL = `https://chatgpt.com/backend-api/codex/models?client_version=${codexProvider.transport.cliVersion}`;
@@ -45,6 +53,18 @@ const parseGeminiCliModels = (data) => {
 
   return [];
 };
+
+// The live Antigravity catalogue carries two unshipped preview slots
+// (`tab_flash_lite_preview` / `tab_jump_flash_lite_preview`) whose `model` is
+// MODEL_PLACEHOLDER_M19 / _M28 and which are NOT flagged isInternal, so
+// parseGeminiCliModels would surface them in the picker. Filtered here rather
+// than in the shared parser so gemini-cli keeps its current output untouched.
+const parseAntigravityModels = (data) =>
+  parseGeminiCliModels(data).filter((model) => {
+    if (model.id.startsWith("tab_")) return false;
+    const upstream = data?.models?.[model.id]?.model;
+    return !(typeof upstream === "string" && upstream.startsWith("MODEL_PLACEHOLDER"));
+  });
 
 const appendCodexReviewModels = (models) => models.flatMap((model) => {
   const id = model?.id || model?.slug || model?.model || model?.name;
@@ -180,13 +200,27 @@ const PROVIDER_MODELS_CONFIG = {
     })
   },
   antigravity: {
-    url: "https://daily-cloudcode-pa.sandbox.googleapis.com/v1internal:models",
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    authHeader: "Authorization",
-    authPrefix: "Bearer ",
-    body: {},
-    parseResponse: (data) => data.models || []
+    customResolver: buildOAuthResolver({
+      refreshFn: (conn) => refreshGoogleToken(
+        conn.refreshToken,
+        antigravityProvider.transport.clientId || ANTIGRAVITY_OAUTH_CLIENT.clientId,
+        antigravityProvider.transport.clientSecret || ANTIGRAVITY_OAUTH_CLIENT.clientSecret
+      ),
+      fetchFn: (token, conn) => {
+        const projectId = conn.projectId || conn.providerSpecificData?.projectId;
+        return fetch(ANTIGRAVITY_MODELS_URL, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`,
+            "User-Agent": antigravityProvider.transport.headers["User-Agent"]
+          },
+          body: JSON.stringify(projectId ? { project: projectId } : {})
+        });
+      },
+      parseFn: parseAntigravityModels,
+      errorLabel: "Failed to fetch Antigravity models"
+    })
   },
   github: {
     url: "https://api.githubcopilot.com/models",
