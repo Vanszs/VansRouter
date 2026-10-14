@@ -14,6 +14,7 @@ import { resolveCursorModels } from "open-sse/services/cursorModels.js";
 import { getKimchiUserAgent } from "open-sse/utils/kimchiUserAgent.js";
 import { ANTHROPIC_API_VERSION } from "open-sse/providers/shared.js";
 import codexProvider from "open-sse/providers/registry/codex.js";
+import clineProvider from "open-sse/providers/registry/cline.js";
 
 const GEMINI_CLI_MODELS_URL = "https://cloudcode-pa.googleapis.com/v1internal:fetchAvailableModels";
 
@@ -291,6 +292,31 @@ const PROVIDER_MODELS_CONFIG = {
     authHeader: "Authorization",
     authPrefix: "Bearer ",
     parseResponse: (data) => data?.data || data?.models || [],
+  },
+  // Cline's catalogue is public, so this resolver never needs the connection
+  // token and cannot spend quota. owner/model ids are served verbatim.
+  cline: {
+    customResolver: async () => {
+      try {
+        const response = await fetch(clineProvider.modelsFetcher.url, {
+          method: "GET",
+          headers: { "Content-Type": "application/json" },
+        });
+        if (response.ok) {
+          const data = await response.json();
+          const models = parseOpenAIStyleModels(data)
+            .filter((m) => typeof m?.id === "string" && m.id !== "")
+            .map((m) => ({ id: m.id, name: m.name || m.id }));
+          if (models.length > 0) return { models };
+        }
+      } catch (error) {
+        console.log("Failed to fetch Cline models dynamically, falling back to static:", error.message);
+      }
+      return {
+        models: getStaticProviderModels(clineProvider.alias),
+        warning: "Failed to fetch Cline models; falling back to static catalog.",
+      };
+    },
   },
   cursor: {
     customResolver: async (connection) => {
