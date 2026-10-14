@@ -286,12 +286,17 @@ export const MODEL_CAPABILITIES = {
 
   // GLM vision variants (text GLM has no vision) — 5.3-Flash is natively
   // multimodal per z.ai and carries the full 1M window.
+  // thinkingCanDisable:false is REQUIRED, not a default: z.ai's docs state the
+  // 5.3 line no longer supports disabling thinking and errors if thinking.type
+  // is "disabled". Left true, applyThinking emitted enable_thinking:false on
+  // turns that asked for no reasoning and z.ai answered 400 code 1210.
   "glm-5.3-flash": {
     vision: true,
     videoInput: true,
     pdf: true,
     reasoning: true,
     thinkingFormat: "zai",
+    thinkingCanDisable: false,
     contextWindow: 1000000,
     maxOutput: 131072,
   },
@@ -1463,7 +1468,8 @@ export const PATTERN_CAPABILITIES = [
       reasoning: true,
       thinkingFormat: "zai",
       thinkingEffortSupported: true,
-      contextWindow: 200000,
+      thinkingCanDisable: false,
+      contextWindow: 1000000,
       maxOutput: 128000,
     },
   },
@@ -1473,7 +1479,7 @@ export const PATTERN_CAPABILITIES = [
       reasoning: true,
       thinkingFormat: "zai",
       thinkingEffortSupported: true,
-      contextWindow: 200000,
+      contextWindow: 1000000,
       maxOutput: 128000,
     },
   },
