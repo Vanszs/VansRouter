@@ -569,17 +569,21 @@ async function buildConnectedProviderIds(providerId, conn, kindFilter, customMod
   }
 
   const providerInfo = AI_PROVIDERS[providerId];
-  if (providerInfo?.noAuth && providerInfo?.modelsFetcher) {
-    const fetcherIds = await fetchModelsFetcherIds(providerId, providerInfo);
-    rawModelIds = Array.from(new Set([...rawModelIds, ...fetcherIds]));
-  }
-
-  if (isPassthroughProvider && rawModelIds.length === 0) {
-    rawModelIds = providerModels.map((m) => m.id);
-  }
 
   if (isPassthroughProvider && !hasExplicitEnabledModels) {
     rawModelIds = providerModels.map((m) => m.id);
+  }
+
+  // A provider that publishes a live catalogue owns ids the static registry
+  // cannot know. This merge must come after the passthrough reset above, which
+  // otherwise discards them; it must NOT be gated on noAuth, because that
+  // silently excluded every OAuth provider declaring a fetcher (cline), leaving
+  // its catalogue models listed in /v1/models but rejected by the chat gate.
+  // An explicit enabledModels allowlist still wins, matching the live resolver
+  // below, and callers may opt out wholesale with skipDynamicFetch.
+  if (providerInfo?.modelsFetcher && !hasExplicitEnabledModels && !skipDynamicFetch) {
+    const fetcherIds = await fetchModelsFetcherIds(providerId, providerInfo);
+    rawModelIds = Array.from(new Set([...rawModelIds, ...fetcherIds]));
   }
 
   const liveResolver = LIVE_MODEL_RESOLVERS[providerId];

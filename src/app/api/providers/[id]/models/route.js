@@ -16,6 +16,7 @@ import { ANTHROPIC_API_VERSION, ANTIGRAVITY_OAUTH_CLIENT } from "open-sse/provid
 import codexProvider from "open-sse/providers/registry/codex.js";
 import clineProvider from "open-sse/providers/registry/cline.js";
 import antigravityProvider from "open-sse/providers/registry/antigravity.js";
+import { fetchModelsFetcherIds } from "@/sse/services/allowedModels.js";
 
 const GEMINI_CLI_MODELS_URL = "https://cloudcode-pa.googleapis.com/v1internal:fetchAvailableModels";
 
@@ -110,6 +111,14 @@ const resolveQwenModelsUrl = (connection) => {
 
 // Generic custom resolver for OAuth providers that need refresh-on-401 + token persist.
 // Receives a `fetchFn(token)` and returns parsed models or throws.
+// Fetches are bounded: an unresponsive provider endpoint would otherwise hold the
+// route handler open indefinitely. Same budget as the canonical
+// fetchModelsFetcherIds helper. A timeout surfaces as an AbortError and takes the
+// existing fall-to-static path.
+const MODELS_FETCH_TIMEOUT_MS = 8000;
+const timedFetch = (url, options = {}) =>
+  fetch(url, { ...options, signal: options.signal || AbortSignal.timeout(MODELS_FETCH_TIMEOUT_MS) });
+
 const buildOAuthResolver = ({ refreshFn, fetchFn, parseFn, errorLabel }) => async (connection) => {
   const { accessToken, refreshToken } = connection;
   if (!accessToken) {
@@ -207,7 +216,7 @@ const PROVIDER_MODELS_CONFIG = {
       ),
       fetchFn: (token, conn) => {
         const projectId = conn.projectId || conn.providerSpecificData?.projectId;
-        return fetch(ANTIGRAVITY_MODELS_URL, {
+        return timedFetch(ANTIGRAVITY_MODELS_URL, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -327,23 +336,14 @@ const PROVIDER_MODELS_CONFIG = {
     parseResponse: (data) => data?.data || data?.models || [],
   },
   // Cline's catalogue is public, so this resolver never needs the connection
-  // token and cannot spend quota. owner/model ids are served verbatim.
+  // token and cannot spend quota. Reuses the canonical fetcher helper rather than
+  // a bespoke fetch: that helper already carries the bounded timeout, the
+  // response-shape handling and the cache. owner/model ids are served verbatim.
   cline: {
     customResolver: async () => {
-      try {
-        const response = await fetch(clineProvider.modelsFetcher.url, {
-          method: "GET",
-          headers: { "Content-Type": "application/json" },
-        });
-        if (response.ok) {
-          const data = await response.json();
-          const models = parseOpenAIStyleModels(data)
-            .filter((m) => typeof m?.id === "string" && m.id !== "")
-            .map((m) => ({ id: m.id, name: m.name || m.id }));
-          if (models.length > 0) return { models };
-        }
-      } catch (error) {
-        console.log("Failed to fetch Cline models dynamically, falling back to static:", error.message);
+      const ids = await fetchModelsFetcherIds("cline", clineProvider);
+      if (ids.length > 0) {
+        return { models: ids.map((id) => ({ id, name: id })) };
       }
       return {
         models: getStaticProviderModels(clineProvider.alias),

@@ -94,7 +94,9 @@ function digestBase62(digest) {
 // Translated ids are stable per input: replaying the same session value must
 // reuse one upstream session. Callers that carry credentials also persist the id
 // on `runtimeOpencodeSession`; this covers the ones that do not.
-// Key = `${kind}\0${clientTool}\0${value}`, Value = { id, lastUsed }.
+// Key = `${kind}\0${clientTool}\0${value}`, Value = id. Eviction is
+// insertion-ordered (oldest id first); entries are small and never need
+// per-entry recency, so this stays a plain Map rather than an LRU.
 const translatedIdStore = new Map();
 const MAX_TRANSLATED_IDS = 5000;
 
@@ -103,10 +105,7 @@ function translateCanonicalId(value, pattern, prefix, kind, inverted, clientTool
   if (pattern.test(trimmed)) return trimmed;
   const cacheKey = `${kind}\0${clientTool || "generic"}\0${value ?? ""}`;
   const cached = translatedIdStore.get(cacheKey);
-  if (cached) {
-    cached.lastUsed = Date.now();
-    return cached.id;
-  }
+  if (cached) return cached;
   const digest = crypto
     .createHash("sha256")
     .update(`opencode\0${kind}\0${clientTool || "generic"}\0${value ?? ""}`)
@@ -115,7 +114,7 @@ function translateCanonicalId(value, pattern, prefix, kind, inverted, clientTool
   if (translatedIdStore.size >= MAX_TRANSLATED_IDS) {
     translatedIdStore.delete(translatedIdStore.keys().next().value);
   }
-  translatedIdStore.set(cacheKey, { id, lastUsed: Date.now() });
+  translatedIdStore.set(cacheKey, id);
   return id;
 }
 
