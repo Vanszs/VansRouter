@@ -10,6 +10,7 @@ import { stripUnsupportedParams } from "../translator/concerns/paramSupport.js";
 import { getCapabilitiesForModel } from "../providers/capabilities.js";
 import { getKimchiUserAgent } from "../utils/kimchiUserAgent.js";
 import { extractClaudeSessionIdFromUserId } from "../utils/claudeCloaking.js";
+import { refreshCodebuddyToken } from "../services/tokenRefresh/providers.js";
 
 // Auth header descriptors — derived from registry transport.auth, fallback to hardcoded defaults.
 const BEARER = { combined: true, header: "Authorization", scheme: "bearer" };
@@ -353,7 +354,13 @@ export class DefaultExecutor extends BaseExecutor {
       clinepass: () => this.refreshCline(credentials.refreshToken, proxyOptions),
       kimi: () => this.refreshKimi(credentials, proxyOptions),
       "kimi-coding": () => this.refreshKimi(credentials, proxyOptions),
-      kilocode: () => this.refreshKilocode(credentials.refreshToken, proxyOptions)
+      kilocode: () => this.refreshKilocode(credentials.refreshToken, proxyOptions),
+      // CodeBuddy's access token lives ~1 year, so the pre-flight expiry check
+      // never fires; without this entry a 401 could not be retried with a fresh
+      // token and the connection stayed broken until re-auth. Manual token paste
+      // has no refresh token, so this no-ops there (guarded above).
+      "codebuddy-cn": () => refreshCodebuddyToken(credentials.refreshToken, log, "codebuddy-cn"),
+      "codebuddy-intl": () => refreshCodebuddyToken(credentials.refreshToken, log, "codebuddy-intl")
     };
 
     const refresher = refreshers[this.provider];

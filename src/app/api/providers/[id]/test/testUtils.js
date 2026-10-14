@@ -339,23 +339,30 @@ function isTokenExpired(connection) {
   return shouldRefreshCredentials(connection.provider, connection);
 }
 
+// tokenExists providers whose tokens are JWTs: an expired one still "exists",
+// so the token-exists strategy must inspect exp or an expired import reports as
+// connected. Cursor has no probe endpoint (protobuf API); CodeBuddy exposes only
+// /v2/chat/completions, which would spend quota.
+const JWT_TOKEN_EXPIRED_MESSAGE = {
+  cursor: "Cursor token expired. Please re-import token from Cursor IDE.",
+  "codebuddy-cn": "CodeBuddy access token expired. Please re-connect your CodeBuddy account.",
+  "codebuddy-intl": "CodeBuddy access token expired. Please re-connect your CodeBuddy account.",
+};
+
 export async function testOAuthConnection(connection, effectiveProxy = null) {
   const config = OAUTH_TEST_CONFIG[connection.provider];
   if (!config) return { valid: false, error: "Provider test not supported", refreshed: false };
   if (!connection.accessToken) return { valid: false, error: "No access token", refreshed: false };
 
-  // Cursor uses protobuf API - can only verify token exists, not test endpoint
   if (config.tokenExists) {
-    // Cursor sessions are JWTs: an expired one still "exists", so the token-exists
-    // strategy must inspect exp or an expired import reports as connected.
-    if (connection.provider === "cursor" && connection.accessToken) {
+    if (JWT_TOKEN_EXPIRED_MESSAGE[connection.provider] && connection.accessToken) {
       try {
         const payload = JSON.parse(Buffer.from(String(connection.accessToken).split(".")[1], "base64url").toString("utf8"));
         const exp = Number(payload?.exp);
         if (Number.isFinite(exp)) {
           const expMs = exp > 1e12 ? exp : exp * 1000;   // accept seconds and milliseconds
           if (expMs <= Date.now()) {
-            return { valid: false, error: "Cursor token expired. Please re-import token from Cursor IDE." };
+            return { valid: false, error: JWT_TOKEN_EXPIRED_MESSAGE[connection.provider] };
           }
         }
       } catch {
