@@ -55,16 +55,15 @@ const parseGeminiCliModels = (data) => {
 };
 
 // The live Antigravity catalogue carries two unshipped preview slots
-// (`tab_flash_lite_preview` / `tab_jump_flash_lite_preview`) whose `model` is
-// MODEL_PLACEHOLDER_M19 / _M28 and which are NOT flagged isInternal, so
-// parseGeminiCliModels would surface them in the picker. Filtered here rather
-// than in the shared parser so gemini-cli keeps its current output untouched.
+// (`tab_flash_lite_preview` / `tab_jump_flash_lite_preview`) which are NOT
+// flagged isInternal, so parseGeminiCliModels would surface them in the picker.
+// They are identified by the `tab_` prefix alone: the payload's own `model`
+// field is MODEL_PLACEHOLDER_* for real models too (gemini-3.8-flash-tiered and
+// claude-sonnet-4-6 among them), so filtering on that string deletes valid
+// entries. Filtered here rather than in the shared parser so gemini-cli keeps
+// its current output untouched.
 const parseAntigravityModels = (data) =>
-  parseGeminiCliModels(data).filter((model) => {
-    if (model.id.startsWith("tab_")) return false;
-    const upstream = data?.models?.[model.id]?.model;
-    return !(typeof upstream === "string" && upstream.startsWith("MODEL_PLACEHOLDER"));
-  });
+  parseGeminiCliModels(data).filter((model) => !model.id.startsWith("tab_"));
 
 const appendCodexReviewModels = (models) => models.flatMap((model) => {
   const id = model?.id || model?.slug || model?.model || model?.name;

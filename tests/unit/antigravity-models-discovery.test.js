@@ -35,9 +35,13 @@ vi.mock("../../open-sse/utils/proxyFetch.js", () => ({
 const ANTIGRAVITY_MODELS_URL = "https://daily-cloudcode-pa.googleapis.com/v1internal:fetchAvailableModels";
 
 // Mirrors the live payload shape: { models: { <id>: {...} } }.
+// Important: the payload's own `model` field is MODEL_PLACEHOLDER_* for REAL
+// models too (gemini-3.8-flash-tiered is MODEL_PLACEHOLDER_M322 live), so that
+// field must never be used to decide visibility. Only `tab_` ids are slots.
 const catalogueFixture = {
   models: {
-    "gemini-3.8-flash-tiered": { maxTokens: 1048576 },
+    "gemini-3.8-flash-tiered": { model: "MODEL_PLACEHOLDER_M322", maxTokens: 1048576 },
+    "claude-sonnet-4-6": { model: "MODEL_PLACEHOLDER_M999" },
     "chat_20706": { isInternal: true },
     "tab_flash_lite_preview": { model: "MODEL_PLACEHOLDER_M19" },
   },
@@ -90,6 +94,17 @@ describe("GET /api/providers/[id]/models for antigravity", () => {
     expect(ids).toContain("gemini-3.8-flash-tiered");
     expect(ids).not.toContain("chat_20706");
     expect(ids).not.toContain("tab_flash_lite_preview");
+  });
+
+  // A real model whose `model` field is MODEL_PLACEHOLDER_* must survive: that
+  // field is Google's internal naming for genuinely served models, so filtering
+  // on it silently deletes valid entries.
+  it("keeps real models whose model field is a MODEL_PLACEHOLDER value", async () => {
+    const { body } = await getModels();
+    const ids = body.models.map((m) => m.id);
+
+    expect(ids).toContain("gemini-3.8-flash-tiered");
+    expect(ids).toContain("claude-sonnet-4-6");
   });
 
   it("calls fetchAvailableModels on the production host with the IDE User-Agent", async () => {
