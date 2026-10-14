@@ -102,7 +102,7 @@ function encodeHistoryMessage(message) {
   return agentMessage(1, agentMessage(1, agentMessage(1, text)));
 }
 
-export function buildAgentRunFrame(messages, model, tools = []) {
+export function buildAgentRunFrame(messages, model, tools = [], reasoningEffort = null) {
   // custom_system_prompt (RunRequest field 8) makes AgentService return an
   // empty turn. Fold system text into the current user message instead.
   const system = messages
@@ -137,7 +137,18 @@ export function buildAgentRunFrame(messages, model, tools = []) {
     ...(conversationHistory ? [agentMessage(7, conversationHistory)] : []),
   );
   const conversationAction = agentMessage(1, userAction);
-  const requestedModel = concatBuffers(agentString(1, model), agentBool(7, true));
+  const effort = String(reasoningEffort || "").toLowerCase();
+  const effortValue = effort === "ultra" ? "max" : effort === "minimal" ? "low" : effort;
+  const parameter = effortValue && effortValue !== "none"
+    ? agentMessage(3, concatBuffers(
+      agentString(1, /gpt-/i.test(model) ? "reasoning" : "effort"),
+      agentString(2, effortValue),
+    ))
+    : null;
+  const requestedModel = concatBuffers(
+    agentString(1, model), agentBool(7, true),
+    ...(parameter ? [parameter] : []),
+  );
   // ModelDetails (field 3): thinking variants (Composer, Grok, *-thinking)
   // return an empty turn when only RequestedModel (field 9) is set.
   const modelDetails = concatBuffers(
@@ -592,7 +603,7 @@ export class CursorExecutor extends BaseExecutor {
     const upstreamModel = resolveCursorUpstreamModel(model);
     try {
       session = this.openAgentHttp2Stream(url, headers, requestController.signal);
-      session.write(buildAgentRunFrame(body.messages || [], upstreamModel, tools));
+      session.write(buildAgentRunFrame(body.messages || [], upstreamModel, tools, body.reasoning_effort || body.reasoning?.effort));
     } catch (error) {
       throw new Error(`Cursor AgentService request failed: ${error.message}`);
     }
