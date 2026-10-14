@@ -12,7 +12,7 @@ import { getModelTargetFormat, PROVIDER_MODELS, PROVIDER_ID_TO_ALIAS } from "../
 // OpenCode free tier limits requests per egress IP.
 const IP_LIMIT_BODY = /limit|rate|quota|exhausted|capacity|too many|retry/i;
 
-const OPENCODE_UA = "opencode/1.18.31";
+const OPENCODE_UA = "opencode/1.19.0";
 
 // Lane → registry transport format / shared /zen/v1 path (free lane has no transports).
 const LANE_FORMAT = { chat: "openai", claude: "claude", responses: "openai-responses" };
@@ -52,23 +52,25 @@ function clientRequestId(requestId) {
 // Canonical id formats OpenCode validates: ses_<12 hex><14 base62> / msg_<12 hex><14 base62>.
 const BASE62 = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
 
-function translateCanonicalId(value, pattern, prefix, kind, clientTool = "") {
-  const trimmed = typeof value === "string" ? value.trim() : "";
-  if (pattern.test(trimmed)) return trimmed;
-  const digest = crypto
-    .createHash("sha256")
-    .update(`opencode\0${kind}\0${clientTool || "generic"}\0${value ?? ""}`)
-    .digest();
-  const randomPart = Array.from(digest.subarray(6, 20), (byte) => BASE62[byte % 62]).join("");
-  return `${prefix}${digest.subarray(0, 6).toString("hex")}${randomPart}`;
-}
+// Upstream reads the 12 hex chars as `Identifier.descending("session")` for ses_
+// (inverted timestamp) and `Identifier.ascending("message")` for msg_ (forward
+// timestamp): `ts * 0x1000 + counter`, where the low 12 bits are the counter.
+// The free tier 403s any prefix that does not decode to a timestamp, so a
+// random prefix is rejected even when the id shape is canonical.
+const ID_COUNTER_BITS = 12n;
+const ID_COUNTER_MASK = 0xfffn;
+let idTimestamp = 0n;
+let idCounter = 0n;
 
-export function translateSessionId(value, clientTool) {
-  return translateCanonicalId(value, CANONICAL_SESSION, "ses_", "session", clientTool);
-}
-
-export function translateRequestId(value) {
-  return translateCanonicalId(value, CANONICAL_REQUEST, "msg_", "request");
+// Counter starts at 1 for a fresh millisecond (matches the +1 of the request id)
+// and increments within it, so ids minted in one millisecond still differ.
+function idCounterFor(ts) {
+  if (ts !== idTimestamp) {
+    idTimestamp = ts;
+    idCounter = 0n;
+  }
+  idCounter = (idCounter + 1n) & ID_COUNTER_MASK;
+  return idCounter;
 }
 
 function timeHex(value) {
@@ -77,17 +79,65 @@ function timeHex(value) {
   ).join("");
 }
 
+// Session ids encode the inverted timestamp, request ids the forward one.
+function stampHex(inverted, ts) {
+  const raw = (ts << ID_COUNTER_BITS) | idCounterFor(ts);
+  return timeHex(inverted ? ~raw : raw);
+}
+
+// Deterministic per-input suffix: same input always yields the same id so
+// multi-turn sessions and retries stay stable.
+function digestBase62(digest) {
+  return Array.from(digest.subarray(6, 20), (byte) => BASE62[byte % 62]).join("");
+}
+
+// Translated ids are stable per input: replaying the same session value must
+// reuse one upstream session. Callers that carry credentials also persist the id
+// on `runtimeOpencodeSession`; this covers the ones that do not.
+// Key = `${kind}\0${clientTool}\0${value}`, Value = { id, lastUsed }.
+const translatedIdStore = new Map();
+const MAX_TRANSLATED_IDS = 5000;
+
+function translateCanonicalId(value, pattern, prefix, kind, inverted, clientTool = "") {
+  const trimmed = typeof value === "string" ? value.trim() : "";
+  if (pattern.test(trimmed)) return trimmed;
+  const cacheKey = `${kind}\0${clientTool || "generic"}\0${value ?? ""}`;
+  const cached = translatedIdStore.get(cacheKey);
+  if (cached) {
+    cached.lastUsed = Date.now();
+    return cached.id;
+  }
+  const digest = crypto
+    .createHash("sha256")
+    .update(`opencode\0${kind}\0${clientTool || "generic"}\0${value ?? ""}`)
+    .digest();
+  const id = `${prefix}${stampHex(inverted, BigInt(Date.now()))}${digestBase62(digest)}`;
+  if (translatedIdStore.size >= MAX_TRANSLATED_IDS) {
+    translatedIdStore.delete(translatedIdStore.keys().next().value);
+  }
+  translatedIdStore.set(cacheKey, { id, lastUsed: Date.now() });
+  return id;
+}
+
+export function translateSessionId(value, clientTool) {
+  return translateCanonicalId(value, CANONICAL_SESSION, "ses_", "session", true, clientTool);
+}
+
+export function translateRequestId(value) {
+  return translateCanonicalId(value, CANONICAL_REQUEST, "msg_", "request", false);
+}
+
 function randomPart() {
   const bytes = crypto.randomBytes(14);
   return Array.from(bytes, (b) => BASE62[b % 62]).join("");
 }
 
 function generateRequestId() {
-  return `msg_${timeHex(BigInt(Date.now()) * 0x1000n + 1n)}${randomPart()}`;
+  return `msg_${stampHex(false, BigInt(Date.now()))}${randomPart()}`;
 }
 
 function generateSessionId() {
-  return `ses_${timeHex(~(BigInt(Date.now()) * 0x1000n))}${randomPart()}`;
+  return `ses_${stampHex(true, BigInt(Date.now()))}${randomPart()}`;
 }
 
 // Declared lane for a model: primary registry alias (oc free lane / ocz keyed

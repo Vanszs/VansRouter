@@ -20,7 +20,7 @@ describe("OpenCode free-tier request identity", () => {
 
   it("defaults to a versioned User-Agent and canonical session/request ids", () => {
     const headers = executor.buildHeaders({}, true);
-    expect(headers["User-Agent"]).toBe("opencode/1.18.31");
+    expect(headers["User-Agent"]).toBe("opencode/1.19.0");
     assertCanonical(headers["x-opencode-session"], "ses");
     assertCanonical(headers["x-opencode-request"], "msg");
   });
@@ -33,7 +33,7 @@ describe("OpenCode free-tier request identity", () => {
   it("replaces a version-less or too-old client User-Agent", () => {
     for (const ua of ["opencode", "opencode/1.4.0", "claude-cli/2.0"]) {
       const headers = executor.buildHeaders({ rawHeaders: { "user-agent": ua } }, true);
-      expect(headers["User-Agent"]).toBe("opencode/1.18.31");
+      expect(headers["User-Agent"]).toBe("opencode/1.19.0");
     }
   });
 

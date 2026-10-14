@@ -801,7 +801,7 @@ async function testApiKeyConnection(connection, effectiveProxy = null) {
       }
       case "opencode": {
         const res = await fetchWithConnectionProxy("https://opencode.ai/zen/v1/models", {
-          headers: { Authorization: "Bearer public", "User-Agent": "opencode/1.18.31" },
+          headers: { Authorization: "Bearer public", "User-Agent": "opencode/1.19.0" },
         }, effectiveProxy);
         return { valid: res.ok, error: res.ok ? null : "OpenCode free tier unavailable" };
       }
