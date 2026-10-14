@@ -651,7 +651,16 @@ export class CursorExecutor extends BaseExecutor {
     };
 
     const consume = async (onEvent) => {
+      // Fork: a trailer frame marks the turn spent, so the completion path must
+      // not also emit a duplicate `done`. Upstream: an empty turn with no text is
+      // an error, not a silent success. Both guards are load-bearing.
       let trailerErrorOccurred = false;
+      const finishTurn = () => {
+        flushThinkingFallback(onEvent);
+        finished = true;
+        if (emittedText) onEvent({ type: "done" });
+        else onEvent({ type: "error", value: "Cursor AgentService returned an empty turn" });
+      };
       try {
         while (!finished) {
           const { done, value } = await session.read();
@@ -709,9 +718,7 @@ export class CursorExecutor extends BaseExecutor {
               }
               // Keep unsigned reasoning upstream-only for Anthropic clients.
               if (update.has(14)) {
-                flushThinkingFallback(onEvent);
-                finished = true;
-                onEvent({ type: "done" });
+                finishTurn();
               }
             }
 
@@ -769,9 +776,13 @@ export class CursorExecutor extends BaseExecutor {
             }
           });
         }
+        if (!finished) finishTurn();
       } finally {
         try { session.end(); } catch {}
         try { session.close(); } catch {}
+        // Upstream's finishTurn already ran for the normal path (and emitted the
+        // empty-turn error). This fork-side guard still covers a trailer error,
+        // where `finished` is set by the trailer branch and no done should follow.
         if (!finished && !trailerErrorOccurred) {
           flushThinkingFallback(onEvent);
           onEvent({ type: "done" });
