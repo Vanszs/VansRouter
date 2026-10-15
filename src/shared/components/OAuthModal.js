@@ -187,6 +187,7 @@ export default function OAuthModal({ isOpen, provider, providerInfo, onSuccess, 
         "glm",
         "minimax-code",
         "minimax-code-global",
+        "nous",
       ];
       if (deviceCodeProviders.includes(provider)) {
         setIsDeviceCode(true);

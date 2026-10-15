@@ -1,3 +1,5 @@
+import { normalizeNousFreeModels } from "open-sse/services/nous.js";
+
 // Free OpenCode models that don't use the "-free" id suffix
 const KNOWN_FREE_OPENCODE_MODELS = ["big-pickle"];
 
@@ -69,6 +71,7 @@ export const FILTERS = {
   // so we cannot filter server-side. Whitelist is the source of truth.
   "nvidia-free": (models) =>
     (Array.isArray(models) ? models : [])
+<<<<<<< HEAD
       .filter((m) => m.id && NVIDIA_FREE_MODEL_IDS.has(m.id))
       .map((m) => {
         // Friendly display mapping for whitelisted models
@@ -85,4 +88,11 @@ export const FILTERS = {
         };
         return { id: m.id, name: friendlyNames[m.id] || m.id };
       }),
+=======
+      .filter((m) => (m.tier === "free" || m.id?.endsWith(":free")) && m.supports_chat === true && (!m.media_type || m.media_type === "chat" || m.media_type === "text"))
+      .map((m) => ({ id: m.id, name: m.name || m.id, contextLength: m.context_length }))
+      .sort((a, b) => String(a.id).localeCompare(String(b.id))),
+
+  "nous-free": normalizeNousFreeModels,
+>>>>>>> 165f9b90 (feat(providers): add Nous Research OAuth + free-tier provider)
 };
