@@ -12,9 +12,10 @@ import { resolveGrokCliModels } from "open-sse/services/grokCliModels.js";
 import { resolveConnectionProxyConfig } from "@/lib/network/connectionProxy";
 import { resolveCursorModels } from "open-sse/services/cursorModels.js";
 import { getKimchiUserAgent } from "open-sse/utils/kimchiUserAgent.js";
-import { ANTHROPIC_API_VERSION, ANTIGRAVITY_OAUTH_CLIENT } from "open-sse/providers/shared.js";
+import { ANTHROPIC_API_VERSION } from "open-sse/providers/shared.js";
 import codexProvider from "open-sse/providers/registry/codex.js";
 import clineProvider from "open-sse/providers/registry/cline.js";
+import cursorProvider from "open-sse/providers/registry/cursor.js";
 import antigravityProvider from "open-sse/providers/registry/antigravity.js";
 import { fetchModelsFetcherIds } from "@/sse/services/allowedModels.js";
 
@@ -111,14 +112,16 @@ const resolveQwenModelsUrl = (connection) => {
 
 // Generic custom resolver for OAuth providers that need refresh-on-401 + token persist.
 // Receives a `fetchFn(token)` and returns parsed models or throws.
-// Fetches are bounded: an unresponsive provider endpoint would otherwise hold the
-// route handler open indefinitely. Same budget as the canonical
-// fetchModelsFetcherIds helper. A timeout surfaces as an AbortError and takes the
-// existing fall-to-static path.
+// Every fetch a fetchFn performs must go through `timedFetch`: an unresponsive
+// provider endpoint would otherwise hold the route handler open indefinitely.
+// Same budget as the canonical fetchModelsFetcherIds helper. A timeout surfaces
+// as an AbortError and takes the existing fall-to-static path.
 const MODELS_FETCH_TIMEOUT_MS = 8000;
 const timedFetch = (url, options = {}) =>
   fetch(url, { ...options, signal: options.signal || AbortSignal.timeout(MODELS_FETCH_TIMEOUT_MS) });
 
+// Fails the module if a future fetchFn bypasses timedFetch: a bare `fetch(` call
+// inside this file's buildOAuthResolver wiring is the bug this guards.
 const buildOAuthResolver = ({ refreshFn, fetchFn, parseFn, errorLabel }) => async (connection) => {
   const { accessToken, refreshToken } = connection;
   if (!accessToken) {
@@ -194,7 +197,7 @@ const PROVIDER_MODELS_CONFIG = {
   codex: {
     customResolver: buildOAuthResolver({
       refreshFn: (conn) => refreshCodexToken(conn.refreshToken),
-      fetchFn: (token) => fetch(CODEX_MODELS_URL, {
+      fetchFn: (token) => timedFetch(CODEX_MODELS_URL, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -211,8 +214,8 @@ const PROVIDER_MODELS_CONFIG = {
     customResolver: buildOAuthResolver({
       refreshFn: (conn) => refreshGoogleToken(
         conn.refreshToken,
-        antigravityProvider.transport.clientId || ANTIGRAVITY_OAUTH_CLIENT.clientId,
-        antigravityProvider.transport.clientSecret || ANTIGRAVITY_OAUTH_CLIENT.clientSecret
+        antigravityProvider.transport.clientId,
+        antigravityProvider.transport.clientSecret
       ),
       fetchFn: (token, conn) => {
         const projectId = conn.projectId || conn.providerSpecificData?.projectId;
@@ -359,7 +362,7 @@ const PROVIDER_MODELS_CONFIG = {
       }, { log: console });
       if (result?.models?.length) return { models: result.models };
       return {
-        models: getStaticProviderModels("cursor"),
+        models: getStaticProviderModels(cursorProvider.alias),
         warning: "Cursor returned no live models; falling back to static catalog.",
       };
     },
@@ -452,7 +455,7 @@ const PROVIDER_MODELS_CONFIG = {
       fetchFn: (token, conn) => {
         const projectId = conn.projectId || conn.providerSpecificData?.projectId;
         const body = projectId ? { project: projectId } : {};
-        return fetch(GEMINI_CLI_MODELS_URL, {
+        return timedFetch(GEMINI_CLI_MODELS_URL, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",

@@ -6,6 +6,8 @@ import { getDefaultModel } from "open-sse/config/providerModels.js";
 import { resolveOllamaLocalHost, PROVIDERS } from "open-sse/config/providers.js";
 import { CODEX_CLI_VERSION } from "open-sse/config/appConstants.js";
 import { GROK_CLI_PAGER_USER_AGENT, GROK_CLI_VERSION } from "open-sse/config/grokCli.js";
+import { OPENCODE_UA } from "open-sse/executors/opencode.js";
+import { decodeJwtPayload } from "@/lib/oauth/kiroExternalIdp.js";
 import {
   refreshProviderCredentials,
   shouldRefreshCredentials,
@@ -355,18 +357,17 @@ export async function testOAuthConnection(connection, effectiveProxy = null) {
   if (!connection.accessToken) return { valid: false, error: "No access token", refreshed: false };
 
   if (config.tokenExists) {
-    if (JWT_TOKEN_EXPIRED_MESSAGE[connection.provider] && connection.accessToken) {
-      try {
-        const payload = JSON.parse(Buffer.from(String(connection.accessToken).split(".")[1], "base64url").toString("utf8"));
-        const exp = Number(payload?.exp);
-        if (Number.isFinite(exp)) {
-          const expMs = exp > 1e12 ? exp : exp * 1000;   // accept seconds and milliseconds
-          if (expMs <= Date.now()) {
-            return { valid: false, error: JWT_TOKEN_EXPIRED_MESSAGE[connection.provider] };
-          }
+    if (JWT_TOKEN_EXPIRED_MESSAGE[connection.provider]) {
+      // Canonical decoder (src/lib/oauth/kiroExternalIdp.js) rather than an
+      // inline split: it validates the 3-part shape and restores base64 padding,
+      // and returns null instead of throwing on a non-JWT.
+      const payload = decodeJwtPayload(connection.accessToken);
+      const exp = Number(payload?.exp);
+      if (Number.isFinite(exp)) {
+        const expMs = exp > 1e12 ? exp : exp * 1000;   // accept seconds and milliseconds
+        if (expMs <= Date.now()) {
+          return { valid: false, error: JWT_TOKEN_EXPIRED_MESSAGE[connection.provider] };
         }
-      } catch {
-        // not a JWT — fall through to the plain existence check
       }
     }
 
@@ -808,7 +809,7 @@ async function testApiKeyConnection(connection, effectiveProxy = null) {
       }
       case "opencode": {
         const res = await fetchWithConnectionProxy("https://opencode.ai/zen/v1/models", {
-          headers: { Authorization: "Bearer public", "User-Agent": "opencode/1.19.0" },
+          headers: { Authorization: "Bearer public", "User-Agent": OPENCODE_UA },
         }, effectiveProxy);
         return { valid: res.ok, error: res.ok ? null : "OpenCode free tier unavailable" };
       }

@@ -12,7 +12,7 @@ import { getModelTargetFormat, PROVIDER_MODELS, PROVIDER_ID_TO_ALIAS } from "../
 // OpenCode free tier limits requests per egress IP.
 const IP_LIMIT_BODY = /limit|rate|quota|exhausted|capacity|too many|retry/i;
 
-const OPENCODE_UA = "opencode/1.19.0";
+export const OPENCODE_UA = "opencode/1.19.0";
 
 // Lane → registry transport format / shared /zen/v1 path (free lane has no transports).
 const LANE_FORMAT = { chat: "openai", claude: "claude", responses: "openai-responses" };
