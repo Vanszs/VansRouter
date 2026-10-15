@@ -302,6 +302,19 @@ export default function ConnectionRow({ connection, proxyPools, isOAuth, isFirst
               )}
             </div>
           )}
+          {autoPing?.onOpenSchedule && (
+            <Tooltip text={autoPing.scheduleOn
+              ? `Scheduled ping active${autoPing.scheduleSummary ? `: ${autoPing.scheduleSummary}` : ""}. Click to edit.`
+              : "Ping at fixed local times (e.g. 09:30 / 14:30 / 19:30) so the 5h windows match your working hours."}>
+              <button
+                onClick={autoPing.onOpenSchedule}
+                className={`flex w-full flex-col items-center rounded px-2 py-1 transition-colors hover:bg-black/5 dark:hover:bg-white/5 ${autoPing.scheduleOn ? "text-primary" : "text-text-muted hover:text-primary"}`}
+              >
+                <span className="material-symbols-outlined text-[18px]">schedule</span>
+                <span className="text-[10px] leading-tight">Schedule</span>
+              </button>
+            </Tooltip>
+          )}
           {autoPing && (
             <Tooltip text={autoPingTooltip}>
               <button
