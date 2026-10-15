@@ -45,13 +45,14 @@ export default {
   ],
   // The Cline catalogue (462 models at time of writing) answers this endpoint
   // without any credentials, so the fetcher needs no token. Ids are owner/model
-  // and the 8 static entries above stay as the fallback; passthroughModels keeps
-  // a catalogue id usable before it has been imported into the picker.
+  // and the 8 static entries above stay as the fallback.
   modelsFetcher: { url: "https://api.cline.bot/api/v1/models", type: "openai" },
-  // Opt in to feeding the chat allowlist from the live catalogue. Without this
-  // the picker lists catalogue ids that the chat gate rejects (issue #159).
+  // Opt in to feeding the chat allowlist from the live catalogue, so a catalogue
+  // id is accepted by the chat gate (issue #159).
+  // Deliberately NOT passthroughModels: the picker branches on that flag BEFORE
+  // it reads the live catalogue, so setting it would hide the fetched models and
+  // show only the static list — the opposite of the intent.
   liveCatalog: true,
-  passthroughModels: true,
   oauth: {
     appBaseUrl: "https://app.cline.bot",
     apiBaseUrl: "https://api.cline.bot",

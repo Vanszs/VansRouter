@@ -2,7 +2,10 @@ import { createErrorResult, parseUpstreamError, formatProviderError } from "../u
 import { HTTP_STATUS, FETCH_CONNECT_TIMEOUT_MS } from "../config/runtimeConfig.js";
 import { PROVIDER_MEDIA } from "../providers/index.js";
 import { getModelUpstreamId } from "../config/providerModels.js";
-import { generateSessionId } from "../executors/opencode-zen.js";
+// opencode-zen.js does not exist in this fork: the zen executor was merged into
+// opencode.js, which owns generateSessionId. Point at the real module so this
+// handler is importable instead of throwing ERR_MODULE_NOT_FOUND.
+import { generateSessionId } from "../executors/opencode.js";
 
 /**
  * Core System One (Jev) handler — native decision payload pass-through.

@@ -138,7 +138,7 @@ function generateRequestId() {
   return `msg_${stampHex(false, BigInt(Date.now()))}${randomPart()}`;
 }
 
-function generateSessionId() {
+export function generateSessionId() {
   return `ses_${stampHex(true, BigInt(Date.now()))}${randomPart()}`;
 }
 
