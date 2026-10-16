@@ -76,8 +76,9 @@ export function extractUsageFromResponse(responseBody) {
 
   // Ollama format: prompt_eval_count/eval_count at top level (not nested under usage).
   // prompt_eval_cached_count is a cache-read subset of prompt_eval_count (cache-INCLUSIVE).
-  if (responseBody.done === true &&
-      (responseBody.prompt_eval_count !== undefined || responseBody.eval_count !== undefined)) {
+  // The typeof guard matches the canonical sibling in utils/usageTracking.js: a
+  // stringified count must fall through rather than be recorded as a token count.
+  if (responseBody.done === true && typeof responseBody.prompt_eval_count === "number") {
     const prompt = responseBody.prompt_eval_count || 0;
     const completion = responseBody.eval_count || 0;
     const cached = responseBody.prompt_eval_cached_count || 0;

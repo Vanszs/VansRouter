@@ -59,6 +59,11 @@ function buildContent(prompt, refs, detail = CODEX_REF_DETAIL) {
   return content;
 }
 
+// Deliberately stricter than the canonical extractUsage/normalizeUsage pair
+// (utils/usageTracking.js), which coerces with Number() and accepts any finite
+// float. This runs on a provider-supplied image-usage payload right before it is
+// written, so a non-integer or negative count is rejected outright rather than
+// coerced into the ledger. Not folded into the canonical mapper for that reason.
 function normalizeResponsesUsage(raw) {
   if (!raw || typeof raw !== "object" || Array.isArray(raw)) return null;
   const input = raw.input_tokens ?? raw.prompt_tokens;
