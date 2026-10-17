@@ -487,7 +487,7 @@ async function buildAllModelEntries(kindFilter, combos, customModels, modelAlias
       if (!providerMatchesKinds(providerId, kindFilter)) continue;
       for (const model of providerModels) {
         if (!kindFilter.has(modelKind(model))) continue;
-        if (isDisabled(alias, model.id)) continue;
+        if (isDisabled(alias, model.id) || isDisabled(providerId, model.id)) continue;
         entries.push({
           id: `${alias}/${model.id}`,
           object: "model",
@@ -664,7 +664,7 @@ async function buildConnectedProviderIds(providerId, conn, kindFilter, customMod
     const kind = staticModelKindById.get(modelId) || customKind || inferKindFromUnknownModelId(modelId);
     const allowAsLlm = kind === "imageToText" && kindFilter.has(LLM_KIND);
     if (!kindFilter.has(kind) && !allowAsLlm) continue;
-    if (isDisabled(outputAlias, modelId) || isDisabled(staticAlias, modelId)) continue;
+    if (isDisabled(outputAlias, modelId) || isDisabled(staticAlias, modelId) || isDisabled(providerId, modelId)) continue;
 
     const entry = {
       id: `${outputAlias}/${modelId}`,

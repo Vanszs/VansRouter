@@ -90,6 +90,11 @@ export async function deleteProviderNode(id) {
     if (!row) return;
     removed = rowToNode(row);
     db.run(`DELETE FROM providerNodes WHERE id = ?`, [id]);
+    // Custom models are keyed `${providerAlias}|${id}|${type}` and their
+    // disabled lists `${providerAlias}`; a compatible node stores both under its
+    // own id, so leaving them behind keeps a deleted node's models in /v1/models.
+    db.run(`DELETE FROM kv WHERE scope = 'customModels' AND key LIKE ?`, [`${id}|%`]);
+    db.run(`DELETE FROM kv WHERE scope = 'disabledModels' AND key = ?`, [id]);
   });
   return removed;
 }
