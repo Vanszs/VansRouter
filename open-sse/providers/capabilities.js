@@ -1075,6 +1075,23 @@ export const PATTERN_CAPABILITIES = [
     pattern: "*gemini*image*",
     caps: { vision: true, imageOutput: true, contextWindow: 1048576 },
   },
+  // Gemini 4 (Argon): no "minimal" tier (400) and no thinkingBudget — LOW/MEDIUM/HIGH only, cannot disable.
+  // This block is the one that matches first (see the duplicate compact block further
+  // down), so new gemini generations have to be registered here as well.
+  {
+    pattern: "*gemini-4*",
+    caps: {
+      vision: true,
+      audioInput: true,
+      videoInput: true,
+      reasoning: true,
+      search: true,
+      thinkingFormat: "gemini-level",
+      thinkingCanDisable: false,
+      contextWindow: 1048576,
+      maxOutput: 65536,
+    },
+  },
   {
     pattern: "*gemini-3.8*",
     caps: {
@@ -1207,6 +1224,8 @@ export const PATTERN_CAPABILITIES = [
     caps: { reasoning: true, thinkingFormat: "openai", contextWindow: 128000 },
   },
   { pattern: "*gemini*image*",  caps: { vision: true, imageOutput: true, contextWindow: 1048576 } },
+  // Gemini 4 (Argon): no "minimal" tier (400) and no thinkingBudget — LOW/MEDIUM/HIGH only, cannot disable.
+  { pattern: "*gemini-4*",      caps: { vision: true, audioInput: true, videoInput: true, reasoning: true, search: true, thinkingFormat: "gemini-level", thinkingCanDisable: false, contextWindow: 1048576, maxOutput: 65536 } },
   { pattern: "*gemini-3.8*",    caps: { vision: true, audioInput: true, videoInput: true, reasoning: true, search: true, thinkingFormat: "gemini-level", thinkingCanDisable: false, contextWindow: 1048576, maxOutput: 65536 } },
   { pattern: "*gemini-3.7*",    caps: { vision: true, audioInput: true, videoInput: true, reasoning: true, search: true, thinkingFormat: "gemini-level", thinkingCanDisable: false, contextWindow: 1048576, maxOutput: 65536 } },
   { pattern: "*gemini-3*pro*",  caps: { vision: true, audioInput: true, videoInput: true, reasoning: true, search: true, thinkingFormat: "gemini-level", thinkingCanDisable: false, contextWindow: 1048576, maxOutput: 65535 } },

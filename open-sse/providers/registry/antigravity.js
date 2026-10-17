@@ -50,6 +50,9 @@ export default {
     clientSecret: "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",
   },
   models: [
+    // No gemini-4-argon entry here: antigravity's own catalogue
+    // (v1internal:fetchAvailableModels) omits it and generateContent 404s on the
+    // id. The wire ids below are the tiered ones that catalogue does advertise.
     { id: "gemini-3.8-flash-high", name: "Gemini 3.8 Flash (High)", upstreamModelId: "gemini-3.8-flash-tiered(high)" },
     { id: "gemini-3.8-flash-medium", name: "Gemini 3.8 Flash (Medium)", upstreamModelId: "gemini-3.8-flash-tiered(medium)" },
     { id: "gemini-3.8-flash-low", name: "Gemini 3.8 Flash (Low)", upstreamModelId: "gemini-3.8-flash-tiered(low)" },
