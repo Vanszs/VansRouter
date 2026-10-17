@@ -245,7 +245,8 @@ export class AntigravityExecutor extends BaseExecutor {
       }
       return c;
     }).filter(c => Array.isArray(c.parts) && c.parts.length > 0); // ponytail: v1internal rejects empty parts[] (issue #6)
-    const contents = normalizeGeminiContents(rawContents);
+    // `model` lets the helper apply the Gemini 4 functionResponse-last ordering.
+    const contents = normalizeGeminiContents(rawContents, model);
 
     // Sanitize tool schemas and function names before sending to Antigravity.
     let tools = body.request?.tools;

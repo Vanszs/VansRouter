@@ -82,7 +82,13 @@ function openaiToGeminiBase(model, body, stream, signature = DEFAULT_THINKING_AG
     safetySettings: DEFAULT_SAFETY_SETTINGS
   };
 
-  // Generation config
+  // Generation config.
+  // Upstream eb373017 also drops temperature/top_p/top_k for Gemini 4, on the
+  // premise that Argon removed the sampling params. Live probe 2026-10-17 did
+  // not reproduce that: on gemini-4-argon those fields are still KNOWN
+  // (temperature 999 -> a range error, not the "Unknown name" 400 that an
+  // actually-removed field such as thinkingBudget produces), so we keep
+  // forwarding them. Evidence: .audit/probe-gemini4-argon-2026-10-17.txt (E).
   if (body.temperature !== undefined) {
     result.generationConfig.temperature = body.temperature;
   }
@@ -311,7 +317,7 @@ function openaiToGeminiBase(model, body, stream, signature = DEFAULT_THINKING_AG
     }
   }
 
-  result.contents = normalizeGeminiContents(result.contents);
+  result.contents = normalizeGeminiContents(result.contents, model);
   return result;
 }
 
@@ -530,7 +536,7 @@ function wrapInCloudCodeEnvelopeForClaude(model, claudeRequest, credentials = nu
     envelope.request.systemInstruction = { role: GEMINI_ROLE.USER, parts: systemParts };
   }
 
-  envelope.request.contents = normalizeGeminiContents(envelope.request.contents);
+  envelope.request.contents = normalizeGeminiContents(envelope.request.contents, model);
   return envelope;
 }
 

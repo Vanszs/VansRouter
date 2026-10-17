@@ -1839,3 +1839,7 @@ export function getCapabilitiesForModel(provider, model) {
   return refine(null, provider, model);
 }
 
+// Gemini 4 (Argon) merged user turns must keep functionResponse as the last part.
+export function isGemini4Model(model) {
+  return /(?:^|\/)gemini-4(?:$|[-.])/i.test(String(model || ""));
+}
