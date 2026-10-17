@@ -1,0 +1,31 @@
+Live probes, 2026-10-17, against https://opencode.ai — deciding 5bdcd5e7.
+
+Our CURRENT code path (as committed at 1b98f1fe):
+  headers: User-Agent opencode/1.19.0, x-opencode-client desktop,
+           x-opencode-session <our timestamp-encoded ses_ id>,
+           x-opencode-request <our timestamp-encoded msg_ id>
+  body:    decoy quartet bash/glob/grep/read (description "This tool is currently
+           unavailable and must not be used.")
+
+1) POST /zen/v1/chat/completions  quartet + our headers      => 200 SSE stream
+2) POST /zen/v1/chat/completions  quartet + v2 headers       => 200 SSE stream
+3) POST /inference/v1/chat/completions quartet + our headers  => 200 SSE stream
+4) POST /zen/v1/chat/completions  read+shell (upstream defs)  => 200 SSE stream
+5) POST /zen/v1/chat/completions  quartet + tool_choice none  => 200 SSE stream
+6) POST /zen/v1/chat/completions  quartet + tool_choice auto  => 200 SSE stream
+7) POST /zen/v1/chat/completions  NO tools                    => 403 FreeTierError
+8) UA opencode/1.17.0                                         => 426 UpgradeRequired
+     "OpenCode 1.18.0 or newer is required"
+9) UA opencode/1.18.31 / 1.19.0 / opencode/latest/2.0.26/cli  => 200 SSE stream
+
+Models served on /zen/v1 with our headers (200 SSE): deepseek-v4.1-flash-free,
+space-bunny-free, big-pickle, glm-5.3-flash-free, mimo-v2.6-flash-free.
+
+CONCLUSION: /zen/v1 is NOT dead for our client shape; /inference/v1 is not
+required. Our v1 UA, our session encoding, our quartet decoys and our
+tool_choice=none default all still pass. Upstream's stated reasons for
+5bdcd5e7 ("/zen/v1 now answers every free request with 403 FreeTierError",
+"upstream rejects any x-opencode-request with 403",
+"never default to none: upstream answers tool_choice none with 403") do NOT
+reproduce for our request shape. Adopting it would replace a verified-working
+path with an unverified one and drop the request-id handling fix #162 relies on.

@@ -1,0 +1,66 @@
+Live probes, 2026-10-17 — deciding 29fc880e + 9c141910 (Gemini 4 Argon).
+
+A) Google Gemini API (provider=gemini, API key from live DB connection):
+   GET https://generativelanguage.googleapis.com/v1beta/models => 200
+   catalogue CONTAINS "gemini-4-argon".  Model exists and is advertised.
+
+B) Same key, POST /v1beta/models/gemini-4-argon:generateContent
+   with temperature/topP  => 429 quota-exceeded (billing), NOT 404/400.
+   without sampling       => 429 quota-exceeded.
+   => reachable; our key simply has no quota. Existence proven, 200 not provable
+      today without a billable key.
+
+C) Antigravity (provider=antigravity, live OAuth connection, project
+   aicode-consumers) — this is the provider upstream 29fc880e registers
+   gemini-4-argon-high on:
+   - POST v1internal:fetchAvailableModels => 200, 19 models, ZERO gemini-4 ids:
+     gemini-2.5-*, gemini-3.5-flash*, gemini-3.8-flash-tiered, gemini-3-flash*,
+     gemini-3.1-*, claude-*, gpt-oss-120b-medium. No gemini-4 entry.
+   - POST v1internal:generateContent model=gemini-4-argon-high
+        => 404 {"code":404,"message":"Requested entity was not found.","status":"NOT_FOUND"}
+   - POST v1internal:generateContent model=gemini-4-argon
+        => 404 same
+   - control, same call model=gemini-3.8-flash-tiered => 429 individual quota
+     (proves the endpoint+auth+body shape are valid; only the model id 404s)
+
+CONCLUSION: Gemini 4 Argon is real and serviceable on the Gemini API provider
+(A) but is NOT served on Antigravity (C) — the antigravity catalogue omits it
+and generateContent 404s. Adopt the gemini + vertex + capabilities +
+thinkingLevels + thinkingUnified parts; SKIP the antigravity registry entry
+(upstream adds a model that 404s on the lane they added it to).
+Vertex (B) cannot be probed here: no SA/ADC credentials in this environment.
+
+D) Extra evidence, same key:
+   gemini-3.8-flash + topK 999 => 200 (key has quota for 3.8)
+   gemini-4-argon  + topK 999 => 429 (quota is argon-specific, not a key problem)
+   gemini-4-argon  + temperature 999 => 400 "...generation_config.temperature:
+     temperature must be <= 2" — a RANGE validation error, i.e. the request
+     reached Argon's validator. Same shape for gemini-3.8-flash + temperature 999.
+   => gemini-4-argon is real, addressable and validated. A 200 could not be
+      obtained because this key is not entitled to Argon.
+   => upstream's claim (eb373017) that Argon REJECTS sampling params could not
+      be reproduced or refuted here: the quota wall answers first for valid
+      values, and an out-of-range value returns the ordinary range error that
+      Gemini 3 models also return. Recorded as UNVERIFIED.
+
+E) Sampling params on Argon (deciding the direct claim in eb373017:
+   "Generation config — Gemini 4 removed the sampling params, forwarding them
+   fails the request").
+   Payload validation runs BEFORE the quota check on this API — proven by
+   generationConfig.totallyUnknownField => 400 "Unknown name ... Cannot find
+   field" and generationConfig.thinkingBudget => 400 "Unknown name
+   thinkingBudget", both returned instead of 429.
+
+   Against that control:
+     gemini-4-argon  generationConfig.temperature = 0.7  => 429 (quota)
+     gemini-4-argon  generationConfig.temperature = 999  => 400
+        "...temperature: temperature must be <= 2"  <- a VALUE error
+     gemini-4-argon  generationConfig.topK = 999        => 429 (quota)
+     gemini-3.8-flash generationConfig.topK = 999       => 200
+   temperature/topP/topK are KNOWN fields on gemini-4-argon: had they been
+   removed we would have seen the "Unknown name" 400 the thinkingBudget control
+   produces. => the "Gemini 4 removed the sampling params" premise does NOT
+   reproduce, so the sampling-param drop in eb373017 is NOT adopted.
+   (The functionResponse-last reordering in the same commit is a separate,
+   scoped, gemini-4-only change that could not be probed for lack of quota;
+   it is adopted on its own merits and cannot affect Gemini 3 models.)
