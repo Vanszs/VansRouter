@@ -348,6 +348,27 @@ function applyFormat(fmt, body, cfg, caps, supportedLevels, display) {
       if (level) body.reasoning_effort = level === "xhigh" || level === "max" ? "high" : level;
       break;
     }
+    case "nous": {
+      // Nous's first-party client omits `reasoning` when disabled and sends a
+      // nested object when enabled. The API does not advertise top-level
+      // `reasoning_effort` for all models, so send nested `reasoning`.
+      if (none && canDisable) break;
+      const level = eff.mode === "auto" ? "medium" : toLevel(eff);
+      body.reasoning = {
+        enabled: true,
+        ...(level ? { effort: level } : {}),
+      };
+      break;
+    }
+    case "tokenrouter": {
+      // TokenRouter's reasoning_effort enum is low/medium/high/xhigh/max — it rejects
+      // "none"/"auto" with a 400 and supports "max" natively (no clamp like openai).
+      // "none" → omit the field so the upstream default applies; pass levels through.
+      if (none || eff.mode === "auto") break;
+      const level = toLevel(eff);
+      if (level) body.reasoning_effort = level;
+      break;
+    }
     case "kiro":
       // Kiro thinking handled via system-tag injection in openai-to-kiro.js; no body field here.
       break;

@@ -166,6 +166,7 @@ import p68z from "./opencode-zen.js";
 // import p102 from "./trae.js";
 // import p114 from "./devin-cli.js";
 // import p104 from "./windsurf.js";
+import nousProvider from "./nous.js";
 export default [
   p0,
   p1,
@@ -326,5 +327,6 @@ export default [
   p155,
   p156,
   p157,
-  p158
+  p158,
+  nousProvider
 ];

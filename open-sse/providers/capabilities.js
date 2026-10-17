@@ -57,7 +57,7 @@ export const DEFAULT_CAPABILITIES = {
   tools: true, // function / tool calling
   reasoning: false, // thinking / reasoning
   // thinking wire format (only meaningful when reasoning:true). null → derive from transport.format.
-  // enum: openai|claude-adaptive|claude-budget|gemini-level|gemini-budget|zai|qwen|deepseek|kimi|minimax|hunyuan|step|commandcode
+  // enum: openai|claude-adaptive|claude-budget|gemini-level|gemini-budget|zai|qwen|deepseek|kimi|minimax|hunyuan|step|commandcode|nous
   thinkingFormat: null,
   thinkingCanDisable: true, // false → model cannot turn thinking off (clamp to min instead of disable)
   thinkingRange: null, // { min, max } for budget formats; null = no clamp
@@ -893,6 +893,17 @@ export const PROVIDER_CAPABILITIES = {
       contextWindow: 1000000,
       maxOutput: 384000,
     },
+  },
+  // Nous Research Portal free-tier models (probed live against https://inference-api.nousresearch.com/v1/models).
+  "nous": {
+    "meituan/longcat-2.0:free":         { tools: true, reasoning: true, thinkingFormat: "nous", contextWindow: 1048756, maxOutput: 262144 },
+    "meituan/longcat-2.5-preview:free": { tools: true, vision: true, reasoning: true, thinkingFormat: "nous", contextWindow: 1048576, maxOutput: 131072 },
+    "stepfun/step-5-preview:free":      { tools: true, vision: true, videoInput: true, reasoning: true, thinkingFormat: "nous", contextWindow: 1000000, maxOutput: 64000 },
+    "upstage/solar-mini4:free":         { tools: true, reasoning: true, thinkingFormat: "nous", contextWindow: 524288, maxOutput: 131072 },
+    "stepfun/step-3.7-flash:free":      { tools: true, vision: true, videoInput: true, reasoning: true, thinkingFormat: "nous", contextWindow: 262144, maxOutput: 256000 },
+    "poolside/laguna-s-2.1:free":       { tools: true, reasoning: true, thinkingFormat: "nous", contextWindow: 262144, maxOutput: 131072 },
+    "poolside/laguna-xs-2.1:free":      { tools: true, reasoning: true, thinkingFormat: "nous", contextWindow: 262144, maxOutput: 32768 },
+    "stealth/missingno":                { tools: true, reasoning: true, thinkingFormat: "nous", contextWindow: 262144, maxOutput: 131072 },
   },
 };
 

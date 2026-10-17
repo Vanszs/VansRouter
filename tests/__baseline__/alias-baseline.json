@@ -93,7 +93,11 @@
     "polly": "aws-polly",
     "aws-polly": "aws-polly",
     "bb": "blackbox",
-    "blackbox": "blackbox"
+    "blackbox": "blackbox",
+    "nous": "nous",
+    "nous-portal": "nous",
+    "nous-research": "nous",
+    "ns": "nous"
   },
   "idToAlias": {
     "a6api": "a6api",
@@ -196,6 +200,7 @@
     "nanobanana": "nanobanana",
     "nanogpt": "nanogpt",
     "nebius": "nebius",
+    "nous": "nous",
     "nscale": "nscale",
     "nvidia": "nvidia",
     "ollama": "ollama",
@@ -344,6 +349,7 @@
     "nanobanana",
     "nanogpt",
     "nebius",
+    "nous",
     "nscale",
     "nvidia",
     "oc",
