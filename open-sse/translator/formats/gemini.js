@@ -449,7 +449,15 @@ export function sanitizeFunctionResponsePayload(value) {
     const mapped = Object.hasOwn(GEMINI_RESERVED_RESPONSE_KEYS, key)
       ? GEMINI_RESERVED_RESPONSE_KEYS[key]
       : key;
-    out[mapped] = sanitizeFunctionResponsePayload(val);
+    // defineProperty, not `out[mapped] =`: a client-supplied "__proto__" key would
+    // otherwise hit the prototype setter, silently dropping the key and giving the
+    // output a non-standard prototype. defineProperty always makes an own property.
+    Object.defineProperty(out, mapped, {
+      value: sanitizeFunctionResponsePayload(val),
+      enumerable: true,
+      writable: true,
+      configurable: true,
+    });
   }
   return out;
 }

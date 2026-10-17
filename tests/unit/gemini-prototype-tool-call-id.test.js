@@ -37,6 +37,18 @@ describe("prototype-named keys are treated as data", () => {
     }
   });
 
+  it("keeps a client-supplied __proto__ key as an own property without re-prototyping", () => {
+    // `out[key] = value` hits the prototype setter for "__proto__": the key
+    // vanished from the output and the object got an attacker-controlled
+    // prototype. defineProperty makes a real own property instead.
+    const payload = JSON.parse('{"__proto__":{"polluted":true},"$ref":"R"}');
+    const out = sanitizeFunctionResponsePayload(payload);
+
+    expect(Object.hasOwn(out, "__proto__")).toBe(true);
+    expect(Object.getPrototypeOf(out).polluted).toBeUndefined();
+    expect(out._ref).toBe("R");
+  });
+
   it("reproduces the old failure mode: ||= on a bare object reads an inherited function", () => {
     // Guards the exact pattern that regressed: a null-prototype map is required
     // for `(map[id] ||= []).push(...)` to be safe for client-supplied ids.
