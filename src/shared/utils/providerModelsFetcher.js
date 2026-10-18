@@ -22,7 +22,9 @@ export async function fetchSuggestedModels(fetcher) {
     if (!res.ok) return [];
     const json = await res.json();
     const data = json.data ?? [];
-    cache.set(fetcher.url, { data, expiresAt: Date.now() + CACHE_TTL_MS });
+    // An empty read is a failed catalog, not a provider with no models. Caching
+    // it hides the next attempt for the whole TTL.
+    if (data.length > 0) cache.set(fetcher.url, { data, expiresAt: Date.now() + CACHE_TTL_MS });
     return data;
   } catch {
     return [];

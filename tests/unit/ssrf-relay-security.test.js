@@ -84,8 +84,9 @@ describe("generated relay source", () => {
       path.join(projectRoot, "src/app/api/providers/suggested-models/route.js"),
       "utf8"
     );
-    expect(source).toContain("assertPublicUrl(url)");
+    expect(source).toContain("guardedFetch(url");
     expect(source).toMatch(/AbortSignal\.timeout\(\d+\)/);
+    expect(source).not.toMatch(/return NextResponse\.json\(\{ data: \[\] \}\)/);
   });
 });
 
