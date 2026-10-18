@@ -6,6 +6,8 @@ import Link from "next/link";
 import Image from "next/image";
 import { getProviderIconSrc, markProviderIconMissing } from "@/shared/utils/providerIcon";
 import ProviderIcon from "@/shared/components/ProviderIcon";
+import ModelImportModal from "@/shared/components/ModelImportModal.js";
+import { importSelectedModels } from "@/shared/utils/importSelectedModels.js";
 import { Card, Button, Badge, Input, Modal, CardSkeleton, OAuthModal, KiroOAuthWrapper, CursorAuthModal, ZedAuthModal, IFlowCookieModal, GitLabAuthModal, Toggle, Select, EditConnectionModal, NoAuthProxyCard, ConfirmModal, Pagination } from "@/shared/components";
 import { CONNECTIONS_PER_PAGE, computeConnectionPagination } from "./connectionsPagination";
 import { OAUTH_PROVIDERS, APIKEY_PROVIDERS, FREE_PROVIDERS, FREE_TIER_PROVIDERS, WEB_COOKIE_PROVIDERS, getProviderAlias, isOpenAICompatibleProvider, isAnthropicCompatibleProvider, AI_PROVIDERS } from "@/shared/constants/providers";
@@ -74,6 +76,7 @@ export default function ProviderDetailPage() {
   const [thinkingMode, setThinkingMode] = useState("auto");
   const [autoPing, setAutoPing] = useState({ enabled: false, connections: {} });
   const [suggestedModels, setSuggestedModels] = useState([]);
+  const [importPreview, setImportPreview] = useState(null);
   const [liveModels, setLiveModels] = useState([]);
   const [kiloFreeModels, setKiloFreeModels] = useState([]);
   const [disabledModelIds, setDisabledModelIds] = useState([]);
@@ -697,22 +700,7 @@ export default function ProviderDetailPage() {
       if (toImport.length === 0) {
         setNoticeState({ title: translate("Notice"), message: translate("All models already exist, no new models added"), variant: "info" });
       } else {
-        const res = await fetch("/api/models/custom", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ models: toImport }),
-        });
-        const data = await res.json();
-        const importedCount = data.count ?? toImport.length;
-
-        await fetchCustomModels();
-        if (typeof window !== "undefined") window.dispatchEvent(new CustomEvent("customModelChanged"));
-
-        setNoticeState({
-          title: translate("Success"),
-          message: translate("Successfully added") + ` ${importedCount} ` + translate("models"),
-          variant: "success",
-        });
+        setImportPreview(toImport);
       }
     } catch (error) {
       console.log("Error importing provider models:", error);
@@ -720,6 +708,13 @@ export default function ProviderDetailPage() {
     } finally {
       setImportingModels(false);
     }
+  };
+
+  const confirmModelImport = async (selected) => {
+    const count = await importSelectedModels(selected);
+    await fetchCustomModels();
+    window.dispatchEvent(new CustomEvent("customModelChanged"));
+    setNoticeState({ title: translate("Success"), message: `${count} models imported`, variant: "success" });
   };
 
   const handleRunOneByOneTest = async () => {
@@ -1299,6 +1294,7 @@ export default function ProviderDetailPage() {
           onCopy={copy}
           onSetAlias={handleSetAlias}
           onDeleteAlias={handleDeleteAlias}
+          onImportModels={confirmModelImport}
           onAddCustomModel={(modelId) => handleAddCustomModel(modelId, "llm", providerStorageAlias)}
           onDeleteCustomModel={(modelId) => handleDeleteCustomModel(modelId, "llm", providerStorageAlias)}
           connections={connections}
@@ -2020,6 +2016,8 @@ export default function ProviderDetailPage() {
           onSuccess={fetchConnections}
         />
       )}
+
+      {importPreview && <ModelImportModal models={importPreview} onClose={() => setImportPreview(null)} onConfirm={confirmModelImport} />}
 
       {/* AG Risk Confirmation Modal */}
       <ConfirmModal

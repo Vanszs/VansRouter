@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Button } from "@/shared/components";
+import ModelImportModal from "@/shared/components/ModelImportModal.js";
 import { getProviderCustomModelRows } from "@/shared/utils/providerCustomModels";
 function CompatibleModelRow({ modelId, fullModel, copied, onCopy, onDeleteAlias, onTest, testStatus, isTesting }) {
   const borderColor = testStatus === "ok"
@@ -70,10 +71,11 @@ function CompatibleModelRow({ modelId, fullModel, copied, onCopy, onDeleteAlias,
   );
 }
 
-export default function CompatibleModelsSection({ providerStorageAlias, providerDisplayAlias, modelAliases, customModels, copied, onCopy, onDeleteAlias, onAddCustomModel, onDeleteCustomModel, connections, isAnthropic }) {
+export default function CompatibleModelsSection({ providerStorageAlias, providerDisplayAlias, modelAliases, customModels, copied, onCopy, onDeleteAlias, onAddCustomModel, onDeleteCustomModel, connections, isAnthropic, onImportModels }) {
   const [newModel, setNewModel] = useState("");
   const [adding, setAdding] = useState(false);
   const [importing, setImporting] = useState(false);
+  const [importPreview, setImportPreview] = useState(null);
   const [testingModelId, setTestingModelId] = useState(null);
   const [modelTestResults, setModelTestResults] = useState({});
 
@@ -139,17 +141,16 @@ export default function CompatibleModelsSection({ providerStorageAlias, provider
         alert("No models returned from /models.");
         return;
       }
-      let importedCount = 0;
+      const seen = new Set(allModels.map((entry) => entry.id));
+      const candidates = [];
       for (const model of models) {
-        const modelId = model.id || model.name || model.model;
-        if (!modelId) continue;
-        if (allModels.some((entry) => entry.id === modelId)) continue;
-        await onAddCustomModel(modelId);
-        importedCount += 1;
+        const id = model.id || model.name || model.model;
+        if (typeof id !== "string" || !id.trim() || seen.has(id)) continue;
+        seen.add(id);
+        candidates.push({ id, providerAlias: providerStorageAlias, type: "llm" });
       }
-      if (importedCount === 0) {
-        alert("No new models were added.");
-      }
+      if (candidates.length === 0) alert("No new models were added.");
+      else setImportPreview(candidates);
     } catch (error) {
       console.log("Error importing models:", error);
     } finally {
@@ -157,10 +158,15 @@ export default function CompatibleModelsSection({ providerStorageAlias, provider
     }
   };
 
+  const confirmImport = async (selected) => {
+    await onImportModels(selected);
+  };
+
   const canImport = connections.some((conn) => conn.isActive !== false);
 
   return (
     <div className="flex flex-col gap-4">
+      {importPreview && <ModelImportModal models={importPreview} onClose={() => setImportPreview(null)} onConfirm={confirmImport} />}
       <p className="text-sm text-text-muted">
         Add {isAnthropic ? "Anthropic" : "OpenAI"}-compatible models manually or import them from the /models endpoint.
       </p>
