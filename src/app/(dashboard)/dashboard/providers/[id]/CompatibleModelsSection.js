@@ -227,7 +227,7 @@ export default function CompatibleModelsSection({ providerStorageAlias, provider
                 onClick={() => { setShowImportMenu(false); handleImport("all"); }}
                 className="flex w-full items-center gap-2 whitespace-nowrap rounded-lg px-3 py-2 text-left text-sm text-text-main transition-colors hover:bg-black/5 dark:hover:bg-white/5"
               >
-                <span className="material-symbols-outlined shrink-0 text-[20px] leading-none text-primary">select_all</span>
+                <span className="material-symbols-outlined shrink-0 text-[20px] leading-none text-primary">download</span>
                 <span className="min-w-0 flex-1 truncate">{"Import all"}</span>
               </button>
               <button
