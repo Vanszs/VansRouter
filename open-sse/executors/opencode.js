@@ -22,17 +22,20 @@ const LANE_PATH = { chat: "/chat/completions", claude: "/messages", responses: "
 // declare bash/glob/grep/read exactly once. See utils/opencodeFingerprint.js.
 const DECOY_DESCRIPTION = "This tool is currently unavailable and must not be used.";
 
-// OpenCode's free tier rejects requests whose User-Agent has no version >= 1.17.0.
+// OpenCode's free tier answers 426 UpgradeRequired below opencode/1.18.0.
+// The official UA is opencode/<channel>/<version>/<name>; the version is the
+// first major.minor after the product name, so both shapes parse the same way.
+const MIN_OPENCODE_MINOR = 18;
+
 function hasValidOpencodeVersion(ua) {
-  const m = String(ua || "").match(/opencode\/(\d+)\.(\d+)/i);
+  const m = String(ua || "").match(/opencode\/(?:[a-z][a-z0-9-]*\/)?(\d+)\.(\d+)/i);
   if (!m) return false;
   const major = parseInt(m[1], 10);
   const minor = parseInt(m[2], 10);
-  return major > 1 || (major === 1 && minor >= 17);
+  return major > 1 || (major === 1 && minor >= MIN_OPENCODE_MINOR);
 }
 
-// A client-supplied session id in a non-canonical shape makes the free tier 403,
-// so ignore anything that does not match the canonical format upstream validates.
+// Shape the free tier accepts: ses_/msg_ + 12 hex + 14 base62.
 const CANONICAL_SESSION = /^ses_[0-9a-f]{12}[0-9A-Za-z]{14}$/;
 const CANONICAL_REQUEST = /^msg_[0-9a-f]{12}[0-9A-Za-z]{14}$/;
 
@@ -41,8 +44,21 @@ function canonicalId(value, pattern) {
   return pattern.test(trimmed) ? trimmed : "";
 }
 
+// The session's 12 hex are the low 48 bits of ~(unixMillis * 4096 + counter)
+// (packages/schema/src/identifier.ts). The free tier rejects a session that was
+// not inverted: an ascending timestamp and a hash-derived id both answer 403
+// FreeTierError, while the inverted form answers 200. The multiply overflows
+// 48 bits, so the high bit of a live inverted id is 1. Age is not what the gate
+// checks — ids from a year either side still pass — so the inversion is the
+// whole check. Request ids are minted ascending and are not gated this way.
+export function plausibleOpencodeId(value, pattern) {
+  const trimmed = canonicalId(value, pattern);
+  if (!trimmed || pattern !== CANONICAL_SESSION) return trimmed;
+  return (BigInt(`0x${trimmed.slice(4, 16)}`) >> 47n) === 1n ? trimmed : "";
+}
+
 function clientSession(sessionId) {
-  return canonicalId(sessionId, CANONICAL_SESSION);
+  return plausibleOpencodeId(sessionId, CANONICAL_SESSION);
 }
 
 function clientRequestId(requestId) {
@@ -52,23 +68,32 @@ function clientRequestId(requestId) {
 // Canonical id formats OpenCode validates: ses_<12 hex><14 base62> / msg_<12 hex><14 base62>.
 const BASE62 = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
 
-function translateCanonicalId(value, pattern, prefix, kind, clientTool = "") {
-  const trimmed = typeof value === "string" ? value.trim() : "";
-  if (pattern.test(trimmed)) return trimmed;
-  const digest = crypto
-    .createHash("sha256")
-    .update(`opencode\0${kind}\0${clientTool || "generic"}\0${value ?? ""}`)
-    .digest();
-  const randomPart = Array.from(digest.subarray(6, 20), (byte) => BASE62[byte % 62]).join("");
-  return `${prefix}${digest.subarray(0, 6).toString("hex")}${randomPart}`;
+// One minted id per foreign conversation key. The timestamp is the payload, so
+// a hash can no longer be the id; caching is what keeps one upstream session
+// (and its prompt cache) for the life of this process.
+const translatedSessions = new Map();
+const MAX_TRANSLATED_SESSIONS = 256;
+
+function rememberTranslatedSession(key) {
+  const existing = translatedSessions.get(key);
+  if (existing) return existing;
+  const minted = generateSessionId();
+  if (translatedSessions.size >= MAX_TRANSLATED_SESSIONS) {
+    translatedSessions.delete(translatedSessions.keys().next().value);
+  }
+  translatedSessions.set(key, minted);
+  return minted;
 }
 
-export function translateSessionId(value, clientTool) {
-  return translateCanonicalId(value, CANONICAL_SESSION, "ses_", "session", clientTool);
+export function translateSessionId(value, clientTool = "") {
+  const accepted = clientSession(value);
+  if (accepted) return accepted;
+  const key = `${clientTool || "generic"}\0${value ?? ""}`;
+  return rememberTranslatedSession(key);
 }
 
 export function translateRequestId(value) {
-  return translateCanonicalId(value, CANONICAL_REQUEST, "msg_", "request");
+  return clientRequestId(value) || generateRequestId();
 }
 
 function timeHex(value) {

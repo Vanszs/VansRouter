@@ -1,18 +1,22 @@
 import { describe, expect, it } from "vitest";
 import {
   OpenCodeExecutor,
+  plausibleOpencodeId,
   translateRequestId,
   translateSessionId,
 } from "../../open-sse/executors/opencode.js";
 import { PROVIDERS } from "../../open-sse/config/providers.js";
 
-// OpenCode's free tier (403 FreeTierError) requires UA version >= 1.17.0 and
-// canonical ses_/msg_ id formats.
+// OpenCode's free tier requires UA >= 1.18.0 and a ses_/msg_ id whose 12 hex
+// are the client's inverted timestamp. A shape-valid id with the high bit clear
+// (an ascending timestamp, or a hash) is refused with 403 FreeTierError.
+const SESSION_RE = /^ses_[0-9a-f]{12}[0-9A-Za-z]{14}$/;
+const REQUEST_RE = /^msg_[0-9a-f]{12}[0-9A-Za-z]{14}$/;
+
 const assertCanonical = (id, prefix) => {
-  expect(id).toHaveLength(30);
-  expect(id.startsWith(`${prefix}_`)).toBe(true);
-  expect([...id.slice(4, 16)].every((char) => "0123456789abcdef".includes(char))).toBe(true);
-  expect([...id.slice(16)].every((char) => /^[0-9A-Za-z]$/.test(char))).toBe(true);
+  const pattern = prefix === "ses" ? SESSION_RE : REQUEST_RE;
+  expect(plausibleOpencodeId(id, pattern)).toBe(id);
+  if (prefix === "ses") expect(BigInt(`0x${id.slice(4, 16)}`) >> 47n).toBe(1n);
 };
 
 describe("OpenCode free-tier request identity", () => {
@@ -26,12 +30,14 @@ describe("OpenCode free-tier request identity", () => {
   });
 
   it("keeps a client User-Agent that carries a supported version", () => {
-    const headers = executor.buildHeaders({ rawHeaders: { "user-agent": "opencode/1.17.2" } }, true);
-    expect(headers["User-Agent"]).toBe("opencode/1.17.2");
+    for (const ua of ["opencode/1.18.0", "opencode/stable/1.18.2/opencode"]) {
+      const headers = executor.buildHeaders({ rawHeaders: { "user-agent": ua } }, true);
+      expect(headers["User-Agent"]).toBe(ua);
+    }
   });
 
   it("replaces a version-less or too-old client User-Agent", () => {
-    for (const ua of ["opencode", "opencode/1.4.0", "claude-cli/2.0"]) {
+    for (const ua of ["opencode", "opencode/1.17.2", "opencode/stable/1.3.17/opencode", "claude-cli/2.0"]) {
       const headers = executor.buildHeaders({ rawHeaders: { "user-agent": ua } }, true);
       expect(headers["User-Agent"]).toBe("opencode/1.18.31");
     }
@@ -50,14 +56,21 @@ describe("OpenCode free-tier request identity", () => {
     expect(first).not.toBe(second);
   });
 
-  it("prefers the stored runtime session and explicit raw headers", () => {
-    const stored = executor.buildHeaders({ runtimeOpencodeSession: "ses_abcdef012345ABCDEFGHIJKLMN" }, true);
-    expect(stored["x-opencode-session"]).toBe("ses_abcdef012345ABCDEFGHIJKLMN");
-
+  it("forwards a client session that carries the inverted timestamp", () => {
+    const live = executor.buildHeaders({}, true)["x-opencode-session"];
     const explicit = executor.buildHeaders({
-      rawHeaders: { "x-opencode-session": "ses_001122334455ABCDEFGHIJKLMN" },
+      rawHeaders: { "x-opencode-session": live },
     }, true);
-    expect(explicit["x-opencode-session"]).toBe("ses_001122334455ABCDEFGHIJKLMN");
+    expect(explicit["x-opencode-session"]).toBe(live);
+  });
+
+  it("replaces a shape-valid session that was not inverted", () => {
+    // High bit clear: an ascending timestamp and a low hash, both refused live.
+    for (const stale of ["ses_14d380c78001ABCDEFGHIJKLMN", "ses_001122334455ABCDEFGHIJKLMN"]) {
+      const headers = executor.buildHeaders({ rawHeaders: { "x-opencode-session": stale } }, true);
+      expect(headers["x-opencode-session"]).not.toBe(stale);
+      assertCanonical(headers["x-opencode-session"], "ses");
+    }
   });
 
   it("ignores a non-canonical client session id instead of forwarding a 403", () => {
@@ -68,14 +81,16 @@ describe("OpenCode free-tier request identity", () => {
     }
   });
 
-  it("translates foreign ids deterministically and preserves canonical ids", () => {
+  it("reuses one minted session per foreign id and drops one that was not inverted", () => {
     const translated = translateSessionId("foreign-id", "desktop");
     expect(translateSessionId("foreign-id", "desktop")).toBe(translated);
     assertCanonical(translated, "ses");
     expect(translateSessionId("another-id", "desktop")).not.toBe(translated);
-    expect(translateSessionId("ses_001122334455ABCDEFGHIJKLMN", "desktop"))
-      .toBe("ses_001122334455ABCDEFGHIJKLMN");
+    const replaced = translateSessionId("ses_001122334455ABCDEFGHIJKLMN", "desktop");
+    expect(replaced).not.toBe("ses_001122334455ABCDEFGHIJKLMN");
+    assertCanonical(replaced, "ses");
     assertCanonical(translateRequestId("foreign-id"), "msg");
+    expect(translateRequestId("foreign-id")).not.toBe(translateRequestId("foreign-id"));
   });
 
   it("stably translates non-canonical raw session and request headers", () => {
@@ -91,15 +106,15 @@ describe("OpenCode free-tier request identity", () => {
     assertCanonical(first["x-opencode-session"], "ses");
     expect(first["x-opencode-session"]).toBe(second["x-opencode-session"]);
     assertCanonical(first["x-opencode-request"], "msg");
-    expect(first["x-opencode-request"]).toBe(second["x-opencode-request"]);
   });
 
-  it("still reuses the stored runtime session over a rejected client header", () => {
+  it("mints a fresh session when neither the stored nor the client id was inverted", () => {
     const headers = executor.buildHeaders({
       runtimeOpencodeSession: "ses_abcdef012345ABCDEFGHIJKLMN",
       rawHeaders: { "x-opencode-session": "bogus" },
     }, true);
     expect(headers["x-opencode-session"]).not.toBe("ses_abcdef012345ABCDEFGHIJKLMN");
+    expect(headers["x-opencode-session"]).not.toBe("bogus");
     assertCanonical(headers["x-opencode-session"], "ses");
   });
 
