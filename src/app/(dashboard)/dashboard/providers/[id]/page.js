@@ -6,6 +6,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { getProviderIconSrc, markProviderIconMissing } from "@/shared/utils/providerIcon";
 import ProviderIcon from "@/shared/components/ProviderIcon";
+import ModelBulkDeleteModal from "@/shared/components/ModelBulkDeleteModal.js";
 import { Card, Button, Badge, Input, Modal, CardSkeleton, OAuthModal, KiroOAuthWrapper, CursorAuthModal, ZedAuthModal, IFlowCookieModal, GitLabAuthModal, Toggle, Select, EditConnectionModal, NoAuthProxyCard, ConfirmModal, Pagination } from "@/shared/components";
 import { CONNECTIONS_PER_PAGE, computeConnectionPagination } from "./connectionsPagination";
 import { OAUTH_PROVIDERS, APIKEY_PROVIDERS, FREE_PROVIDERS, FREE_TIER_PROVIDERS, WEB_COOKIE_PROVIDERS, getProviderAlias, isOpenAICompatibleProvider, isAnthropicCompatibleProvider, AI_PROVIDERS } from "@/shared/constants/providers";
@@ -74,6 +75,7 @@ export default function ProviderDetailPage() {
   const [thinkingMode, setThinkingMode] = useState("auto");
   const [autoPing, setAutoPing] = useState({ enabled: false, connections: {} });
   const [suggestedModels, setSuggestedModels] = useState([]);
+  const [showBulkModelDelete, setShowBulkModelDelete] = useState(false);
   const [liveModels, setLiveModels] = useState([]);
   const [kiloFreeModels, setKiloFreeModels] = useState([]);
   const [disabledModelIds, setDisabledModelIds] = useState([]);
@@ -1857,6 +1859,7 @@ export default function ProviderDetailPage() {
             <h2 className="text-lg font-semibold">
               {"Available Models"}
             </h2>
+            <Button size="sm" variant="secondary" icon="delete" onClick={() => setShowBulkModelDelete(true)}>Remove added models</Button>
             {providerThinkingLevels && (
               <select
                 value={thinkingMode}
@@ -2020,6 +2023,14 @@ export default function ProviderDetailPage() {
           onSuccess={fetchConnections}
         />
       )}
+
+      {showBulkModelDelete && <ModelBulkDeleteModal
+        models={getProviderCustomModelRows({ customModels, modelAliases, providerAlias: providerStorageAlias, builtInModels: models, type: "llm" })}
+        modelAliases={modelAliases}
+        providerAlias={providerStorageAlias}
+        onClose={() => setShowBulkModelDelete(false)}
+        onRefresh={async () => { await Promise.all([fetchCustomModels(), fetchAliases()]); window.dispatchEvent(new CustomEvent("customModelChanged")); }}
+      />}
 
       {/* AG Risk Confirmation Modal */}
       <ConfirmModal
