@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/shared/components";
 import ModelImportModal from "@/shared/components/ModelImportModal.js";
 import { getProviderCustomModelRows } from "@/shared/utils/providerCustomModels";
@@ -76,6 +76,17 @@ export default function CompatibleModelsSection({ providerStorageAlias, provider
   const [adding, setAdding] = useState(false);
   const [importing, setImporting] = useState(false);
   const [importPreview, setImportPreview] = useState(null);
+  const [showImportMenu, setShowImportMenu] = useState(false);
+  const importMenuRef = useRef(null);
+
+  useEffect(() => {
+    if (!showImportMenu) return;
+    const handleClick = (e) => {
+      if (importMenuRef.current && !importMenuRef.current.contains(e.target)) setShowImportMenu(false);
+    };
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [showImportMenu]);
   const [testingModelId, setTestingModelId] = useState(null);
   const [modelTestResults, setModelTestResults] = useState({});
 
@@ -123,7 +134,7 @@ export default function CompatibleModelsSection({ providerStorageAlias, provider
     }
   };
 
-  const handleImport = async () => {
+  const handleImport = async (mode = "batch") => {
     if (importing) return;
     const activeConnection = connections.find((conn) => conn.isActive !== false);
     if (!activeConnection) return;
@@ -150,6 +161,7 @@ export default function CompatibleModelsSection({ providerStorageAlias, provider
         candidates.push({ id, providerAlias: providerStorageAlias, type: "llm" });
       }
       if (candidates.length === 0) alert("No new models were added.");
+      else if (mode === "all") await onImportModels(candidates);
       else setImportPreview(candidates);
     } catch (error) {
       console.log("Error importing models:", error);
@@ -166,7 +178,21 @@ export default function CompatibleModelsSection({ providerStorageAlias, provider
 
   return (
     <div className="flex flex-col gap-4">
-      {importPreview && <ModelImportModal models={importPreview} onClose={() => setImportPreview(null)} onConfirm={confirmImport} />}
+      {importPreview && (
+        <ModelImportModal
+          models={importPreview}
+          onClose={() => setImportPreview(null)}
+          onConfirm={confirmImport}
+          onTestConnection={async () => {
+            const activeConnection = connections.find((conn) => conn.isActive !== false);
+            if (!activeConnection) throw new Error("Add a connection first");
+            const res = await fetch(`/api/providers/${activeConnection.id}/test`, { method: "POST" });
+            const data = await res.json();
+            if (!res.ok || !data.valid) throw new Error(data.error || "Connection failed");
+            return "Connection OK";
+          }}
+        />
+      )}
       <p className="text-sm text-text-muted">
         Add {isAnthropic ? "Anthropic" : "OpenAI"}-compatible models manually or import them from the /models endpoint.
       </p>
@@ -187,9 +213,34 @@ export default function CompatibleModelsSection({ providerStorageAlias, provider
         <Button size="sm" icon="add" onClick={handleAdd} disabled={!newModel.trim() || adding}>
           {adding ? "Adding..." : "Add"}
         </Button>
-        <Button size="sm" variant="secondary" icon="download" onClick={handleImport} disabled={!canImport || importing}>
-          {importing ? "Importing..." : "Import from /models"}
-        </Button>
+        <div className="relative" ref={importMenuRef}>
+          <Button size="sm" variant="secondary" icon="download" onClick={() => setShowImportMenu((prev) => !prev)} disabled={!canImport || importing}>
+            {importing ? "Importing..." : "Import from /models"}
+            <span className="material-symbols-outlined ml-1 text-[18px]">
+              {showImportMenu ? "expand_less" : "expand_more"}
+            </span>
+          </Button>
+          {showImportMenu && (
+            <div className="absolute left-0 top-full z-50 mt-1 w-52 rounded-xl border border-black/10 bg-white p-1 shadow-xl dark:border-white/10 dark:bg-zinc-900 sm:left-auto sm:right-0">
+              <button
+                type="button"
+                onClick={() => { setShowImportMenu(false); handleImport("all"); }}
+                className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-text-main transition-colors hover:bg-black/5 dark:hover:bg-white/5"
+              >
+                <span className="material-symbols-outlined text-[20px] text-primary">done_all</span>
+                {"Import all"}
+              </button>
+              <button
+                type="button"
+                onClick={() => { setShowImportMenu(false); handleImport("batch"); }}
+                className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-text-main transition-colors hover:bg-black/5 dark:hover:bg-white/5"
+              >
+                <span className="material-symbols-outlined text-[20px] text-emerald-500">checklist</span>
+                {"Import batch"}
+              </button>
+            </div>
+          )}
+        </div>
       </div>
 
       {!canImport && (
