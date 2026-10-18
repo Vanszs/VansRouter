@@ -143,6 +143,56 @@ function decoyTool(name, shape) {
   return { type: "function", name, description: DECOY_DESCRIPTION, parameters: { type: "object", properties: {} } };
 }
 
+// /responses rejects a tool name outside ^[a-zA-Z0-9_.-]+$ (measured: `mcp:fs:read`
+// answers 400). The colon an MCP name carries is the character that fails.
+const RESPONSES_TOOL_NAME = /[^a-zA-Z0-9_.-]/g;
+
+function responsesToolName(name) {
+  return String(name || "").trim().replace(RESPONSES_TOOL_NAME, "_").slice(0, 128);
+}
+
+// A compacted or interrupted turn arrives with a function_call and no output, or
+// an output and no call. /responses answers 400 for either. Drop the output that
+// has no call and close the call that has no output.
+function pairResponsesCalls(input) {
+  if (!Array.isArray(input)) return input;
+  const calls = new Set(input.filter((item) => item?.type === "function_call" && item.call_id).map((item) => item.call_id));
+  const kept = input.filter((item) => item?.type !== "function_call_output" || calls.has(item?.call_id));
+  const outputs = new Set(kept.filter((item) => item?.type === "function_call_output").map((item) => item.call_id));
+  const paired = [];
+  for (const item of kept) {
+    paired.push(item);
+    if (item?.type === "function_call" && item.call_id && !outputs.has(item.call_id)) {
+      paired.push({ type: "function_call_output", call_id: item.call_id, output: "{}" });
+      outputs.add(item.call_id);
+    }
+  }
+  return paired;
+}
+
+function hardenResponsesBody(body) {
+  if (!body || typeof body !== "object") return;
+  // /responses answers 400 below 16. A large cap is accepted (700000 answered
+  // 200), so only the floor is enforced.
+  if (typeof body.max_output_tokens === "number" && body.max_output_tokens < 16) {
+    body.max_output_tokens = 16;
+  }
+  if (Array.isArray(body.tools)) {
+    for (const tool of body.tools) {
+      if (!tool || typeof tool !== "object") continue;
+      if (typeof tool.name === "string") tool.name = responsesToolName(tool.name);
+      const fn = tool.function;
+      if (fn && typeof fn === "object" && typeof fn.name === "string") fn.name = responsesToolName(fn.name);
+    }
+  }
+  if (Array.isArray(body.input)) {
+    for (const item of body.input) {
+      if (item?.type === "function_call" && typeof item.name === "string") item.name = responsesToolName(item.name);
+    }
+    body.input = pairResponsesCalls(body.input);
+  }
+}
+
 function cloakFingerprintTools(body, shape) {
   if (!body || typeof body !== "object") return;
   const hadTools = Array.isArray(body.tools) && body.tools.length > 0;
@@ -217,6 +267,9 @@ export class OpenCodeExecutor extends BaseExecutor {
       normalizeOpencodeReasoning(model, body);
     }
     cloakFingerprintTools(body, lane);
+    // After the fingerprint pass, so a canonical tool name is not rewritten and
+    // a decoy the pass appends is paired like any other call.
+    if (lane === "responses") hardenResponsesBody(body);
     return injectReasoningContent({ provider: this.provider, model, body });
   }
 

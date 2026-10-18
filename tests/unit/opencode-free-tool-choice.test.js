@@ -124,6 +124,41 @@ describe("opencode free-tier fingerprint tools", () => {
     expect(out.tools.map((tool) => tool.function.name)).toEqual(["get_weather", ...QUARTET]);
   });
 
+  it("repairs the Responses body the upstream answers 400 for", () => {
+    const body = {
+      model: "muse-spark-1.2-contributor-free",
+      max_output_tokens: 1,
+      input: [
+        { type: "message", role: "user", content: [{ type: "input_text", text: "hi" }] },
+        { type: "function_call", call_id: "call_orphan", name: "mcp:fs:read", arguments: "{}" },
+        { type: "function_call_output", call_id: "call_missing", output: "{}" },
+      ],
+      tools: [{ type: "function", name: "mcp:fs:read", description: "read", parameters: { type: "object", properties: {} } }],
+    };
+    const out = executor.transformRequest("muse-spark-1.2-contributor-free", body, true, CREDS);
+    expect(out.max_output_tokens).toBe(16);
+    expect(out.tools.find((tool) => tool.description === "read").name).toBe("mcp_fs_read");
+    expect(out.input.find((item) => item.call_id === "call_missing")).toBeUndefined();
+    const call = out.input.find((item) => item.type === "function_call" && item.call_id === "call_orphan");
+    expect(call.name).toBe("mcp_fs_read");
+    const output = out.input.find((item) => item.type === "function_call_output" && item.call_id === "call_orphan");
+    expect(output.output).toBe("{}");
+    expect(out.input.indexOf(output)).toBe(out.input.indexOf(call) + 1);
+  });
+
+  it("leaves a large Responses cap and a chat body alone", () => {
+    const responses = executor.transformRequest("muse-spark-1.2-contributor-free", {
+      input: structuredClone(INPUT), max_output_tokens: 700000,
+    }, true, CREDS);
+    expect(responses.max_output_tokens).toBe(700000);
+    const chat = executor.transformRequest("big-pickle", {
+      messages: [{ role: "user", content: "hi" }], max_tokens: 1,
+      tools: [{ type: "function", function: { name: "mcp:fs:read", parameters: { type: "object" } } }],
+    }, true, CREDS);
+    expect(chat.max_tokens).toBe(1);
+    expect(chat.tools[0].function.name).toBe("mcp:fs:read");
+  });
+
   it("uses Anthropic decoy shape for the Messages lane and leaves tool_choice alone", () => {
     const body = {
       messages: [{ role: "user", content: "hi" }],
