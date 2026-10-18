@@ -6,7 +6,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { getProviderIconSrc, markProviderIconMissing } from "@/shared/utils/providerIcon";
 import ProviderIcon from "@/shared/components/ProviderIcon";
-import ModelBulkDeleteModal from "@/shared/components/ModelBulkDeleteModal.js";
+import { deleteSelectedModels } from "@/shared/utils/deleteSelectedModels.js";
 import { Card, Button, Badge, Input, Modal, CardSkeleton, OAuthModal, KiroOAuthWrapper, CursorAuthModal, ZedAuthModal, IFlowCookieModal, GitLabAuthModal, Toggle, Select, EditConnectionModal, NoAuthProxyCard, ConfirmModal, Pagination } from "@/shared/components";
 import { CONNECTIONS_PER_PAGE, computeConnectionPagination } from "./connectionsPagination";
 import { OAUTH_PROVIDERS, APIKEY_PROVIDERS, FREE_PROVIDERS, FREE_TIER_PROVIDERS, WEB_COOKIE_PROVIDERS, getProviderAlias, isOpenAICompatibleProvider, isAnthropicCompatibleProvider, AI_PROVIDERS } from "@/shared/constants/providers";
@@ -75,7 +75,8 @@ export default function ProviderDetailPage() {
   const [thinkingMode, setThinkingMode] = useState("auto");
   const [autoPing, setAutoPing] = useState({ enabled: false, connections: {} });
   const [suggestedModels, setSuggestedModels] = useState([]);
-  const [showBulkModelDelete, setShowBulkModelDelete] = useState(false);
+  const [selectedModelIds, setSelectedModelIds] = useState([]);
+  const [bulkDeleteBusy, setBulkDeleteBusy] = useState(false);
   const [liveModels, setLiveModels] = useState([]);
   const [kiloFreeModels, setKiloFreeModels] = useState([]);
   const [disabledModelIds, setDisabledModelIds] = useState([]);
@@ -1289,6 +1290,47 @@ export default function ProviderDetailPage() {
     }
   };
 
+  const deletableModelRows = getProviderCustomModelRows({
+    customModels,
+    modelAliases,
+    providerAlias: providerStorageAlias,
+    builtInModels: models,
+    type: "llm",
+  });
+  const allDeletableSelected =
+    deletableModelRows.length > 0 && selectedModelIds.length === deletableModelRows.length;
+  const toggleSelectModel = (id) =>
+    setSelectedModelIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
+  const toggleSelectAllModels = () =>
+    setSelectedModelIds(allDeletableSelected ? [] : deletableModelRows.map((m) => m.id));
+  const handleBulkDeleteModels = () => {
+    if (selectedModelIds.length === 0) return;
+    const count = selectedModelIds.length;
+    setConfirmState({
+      title: "Remove Added Models",
+      message: `Remove ${count} added model${count === 1 ? "" : "s"} and their aliases? This cannot be undone.`,
+      confirmText: "Remove",
+      variant: "danger",
+      onConfirm: async () => {
+        setBulkDeleteBusy(true);
+        try {
+          const chosen = deletableModelRows.filter((m) => selectedModelIds.includes(m.id));
+          await deleteSelectedModels(chosen, providerStorageAlias, modelAliases);
+          await Promise.all([fetchCustomModels(), fetchAliases()]);
+          if (typeof window !== "undefined") window.dispatchEvent(new CustomEvent("customModelChanged"));
+          setSelectedModelIds([]);
+          setConfirmState(null);
+        } catch (error) {
+          setConfirmState(null);
+          setNoticeState({ title: translate("Error"), message: error.message || "Failed to remove selected models", variant: "error" });
+          await Promise.all([fetchCustomModels(), fetchAliases()]);
+        } finally {
+          setBulkDeleteBusy(false);
+        }
+      },
+    });
+  };
+
   const renderModelsSection = () => {
     if (isCompatible) {
       return (
@@ -1351,6 +1393,8 @@ export default function ProviderDetailPage() {
             isFree={false}
             caps={getCaps(`${providerId}/${model.id}`)}
             thinkingSuffix={resolveThinkingSuffix(model.id)}
+            selected={selectedModelIds.includes(model.id)}
+            onToggleSelect={() => toggleSelectModel(model.id)}
           />
         ))}
 
@@ -1859,7 +1903,36 @@ export default function ProviderDetailPage() {
             <h2 className="text-lg font-semibold">
               {"Available Models"}
             </h2>
-            <Button size="sm" variant="secondary" icon="delete" onClick={() => setShowBulkModelDelete(true)}>Remove added models</Button>
+            {deletableModelRows.length > 0 && (
+              <label className="flex cursor-pointer select-none items-center gap-2 text-xs text-text-muted hover:text-primary">
+                <input
+                  type="checkbox"
+                  checked={allDeletableSelected}
+                  ref={(el) => { if (el) el.indeterminate = selectedModelIds.length > 0 && !allDeletableSelected; }}
+                  onChange={toggleSelectAllModels}
+                  className="h-3.5 w-3.5 rounded border-gray-300 text-primary focus:ring-primary"
+                  aria-label="Select all added models"
+                />
+                <span>{selectedModelIds.length > 0 ? `${selectedModelIds.length} selected` : `Select all (${deletableModelRows.length})`}</span>
+              </label>
+            )}
+            {selectedModelIds.length > 0 && (
+              <>
+                <Button
+                  size="sm"
+                  variant="danger"
+                  icon="delete"
+                  disabled={bulkDeleteBusy}
+                  loading={bulkDeleteBusy}
+                  onClick={handleBulkDeleteModels}
+                >
+                  {`Remove (${selectedModelIds.length})`}
+                </Button>
+                <Button size="sm" variant="ghost" disabled={bulkDeleteBusy} onClick={() => setSelectedModelIds([])}>
+                  Clear
+                </Button>
+              </>
+            )}
             {providerThinkingLevels && (
               <select
                 value={thinkingMode}
@@ -2023,14 +2096,6 @@ export default function ProviderDetailPage() {
           onSuccess={fetchConnections}
         />
       )}
-
-      {showBulkModelDelete && <ModelBulkDeleteModal
-        models={getProviderCustomModelRows({ customModels, modelAliases, providerAlias: providerStorageAlias, builtInModels: models, type: "llm" })}
-        modelAliases={modelAliases}
-        providerAlias={providerStorageAlias}
-        onClose={() => setShowBulkModelDelete(false)}
-        onRefresh={async () => { await Promise.all([fetchCustomModels(), fetchAliases()]); window.dispatchEvent(new CustomEvent("customModelChanged")); }}
-      />}
 
       {/* AG Risk Confirmation Modal */}
       <ConfirmModal
