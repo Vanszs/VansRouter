@@ -30,6 +30,6 @@ export default {
     { id: "deepseek-ai/DeepSeek-V4-Flash-0731", name: "DeepSeek V4 Flash 0731" },
     { id: "MiniMaxAI/MiniMax-M2.7", name: "MiniMax M2.7" },
   ],
-  modelsFetcher: { url: "https://inference.dahl.global/v1/models", type: "openai" },
+  modelsFetcher: { url: "https://inference.dahl.global/v1/models", type: "openai", public: true },
   passthroughModels: true,
 };
