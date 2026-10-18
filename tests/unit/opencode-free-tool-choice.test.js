@@ -7,9 +7,10 @@ vi.mock("../../open-sse/utils/proxyFetch.js", () => ({
   proxyAwareFetch: vi.fn(async () => ({ ok: true, status: 200, headers: { get: () => "" } })),
 }));
 
-// OpenCode Free answers 400 for muse-spark-1.3-contributor-free unless
-// tool_choice is "auto", so named/required/none must be demoted.
-const FREE_13 = "muse-spark-1.3-contributor-free";
+// OpenCode Free answers 400 for muse-spark-1.2-contributor-free unless
+// tool_choice is "auto", so named/required/none must be demoted. The 1.3 id
+// that used to carry this quirk now answers 410 ModelDeprecated.
+const FREE_13 = "muse-spark-1.2-contributor-free";
 const CREDS = { connectionId: "opencode-free-tool-choice-test" };
 const INPUT = [{ type: "message", role: "user", content: [{ type: "input_text", text: "hi" }] }];
 const TOOLS = [{ type: "function", name: "get_weather", description: "w", parameters: { type: "object", properties: {} } }];
@@ -43,7 +44,7 @@ describe("opencode Free 1.3 tool_choice auto-only", () => {
 
   it("leaves tool_choice of other models untouched", () => {
     const choice = { type: "function", name: "get_weather" };
-    for (const model of ["muse-spark-1.2-contributor-free", "muse-spark-1.4-contributor-free", "big-pickle"]) {
+    for (const model of ["muse-spark-1.4-contributor-free", "big-pickle"]) {
       const body = responsesBody(model, structuredClone(choice));
       const out = new OpenCodeExecutor().transformRequest(model, body, true, CREDS);
       expect(out.tool_choice).toEqual(choice);
@@ -164,7 +165,10 @@ describe("opencode free-tier fingerprint tools", () => {
       messages: [{ role: "user", content: "hi" }],
       tools: [{ name: "get_weather", description: "w", input_schema: { type: "object", properties: {} } }],
     };
-    const out = executor.transformRequest("union-alpha", body, true, CREDS);
+    const out = executor.transformRequest("minimax-m3-free", body, true, {
+      ...CREDS,
+      runtimeTransport: { format: "claude" },
+    });
     expect(out.tools.map((tool) => tool.name)).toEqual(["get_weather", ...QUARTET]);
     expect(out.tools[1]).toMatchObject({ name: "bash", input_schema: { type: "object", properties: {} } });
     expect("tool_choice" in out).toBe(false);
