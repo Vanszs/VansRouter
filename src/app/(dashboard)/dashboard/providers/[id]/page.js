@@ -643,6 +643,10 @@ export default function ProviderDetailPage() {
           return;
         }
         fetchedModels = data.models || [];
+        if (fetchedModels.length === 0) {
+          const fetcher = (OAUTH_PROVIDERS[providerId] || APIKEY_PROVIDERS[providerId] || FREE_PROVIDERS[providerId] || FREE_TIER_PROVIDERS[providerId])?.modelsFetcher;
+          if (fetcher) fetchedModels = await fetchSuggestedModels(fetcher);
+        }
       } else {
         const fetcher = (OAUTH_PROVIDERS[providerId] || APIKEY_PROVIDERS[providerId] || FREE_PROVIDERS[providerId] || FREE_TIER_PROVIDERS[providerId])?.modelsFetcher;
         if (!fetcher) {

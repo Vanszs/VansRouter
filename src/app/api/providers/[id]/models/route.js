@@ -544,8 +544,12 @@ export async function GET(request, { params }) {
     let config = PROVIDER_MODELS_CONFIG[connection.provider];
     if (!config) {
       const regCfg = PROVIDERS[connection.provider];
-      const validateUrl = deriveValidateUrl(regCfg);
-      if (validateUrl && connection.apiKey) {
+      // A declared catalog wins over a URL derived from the chat base. OpenCode
+      // Free's base is the site root, so the derived URL is https://opencode.ai/models,
+      // which answers 404, while its modelsFetcher points at the catalog that answers.
+      const catalogUrl = regCfg?.modelsFetcher?.url;
+      const validateUrl = catalogUrl || deriveValidateUrl(regCfg);
+      if (validateUrl && (connection.apiKey || connection.accessToken || catalogUrl)) {
         config = createOpenAIModelsConfig(validateUrl, regCfg);
       }
     }
