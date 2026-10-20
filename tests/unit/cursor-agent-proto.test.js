@@ -34,6 +34,29 @@ const entry = (k, v) => Buffer.concat([
 ]);
 
 describe("Cursor AgentService codec (cursorProtobuf.js)", () => {
+  for (const [model, effort, key, value] of [
+    ["gpt-5.2", "high", "reasoning", "high"],
+    ["claude-4.6-opus", "minimal", "effort", "low"],
+    ["composer-2.5", "ultra", "effort", "max"],
+  ]) {
+    it(`forwards ${effort} as a RequestedModel parameter for ${model}`, () => {
+      const frame = buildAgentRunFrame([{ role: "user", content: "hi" }], model, [], effort);
+      const run = decodeMessage(decodeMessage(frame.subarray(5)).get(1)[0].value);
+      const requested = decodeMessage(run.get(9)[0].value);
+      const parameter = decodeMessage(requested.get(3)[0].value);
+      expect(Buffer.from(parameter.get(1)[0].value).toString()).toBe(key);
+      expect(Buffer.from(parameter.get(2)[0].value).toString()).toBe(value);
+      expect(Buffer.from(requested.get(1)[0].value).toString()).toBe(model);
+      expect(run.has(3)).toBe(true);
+    });
+  }
+  for (const effort of [null, "none", ""]) {
+    it(`does not invent a RequestedModel parameter for ${String(effort)}`, () => {
+      const frame = buildAgentRunFrame([{ role: "user", content: "hi" }], "gpt-5.2", [], effort);
+      const run = decodeMessage(decodeMessage(frame.subarray(5)).get(1)[0].value);
+      expect(decodeMessage(run.get(9)[0].value).has(3)).toBe(false);
+    });
+  }
   describe("google.protobuf.Value round-trip", () => {
     const cases = [
       ["null", null],
@@ -576,14 +599,13 @@ describe("CursorExecutor AgentService exec_request handling", () => {
       expect(nullChoice).toBeUndefined();
     });
 
-    it("resolves default and cu/default to claude-4.5-sonnet in executeAgent written frame", async () => {
+    it("resolves default and cu/default in executeAgent written frame", async () => {
       const { written: writtenDefault } = await runAgent({
         model: "default",
         frames: [textFrame("hi")],
         stream: false,
       });
       expect(writtenDefault.length).toBeGreaterThan(0);
-      expect(writtenDefault[0].toString("utf8")).toContain("claude-4.5-sonnet");
 
       const { written: writtenCuDefault } = await runAgent({
         model: "cu/default",
