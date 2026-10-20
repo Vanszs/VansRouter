@@ -348,7 +348,8 @@ export function normalizeClaudePassthrough(body, model = "") {
       if (typeof msg.content === "string") return msg.content.trim().length > 0;
       if (!Array.isArray(msg.content)) return true;
       msg.content = msg.content.filter(block =>
-        !(block?.type === CLAUDE_BLOCK.TEXT && !String(block.text ?? "").trim()));
+        !(block?.type === CLAUDE_BLOCK.TEXT && !String(block.text ?? "").trim())
+        && !(block?.type === CLAUDE_BLOCK.THINKING && !String(block.thinking ?? "").trim()));
       return msg.content.length > 0;
     });
     body.messages = ensureTrailingUserTurn(body.messages, originalLastRole);
@@ -409,6 +410,16 @@ export function prepareClaudeRequest(body, provider = null, apiKey = null, conne
   // quirk: MiniMax's Claude-compatible endpoint rejects Anthropic's output_config (400 invalid params)
   if (PROVIDERS[provider]?.quirks?.dropOutputConfig) {
     delete body.output_config;
+  }
+
+  // Claude Code puts a `context_management` block (context-editing strategy) in
+  // every request; only Anthropic accepts it — gateways fronting other engines
+  // answer 400 "context_management: Extra inputs are not permitted". Same-format
+  // claude→claude requests skip body rebuilding in the translator, so the field
+  // rides through to every non-Anthropic provider on the Claude transport.
+  const isAnthropicServing = provider === "claude" || provider?.startsWith?.("anthropic-compatible-");
+  if (!isAnthropicServing) {
+    delete body.context_management;
   }
 
   // Models whose API rejects thinking "disabled" and forced tool use with a 400
@@ -537,6 +548,7 @@ export function prepareClaudeRequest(body, provider = null, apiKey = null, conne
           for (const block of msg.content) {
             const isThinking = block.type === CLAUDE_BLOCK.THINKING || block.type === CLAUDE_BLOCK.REDACTED_THINKING;
             if (isThinking) {
+              if (!String(block.thinking ?? "").trim()) continue;
               if (isClaudeNative) {
                 if (isValidClaudeSignature(block.signature)) {
                   hasKeptThinking = true;
