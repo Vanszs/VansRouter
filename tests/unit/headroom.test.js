@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
-import { compressWithHeadroom, formatHeadroomLog } from "../../open-sse/rtk/headroom.js";
+import { compressWithHeadroom, formatHeadroomLog, formatHeadroomSizeLog, isHeadroomPhantomSavings } from "../../open-sse/rtk/headroom.js";
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -303,5 +303,41 @@ describe("formatHeadroomLog", () => {
   it("formats reported token deltas without implying provider billing savings", () => {
     expect(formatHeadroomLog({ tokens_before: 100, tokens_after: 25, tokens_saved: 75 }))
       .toBe("reported token delta=75 before=100 after=25 (75.0%)");
+  });
+});
+
+describe("isHeadroomPhantomSavings", () => {
+  it.each([
+    ["healthy message compression with large tools", 1000, 500, false],
+    ["barely smaller messages", 1000, 990, true],
+    ["unchanged messages", 1000, 1000, true],
+    ["larger messages", 1000, 1100, true],
+    ["missing message sizes", undefined, undefined, false],
+    ["empty original messages", 0, 10, false],
+    ["missing compressed size", 1000, 0, false],
+  ])("handles %s", (_name, before, after, expected) => {
+    expect(isHeadroomPhantomSavings({ tokens_saved: 500 }, {
+      before: { bodyBytes: 100000, messageBytes: before },
+      after: { bodyBytes: 99500, messageBytes: after },
+    })).toBe(expected);
+  });
+
+  it("does not warn without a positive reported token delta", () => {
+    const diagnostics = {
+      before: { bodyBytes: 100000, messageBytes: 1000 },
+      after: { bodyBytes: 100000, messageBytes: 1000 },
+    };
+    for (const stats of [null, {}, { tokens_saved: 0 }, { tokens_saved: -1 }]) {
+      expect(isHeadroomPhantomSavings(stats, diagnostics)).toBe(false);
+    }
+  });
+
+  it("honors the requested message shrink threshold", () => {
+    const diagnostics = {
+      before: { bodyBytes: 100000, messageBytes: 1000 },
+      after: { bodyBytes: 99900, messageBytes: 900 },
+    };
+    expect(isHeadroomPhantomSavings({ tokens_saved: 100 }, diagnostics)).toBe(false);
+    expect(isHeadroomPhantomSavings({ tokens_saved: 100 }, diagnostics, 0.2)).toBe(true);
   });
 });
