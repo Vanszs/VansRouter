@@ -1,7 +1,8 @@
 import { createErrorResult, parseUpstreamError, formatProviderError } from "../utils/error.js";
 import { HTTP_STATUS, FETCH_CONNECT_TIMEOUT_MS } from "../config/runtimeConfig.js";
 import { PROVIDER_MEDIA } from "../providers/index.js";
-import { generateSessionId } from "../executors/opencode-zen.js";
+import { getModelUpstreamId } from "../config/providerModels.js";
+import { generateSessionId } from "../executors/opencode.js";
 
 /**
  * Core System One (Jev) handler — native decision payload pass-through.
@@ -19,12 +20,27 @@ export async function handleSystemoneCore({
 }) {
   const { provider, model } = modelInfo;
   const cfg = PROVIDER_MEDIA[provider]?.systemoneConfig;
-  const targetUrl = credentials?.providerSpecificData?.baseUrl || cfg?.baseUrl;
+  let targetUrl = credentials?.providerSpecificData?.baseUrl || cfg?.baseUrl;
   if (!targetUrl) {
     return createErrorResult(
       HTTP_STATUS.BAD_REQUEST,
       `Provider '${provider}' does not support System One.`
     );
+  }
+
+  // Cloudflare-style endpoints embed the account and model in the path.
+  if (targetUrl.includes("{accountId}")) {
+    const accountId = credentials?.providerSpecificData?.accountId;
+    if (!accountId) {
+      return createErrorResult(
+        HTTP_STATUS.BAD_REQUEST,
+        `Provider '${provider}' requires accountId in providerSpecificData.`
+      );
+    }
+    targetUrl = targetUrl.replace("{accountId}", accountId);
+  }
+  if (targetUrl.includes("{model}")) {
+    targetUrl = targetUrl.replace(/\{model\}/g, model);
   }
 
   // Validate input at the trust boundary; question-level shape is upstream's job.
@@ -35,16 +51,25 @@ export async function handleSystemoneCore({
     return createErrorResult(HTTP_STATUS.BAD_REQUEST, "Missing required field: questions");
   }
 
-  // noAuth free lanes carry accessToken "public" from the credential stub.
   const token = credentials?.apiKey || credentials?.accessToken;
+  const authHeader = cfg?.authHeader || "bearer";
   const headers = {
     "Content-Type": "application/json",
-    ...(token ? { Authorization: `Bearer ${token}` } : {}),
-    ...(cfg.headers || {}),
+    ...(cfg?.headers || {}),
+    ...(credentials?.headers || {}),
     // Zen lanes expect the official client session header on every request.
     "x-opencode-session": generateSessionId(),
   };
-  const requestBody = { ...body, model };
+
+  if (token) {
+    if (authHeader === "bearer") {
+      headers["Authorization"] = `Bearer ${token}`;
+    } else if (authHeader === "x-api-key") {
+      headers["x-api-key"] = token;
+    }
+  }
+
+  const requestBody = { ...body, model: getModelUpstreamId(provider, model) || model };
 
   log?.debug?.("SYSTEMONE", `${provider.toUpperCase()} | ${model}`);
 
@@ -84,7 +109,10 @@ export async function handleSystemoneCore({
   return {
     success: true,
     usage: usage
-      ? { prompt_tokens: usage.input_tokens || 0, completion_tokens: usage.output_tokens || 0 }
+      ? {
+          prompt_tokens: usage.prompt_tokens ?? usage.input_tokens ?? 0,
+          completion_tokens: usage.completion_tokens ?? usage.output_tokens ?? 0,
+        }
       : null,
     response: new Response(JSON.stringify(responseBody), {
       headers: {
