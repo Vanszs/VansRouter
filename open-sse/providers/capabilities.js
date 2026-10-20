@@ -1124,12 +1124,6 @@ export const PATTERN_CAPABILITIES = [
       maxOutput: 65536,
     },
   },
-  {
-    pattern: "*gemini*",
-    caps: { vision: true, search: true, contextWindow: 1048576 },
-  },
-  { pattern: "*gemma*", caps: { vision: true, contextWindow: 128000 } },
-  { pattern: "*nanobanana*", caps: { vision: true, imageOutput: true } },
 
   // ── OpenAI GPT-5.x (vision + thinking + web search) ──────────────
   { pattern: "*gpt-5*image*", caps: { imageOutput: true } },

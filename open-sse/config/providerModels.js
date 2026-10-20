@@ -114,7 +114,7 @@ export function getModelUpstreamId(aliasOrId, modelId) {
 
 export function resolveAntigravityUpstreamModel(model) {
   const upstream = getModelUpstreamId("ag", model) || model;
-  return upstream.replace(/-tiered\([^)]*\)$/, "-tiered");
+  return upstream.replace(/-tiered\([^)]*\)$/, "-tiered").replace(/\((?:low|medium|high)\)$/, "");
 }
 
 export function getModelQuotaFamily(aliasOrId, modelId) {
