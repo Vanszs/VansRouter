@@ -686,14 +686,16 @@ export class CursorExecutor extends BaseExecutor {
     const originalMessages = body.messages || [];
     let workingMessages = originalMessages;
     const tools = body.tools || [];
-    let runModel = resolveCursorUpstreamModel(model);
+    let runModel = model;
     if (model === "default" || model === "auto") {
       const catalog = await resolveCursorModels(credentials, { signal, log });
       const selection = resolveAutoModelSelection(catalog?.models);
       if (selection) {
         log?.info?.("CURSOR", `auto model resolved: ${model} → ${selection.modelId} (${selection.matchedBy})`);
-        runModel = resolveCursorUpstreamModel(selection.modelId);
+        runModel = selection.modelId;
       }
+    } else {
+      runModel = resolveCursorUpstreamModel(model);
     }
 
     const openAgentSession = (frameMessages) => {
@@ -701,15 +703,10 @@ export class CursorExecutor extends BaseExecutor {
       session.write(buildAgentRunFrame(frameMessages, runModel, tools, body.reasoning_effort || body.reasoning?.effort));
       return session;
     };
-      return session;
-    };
 
     let session;
     try {
       session = openAgentSession(workingMessages);
-    } catch (error) {
-      throw new Error(`Cursor AgentService request failed: ${error.message}`);
-    }
     } catch (error) {
       throw new Error(`Cursor AgentService request failed: ${error.message}`);
     }

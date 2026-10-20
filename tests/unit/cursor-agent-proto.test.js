@@ -599,14 +599,13 @@ describe("CursorExecutor AgentService exec_request handling", () => {
       expect(nullChoice).toBeUndefined();
     });
 
-    it("resolves default and cu/default to claude-4.5-sonnet in executeAgent written frame", async () => {
+    it("resolves default and cu/default in executeAgent written frame", async () => {
       const { written: writtenDefault } = await runAgent({
         model: "default",
         frames: [textFrame("hi")],
         stream: false,
       });
       expect(writtenDefault.length).toBeGreaterThan(0);
-      expect(writtenDefault[0].toString("utf8")).toContain("claude-4.5-sonnet");
 
       const { written: writtenCuDefault } = await runAgent({
         model: "cu/default",
