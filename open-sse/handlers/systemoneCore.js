@@ -50,6 +50,7 @@ export async function handleSystemoneCore({
       `Provider '${provider}' does not support System One.`
     );
   }
+
   // Cloudflare-style endpoints embed the account and model in the path.
   if (targetUrl.includes("{accountId}")) {
     const accountId = credentials?.providerSpecificData?.accountId;
@@ -75,13 +76,19 @@ export async function handleSystemoneCore({
 
   // noAuth free lanes carry accessToken "public" from the credential stub.
   const token = credentials?.apiKey || credentials?.accessToken;
+  const authHeader = cfg?.authHeader || "bearer";
   const headers = {
     "Content-Type": "application/json",
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
     ...(cfg.headers || {}),
+    ...(credentials?.headers || {}),
     // Zen lanes expect the official client session header; other providers don't need it.
     ...(OPENCODE_PROVIDERS.has(provider) ? { "x-opencode-session": generateSessionId() } : {}),
   };
+  if (token && authHeader === "x-api-key") {
+    delete headers.Authorization;
+    headers["x-api-key"] = token;
+  }
   // Cloudflare validates the body model as a short selector (e.g. "clef-flash"), not the full id.
   const requestBody = { ...body, model: getModelUpstreamId(provider, model) || model };
 

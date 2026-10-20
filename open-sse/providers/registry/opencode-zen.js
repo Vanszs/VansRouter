@@ -122,7 +122,18 @@ export default {
     { id: "kimi-k2.5", name: "Kimi K2.5", supportedFormats: ["openai"] },
     { id: "big-pickle", name: "Big Pickle", supportedFormats: ["openai"] },
     { id: "union-alpha", name: "Union Alpha", supportedFormats: ["claude"] },
+    // System One (Jev) decision models on the native /systemone endpoint
+    { id: "jev-1.13", name: "Jev 1.13", kind: "systemone" },
+    { id: "jev-1.13-free", name: "Jev 1.13 Free", kind: "systemone" },
   ],
+  serviceKinds: ["llm", "systemone"],
+  systemoneConfig: {
+    baseUrl: "https://opencode.ai/zen/v1/systemone",
+    headers: {
+      "x-opencode-client": "desktop",
+      "User-Agent": "opencode/1.18.31",
+    },
+  },
   passthroughModels: true,
   features: {
     usage: true,

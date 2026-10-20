@@ -43,6 +43,14 @@ export default {
     { id: "nemotron-3.5-lightning-free", name: "Nemotron 3.5 Lightning Free" },
     { id: "minimax-m3.1-flash-free", name: "MiniMax M3.1 Flash Free" },
   ],
+  serviceKinds: ["llm", "systemone"],
+  systemoneConfig: {
+    baseUrl: "https://opencode.ai/zen/v1/systemone",
+    headers: {
+      "x-opencode-client": "desktop",
+      "User-Agent": "opencode/1.18.31",
+    },
+  },
   modelsFetcher: { url: "https://opencode.ai/zen/v1/models", type: "opencode-free" },
   liveCatalog: true,
   passthroughModels: true,
