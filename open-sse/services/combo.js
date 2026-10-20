@@ -281,15 +281,55 @@ export function resetComboRotation(comboName) {
 export function getComboModelsFromData(modelStr, combosData) {
   // Don't check if it's in provider/model format
   if (modelStr.includes("/")) return null;
-  
+
   // Handle both array and object formats
   const combos = Array.isArray(combosData) ? combosData : (combosData?.combos || []);
-  
+
   const combo = combos.find(c => c.name === modelStr);
   if (combo && combo.models && combo.models.length > 0) {
     return combo.models;
   }
   return null;
+}
+
+/**
+ * Detect whether a 2xx JSON response contains zero usable content
+ * (e.g. empty assistant message with in_progress/incomplete)
+ * so combo fallback can continue to the next model.
+ */
+export function isZeroContentResponse(data) {
+  if (!data || typeof data !== "object") return false;
+
+  // OpenAI chat format
+  if (Array.isArray(data.choices)) {
+    if (data.choices.length === 0) return true;
+    const choice = data.choices[0];
+    if (!choice) return true;
+
+    const msg = choice.message || choice.delta;
+    const content = msg?.content;
+    const hasContent = typeof content === "string" ? content.trim().length > 0 : (Array.isArray(content) && content.length > 0);
+    const hasToolCalls = (Array.isArray(msg?.tool_calls) && msg.tool_calls.length > 0) || Boolean(msg?.function_call);
+    const hasReasoning = typeof msg?.reasoning_content === "string" ? msg.reasoning_content.trim().length > 0 : false;
+
+    const finish = choice.finish_reason;
+    const isNormalFinish = finish === "stop" || finish === "length" || finish === "tool_calls" || finish === "function_call";
+
+    if (!hasContent && !hasToolCalls && !hasReasoning && (!isNormalFinish || finish === "in_progress" || finish === "incomplete")) {
+      return true;
+    }
+  }
+
+  // Anthropic messages format
+  if (Array.isArray(data.content)) {
+    const hasContent = data.content.some((c) => (c.type === "text" && c.text?.trim().length > 0) || c.type === "tool_use");
+    const stopReason = data.stop_reason;
+    if (!hasContent && (!stopReason || stopReason === "in_progress" || stopReason === "incomplete")) {
+      return true;
+    }
+  }
+
+  return false;
 }
 
 /**
@@ -415,8 +455,26 @@ export async function handleComboChat({ body, models, handleSingleModel, log, co
         }
       }
 
-      // Success (2xx) - return response
+      // Success (2xx) - return response unless empty/zero-content on a non-final seat
       if (result.ok) {
+        const isLastModel = i === rotatedModels.length - 1;
+        if (!isLastModel) {
+          const contentType = result.headers?.get?.("content-type") || "";
+          if (contentType.includes("application/json")) {
+            try {
+              const peekBody = await result.clone().json();
+              if (isZeroContentResponse(peekBody)) {
+                log.warn("COMBO", `Model ${modelStr} returned HTTP 200 with zero usable content, falling back to next model`);
+                lastError = "Zero usable content";
+                lastStatus = 200;
+                continue;
+              }
+            } catch {
+              // Ignore JSON parse errors
+            }
+          }
+        }
+
         log.info("COMBO", `Model ${modelStr} succeeded`);
         return result;
       }

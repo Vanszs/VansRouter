@@ -35,6 +35,10 @@ const STRIP_RULES = [
   { provider: "groq", dropMessageFields: ["reasoning_content", "reasoning", "reasoning_details"] },
   { provider: "mistral", dropMessageFields: ["reasoning_content", "reasoning", "reasoning_details"] },
   { provider: "cerebras", dropMessageFields: ["reasoning_content", "reasoning", "reasoning_details"] },
+  // OpenCode Go's relay rejects `response_format` for its deepseek family with HTTP
+  // 400 — both json_schema and json_object — while glm / kimi / mimo / minimax /
+  // qwen / grok / gpt on the same relay accept it.
+  { provider: "opencode-go", match: /^deepseek/i, drop: ["response_format"] },
 ];
 
 // Test a rule's match (regex or predicate) against the model id.
