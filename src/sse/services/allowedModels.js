@@ -32,7 +32,7 @@ import { ANTHROPIC_API_VERSION } from "open-sse/providers/shared.js";
 
 const UPSTREAM_CONNECTION_RE = /[-_][0-9a-f]{8,}$/i;
 const LLM_KIND = "llm";
-const ALL_KINDS = [LLM_KIND, "tts", "embedding", "image", "imageToText", "stt", "video", "webSearch", "webFetch"];
+const ALL_KINDS = [LLM_KIND, "tts", "embedding", "image", "imageToText", "stt", "video", "webSearch", "webFetch", "systemone"];
 
 const MODEL_TYPE_TO_KIND = {
   image: "image",
@@ -41,6 +41,7 @@ const MODEL_TYPE_TO_KIND = {
   embedding: "embedding",
   stt: "stt",
   imageToText: "imageToText",
+  systemone: "systemone",
 };
 
 const LIVE_MODEL_RESOLVERS = {

@@ -86,7 +86,7 @@ function generateRequestId() {
   return `msg_${timeHex(BigInt(Date.now()) * 0x1000n + 1n)}${randomPart()}`;
 }
 
-function generateSessionId() {
+export function generateSessionId() {
   return `ses_${timeHex(~(BigInt(Date.now()) * 0x1000n))}${randomPart()}`;
 }
 
