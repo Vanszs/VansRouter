@@ -93,6 +93,12 @@ export const MODEL_CAPABILITIES = {
   "claude-opus-5.5-thinking": { vision: true, reasoning: true, search: true, thinkingFormat: "claude-adaptive", contextWindow: 1000000, maxOutput: 128000 },
   "claude-opus-5.5-agentic": { vision: true, reasoning: true, search: true, thinkingFormat: "claude-adaptive", contextWindow: 1000000, maxOutput: 128000 },
   "claude-opus-5.5-thinking-agentic": { vision: true, reasoning: true, search: true, thinkingFormat: "claude-adaptive", contextWindow: 1000000, maxOutput: 128000 },
+  // Opus 5.5 rejects thinking.type "disabled" and forced tool_choice (any/tool) with 400.
+  "claude-opus-5-5": { vision: true, reasoning: true, search: true, thinkingFormat: "claude-adaptive", contextWindow: 1000000, maxOutput: 128000, thinkingCanDisable: false, forcedToolChoice: false },
+  "claude-opus-5-5-thinking": { vision: true, reasoning: true, search: true, thinkingFormat: "claude-adaptive", contextWindow: 1000000, maxOutput: 128000, thinkingCanDisable: false, forcedToolChoice: false },
+  "claude-opus-5-5-high": { vision: true, reasoning: true, search: true, thinkingFormat: "claude-adaptive", contextWindow: 1000000, maxOutput: 128000, thinkingCanDisable: false, forcedToolChoice: false },
+  "claude-opus-5-5-medium": { vision: true, reasoning: true, search: true, thinkingFormat: "claude-adaptive", contextWindow: 1000000, maxOutput: 128000, thinkingCanDisable: false, forcedToolChoice: false },
+  "claude-opus-5-5-low": { vision: true, reasoning: true, search: true, thinkingFormat: "claude-adaptive", contextWindow: 1000000, maxOutput: 128000, thinkingCanDisable: false, forcedToolChoice: false },
   "claude-opus-5": {
     vision: true,
     reasoning: true,
@@ -292,6 +298,7 @@ export const MODEL_CAPABILITIES = {
     pdf: true,
     reasoning: true,
     thinkingFormat: "zai",
+    thinkingCanDisable: false,
     contextWindow: 1000000,
     maxOutput: 131072,
   },
@@ -629,6 +636,13 @@ export const PROVIDER_CAPABILITIES = {
   // `thinking` object (400: unknown field "thinking") and wants reasoning_effort.
   // Overrides the global entry, whose z.ai shape is correct for z.ai itself.
   "opencode-go": {
+    "claude-haiku-5-5": {
+      vision: true,
+      reasoning: true,
+      thinkingFormat: "claude-adaptive",
+      contextWindow: 1000000,
+      maxOutput: 128000,
+    },
     "glm-5.3-flash": {
       vision: true,
       videoInput: true,
@@ -1459,7 +1473,8 @@ export const PATTERN_CAPABILITIES = [
       reasoning: true,
       thinkingFormat: "zai",
       thinkingEffortSupported: true,
-      contextWindow: 200000,
+      thinkingCanDisable: false,
+      contextWindow: 1000000,
       maxOutput: 128000,
     },
   },
@@ -1469,7 +1484,7 @@ export const PATTERN_CAPABILITIES = [
       reasoning: true,
       thinkingFormat: "zai",
       thinkingEffortSupported: true,
-      contextWindow: 200000,
+      contextWindow: 1000000,
       maxOutput: 128000,
     },
   },

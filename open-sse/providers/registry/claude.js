@@ -77,6 +77,7 @@ export default {
     { id: "claude-fable-5-1", name: "Claude Fable 5.1" },
     { id: "claude-fable-5", name: "Claude Fable 5" },
     { id: "claude-sonnet-5-5", name: "Claude Sonnet 5.5" },
+    { id: "claude-opus-5-5", name: "Claude Opus 5.5" },
   ],
   oauth: {
     clientId: "9d1c250a-e61b-44d9-88ed-5944d1962f5e",
