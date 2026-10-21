@@ -24,6 +24,12 @@ function getOpenAICompatibleType(provider) {
   return provider.includes("responses") ? "responses" : "chat";
 }
 
+export function resolveOpenAICompatibleApiType(provider, credentials = null) {
+  const stored = credentials?.providerSpecificData?.apiType;
+  if (stored === "chat" || stored === "responses") return stored;
+  return typeof provider === "string" && provider.includes("responses") ? "responses" : "chat";
+}
+
 // Detect request format from body structure
 export function detectFormat(body) {
   // OpenAI Responses API: has input (array or string) instead of messages[]
