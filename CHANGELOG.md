@@ -1,15 +1,24 @@
 # v0.91.62 (2026-10-21)
 
-46 commits over the v0.91.61 tag: an upstream sync of decolua/9router v0.5.99 →
-v0.5.104 (38 commits in the range, plus the still-unadopted tail of the v0.5.95 →
-v0.5.99 range), cherry-picked commit by commit onto this fork, followed by a
-repair pass over the conflicts the cherry-picks left behind. 172 files,
-+9499/-897. No push and no tag yet — this entry is the release candidate for
-the branch, and the four upstream items that were deliberately not adopted are
-listed under "Skipped" below.
+85 commits over the v0.91.61 tag: an upstream sync of decolua/9router across the
+v0.5.95, v0.5.99 and v0.5.104 releases, cherry-picked commit by commit onto this
+fork, followed by a repair pass over the conflicts the cherry-picks left behind
+and a decomposition of the three files the sync pushed past 1k lines. Every
+upstream commit in the range is either adopted or listed under "Skipped" with
+its reason; the per-commit mapping is in
+`.audit/sync-ledger-0.5.99-0.5.104.md`. No push and no tag yet — this entry is
+the release candidate.
 
 ## Features
 
+- **AWS Bedrock**: new `bedrock` and `bedrock-xai` providers with static-key and
+  AWS SSO profile credential modes, a hand-rolled SigV4 signer on node:crypto,
+  and region/profile validation before the values are used. The AWS
+  EventStream framing is now one shared implementation, so a bounds or CRC fix
+  cannot land in only one of Bedrock and Kiro.
+- **Hermes**: per-profile configuration across the API, the dashboard card and
+  the CLI, plus speech-to-text wired through 9router's
+  `/v1/audio/transcriptions`.
 - **MiniMax Code (mcode)**: new provider with its own executor, OAuth login
   (`minimax-code` and `minimax-code-global`), live catalogue filter, usage
   tracker, and the `x-api-key` / `X-Mavis-*` header profile the upstream
@@ -50,6 +59,10 @@ listed under "Skipped" below.
 
 ## Reliability & Compatibility
 
+- **Hermes**: the route keeps this fork's validation of the role name, the
+  model and the base URL before it writes the config file, and the new
+  speech-to-text model is validated the same way — upstream's version of the
+  route has neither.
 - **OpenCode Free**: the free lane is pinned to the eight models the upstream
   actually serves, each with a real capability entry (without one,
   `getCapabilitiesForModel()` falls through to the default, which reports
@@ -118,6 +131,10 @@ listed under "Skipped" below.
 - **Claude PDF input**: the current Claude families advertise PDF input, so a
   PDF attachment is no longer dropped before it reaches the upstream
   (`f5f88039`).
+- **Relay deploy modals**: the four "deploy a relay to an edge provider"
+  dialogs (Vercel, Cloudflare, Deno, Netlify) share one component instead of
+  four copies of the same form, and the Netlify dialog the sync added is
+  reachable from the menu item that opens it.
 
 ## Tests
 
@@ -145,43 +162,28 @@ listed under "Skipped" below.
 
 These upstream changes were **not** adopted, with the reason recorded:
 
-- **AWS Bedrock** (`a9d0ad269`): needs a new dependency
-  (`@aws-sdk/credential-providers`) and touches the protected
-  `src/app/api/providers/route.js`. Adding a dependency is out of scope for
-  this sync.
-- **Hermes per-profile configuration** (`a9c9f6836`) and **Hermes audio
-  transcription** (`d6431f8b`): both rewrite the `hermes-settings` route,
-  which this fork deliberately hardened — the route validates the role name
-  and the YAML values before it writes the config file. Upstream's version of
-  that route does not carry the validation, so a straight port would
-  reintroduce the regex/YAML injection the earlier audit found.
 - **Per-API-key access control** (`d8c585fb7`) and **per-key token quotas**
   (`2aa9307f5`): they touch the protected ACL files
   (`src/sse/handlers/chat.js`, `src/app/api/v1/models/route.js`) and the fork
   already has its own per-key ACL (`allowedProviders` / `allowedCombos` /
   `allowedKinds`). Upstream reverted both commits itself in `6ed88685`.
-- **The OpenCode lane changes** (`ef4679df`, `e964e482`, `59e9b526`,
-  `5bdcd5e7`, `c8644368`): out of scope for this pass. `5bdcd5e7` is
-  additionally contradicted by the live probe kept in
+- **The OpenCode lane changes** (`ef4679df`, `e964e4826`, `59e9b5264`,
+  `5bdcd5e7`, `c86443689`): `ef4679df` is already covered by the fork's own
+  `4f5bb8d93`, which additionally encodes the request id, splits the id cache
+  so request churn cannot evict a live session id, and covers the
+  `opencode-zen` lane through the same executor. The rest are out of scope for
+  this pass. `5bdcd5e7` is additionally contradicted by the live probe kept in
   `.audit/probe-opencode-zen-2026-10-17.txt` — `/zen/v1` does not reject
   everything for this fork's client shape, so the premise the commit is based
   on does not hold here.
 - **The OpenCode Free Muse Spark entries** (`acb5c34c`): the Free-lane Muse
   Spark models were deliberately removed from this fork, so only the Meta
   provider half of the change is taken.
-- The upstream changelog-only commits (`3c48d275`, `87a74e1b`): this fork
+- The upstream changelog-only commits (`3c48d275`, `87a74e1bd`): this fork
   writes its own entries in its own style.
 
-
-# v0.91.61 (2026-10-02)
-
-128 commits over the v0.91.51 tag: an upstream sync to decolua/9router v0.5.95
-cherry-picked commit by commit onto this fork, adding three OAuth-capable
-providers and GPT-6.1-era model support, followed by a repair pass over the
-conflicts the cherry-picks left behind, a merge of upstream's grok-cli 426-gate
-fix that landed on `main` mid-release, and a measured performance pass over the
-dashboard. 271 files, +16094/-1420.
-
+The per-commit mapping, including the fork fixes and the decompositions this
+sync forced, is in `.audit/sync-ledger-0.5.99-0.5.104.md`.
 ## Features
 
 - **Codex**: GPT-6.1 Sol with its own 272k capability entry, 1M-context variants
