@@ -261,7 +261,8 @@ function applyFormat(fmt, body, cfg, caps, supportedLevels, display) {
       // ("thinking is off unless you explicitly set it"), and Anthropic-compatible
       // shims (e.g. GitHub Copilot /v1/messages) default thinking off even for
       // Sonnet 5. Send both fields — the documented adaptive-thinking shape.
-      body.thinking = { type: "adaptive", ...(display ? { display } : {}) };
+      if (canDisable) body.thinking = { type: "adaptive", ...(display ? { display } : {}) };
+      else delete body.thinking;
       const level = toLevel(eff);
       // xhigh is model-gated (Opus/Sonnet 4.6 reject it) — clamp when not advertised.
       body.output_config = { effort: level === "auto" ? "high"
