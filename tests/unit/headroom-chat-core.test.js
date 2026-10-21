@@ -209,6 +209,42 @@ describe("handleChatCore Headroom diagnostics", () => {
     expect(logs).not.toContain(original);
   });
 
+  it("does not warn when unchanged tools dominate a request whose messages shrink", async () => {
+    const log = { debug: vi.fn(), info: vi.fn(), warn: vi.fn() };
+    const original = "x".repeat(1000);
+    const compressed = "x".repeat(500);
+    const tools = [{ type: "function", function: { name: "lookup", description: "schema".repeat(10000), parameters: { type: "object" } } }];
+
+    global.fetch = vi.fn(async (url) => {
+      if (String(url).includes("/v1/compress")) {
+        return new Response(JSON.stringify({
+          messages: [{ role: "user", content: compressed }],
+          tokens_before: 1000,
+          tokens_after: 100,
+          tokens_saved: 900,
+        }), { status: 200, headers: { "content-type": "application/json" } });
+      }
+      throw new Error(`unexpected fetch: ${url}`);
+    });
+
+    await handleChatCore({
+      body: { model: "gpt-4o", stream: false, messages: [{ role: "user", content: original }], tools },
+      modelInfo: { provider: "openai", model: "gpt-4o" },
+      credentials: { apiKey: "test-key", providerSpecificData: {} },
+      log,
+      connectionId: "test-conn",
+      headroomEnabled: true,
+      headroomUrl: "http://localhost:8787",
+      headroomCompressUserMessages: false,
+      rtkEnabled: false,
+      cavemanEnabled: false,
+      ponytailEnabled: false,
+      clientRawRequest: { endpoint: "/v1/chat/completions", body: {}, headers: { accept: "application/json" } },
+    });
+
+    expect(log.warn).not.toHaveBeenCalledWith("HEADROOM", expect.stringContaining("reported token delta, but outbound JSON shrank <5%"));
+  });
+
   it("warns when Headroom reports savings but outbound body barely shrinks", async () => {
     const log = { debug: vi.fn(), info: vi.fn(), warn: vi.fn() };
     const original = "x".repeat(1000);
@@ -247,7 +283,7 @@ describe("handleChatCore Headroom diagnostics", () => {
 
     expect(log.warn).toHaveBeenCalledWith(
       "HEADROOM",
-      expect.stringContaining("reported token delta, but outbound JSON shrank <5%; provider may bill near-original payload")
+      expect.stringContaining("reported token delta, but outbound JSON shrank <5%")
     );
   });
 
