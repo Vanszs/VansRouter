@@ -5,9 +5,11 @@ import { FILTERS } from "@/app/api/providers/suggested-models/filters.js";
 const suggest = (ids) => FILTERS["opencode-free"](ids.map((id) => ({ id }))).map((m) => m.id);
 
 describe("opencode-free suggestion filter", () => {
-  it("offers only the eight tested available models", () => {
+  it("offers only the curated available models", () => {
     const available = [
       "beam-free",
+      "flint-40b-free",
+      "jev-1.13-free",
       "mimo-v2.6-flash-free",
       "nemotron-3.5-super-vl-free",
       "nemotron-3.5-lightning-free",
@@ -19,7 +21,6 @@ describe("opencode-free suggestion filter", () => {
     expect(suggest([
       "big-pickle",
       ...available,
-      "jev-1.13-free",
       "space-bunny-free",
       "hy3-free",
       "gpt-4o",

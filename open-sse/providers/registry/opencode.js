@@ -32,6 +32,8 @@ export default {
   },
   models: [
     { id: "beam-free", name: "Beam Free" },
+    { id: "flint-40b-free", name: "Flint 40B Free" },
+    { id: "jev-1.13-free", name: "Jev 1.13 Free" },
     { id: "mimo-v2.6-flash-free", name: "MiMo V2.6 Flash Free" },
     { id: "nemotron-3.5-super-vl-free", name: "Nemotron 3.5 Super VL Free" },
     { id: "longcat-2.5-preview-free", name: "LongCat 2.5 Preview Free" },

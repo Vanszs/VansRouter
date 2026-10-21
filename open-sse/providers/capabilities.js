@@ -388,6 +388,8 @@ export const MODEL_CAPABILITIES = {
   // Modalities and limits below are taken verbatim from models.dev/api.json.
   "big-pickle":        { reasoning: true, thinkingFormat: "openai", contextWindow: 200000, maxOutput: 32000 },
   "beam-free":         { reasoning: true, thinkingFormat: "openai", contextWindow: 1048576, maxOutput: 131072 },
+  "flint-40b-free":    { reasoning: true, thinkingFormat: "openai", contextWindow: 200000, maxOutput: 32000 },
+  "jev-1.13-free":     { reasoning: true, thinkingFormat: "openai", contextWindow: 200000, maxOutput: 32000 },
   "mimo-v2.6-flash-free": { vision: true, audioInput: true, videoInput: true, reasoning: true, thinkingFormat: "openai", contextWindow: 200000, maxOutput: 32000 },
   "nemotron-3.5-super-vl-free": { vision: true, reasoning: true, thinkingFormat: "openai", contextWindow: 1048576, maxOutput: 131072 },
   "nemotron-3.5-lightning-free": { reasoning: true, thinkingFormat: "openai", contextWindow: 262144, maxOutput: 262144 },

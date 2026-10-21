@@ -67,6 +67,8 @@ describe("opencode free-tier fingerprint tools", () => {
     const ids = PROVIDER_MODELS.oc.map(({ id }) => id);
     expect(ids).toEqual([
       "beam-free",
+      "flint-40b-free",
+      "jev-1.13-free",
       "mimo-v2.6-flash-free",
       "nemotron-3.5-super-vl-free",
       "longcat-2.5-preview-free",

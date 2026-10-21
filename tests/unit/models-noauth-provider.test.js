@@ -1,7 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
 const OPENCODE_FREE_IDS = [
-  "beam-free", "mimo-v2.6-flash-free", "nemotron-3.5-super-vl-free",
+  "beam-free", "flint-40b-free", "jev-1.13-free",
+  "mimo-v2.6-flash-free", "nemotron-3.5-super-vl-free",
   "longcat-2.5-preview-free", "deepseek-v4.1-flash-free", "glm-5.3-flash-free",
   "nemotron-3.5-lightning-free", "minimax-m3.1-flash-free",
 ];
@@ -379,7 +380,7 @@ describe("buildModelsList — noAuth providers", () => {
       expect(ids.filter((id) => id === "oc/minimax-m3.1-flash-free")).toHaveLength(1);
       expect(ids).not.toContain("oc/custom-free-model");
       expect(ids).not.toContain("oc/space-bunny-free");
-      expect(ids).not.toContain("oc/jev-1.13-free");
+      expect(ids).not.toContain("oc/hy3-free");
       expect(ids).toContain("oc/minimax-m3.1-flash-free");
     } finally {
       mockFetcherIds = previousFetcherIds;
