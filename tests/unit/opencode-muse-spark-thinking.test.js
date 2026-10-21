@@ -5,20 +5,21 @@ import { OpenCodeExecutor } from "../../open-sse/executors/opencode.js";
 
 const AVAILABLE_FREE_IDS = [
   "beam-free",
-  "flint-40b-free",
-  "jev-1.13-free",
   "mimo-v2.6-flash-free",
   "nemotron-3.5-super-vl-free",
-  "longcat-2.5-preview-free",
+  "nemotron-3.5-lightning-free",
   "deepseek-v4.1-flash-free",
   "glm-5.3-flash-free",
-  "nemotron-3.5-lightning-free",
   "minimax-m3.1-flash-free",
 ];
 
 describe("OpenCode Free available catalog", () => {
   it("contains only the verified chat-capable Free IDs", () => {
-    expect(PROVIDER_MODELS.oc.map(({ id }) => id)).toEqual(AVAILABLE_FREE_IDS);
+    // The registry also declares jev-1.13-free, a decision model served on the
+    // SystemOne endpoint — it is not a chat model and is not in the chat list.
+    const registryIds = PROVIDER_MODELS.oc.map(({ id }) => id);
+    expect(registryIds.filter((id) => !AVAILABLE_FREE_IDS.includes(id))).toEqual(["jev-1.13-free"]);
+    expect(AVAILABLE_FREE_IDS.every((id) => registryIds.includes(id))).toBe(true);
     expect(getCapabilitiesForModel("opencode", "minimax-m3.1-flash-free")).toMatchObject({
       reasoning: true,
       vision: true,

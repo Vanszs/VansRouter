@@ -67,11 +67,10 @@ describe("opencode free-tier fingerprint tools", () => {
     const ids = PROVIDER_MODELS.oc.map(({ id }) => id);
     expect(ids).toEqual([
       "beam-free",
-      "flint-40b-free",
+      // A decision model on the SystemOne endpoint, not a chat model.
       "jev-1.13-free",
       "mimo-v2.6-flash-free",
       "nemotron-3.5-super-vl-free",
-      "longcat-2.5-preview-free",
       "deepseek-v4.1-flash-free",
       "glm-5.3-flash-free",
       "nemotron-3.5-lightning-free",

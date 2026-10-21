@@ -388,12 +388,10 @@ export const MODEL_CAPABILITIES = {
   // Modalities and limits below are taken verbatim from models.dev/api.json.
   "big-pickle":        { reasoning: true, thinkingFormat: "openai", contextWindow: 200000, maxOutput: 32000 },
   "beam-free":         { reasoning: true, thinkingFormat: "openai", contextWindow: 1048576, maxOutput: 131072 },
-  "flint-40b-free":    { reasoning: true, thinkingFormat: "openai", contextWindow: 200000, maxOutput: 32000 },
-  "jev-1.13-free":     { reasoning: true, thinkingFormat: "openai", contextWindow: 200000, maxOutput: 32000 },
+
   "mimo-v2.6-flash-free": { vision: true, audioInput: true, videoInput: true, reasoning: true, thinkingFormat: "openai", contextWindow: 200000, maxOutput: 32000 },
   "nemotron-3.5-super-vl-free": { vision: true, reasoning: true, thinkingFormat: "openai", contextWindow: 1048576, maxOutput: 131072 },
   "nemotron-3.5-lightning-free": { reasoning: true, thinkingFormat: "openai", contextWindow: 262144, maxOutput: 262144 },
-  "longcat-2.5-preview-free": { vision: true, reasoning: true, thinkingFormat: "openai", contextWindow: 1000000, maxOutput: 131072 },
   "deepseek-v4.1-flash-free": { vision: true, reasoning: true, thinkingFormat: "deepseek", contextWindow: 200000, maxOutput: 32000 },
   "glm-5.3-flash-free": { vision: true, videoInput: true, pdf: true, reasoning: true, thinkingFormat: "openai", contextWindow: 200000, maxOutput: 32000 },
   "minimax-m3.1-flash-free": { vision: true, videoInput: true, reasoning: true, thinkingFormat: "openai", contextWindow: 1000000, maxOutput: 512000 },
@@ -401,7 +399,6 @@ export const MODEL_CAPABILITIES = {
   "fledge-alpha-free": { vision: true, reasoning: true, thinkingFormat: "openai", contextWindow: 1048576, maxOutput: 131072 },
   "longcat-2.0":             { reasoning: true, thinkingFormat: "openai", contextWindow: 1000000, maxOutput: 131072 },
   "longcat-2.0-free":        { reasoning: true, thinkingFormat: "openai", contextWindow: 1000000, maxOutput: 131072 },
-  "longcat-2.5-preview-free":{ vision: true, reasoning: true, thinkingFormat: "openai", contextWindow: 1000000, maxOutput: 131072 },
   "north-mini-code-free":    { reasoning: true, thinkingFormat: "openai", contextWindow: 256000, maxOutput: 64000 },
   "ring-2.6-1t-free":        { reasoning: true, thinkingFormat: "openai", contextWindow: 262000, maxOutput: 66000 },
   "x-preview-f-free":        { vision: true, videoInput: true, reasoning: true, thinkingFormat: "openai", contextWindow: 1000000, maxOutput: 131072 },

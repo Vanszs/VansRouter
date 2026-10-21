@@ -1,10 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
 const OPENCODE_FREE_IDS = [
-  "beam-free", "flint-40b-free", "jev-1.13-free",
-  "mimo-v2.6-flash-free", "nemotron-3.5-super-vl-free",
-  "longcat-2.5-preview-free", "deepseek-v4.1-flash-free", "glm-5.3-flash-free",
-  "nemotron-3.5-lightning-free", "minimax-m3.1-flash-free",
+  "beam-free", "mimo-v2.6-flash-free", "nemotron-3.5-super-vl-free",
+  "nemotron-3.5-lightning-free", "deepseek-v4.1-flash-free", "glm-5.3-flash-free",
+  "minimax-m3.1-flash-free",
 ];
 const oldFetcherIds = ["deepseek-v4-flash-free", "mimo-v2.5-free", "qwen3.6-plus-free", "minimax-m3-free", "nemotron-3-super-free"];
 let mockFetcherIds = oldFetcherIds;

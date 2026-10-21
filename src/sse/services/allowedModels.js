@@ -35,11 +35,9 @@ const LLM_KIND = "llm";
 const ALL_KINDS = [LLM_KIND, "tts", "embedding", "image", "imageToText", "stt", "video", "webSearch", "webFetch", "systemone"];
 const OPENCODE_FREE_MODEL_IDS = new Set([
   "beam-free",
-  "flint-40b-free",
-  "jev-1.13-free",
+
   "mimo-v2.6-flash-free",
   "nemotron-3.5-super-vl-free",
-  "longcat-2.5-preview-free",
   "deepseek-v4.1-flash-free",
   "glm-5.3-flash-free",
   "nemotron-3.5-lightning-free",
