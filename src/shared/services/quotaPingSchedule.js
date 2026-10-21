@@ -5,9 +5,17 @@
 // 09:30 / 14:30 / 19:30 local time — the overnight gap is what re-aligns the
 // next day back onto the 09:30 anchor, since 24h is not a multiple of 5h.
 
+export function getLocalTimezone() {
+  try {
+    return Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
+  } catch {
+    return "UTC";
+  }
+}
+
 export const PING_SCHEDULE_DEFAULTS = {
   anchor: "09:30",
-  timezone: "America/Sao_Paulo",
+  timezone: getLocalTimezone(),
   windowHours: 5,
   slotsPerDay: 3,
 };

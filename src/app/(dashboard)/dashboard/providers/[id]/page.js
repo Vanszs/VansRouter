@@ -509,12 +509,12 @@ export default function ProviderDetailPage() {
     }
   };
 
-  const handleAutoPingConnection = (connectionId, on) => {
-    saveAutoPing({ ...autoPing, connections: { ...autoPing.connections, [connectionId]: on } });
-  };
-
-  const handleAutoPingSchedule = (connectionId, schedule) => {
-    saveAutoPing({ ...autoPing, schedules: { ...autoPing.schedules, [connectionId]: schedule } });
+  const handleSaveAutoPing = (connectionId, { reactive, schedule }) => {
+    saveAutoPing({
+      ...autoPing,
+      connections: { ...autoPing.connections, [connectionId]: reactive },
+      schedules: { ...autoPing.schedules, [connectionId]: schedule },
+    });
   };
 
   useEffect(() => {
@@ -1120,12 +1120,12 @@ export default function ProviderDetailPage() {
                 onMoveDown={() => handleSwapPriority(index, index + 1)}
                 onToggleActive={(isActive) => handleUpdateConnectionStatus(conn.id, isActive)}
                 autoPing={AUTO_PING_SETTINGS_KEYS[providerId] && conn.authType === "oauth" ? {
-                  on: autoPing.connections[conn.id] === true,
-                  onToggle: (on) => handleAutoPingConnection(conn.id, on),
+                  isActive: autoPing.connections[conn.id] === true || autoPing.schedules?.[conn.id]?.enabled === true,
+                  reactiveOn: autoPing.connections[conn.id] === true,
                   provider: providerId,
                   scheduleOn: autoPing.schedules?.[conn.id]?.enabled === true,
                   scheduleSummary: getScheduleSlotLabels(autoPing.schedules?.[conn.id]).join(" / "),
-                  onOpenSchedule: () => setScheduleConnection(conn),
+                  onConfigure: () => setScheduleConnection(conn),
                 } : null}
                 onUpdateProxy={async (proxySelection) => {
                   try {
@@ -2036,8 +2036,9 @@ export default function ProviderDetailPage() {
           isOpen={!!scheduleConnection}
           onClose={() => setScheduleConnection(null)}
           connection={scheduleConnection}
+          reactive={autoPing.connections[scheduleConnection.id] === true}
           schedule={autoPing.schedules?.[scheduleConnection.id] || null}
-          onSave={(schedule) => handleAutoPingSchedule(scheduleConnection.id, schedule)}
+          onSave={(result) => handleSaveAutoPing(scheduleConnection.id, result)}
         />
       )}
 

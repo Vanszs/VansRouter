@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  PING_SCHEDULE_DEFAULTS,
   getDuePingSlot,
   getNextPingSlot,
   getScheduleSlotLabels,
@@ -37,7 +38,7 @@ describe("quota ping schedule", () => {
     expect(schedule).toEqual({
       enabled: true,
       anchor: "09:30",
-      timezone: "America/Sao_Paulo",
+      timezone: PING_SCHEDULE_DEFAULTS.timezone,
       windowHours: 0.5,
       slotsPerDay: 48,
     });
