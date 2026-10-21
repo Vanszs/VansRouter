@@ -162,8 +162,25 @@ export default function QuotaTable({
               const colors = isCreditBalance
                 ? { text: "text-blue-600 dark:text-blue-400", bg: "bg-blue-500", bgLight: "bg-blue-500/10", emoji: "💰" }
                 : getColorClasses(quota.remaining);
-              const countdown = formatResetTime(quota.resetAt);
-              const resetDisplay = formatResetTimeDisplay(quota.resetAt);
+              // Qoder flags open-ended plans with `neverExpires` (its API reports a
+              // year-9999 sentinel). Return "-"/"Never expires" rather than an empty
+              // countdown: the render below branches on `countdown !== "-"`, so an
+              // empty string would fall through to the "in " label.
+              const countdown = quota.neverExpires ? "-" : formatResetTime(quota.resetAt);
+              // Providers that expose a detail page but no per-bucket reset date
+              // (Qoder add-on grants) get a pointer to it instead of a bare "N/A".
+              const seeDetails = !quota.neverExpires && !quota.resetAt && Boolean(quota.detailUrl);
+              const resetDisplay = quota.neverExpires
+                ? "Never expires"
+                : seeDetails
+                  ? "See details"
+                  : formatResetTimeDisplay(quota.resetAt);
+              const resetSecondaryText = seeDetails && quota.detailUrl ? quota.detailUrl : resetDisplay;
+              // recurring defaults true: a missing flag means the quota
+              // refreshes at resetAt. Bonus/one-shot packs set recurring:false
+              // and their resetAt is a hard expiry, so word it as "expires".
+              const recurring = quota.recurring !== false;
+              const countdownLabel = recurring ? `in ${countdown}` : `expires in ${countdown}`;
 
               return (
                 <tr
@@ -221,21 +238,35 @@ export default function QuotaTable({
                       compact ? (
                         <div
                           className={`${resetPrimary} text-text-primary font-medium truncate`}
-                          title={resetDisplay || ""}
+                          title={resetSecondaryText || ""}
                         >
-                          {countdown !== "-" ? `in ${countdown}` : resetDisplay}
+                          {countdown !== "-" ? countdownLabel : resetDisplay}
                         </div>
                       ) : (
                         <div className="space-y-0.5">
                           {countdown !== "-" && (
                             <div className={`${resetPrimary} text-text-primary font-medium`}>
-                              in {countdown}
+                              {countdownLabel}
                             </div>
                           )}
-                          {resetDisplay && (
-                            <div className={`${resetSecondary} text-text-muted`}>
+                          {seeDetails ? (
+                            <a
+                              href={quota.detailUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className={`${resetSecondary} text-text-muted inline-flex items-center gap-0.5 hover:text-text-primary hover:underline`}
+                              title={`Open usage details: ${resetSecondaryText}`}
+                              aria-label={`Open usage details for ${quota.name}`}
+                            >
                               {resetDisplay}
-                            </div>
+                              <span className="material-symbols-outlined text-[12px]">open_in_new</span>
+                            </a>
+                          ) : (
+                            resetDisplay && (
+                              <div className={`${resetSecondary} text-text-muted`}>
+                                {resetDisplay}
+                              </div>
+                            )
                           )}
                         </div>
                       )
