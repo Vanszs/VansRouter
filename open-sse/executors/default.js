@@ -12,7 +12,7 @@ import { stripUnsupportedParams } from "../translator/concerns/paramSupport.js";
 import { getCapabilitiesForModel } from "../providers/capabilities.js";
 import { getKimchiUserAgent } from "../utils/kimchiUserAgent.js";
 import { extractClaudeSessionIdFromUserId } from "../utils/claudeCloaking.js";
-import { refreshCodebuddyToken } from "../services/tokenRefresh/providers.js";
+import { refreshCodebuddyToken } from "../services/tokenRefresh/providers/index.js";
 
 // Auth header descriptors — derived from registry transport.auth, fallback to hardcoded defaults.
 const BEARER = { combined: true, header: "Authorization", scheme: "bearer" };

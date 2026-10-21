@@ -7,7 +7,7 @@ import {
   parseMembership,
   parsePlanWindows,
   getMiniMaxCodeUsage,
-} from "../../open-sse/services/minimaxCodeUsage.js";
+} from "../../open-sse/services/usage/minimax-code.js";
 import { FILTERS } from "../../src/app/api/providers/suggested-models/filters.js";
 import { parseQuotaData } from "../../src/app/(dashboard)/dashboard/usage/components/ProviderLimits/utils.js";
 

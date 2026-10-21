@@ -166,19 +166,27 @@ export const CLI_TOOLS = {
     configType: "custom",
     // Model slots Hermes supports besides the default ("model:" block).
     // "default" is not listed — the card renders it as the main model picker.
+    // Mirrors the "auxiliary" defaults in hermes_cli/config_defaults.py (Hermes 0.21.5):
+    // web_extract/session_search no longer call an LLM (their leftover blocks are ignored,
+    // so exposing them only invites dead config), MoA slots are preset-driven and not listed.
     roles: [
       { id: "delegation", label: "Delegation (subagents)" },
       { id: "vision", label: "Vision" },
-      { id: "web_extract", label: "Web Extract" },
       { id: "compression", label: "Compression" },
       { id: "title_generation", label: "Title Generation" },
       { id: "approval", label: "Approval" },
       { id: "skills_hub", label: "Skills Hub" },
       { id: "mcp", label: "MCP" },
+      { id: "review", label: "Review (/review subagent)" },
       { id: "memory_query_rewrite", label: "Memory Query Rewrite" },
       { id: "background_review", label: "Background Review" },
       { id: "curator", label: "Curator" },
       { id: "monitor", label: "Monitor" },
+      { id: "tts_audio_tags", label: "TTS Audio Tags" },
+      { id: "triage_specifier", label: "Triage Specifier" },
+      { id: "kanban_decomposer", label: "Kanban Decomposer" },
+      { id: "profile_describer", label: "Profile Describer" },
+      { id: "goal_judge", label: "Goal Judge" },
     ],
   },
   droid: {

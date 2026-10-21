@@ -11,7 +11,7 @@ export { consumeCodexRateLimitResetCredit, getCodexRateLimitResetCredits, consum
 import { getKiroUsage } from "./usage/kiro.js";
 import { getCursorUsage } from "./usage/cursor.js";
 import { getMiniMaxUsage } from "./usage/minimax.js";
-import { getMiniMaxCodeUsage } from "./minimaxCodeUsage.js";
+import { getMiniMaxCodeUsage } from "./usage/minimax-code.js";
 import { getCodeBuddyCnUsage, getCodeBuddyIntlUsage } from "./usage/codebuddy-cn.js";
 import { getGrokCliUsage } from "./usage/grok-cli.js";
 import { getKimiUsage } from "./usage/kimi.js";

@@ -1,36 +1,16 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback, useReducer } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Card, Button, ModelSelectModal, ManualConfigModal } from "@/shared/components";
 import Image from "next/image";
 import BaseUrlSelect from "./BaseUrlSelect";
-import { rememberEndpoint } from "./cliEndpointPresets";
+import { rememberEndpoint, readPresets } from "./cliEndpointPresets";
 import ApiKeySelect from "./ApiKeySelect";
 import { matchKnownEndpoint } from "./cliEndpointMatch";
 import { CLI_TOOLS } from "@/shared/constants/cliTools";
 
 const ENDPOINT = "/api/cli-tools/hermes-settings";
 const HERMES_ROLES = CLI_TOOLS.hermes?.roles || [];
-
-const normalizeLocalhost = (url) => url.replace("://localhost", "://127.0.0.1");
-function getLocalBaseUrl() {
-  if (typeof window !== "undefined") {
-    return normalizeLocalhost(window.location.origin);
-  }
-  return "http://127.0.0.1:20128";
-}
-
-function cardReducer(state, action) {
-  switch (action.type) {
-    case "CHECK_START": return { ...state, checking: true };
-    case "CHECK_DONE": return { ...state, status: action.data, checking: false };
-    case "APPLY_START": return { ...state, applying: true, message: null };
-    case "APPLY_DONE": return { ...state, applying: false, message: action.message };
-    case "RESTORE_START": return { ...state, restoring: true, message: null };
-    case "RESTORE_DONE": return { ...state, restoring: false, message: action.message };
-    default: return state;
-  }
-}
 
 export default function HermesToolCard({
   tool,
@@ -47,27 +27,35 @@ export default function HermesToolCard({
   tailscaleEnabled,
   tailscaleUrl,
 }) {
-  const [state, dispatch] = useReducer(cardReducer, {
-    status: initialStatus || null,
-    checking: false,
-    applying: false,
-    restoring: false,
-    message: null,
-  });
-  const { status: hermesStatus, checking, applying, restoring, message } = state;
+  const [hermesStatus, setHermesStatus] = useState(initialStatus || null);
+  const [checking, setChecking] = useState(false);
+  const [applying, setApplying] = useState(false);
+  const [restoring, setRestoring] = useState(false);
+  const [message, setMessage] = useState(null);
   const [selectedApiKeyOverride, setSelectedApiKey] = useState(null);
-  const selectedApiKey = selectedApiKeyOverride ?? (apiKeys?.length > 0 ? apiKeys[0].key : "");
+  // Default to the first available key, but keep the user's own pick.
+  const selectedApiKey = selectedApiKeyOverride ?? apiKeys?.[0]?.key ?? "";
+  // The user's own pick wins; otherwise the value tracks the checked config,
+  // so a re-check of the profile is not pinned by an earlier write.
   const [selectedModelOverride, setSelectedModel] = useState(null);
   const selectedModel = selectedModelOverride ?? hermesStatus?.settings?.model?.default ?? "";
-  // Role slots ("delegation" + the auxiliary roles) and which slot the shared
-  // model modal is currently targeting.
   const [roleModels, setRoleModels] = useState({});
   const [modalTarget, setModalTarget] = useState("default");
   const [modalOpen, setModalOpen] = useState(false);
   const [modelAliases, setModelAliases] = useState({});
   const [showManualConfigModal, setShowManualConfigModal] = useState(false);
   const [customBaseUrl, setCustomBaseUrl] = useState("");
+  const [profiles, setProfiles] = useState([]);
+  const [activeProfile, setActiveProfile] = useState("default");
+  const [applyingAll, setApplyingAll] = useState(false);
+  const [copiedCommand, setCopiedCommand] = useState("");
+  // Audio transcription via 9router: stt.provider "openai" + base_url override points
+  // Hermes' speech-to-text at /v1/audio/transcriptions (per-profile, saved with Apply).
+  const [audioEnabled, setAudioEnabled] = useState(false);
+  const [sttModel, setSttModel] = useState("");
   const hasInitializedModel = useRef(false);
+
+  const currentBaseUrl = hermesStatus?.settings?.model?.base_url || "";
 
   const getConfigStatus = () => {
     if (!hermesStatus?.installed) return null;
@@ -79,7 +67,38 @@ export default function HermesToolCard({
 
   const configStatus = getConfigStatus();
 
-  const fetchModelAliases = useCallback(async () => {
+  // Same three-state rule as the header badge, evaluated per profile from the list payload.
+  const profileStatus = (p) => {
+    if (p.has9Router || (p.baseUrl && matchKnownEndpoint(p.baseUrl, { tunnelPublicUrl, tailscaleUrl }))) return "configured";
+    if (p.baseUrl) return "other";
+    return "not_configured";
+  };
+
+  const STATUS_DOT = {
+    configured: "bg-green-500",
+    other: "bg-blue-500",
+    not_configured: "bg-yellow-500",
+  };
+  const STATUS_LABEL = {
+    configured: "Connected",
+    other: "Other endpoint",
+    not_configured: "Not configured",
+  };
+
+
+
+  const fetchProfiles = async () => {
+    try {
+      const res = await fetch("/api/cli-tools/hermes-profiles");
+      const data = await res.json();
+      if (res.ok) setProfiles(data.profiles || []);
+    } catch (error) {
+      console.log("Error fetching hermes profiles:", error);
+    }
+  };
+
+
+  const fetchModelAliases = async () => {
     try {
       const res = await fetch("/api/models/alias");
       const data = await res.json();
@@ -87,115 +106,215 @@ export default function HermesToolCard({
     } catch (error) {
       console.log("Error fetching model aliases:", error);
     }
-  }, []);
+  };
 
   useEffect(() => {
     if (hermesStatus?.installed && !hasInitializedModel.current) {
       hasInitializedModel.current = true;
-      // selectedModel is deliberately not seeded here: it is derived from
-      // hermesStatus unless the user overrode it, so writing it would pin the
-      // override and stop the value tracking a later re-check.
+      // Always reset both: stale values from the previously selected profile must not leak in.
+      setSelectedModel(null);
       const initial = {};
       if (hermesStatus.settings?.delegation?.model) initial.delegation = hermesStatus.settings.delegation.model;
       for (const [role, rcfg] of Object.entries(hermesStatus.settings?.auxiliary || {})) {
         if (rcfg?.model) initial[role] = rcfg.model;
       }
       setRoleModels(initial);
+      setAudioEnabled(!!hermesStatus.has9RouterStt);
+      setSttModel(hermesStatus.has9RouterStt ? hermesStatus.settings?.stt?.model || "" : "");
     }
   }, [hermesStatus]);
 
+  const selectProfile = (name) => {
+    if (name === activeProfile) return;
+    setActiveProfile(name);
+    hasInitializedModel.current = false;
+    setMessage(null);
+    setCustomBaseUrl("");
+    setAudioEnabled(false);
+    setSttModel("");
+    checkStatus(name);
+  };
 
-  const checkStatus = useCallback(async () => {
-    dispatch({ type: "CHECK_START" });
+  const copyCommand = async (cmd) => {
     try {
-      const res = await fetch(ENDPOINT);
-      const data = await res.json();
-      dispatch({ type: "CHECK_DONE", data });
+      await navigator.clipboard.writeText(cmd);
+      setCopiedCommand(cmd);
+      setTimeout(() => setCopiedCommand(""), 2000);
     } catch (error) {
-      dispatch({ type: "CHECK_DONE", data: { installed: false, error: error.message } });
+      console.log("Copy failed", error);
     }
-  }, []);
+  };
 
-
-
-  const statusFetchedRef = useRef(!!initialStatus);
-  const aliasesFetchedRef = useRef(false);
-
-  const initializeCard = useCallback(async () => {
-    if (!statusFetchedRef.current) {
-      statusFetchedRef.current = true;
-      await checkStatus();
+  const checkStatus = async (profile = activeProfile) => {
+    setChecking(true);
+    try {
+      const res = await fetch(`${ENDPOINT}?profile=${encodeURIComponent(profile)}`);
+      const data = await res.json();
+      if (res.ok) {
+        setHermesStatus(data);
+      } else {
+        setMessage({ type: "error", text: data.error || "Failed to load Hermes settings" });
+        if (res.status === 404) {
+          // Profile disappeared (e.g. deleted in another tab) — fall back to default.
+          fetchProfiles();
+          setActiveProfile("default");
+        }
+      }
+    } catch (error) {
+      setHermesStatus({ installed: false, error: error.message });
+    } finally {
+      setChecking(false);
     }
-    if (!aliasesFetchedRef.current) {
-      aliasesFetchedRef.current = true;
-      await fetchModelAliases();
+  };
+
+
+  const normalizeLocalhost = (url) => url.replace("://localhost", "://127.0.0.1");
+
+  const getLocalBaseUrl = () => {
+    if (typeof window !== "undefined") {
+      return normalizeLocalhost(window.location.origin);
     }
-  }, [checkStatus, fetchModelAliases]);
+    return "http://127.0.0.1:20128";
+  };
 
-  const handleToggle = useCallback(() => {
-    if (!isExpanded) initializeCard();
-    onToggle();
-  }, [isExpanded, initializeCard, onToggle]);
-
-  useEffect(() => { initializeCard(); }, [initializeCard]);
   const getEffectiveBaseUrl = () => {
     const url = customBaseUrl || getLocalBaseUrl();
     return url.endsWith("/v1") ? url : `${url}/v1`;
   };
 
-  const handleApply = async () => {
-    dispatch({ type: "APPLY_START" });
-    try {
-      const keyToUse = selectedApiKey?.trim()
-        || (apiKeys?.length > 0 ? apiKeys[0].key : null)
-        || (!cloudEnabled ? "sk_VansRoute" : null);
+  const getKeyToUse = () =>
+    selectedApiKey?.trim()
+      || (apiKeys?.length > 0 ? apiKeys[0].key : null)
+      || (!cloudEnabled ? "sk_9router" : null);
 
+  const profileLabel = (name) => (name === "default" ? "default profile" : `profile "${name}"`);
+
+  const handleApply = async () => {
+    setApplying(true);
+    setMessage(null);
+    try {
       const res = await fetch(ENDPOINT, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          profile: activeProfile,
           baseUrl: getEffectiveBaseUrl(),
-          apiKey: keyToUse,
+          apiKey: getKeyToUse(),
           selections: [
             { role: "default", model: selectedModel },
             ...Object.entries(roleModels)
               .filter(([, model]) => model?.trim())
               .map(([role, model]) => ({ role, model: model.trim() })),
           ],
+          // Always sent: Apply is also how the stt wiring gets turned off.
+          audio: { enabled: audioEnabled, model: sttModel.trim() },
         }),
       });
       const data = await res.json();
       if (res.ok) {
-        dispatch({ type: "APPLY_DONE", message: { type: "success", text: "Settings applied successfully!" } });
+        // Remember the endpoint so it stays selectable next time
+        rememberEndpoint(getEffectiveBaseUrl(), { tunnelPublicUrl, tailscaleUrl });
+        setMessage({ type: "success", text: `Settings applied to ${profileLabel(activeProfile)}!` });
         checkStatus();
+        fetchProfiles();
       } else {
-        dispatch({ type: "APPLY_DONE", message: { type: "error", text: data.error || "Failed to apply settings" } });
+        setMessage({ type: "error", text: data.error || "Failed to apply settings" });
       }
     } catch (error) {
-      dispatch({ type: "APPLY_DONE", message: { type: "error", text: error.message } });
+      setMessage({ type: "error", text: error.message });
+    } finally {
+      setApplying(false);
+    }
+  };
+
+  // Endpoint + API key across every profile. Each profile keeps its own model — only
+  // profiles already routed through 9router are refreshed, the rest are reported.
+  // The endpoint field mirrors whatever the active profile currently points at, so it can
+  // hold a foreign provider URL (openrouter, ...) — propagating that to every profile would
+  // be a mistake, hence the known-endpoint guard.
+  const handleApplyAll = async () => {
+    const endpoint = getEffectiveBaseUrl();
+    const isKnown =
+      matchKnownEndpoint(endpoint, { tunnelPublicUrl, tailscaleUrl })
+      || readPresets().some((p) => (p.baseUrl || "").replace(/\/+$/, "") === endpoint.replace(/\/+$/, ""));
+    if (!isKnown) {
+      setMessage({
+        type: "error",
+        text: `"${endpoint}" is not a 9router endpoint. Select the local, tunnel, Tailscale or a saved 9router endpoint before applying to all profiles.`,
+      });
+      return;
+    }
+
+    setApplyingAll(true);
+    setMessage(null);
+    try {
+      const res = await fetch(ENDPOINT, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          applyToAll: true,
+          baseUrl: endpoint,
+          apiKey: getKeyToUse(),
+          model: selectedModel,
+        }),
+      });
+      const data = await res.json();
+      if (res.ok && data.bulk) {
+        rememberEndpoint(endpoint, { tunnelPublicUrl, tailscaleUrl });
+        const skipped = (data.results || []).filter((r) => r.status !== "updated");
+        if (skipped.length === 0) {
+          setMessage({ type: "success", text: `Endpoint and API key applied to ${data.updated} profile(s).` });
+        } else {
+          const detail = skipped.map((r) => `${r.profile} — ${r.reason || r.status}`).join("; ");
+          setMessage({
+            type: data.updated > 0 ? "success" : "error",
+            text: `Updated ${data.updated} profile(s), skipped ${skipped.length}: ${detail}`,
+          });
+        }
+        fetchProfiles();
+        checkStatus();
+      } else {
+        setMessage({ type: "error", text: data.error || "Failed to apply settings" });
+      }
+    } catch (error) {
+      setMessage({ type: "error", text: error.message });
+    } finally {
+      setApplyingAll(false);
     }
   };
 
   const handleReset = async () => {
-    dispatch({ type: "RESTORE_START" });
+    setRestoring(true);
+    setMessage(null);
     try {
-      const res = await fetch(ENDPOINT, { method: "DELETE" });
+      const res = await fetch(ENDPOINT, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ profile: activeProfile }),
+      });
       const data = await res.json();
       if (res.ok) {
-        dispatch({ type: "RESTORE_DONE", message: { type: "success", text: "Settings reset successfully!" } });
+        setMessage({ type: "success", text: `Settings reset for ${profileLabel(activeProfile)}!` });
         setSelectedModel("");
         setRoleModels({});
+        setAudioEnabled(false);
+        setSttModel("");
         checkStatus();
+        fetchProfiles();
       } else {
-        dispatch({ type: "RESTORE_DONE", message: { type: "error", text: data.error || "Failed to reset settings" } });
+        setMessage({ type: "error", text: data.error || "Failed to reset settings" });
       }
     } catch (error) {
-      dispatch({ type: "RESTORE_DONE", message: { type: "error", text: error.message } });
+      setMessage({ type: "error", text: error.message });
+    } finally {
+      setRestoring(false);
     }
   };
 
   const handleModelSelect = (model) => {
-    if (modalTarget === "default") {
+    if (modalTarget === "stt") {
+      setSttModel(model.value);
+    } else if (modalTarget === "default") {
       setSelectedModel(model.value);
     } else {
       setRoleModels((prev) => ({ ...prev, [modalTarget]: model.value }));
@@ -211,10 +330,12 @@ export default function HermesToolCard({
   const getManualConfigs = () => {
     const keyToUse = (selectedApiKey && selectedApiKey.trim())
       ? selectedApiKey
-      : (!cloudEnabled ? "sk_VansRoute" : "<API_KEY_FROM_DASHBOARD>");
+      : (!cloudEnabled ? "sk_9router" : "<API_KEY_FROM_DASHBOARD>");
 
     const base = getEffectiveBaseUrl();
-    let yamlContent = `model:\n  default: "${selectedModel || "provider/model-id"}"\n  provider: "custom"\n  base_url: "${base}"\n  api_key: \${OPENAI_API_KEY}\n`;
+    const homeDir = activeProfile === "default" ? "~/.hermes" : `~/.hermes/profiles/${activeProfile}`;
+    const runHint = profiles.find((p) => p.name === activeProfile)?.command || "hermes";
+    let yamlContent = `# Run this profile: ${runHint}\nmodel:\n  default: "${selectedModel || "provider/model-id"}"\n  provider: "custom"\n  base_url: "${base}"\n  api_key: \${OPENAI_API_KEY}\n`;
     if (roleModels.delegation?.trim()) {
       yamlContent += `delegation:\n  model: "${roleModels.delegation.trim()}"\n  provider: "custom"\n  base_url: "${base}"\n  api_key: \${OPENAI_API_KEY}\n`;
     }
@@ -224,20 +345,35 @@ export default function HermesToolCard({
         `  ${role}:\n    provider: "custom"\n    model: "${model.trim()}"\n    base_url: "${base}"\n    api_key: \${OPENAI_API_KEY}\n`
       ).join("")}`;
     }
+    if (audioEnabled && sttModel.trim()) {
+      yamlContent += `stt:\n  enabled: true\n  provider: "openai"\n  openai:\n    model: "${sttModel.trim()}"\n    base_url: "${base}"\n    api_key: \${OPENAI_API_KEY}\n`;
+    }
     const envContent = `OPENAI_API_KEY=${keyToUse}\n`;
 
     return [
-      { filename: "~/.hermes/config.yaml", content: yamlContent },
-      { filename: "~/.hermes/.env", content: envContent },
+      { filename: `${homeDir}/config.yaml`, content: yamlContent },
+      { filename: `${homeDir}/.env`, content: envContent },
     ];
   };
 
   return (
     <Card padding="xs" className="overflow-hidden">
-      <button type="button" className="flex w-full items-start justify-between gap-3 hover:cursor-pointer sm:items-center text-left" onClick={handleToggle} aria-expanded={isExpanded} aria-label="Toggle section">
+      <div
+        className="flex items-start justify-between gap-3 hover:cursor-pointer sm:items-center"
+        onClick={() => {
+          onToggle();
+          // Load on expand, from the event handler rather than an effect: a
+          // synchronous setState inside an effect cascades renders.
+          if (!isExpanded) {
+            if (!hermesStatus) checkStatus();
+            fetchModelAliases();
+            fetchProfiles();
+          }
+        }}
+      >
         <div className="flex min-w-0 items-center gap-3">
           <div className="size-8 flex items-center justify-center shrink-0">
-            <Image src="/providers/hermes.webp" alt={tool.name} width={32} height={32} className="size-8 object-contain rounded-lg" sizes="32px" onError={(e) => { e.target.style.display = "none"; }} />
+            <Image src="/providers/hermes.png" alt={tool.name} width={32} height={32} className="size-8 object-contain rounded-lg" sizes="32px" onError={(e) => { e.target.style.display = "none"; }} loading="lazy" decoding="async" />
           </div>
           <div className="min-w-0">
             <div className="flex min-w-0 flex-wrap items-center gap-2">
@@ -245,12 +381,15 @@ export default function HermesToolCard({
               {configStatus === "configured" && <span className="px-1.5 py-0.5 text-[10px] font-medium bg-green-500/10 text-green-600 dark:text-green-400 rounded-full">Connected</span>}
               {configStatus === "not_configured" && <span className="px-1.5 py-0.5 text-[10px] font-medium bg-yellow-500/10 text-yellow-600 dark:text-yellow-400 rounded-full">Not configured</span>}
               {configStatus === "other" && <span className="px-1.5 py-0.5 text-[10px] font-medium bg-blue-500/10 text-blue-600 dark:text-blue-400 rounded-full">Other</span>}
+              {activeProfile !== "default" && (
+                <span className="px-1.5 py-0.5 text-[10px] font-medium bg-primary/10 text-primary rounded-full font-mono" title="Hermes profile shown below">{activeProfile}</span>
+              )}
             </div>
             <p className="text-xs text-text-muted truncate">{tool.description}</p>
           </div>
         </div>
         <span className={`material-symbols-outlined text-text-muted text-[20px] transition-transform ${isExpanded ? "rotate-180" : ""}`}>expand_more</span>
-      </button>
+      </div>
 
       {isExpanded && (
         <div className="mt-4 pt-4 border-t border-border flex flex-col gap-4">
@@ -283,17 +422,67 @@ export default function HermesToolCard({
 
           {!checking && hermesStatus?.installed && (
             <>
+              {profiles.length > 1 && (
+                <div className="flex flex-col gap-1.5">
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <span className="text-xs font-semibold text-text-main mr-1">Profile</span>
+                    {profiles.map((p) => {
+                      const active = p.name === activeProfile;
+                      const status = profileStatus(p);
+                      return (
+                        <button
+                          key={p.name}
+                          onClick={() => selectProfile(p.name)}
+                          title={p.isDefault ? `Default profile — ${STATUS_LABEL[status]}` : `${p.command} — ${STATUS_LABEL[status]}`}
+                          className={`flex items-center gap-1.5 px-2 py-1 rounded border text-xs transition-colors ${
+                            active
+                              ? "border-primary bg-primary/10 text-primary cursor-pointer"
+                              : "bg-surface border-border text-text-muted hover:text-text-main hover:border-border-hover cursor-pointer"
+                          }`}
+                        >
+                          <span className={`size-1.5 rounded-full shrink-0 ${STATUS_DOT[status]}`} />
+                          <span className="font-medium">{p.displayName || p.name}</span>
+                          {p.displayName && !p.isDefault && <span className="font-mono text-[10px] opacity-60">{p.name}</span>}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <div className="flex items-center gap-2 text-xs text-text-muted">
+                    <span className="material-symbols-outlined text-[14px]">terminal</span>
+                    <code className="px-1.5 py-0.5 bg-surface/60 rounded font-mono text-[11px]">
+                      {profiles.find((p) => p.name === activeProfile)?.command || "hermes"}
+                    </code>
+                    <button
+                      onClick={() => copyCommand(profiles.find((p) => p.name === activeProfile)?.command || "hermes")}
+                      className={`p-0.5 rounded transition-colors ${
+                        copiedCommand === (profiles.find((p) => p.name === activeProfile)?.command || "hermes")
+                          ? "text-green-600"
+                          : "text-text-muted hover:text-text-main"
+                      }`}
+                      title="Copy command"
+                    >
+                      <span className="material-symbols-outlined text-[14px]">
+                        {copiedCommand === (profiles.find((p) => p.name === activeProfile)?.command || "hermes") ? "check" : "content_copy"}
+                      </span>
+                    </button>
+                    <span className="hidden sm:inline">— every profile runs as its own agent with its own model.</span>
+                  </div>
+                </div>
+              )}
+
               <div className="flex flex-col gap-2">
                 <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-[8rem_auto_1fr] sm:items-center sm:gap-2">
                   <span className="text-xs font-semibold text-text-main sm:text-right sm:text-sm">Select Endpoint</span>
                   <span className="material-symbols-outlined hidden text-text-muted text-[14px] sm:inline">arrow_forward</span>
-                  <BaseUrlSelect currentUrl={hermesStatus?.settings?.baseUrl || ""} value={customBaseUrl || getEffectiveBaseUrl()}
+                  <BaseUrlSelect
+                    value={customBaseUrl || getEffectiveBaseUrl()}
                     onChange={setCustomBaseUrl}
                     requiresExternalUrl={tool.requiresExternalUrl}
                     tunnelEnabled={tunnelEnabled}
                     tunnelPublicUrl={tunnelPublicUrl}
                     tailscaleEnabled={tailscaleEnabled}
                     tailscaleUrl={tailscaleUrl}
+                    currentUrl={currentBaseUrl}
                   />
                 </div>
 
@@ -318,10 +507,32 @@ export default function HermesToolCard({
                   <span className="material-symbols-outlined hidden text-text-muted text-[14px] sm:inline">arrow_forward</span>
                   <div className="relative w-full min-w-0">
                     <input type="text" value={selectedModel} onChange={(e) => setSelectedModel(e.target.value)} aria-label="Model ID" placeholder="provider/model-id" className="w-full min-w-0 pl-2 pr-7 py-2 bg-surface rounded border border-border text-xs focus:outline-none focus:ring-1 focus:ring-primary/50 sm:py-1.5" />
-                    {selectedModel && <button type="button" onClick={() => setSelectedModel("")} className="absolute right-1 top-1/2 -translate-y-1/2 p-0.5 text-text-muted hover:text-red-500 rounded transition-colors" title="Clear"><span className="material-symbols-outlined text-[14px]">close</span></button>}
+                    {selectedModel && <button type="button" onClick={() => setSelectedModel(null)} className="absolute right-1 top-1/2 -translate-y-1/2 p-0.5 text-text-muted hover:text-red-500 rounded transition-colors" title="Clear"><span className="material-symbols-outlined text-[14px]">close</span></button>}
                   </div>
-                  <button type="button" onClick={() => openModelModal("default")} disabled={!hasActiveProviders} className={`w-full sm:w-auto rounded border px-2 py-2 text-xs transition-colors sm:py-1.5 whitespace-nowrap sm:shrink-0 ${hasActiveProviders ? "bg-surface border-border text-text-main hover:border-primary cursor-pointer" : "opacity-50 cursor-not-allowed border-border"}`}>Select</button>
+                  <button onClick={() => openModelModal("default")} disabled={!hasActiveProviders} className={`w-full sm:w-auto rounded border px-2 py-2 text-xs transition-colors sm:py-1.5 whitespace-nowrap sm:shrink-0 ${hasActiveProviders ? "bg-surface border-border text-text-main hover:border-primary cursor-pointer" : "opacity-50 cursor-not-allowed border-border"}`}>Select</button>
                 </div>
+
+                <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-[8rem_auto_1fr_auto] sm:items-center sm:gap-2">
+                  <span className="text-xs font-semibold text-text-main sm:text-right sm:text-sm">Audio STT</span>
+                  <span className="material-symbols-outlined hidden text-text-muted text-[14px] sm:inline">arrow_forward</span>
+                  <label className="flex items-center gap-2 text-xs text-text-muted cursor-pointer" title="Route Hermes voice & audio transcription through 9router's /v1/audio/transcriptions — usage is tracked on this instance">
+                    <input type="checkbox" checked={audioEnabled} onChange={(e) => setAudioEnabled(e.target.checked)} className="w-3.5 h-3.5 accent-primary cursor-pointer shrink-0" />
+                    <span>Transcribe voice &amp; audio via 9router (per-profile)</span>
+                  </label>
+                  <span />
+                </div>
+
+                {audioEnabled && (
+                  <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-[8rem_auto_1fr_auto] sm:items-center sm:gap-2">
+                    <span className="text-xs font-semibold text-text-main sm:text-right sm:text-sm">STT Model</span>
+                    <span className="material-symbols-outlined hidden text-text-muted text-[14px] sm:inline">arrow_forward</span>
+                    <div className="relative w-full min-w-0">
+                      <input type="text" value={sttModel} onChange={(e) => setSttModel(e.target.value)} placeholder="provider/whisper-model-id" className="w-full min-w-0 pl-2 pr-7 py-2 bg-surface rounded border border-border text-xs focus:outline-none focus:ring-1 focus:ring-primary/50 sm:py-1.5" />
+                      {sttModel && <button onClick={() => setSttModel("")} className="absolute right-1 top-1/2 -translate-y-1/2 p-0.5 text-text-muted hover:text-red-500 rounded transition-colors" title="Clear"><span className="material-symbols-outlined text-[14px]">close</span></button>}
+                    </div>
+                    <button onClick={() => openModelModal("stt")} disabled={!hasActiveProviders} className={`w-full sm:w-auto rounded border px-2 py-2 text-xs transition-colors sm:py-1.5 whitespace-nowrap sm:shrink-0 ${hasActiveProviders ? "bg-surface border-border text-text-main hover:border-primary cursor-pointer" : "opacity-50 cursor-not-allowed border-border"}`}>Select</button>
+                  </div>
+                )}
 
                 <details className="group">
                   <summary className="cursor-pointer select-none text-xs font-semibold text-text-main hover:text-primary transition-colors">
@@ -366,17 +577,29 @@ export default function HermesToolCard({
               </div>
 
               {message && (
-                <div className={`flex items-center gap-2 px-2 py-1.5 rounded text-xs ${message.type === "success" ? "bg-green-500/10 text-green-600 dark:text-green-400 dark:bg-green-500/20" : "bg-red-500/10 text-red-600 dark:text-red-400 dark:bg-red-500/20"}`}>
+                <div className={`flex items-center gap-2 px-2 py-1.5 rounded text-xs ${message.type === "success" ? "bg-green-500/10 text-green-600" : "bg-red-500/10 text-red-600"}`}>
                   <span className="material-symbols-outlined text-[14px]">{message.type === "success" ? "check_circle" : "error"}</span>
                   <span>{message.text}</span>
                 </div>
               )}
 
               <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-                <Button variant="primary" size="sm" onClick={handleApply} disabled={!selectedModel} loading={applying} className="w-full sm:w-auto">
+                <Button variant="primary" size="sm" onClick={handleApply} disabled={!selectedModel || (audioEnabled && !sttModel.trim())} title={audioEnabled && !sttModel.trim() ? "Select an STT model first" : undefined} loading={applying} className="w-full sm:w-auto">
                   <span className="material-symbols-outlined text-[14px] mr-1">save</span>Apply
                 </Button>
-                <Button variant="outline" size="sm" onClick={handleReset} disabled={!hermesStatus?.hasVansRoute} loading={restoring} className="w-full sm:w-auto">
+                {profiles.length > 1 && (
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={handleApplyAll}
+                    loading={applyingAll}
+                    title="Set the endpoint and API key on every profile that routes through 9router. Each profile keeps its own model."
+                    className="w-full sm:w-auto"
+                  >
+                    <span className="material-symbols-outlined text-[14px] mr-1">groups</span>Apply to All Profiles
+                  </Button>
+                )}
+                <Button variant="outline" size="sm" onClick={handleReset} disabled={!hermesStatus?.has9Router && !hermesStatus?.has9RouterStt} loading={restoring} className="w-full sm:w-auto">
                   <span className="material-symbols-outlined text-[14px] mr-1">restore</span>Reset
                 </Button>
                 <Button variant="ghost" size="sm" onClick={() => setShowManualConfigModal(true)} className="w-full sm:w-auto">
@@ -393,10 +616,11 @@ export default function HermesToolCard({
           isOpen={modalOpen}
           onClose={() => setModalOpen(false)}
           onSelect={handleModelSelect}
-          selectedModel={modalTarget === "default" ? selectedModel : roleModels[modalTarget] || ""}
+          selectedModel={modalTarget === "stt" ? sttModel : modalTarget === "default" ? selectedModel : roleModels[modalTarget] || ""}
           activeProviders={activeProviders}
           modelAliases={modelAliases}
-          title={`Select Model for Hermes Agent${modalTarget !== "default" ? ` — ${HERMES_ROLES.find((r) => r.id === modalTarget)?.label || modalTarget}` : ""}`}
+          kindFilter={modalTarget === "stt" ? "stt" : undefined}
+          title={modalTarget === "stt" ? "Select STT Model — audio transcription via 9router" : `Select Model for Hermes Agent${modalTarget !== "default" ? ` — ${HERMES_ROLES.find((r) => r.id === modalTarget)?.label || modalTarget}` : ""}`}
         />
       )}
 

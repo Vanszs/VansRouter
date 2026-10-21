@@ -52,7 +52,7 @@ describe("grok-cli client version (issue #153)", () => {
   it("keeps one source of truth for the OAuth handshake headers", () => {
     for (const file of [
       "../../src/lib/oauth/providers.js",
-      "../../src/app/api/providers/[id]/test/testUtils.js",
+      "../../src/app/api/providers/[id]/test/oauthTestConfig.js",
     ]) {
       const source = readSource(file);
       expect(source, `${file} must not pin the old version`).not.toMatch(/0\.2\.9[0-9]/);

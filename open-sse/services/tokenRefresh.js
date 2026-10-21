@@ -21,7 +21,7 @@ import {
   refreshMiniMaxCodeToken,
   refreshNousToken,
   classifyOAuthRefreshError,
-} from "./tokenRefresh/providers.js";
+} from "./tokenRefresh/providers/index.js";
 
 // Re-export all provider refresh functions (preserves public API for all consumers)
 export {
