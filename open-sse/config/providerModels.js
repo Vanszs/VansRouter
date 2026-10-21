@@ -101,14 +101,25 @@ export function getModelMeta(aliasOrId, modelId) {
 }
 
 export function getModelUpstreamId(aliasOrId, modelId) {
+  // Split off the thinking suffix "(level)" so the lookup hits the base id, then
+  // re-append it to the result: downstream applyThinking still has to see the
+  // suffix (body.model is stripped separately).
+  const sufMatch = typeof modelId === "string" ? modelId.match(/\([^()]+\)\s*$/) : null;
+  const suffix = sufMatch ? sufMatch[0] : "";
+  const baseId = suffix ? modelId.slice(0, sufMatch.index).trim() : modelId;
   const models = PROVIDER_MODELS[aliasOrId];
-  const found = findModel(models, modelId, aliasOrId);
-  if (found?.upstreamModelId) return found.upstreamModelId;
-  if (found?.id) return found.id;
-  if (aliasOrId === "cx" && typeof modelId === "string" && modelId.endsWith(CODEX_REVIEW_SUFFIX)) {
-    return modelId.slice(0, -CODEX_REVIEW_SUFFIX.length);
+  const found = findModel(models, baseId, aliasOrId);
+  const resolvedId = found?.upstreamModelId || found?.id;
+  if (resolvedId) {
+    const presetMatch = resolvedId.match(/\([^()]+\)\s*$/);
+    const presetSuffix = presetMatch?.[0] || "";
+    const resolvedBase = presetSuffix ? resolvedId.slice(0, presetMatch.index).trim() : resolvedId;
+    return resolvedBase + (suffix || presetSuffix);
   }
-  return modelId;
+  if (aliasOrId === "cx" && typeof baseId === "string" && baseId.endsWith(CODEX_REVIEW_SUFFIX)) {
+    return baseId.slice(0, -CODEX_REVIEW_SUFFIX.length) + suffix;
+  }
+  return baseId + suffix;
 }
 
 export function resolveAntigravityUpstreamModel(model) {

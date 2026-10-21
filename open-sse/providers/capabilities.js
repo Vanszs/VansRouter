@@ -1592,6 +1592,10 @@ export const PATTERN_CAPABILITIES = [
   { pattern: "*pplx*", caps: { search: true, contextWindow: 128000 } },
   { pattern: "*perplexity*", caps: { search: true, contextWindow: 128000 } },
 
+  // ── Muse Spark (Meta Model API) ───────────────────────────────────
+  // Multimodal (text+image); OpenAI Responses reasoning supports up to xhigh.
+  { pattern: "*muse*spark*", caps: { vision: true, reasoning: true, thinkingFormat: "openai", contextWindow: 1048576, maxOutput: 131072 } },
+
   // ── Others ───────────────────────────────────────────────────────
   {
     pattern: "*hunyuan*",
