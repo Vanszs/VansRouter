@@ -5,6 +5,7 @@ import { getModelsByProviderId } from "open-sse/config/providerModels.js";
 export const MULTI_MODEL_PROVIDERS = new Set([
   "antigravity",
   "gemini-cli",
+  "cursor",
 ]);
 
 /**
@@ -450,6 +451,20 @@ export function parseQuotaData(provider, data) {
               total: quota.total || 0,
               unit: quota.unit,
               resetAt: quota.resetAt || null,
+            });
+          });
+        }
+        break;
+
+      case "cursor":
+        if (data.quotas) {
+          Object.entries(data.quotas).forEach(([name, quota]) => {
+            normalizedQuotas.push({
+              name,
+              used: quota.used || 0,
+              total: quota.total || 0,
+              resetAt: quota.resetAt || null,
+              remainingPercentage: quota.remainingPercentage,
             });
           });
         }
