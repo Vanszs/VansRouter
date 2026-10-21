@@ -45,6 +45,7 @@ describe("fetchModelsFetcherIds", () => {
 
     expect(ids.sort()).toEqual([
       "beam-free",
+      "jev-1.13-free",
       "mimo-v2.6-flash-free",
       "nemotron-3.5-super-vl-free",
       "longcat-2.5-preview-free",
