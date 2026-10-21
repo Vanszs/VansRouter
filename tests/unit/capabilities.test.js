@@ -51,6 +51,20 @@ describe("getCapabilitiesForModel", () => {
     }
   });
 
+  it("advertises PDF input on current Claude model families", () => {
+    for (const model of [
+      "claude-fable-5-1",
+      "claude-opus-5.5",
+      "claude-opus-4.6",
+      "claude-opus-4.7",
+      "claude-opus-4.8",
+      "claude-sonnet-4.6",
+      "claude-sonnet-5-5",
+    ]) {
+      expect(getCapabilitiesForModel("claude", model).pdf, model).toBe(true);
+    }
+  });
+
   it("reports Kiro Claude Opus 4.8 as a 1M context model", () => {
     expect(getCapabilitiesForModel("kiro", "claude-opus-4.8").contextWindow).toBe(1000000);
     expect(getCapabilitiesForModel("kiro", "anthropic/claude-opus-4.8").contextWindow).toBe(1000000);
