@@ -67,20 +67,31 @@ export async function getProviderCredentials(provider, excludeConnectionIds = nu
       const settings = await getSettings();
       const override = (settings.providerStrategies || {})[providerId] || {};
       const strategy = override.rotateStrategy || "none";
-      let pickedId = override.proxyPoolId || null;
+      const configuredPoolId = override.proxyPoolId || null;
+      let pickedId = configuredPoolId;
       if (strategy !== "none") {
         const allPools = await getProxyPools({ isActive: true });
-        const poolIds = allPools.filter(p => p.proxyUrl).map(p => p.id);
+        const poolIds = allPools
+          .filter((pool) => pool.proxyUrl && !excludeSet.has(`proxy:${pool.id}`) && !excludeSet.has(pool.id))
+          .map((pool) => pool.id);
+        if (poolIds.length === 0 && allPools.some((pool) => pool.proxyUrl)) return null;
         const scope = `${providerId}::${model || "*"}`;
         pickedId = pickProxyPoolId(poolIds, strategy, providerId, { scope });
+      } else if (configuredPoolId && (excludeSet.has(`proxy:${configuredPoolId}`) || excludeSet.has(configuredPoolId))) {
+        return null;
       }
       const resolvedProxy = await resolveConnectionProxyConfig({ proxyPoolId: pickedId || "" });
       const selectedPoolIds = strategy !== "none"
-        ? (await getProxyPools({ isActive: true })).filter((p) => p.proxyUrl).map((p) => p.id)
+        ? [pickedId].filter(Boolean)
         : [];
+      const connectionId = pickedId ? `proxy:${pickedId}` : "noauth";
+      const connectionName = pickedId
+        ? (resolvedProxy.proxyPool?.name || `Proxy (${pickedId.slice(0, 8)})`)
+        : "Public";
       return {
-        id: "noauth",
-        connectionName: "Public",
+        id: connectionId,
+        connectionId,
+        connectionName,
         isActive: true,
         accessToken: "public",
         providerSpecificData: {
@@ -284,6 +295,10 @@ export async function getProviderCredentials(provider, excludeConnectionIds = nu
  */
 export async function markAccountUnavailable(connectionId, status, errorText, provider = null, model = null, resetsAtMs = null, options = {}) {
   if (!connectionId || connectionId === "noauth") return { shouldFallback: false, cooldownMs: 0 };
+  if (connectionId.startsWith("proxy:")) {
+    const { shouldFallback, cooldownMs } = checkFallbackError(status, errorText, 0, resolveProviderId(provider));
+    return { shouldFallback, cooldownMs };
+  }
   const connections = await getProviderConnections({ provider });
   const conn = connections.find(c => c.id === connectionId);
   const backoffLevel = conn?.backoffLevel || 0;

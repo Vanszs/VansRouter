@@ -166,10 +166,13 @@ export async function handleChatCore({ body, modelInfo, credentials, log, onCred
     const caps = getCapabilitiesForModel(provider, model);
     if (caps?.reasoning) {
       const mode = providerThinking.mode;
-      if (mode === "on" && !body.thinking) {
-        body = { ...body, thinking: { type: "enabled", budget_tokens: 10000 } };
-      } else if (mode === "off" && !body.thinking) {
-        if (caps.thinkingCanDisable !== false) body = { ...body, thinking: { type: "disabled" } };
+      if (mode === "on" && !body.thinking && !body.reasoning_effort) {
+        body = provider === "opencode"
+          ? { ...body, reasoning_effort: "medium" }
+          : { ...body, thinking: { type: "enabled", budget_tokens: 10000 } };
+      } else if (mode === "off" && !body.thinking && !body.reasoning_effort) {
+        if (provider === "opencode") body = { ...body, reasoning_effort: "none" };
+        else if (caps.thinkingCanDisable !== false) body = { ...body, thinking: { type: "disabled" } };
       } else if (!body.reasoning_effort) {
         body = { ...body, reasoning_effort: mode };
       }
@@ -379,11 +382,12 @@ export async function handleChatCore({ body, modelInfo, credentials, log, onCred
       const mode = providerThinking.mode;
       if (mode === "off") {
         translatedBody.reasoning_effort = "none";
-        if (caps.thinkingCanDisable !== false) translatedBody.thinking = { type: "disabled" };
+        if (provider !== "opencode" && caps.thinkingCanDisable !== false) translatedBody.thinking = { type: "disabled" };
         log?.debug?.("THINKING", `${provider}/${model} | disabled`);
       } else if (mode === "on") {
-        translatedBody.thinking = { type: "enabled", budget_tokens: 10000 };
-        log?.debug?.("THINKING", `${provider}/${model} | enabled (10k budget)`);
+        if (provider === "opencode") translatedBody.reasoning_effort = "medium";
+        else translatedBody.thinking = { type: "enabled", budget_tokens: 10000 };
+        log?.debug?.("THINKING", provider === "opencode" ? `${provider}/${model} | effort=medium` : `${provider}/${model} | enabled (10k budget)`);
       } else {
         translatedBody.reasoning_effort = mode;
         log?.debug?.("THINKING", `${provider}/${model} | effort=${mode}`);

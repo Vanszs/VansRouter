@@ -1,7 +1,15 @@
 import { normalizeNousFreeModels } from "open-sse/services/nous.js";
 
-// Free OpenCode models that don't use the "-free" id suffix
-const KNOWN_FREE_OPENCODE_MODELS = ["big-pickle"];
+const OPENCODE_FREE_MODEL_IDS = new Set([
+  "beam-free",
+  "mimo-v2.6-flash-free",
+  "nemotron-3.5-super-vl-free",
+  "longcat-2.5-preview-free",
+  "deepseek-v4.1-flash-free",
+  "glm-5.3-flash-free",
+  "nemotron-3.5-lightning-free",
+  "minimax-m3.1-flash-free",
+]);
 
 // No dead-model list: upstream's rejections are volatile and a hardcoded snapshot
 // cannot expire. A bad id fails loudly on use instead. (One existed; it hid two
@@ -36,7 +44,7 @@ export const FILTERS = {
 
   "opencode-free": (models) =>
     models
-      .filter((m) => m.id?.endsWith("-free") || KNOWN_FREE_OPENCODE_MODELS.includes(m.id))
+      .filter((m) => OPENCODE_FREE_MODEL_IDS.has(m.id))
       .map((m) => ({ id: m.id, name: m.id })),
 
   // Go subscription catalogue — every /models id is selectable; the endpoint lane

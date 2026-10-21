@@ -10,6 +10,7 @@ import mimoFree from "../../open-sse/providers/registry/mimo-free.js";
 import opencode from "../../open-sse/providers/registry/opencode.js";
 import antigravity from "../../open-sse/providers/registry/antigravity.js";
 import { OpenCodeExecutor } from "../../open-sse/executors/opencode.js";
+import { getModelTargetFormat } from "../../open-sse/config/providerModels.js";
 
 describe("compat base URLs / version", () => {
   it("OPENAI_COMPAT_BASE", () => {
@@ -48,16 +49,15 @@ describe("antigravity retry (intentional change: 429=3, 503=3)", () => {
   });
 });
 
-describe("OpenCode Free endpoint routing", () => {
-  const MUSE = "muse-spark-1.2-contributor-free";
+describe("OpenCode endpoint routing", () => {
+  const MUSE = "muse-spark-1.2";
 
-  it("declares the Responses format only on the Muse Spark model", () => {
+  it("resolves the live Muse Spark family to the Responses format", () => {
     expect(opencode.transport.format).toBeUndefined();
-    const muse = opencode.models.find((m) => m.id === MUSE);
-    expect(muse?.targetFormat).toBe("openai-responses");
+    expect(getModelTargetFormat("oc", MUSE)).toBe("openai-responses");
   });
 
-  it("routes Muse Spark to /responses and every other model to /chat/completions", () => {
+  it("routes Muse Spark to /responses and chat models to /chat/completions", () => {
     const executor = new OpenCodeExecutor();
     expect(executor.buildUrl(MUSE)).toBe("https://opencode.ai/zen/v1/responses");
     expect(executor.buildUrl(`${MUSE}(xhigh)`)).toBe("https://opencode.ai/zen/v1/responses");

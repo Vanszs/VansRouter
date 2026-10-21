@@ -33,6 +33,16 @@ import { ANTHROPIC_API_VERSION } from "open-sse/providers/shared.js";
 const UPSTREAM_CONNECTION_RE = /[-_][0-9a-f]{8,}$/i;
 const LLM_KIND = "llm";
 const ALL_KINDS = [LLM_KIND, "tts", "embedding", "image", "imageToText", "stt", "video", "webSearch", "webFetch", "systemone"];
+const OPENCODE_FREE_MODEL_IDS = new Set([
+  "beam-free",
+  "mimo-v2.6-flash-free",
+  "nemotron-3.5-super-vl-free",
+  "longcat-2.5-preview-free",
+  "deepseek-v4.1-flash-free",
+  "glm-5.3-flash-free",
+  "nemotron-3.5-lightning-free",
+  "minimax-m3.1-flash-free",
+]);
 
 const MODEL_TYPE_TO_KIND = {
   image: "image",
@@ -330,7 +340,7 @@ export async function fetchModelsFetcherIds(providerId, providerInfo) {
     if (fetcher.type === "opencode-free") {
       ids = rawModels.reduce((acc, m) => {
         const id = m?.id || m?.name || m?.model;
-        if (typeof id === "string" && id.trim() !== "" && id.endsWith("-free")) acc.push(id);
+        if (typeof id === "string" && OPENCODE_FREE_MODEL_IDS.has(id)) acc.push(id);
         return acc;
       }, []);
     } else {
@@ -502,6 +512,7 @@ async function buildAllModelEntries(kindFilter, combos, customModels, modelAlias
       appendConfiguredMediaModels(entries, providerInfo, alias, kindFilter, isDisabled);
     }
     for (const customModel of customModels) {
+      if (customModel?.providerAlias === "oc" && !OPENCODE_FREE_MODEL_IDS.has(customModel.id)) continue;
       if (!customModel?.id || (customModel.type && customModel.type !== "llm")) continue;
       if (!kindFilter.has(LLM_KIND)) continue;
       const providerAlias = customModel.providerAlias;
@@ -660,6 +671,7 @@ async function buildConnectedProviderIds(providerId, conn, kindFilter, customMod
 
   const mergedModelIds = Array.from(new Set([...modelIds, ...customModelIds, ...aliasModelIds]));
   for (const modelId of mergedModelIds) {
+    if (providerInfo?.modelsFetcher?.type === "opencode-free" && !OPENCODE_FREE_MODEL_IDS.has(modelId)) continue;
     const customKind = customModelKindById.get(modelId);
     const kind = staticModelKindById.get(modelId) || customKind || inferKindFromUnknownModelId(modelId);
     const allowAsLlm = kind === "imageToText" && kindFilter.has(LLM_KIND);
@@ -717,7 +729,20 @@ async function buildFreeProviderIds(providerId, providerInfo, kindFilter, custom
     return acc;
   }, []);
 
-  const mergedModelIds = Array.from(new Set([...modelIds, ...fetcherModelIds, ...customModelIds, ...aliasModelIds]));
+  const isOpenCodeFree = providerInfo.modelsFetcher?.type === "opencode-free";
+  const curatedModelIds = isOpenCodeFree
+    ? fetcherModelIds.filter((id) => OPENCODE_FREE_MODEL_IDS.has(id))
+    : fetcherModelIds;
+  const safeAliases = isOpenCodeFree
+    ? aliasModelIds.filter((id) => OPENCODE_FREE_MODEL_IDS.has(id))
+    : aliasModelIds;
+  const safeStaticIds = isOpenCodeFree
+    ? modelIds.filter((id) => OPENCODE_FREE_MODEL_IDS.has(id))
+    : modelIds;
+  const safeCustomModelIds = isOpenCodeFree
+    ? customModelIds.filter((id) => OPENCODE_FREE_MODEL_IDS.has(id))
+    : customModelIds;
+  const mergedModelIds = Array.from(new Set([...safeStaticIds, ...curatedModelIds, ...safeCustomModelIds, ...safeAliases]));
   for (const modelId of mergedModelIds) {
     const kind = staticModelKindById.get(modelId) || inferKindFromUnknownModelId(modelId);
     if (!kindFilter.has(kind)) continue;
@@ -771,6 +796,7 @@ export async function buildModelsList(kindFilter, options = {}) {
     const cachedDbModels = await getCachedProviderModels();
     if (cachedDbModels.length > 0) {
       for (const model of cachedDbModels) {
+        if (model.id?.startsWith("oc/") && !OPENCODE_FREE_MODEL_IDS.has(model.id.slice(3))) continue;
         if (!seen.has(model.id)) {
           seen.add(model.id);
           dedupedModels.push(model);

@@ -151,18 +151,17 @@ describe("OpenCode Free ids newer than the capability tables", () => {
   // ids missing here fall through to DEFAULT_CAPABILITIES (reasoning: false),
   // and applyThinking() then deletes the client's reasoning_effort — see #2690.
   // Modalities/limits are taken verbatim from models.dev.
-  it("reports reasoning and the models.dev limits for space-bunny", () => {
-    expect(getCapabilitiesForModel(undefined, "space-bunny-free")).toMatchObject({
-      reasoning: true,
-      thinkingFormat: "openai",
-      contextWindow: 1048576,
-      maxOutput: 524288,
-    });
-    expect(getCapabilitiesForModel("opencode-go", "space-bunny")).toMatchObject({
-      reasoning: true,
-      contextWindow: 1048576,
-      maxOutput: 524288,
-    });
+  it.each([
+    ["beam-free", { reasoning: true, vision: false, contextWindow: 1048576, maxOutput: 131072 }],
+    ["mimo-v2.6-flash-free", { reasoning: true, vision: true, audioInput: true, videoInput: true, contextWindow: 200000, maxOutput: 32000 }],
+    ["nemotron-3.5-super-vl-free", { reasoning: true, vision: true, contextWindow: 1048576, maxOutput: 131072 }],
+    ["nemotron-3.5-lightning-free", { reasoning: true, vision: false, contextWindow: 262144, maxOutput: 262144 }],
+    ["longcat-2.5-preview-free", { reasoning: true, vision: true, contextWindow: 1000000, maxOutput: 131072 }],
+    ["deepseek-v4.1-flash-free", { reasoning: true, vision: true, thinkingFormat: "deepseek", contextWindow: 200000, maxOutput: 32000 }],
+    ["glm-5.3-flash-free", { reasoning: true, vision: true, videoInput: true, pdf: true, contextWindow: 200000, maxOutput: 32000 }],
+    ["minimax-m3.1-flash-free", { reasoning: true, vision: true, videoInput: true, contextWindow: 1000000, maxOutput: 512000 }],
+  ])("reports current upstream metadata for %s", (model, expected) => {
+    expect(getCapabilitiesForModel("opencode", model)).toMatchObject(expected);
   });
 
   it("keeps per-id modalities and limits instead of a generic floor", () => {

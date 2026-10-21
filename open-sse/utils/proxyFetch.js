@@ -189,6 +189,24 @@ async function fetchWithTlsFallback(url, options, proxyUrl) {
   }
 }
 
+async function replayFreeTierError(url, options, response, fetchDirect) {
+  const bodyText = await response.text();
+  const headers = new Headers(response.headers);
+  headers.delete("content-length");
+  headers.delete("content-encoding");
+  const originalRejection = () => new Response(bodyText, {
+    status: response.status,
+    statusText: response.statusText,
+    headers,
+  });
+  if (!bodyText.includes("FreeTierError") || options.body?.getReader) return originalRejection();
+  try {
+    return await fetchDirect(url, options, null);
+  } catch {
+    return originalRejection();
+  }
+}
+
 /**
  * Create HTTPS request with manual socket connection (bypass DNS)
  */
@@ -261,6 +279,9 @@ export async function proxyAwareFetch(url, options = {}, proxyOptions = null) {
 
   // Vercel relay: forward request via relay headers
   const vercelRelayUrl = normalizeString(proxyOptions?.vercelRelayUrl);
+  const isOpenCodeFreeRequest = options.provider === "opencode" && /\/zen\/v1\//.test(new URL(targetUrl).pathname);
+  const proxyStrict = proxyOptions?.strictProxy === true;
+
   if (vercelRelayUrl) {
     const parsed = new URL(targetUrl);
     const baseHeaders = options.headers instanceof Headers
@@ -271,7 +292,11 @@ export async function proxyAwareFetch(url, options = {}, proxyOptions = null) {
       "x-relay-target": `${parsed.protocol}//${parsed.host}`,
       "x-relay-path": `${parsed.pathname}${parsed.search}`,
     };
-    return originalFetch(vercelRelayUrl, { ...options, headers: relayHeaders });
+    const relayed = await originalFetch(vercelRelayUrl, { ...options, headers: relayHeaders });
+    if (options.provider !== "opencode" || !/\/zen\/v1\//.test(parsed.pathname) || relayed.status !== 403 || proxyStrict) {
+      return relayed;
+    }
+    return replayFreeTierError(url, options, relayed, fetchWithTlsFallback);
   }
 
   const connectionProxyUrl = resolveConnectionProxyUrl(targetUrl, proxyOptions);
@@ -303,7 +328,9 @@ export async function proxyAwareFetch(url, options = {}, proxyOptions = null) {
 
   if (proxyUrl) {
     try {
-      return await fetchWithTlsFallback(url, options, proxyUrl);
+      const proxiedResponse = await fetchWithTlsFallback(url, options, proxyUrl);
+      if (!isOpenCodeFreeRequest || proxiedResponse.status !== 403 || proxyStrict) return proxiedResponse;
+      return replayFreeTierError(url, options, proxiedResponse, fetchWithTlsFallback);
     } catch (proxyError) {
       // If strictProxy is enabled, fail hard instead of falling back to direct
       if (proxyOptions?.strictProxy === true) {

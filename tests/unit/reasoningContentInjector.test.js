@@ -148,6 +148,14 @@ describe("injectReasoningContent — MiniMax thinking round-trip", () => {
 });
 
 describe("OpenCodeExecutor — issue #1543 regression", () => {
+  it("injects reasoning_content for multi-turn DeepSeek Free histories", () => {
+    const out = new OpenCodeExecutor().transformRequest(
+      "deepseek-v4.1-flash-free",
+      bodyWith([{ role: "user", content: "hi" }, { role: "assistant", content: "answer" }, { role: "user", content: "next" }]),
+    );
+    expect(out.messages[1].reasoning_content).toBe(" ");
+  });
+
   it("runs the injector so deepseek-v4-flash-free round-trips reasoning_content", () => {
     const executor = new OpenCodeExecutor();
     const out = executor.transformRequest(

@@ -375,10 +375,16 @@ export const MODEL_CAPABILITIES = {
   // Without these entries getCapabilitiesForModel() falls through to
   // DEFAULT_CAPABILITIES (reasoning: false) and applyThinking() strips the client's
   // reasoning_effort before it reaches the upstream — see #2690.
-  // Modalities and limits below are taken verbatim from models.dev.
-  "space-bunny-free":  { vision: true, videoInput: true, reasoning: true, thinkingFormat: "openai", contextWindow: 1048576, maxOutput: 524288 },
-  "space-bunny":       { vision: true, videoInput: true, reasoning: true, thinkingFormat: "openai", contextWindow: 1048576, maxOutput: 524288 },
+  // Modalities and limits below are taken verbatim from models.dev/api.json.
   "big-pickle":        { reasoning: true, thinkingFormat: "openai", contextWindow: 200000, maxOutput: 32000 },
+  "beam-free":         { reasoning: true, thinkingFormat: "openai", contextWindow: 1048576, maxOutput: 131072 },
+  "mimo-v2.6-flash-free": { vision: true, audioInput: true, videoInput: true, reasoning: true, thinkingFormat: "openai", contextWindow: 200000, maxOutput: 32000 },
+  "nemotron-3.5-super-vl-free": { vision: true, reasoning: true, thinkingFormat: "openai", contextWindow: 1048576, maxOutput: 131072 },
+  "nemotron-3.5-lightning-free": { reasoning: true, thinkingFormat: "openai", contextWindow: 262144, maxOutput: 262144 },
+  "longcat-2.5-preview-free": { vision: true, reasoning: true, thinkingFormat: "openai", contextWindow: 1000000, maxOutput: 131072 },
+  "deepseek-v4.1-flash-free": { vision: true, reasoning: true, thinkingFormat: "deepseek", contextWindow: 200000, maxOutput: 32000 },
+  "glm-5.3-flash-free": { vision: true, videoInput: true, pdf: true, reasoning: true, thinkingFormat: "openai", contextWindow: 200000, maxOutput: 32000 },
+  "minimax-m3.1-flash-free": { vision: true, videoInput: true, reasoning: true, thinkingFormat: "openai", contextWindow: 1000000, maxOutput: 512000 },
   "exo-free":          { vision: true, reasoning: true, thinkingFormat: "openai", contextWindow: 1048576, maxOutput: 131072 },
   "fledge-alpha-free": { vision: true, reasoning: true, thinkingFormat: "openai", contextWindow: 1048576, maxOutput: 131072 },
   "longcat-2.0":             { reasoning: true, thinkingFormat: "openai", contextWindow: 1000000, maxOutput: 131072 },
@@ -441,13 +447,6 @@ export const MODEL_CAPABILITIES = {
     thinkingCanDisable: false,
     contextWindow: 262144,
     maxOutput: 65536,
-  },
-  // OpenCode Free Muse Spark — OpenAI Responses reasoning supports up to xhigh.
-  "muse-spark-1.2-contributor-free": {
-    reasoning: true,
-    thinkingFormat: "openai",
-    contextWindow: 1048576,
-    maxOutput: 131072,
   },
   // OpenCode Go Muse Spark — same Responses reasoning shape as the free tier.
   "muse-spark-1.2-contributor": {

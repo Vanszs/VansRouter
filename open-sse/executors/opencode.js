@@ -12,7 +12,7 @@ import { getModelTargetFormat, PROVIDER_MODELS, PROVIDER_ID_TO_ALIAS } from "../
 // OpenCode free tier limits requests per egress IP.
 const IP_LIMIT_BODY = /limit|rate|quota|exhausted|capacity|too many|retry/i;
 
-export const OPENCODE_UA = "opencode/1.19.0";
+export const OPENCODE_UA = "opencode/latest/2.0.29/cli";
 
 // Lane → registry transport format / shared /zen/v1 path (free lane has no transports).
 const LANE_FORMAT = { chat: "openai", claude: "claude", responses: "openai-responses" };
@@ -22,13 +22,12 @@ const LANE_PATH = { chat: "/chat/completions", claude: "/messages", responses: "
 // declare bash/glob/grep/read exactly once. See utils/opencodeFingerprint.js.
 const DECOY_DESCRIPTION = "This tool is currently unavailable and must not be used.";
 
-// OpenCode's free tier rejects requests whose User-Agent has no version >= 1.17.0.
+// Preserve either supported OpenCode CLI UA form; normalize all others to current form.
 function hasValidOpencodeVersion(ua) {
-  const m = String(ua || "").match(/opencode\/(\d+)\.(\d+)/i);
-  if (!m) return false;
-  const major = parseInt(m[1], 10);
-  const minor = parseInt(m[2], 10);
-  return major > 1 || (major === 1 && minor >= 17);
+  const value = String(ua || "").trim();
+  const legacy = value.match(/^opencode\/(\d+)\.(\d+)\.\d+$/i);
+  if (legacy) return Number(legacy[1]) > 1 || (Number(legacy[1]) === 1 && Number(legacy[2]) >= 17);
+  return /^opencode\/[\w-]+\/\d+\.\d+\.\d+\/(?:cli|desktop)$/i.test(value);
 }
 
 // A client-supplied session id in a non-canonical shape makes the free tier 403,
@@ -271,7 +270,7 @@ export class OpenCodeExecutor extends BaseExecutor {
     const headers = {
       "Content-Type": "application/json",
       "User-Agent": hasValidOpencodeVersion(raw["user-agent"]) ? raw["user-agent"] : OPENCODE_UA,
-      "x-opencode-client": raw["x-opencode-client"] || "desktop",
+      "x-opencode-client": raw["x-opencode-client"] || "cli",
       "x-opencode-session": session,
       "x-opencode-request": request,
       "x-opencode-project": raw["x-opencode-project"] || "global",

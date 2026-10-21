@@ -242,26 +242,26 @@ describe("extractReasoningText (response shapes)", () => {
   });
 });
 
-describe("OpenCode Free ids with no capabilities entry (#2690)", () => {
-  const bunny = (effort) => ({
-    model: "oc/space-bunny-free",
+describe("OpenCode Free reasoning capabilities", () => {
+  const minimax = (effort) => ({
+    model: "oc/minimax-m3.1-flash-free",
     messages: [{ role: "user", content: "hi" }],
     reasoning_effort: effort,
   });
 
-  it("keeps the client reasoning_effort for space-bunny-free", () => {
+  it("keeps the client reasoning_effort for minimax-m3.1-flash-free", () => {
     for (const level of ["low", "medium", "high", "xhigh", "none"]) {
-      expect(apply("openai", "oc/space-bunny-free", bunny(level), "oc").reasoning_effort).toBe(level);
-      expect(apply("openai-responses", "oc/space-bunny-free", bunny(level), "oc").reasoning_effort).toBe(level);
+      expect(apply("openai", "oc/minimax-m3.1-flash-free", minimax(level), "oc").reasoning_effort).toBe(level);
+      expect(apply("openai-responses", "oc/minimax-m3.1-flash-free", minimax(level), "oc").reasoning_effort).toBe(level);
     }
   });
 
   it("clamps max to xhigh (openai format has no max)", () => {
-    expect(apply("openai", "oc/space-bunny-free", bunny("max"), "oc").reasoning_effort).toBe("xhigh");
-    expect(apply("openai-responses", "oc/space-bunny-free", bunny("max"), "oc").reasoning_effort).toBe("xhigh");
+    expect(apply("openai", "oc/minimax-m3.1-flash-free", minimax("max"), "oc").reasoning_effort).toBe("xhigh");
+    expect(apply("openai-responses", "oc/minimax-m3.1-flash-free", minimax("max"), "oc").reasoning_effort).toBe("xhigh");
   });
 
-  it("still strips it for a model that has no entry at all (control)", () => {
-    expect(apply("openai", "oc/no-such-model-xyz", bunny("high"), "oc").reasoning_effort).toBeUndefined();
+  it("strips reasoning for an unknown model", () => {
+    expect(apply("openai", "oc/no-such-model-xyz", minimax("high"), "oc").reasoning_effort).toBeUndefined();
   });
 });
