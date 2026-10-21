@@ -1,6 +1,6 @@
 # v0.91.62 (2026-10-21)
 
-85 commits over the v0.91.61 tag: an upstream sync of decolua/9router across the
+82 commits over the v0.91.61 tag: an upstream sync of decolua/9router across the
 v0.5.95, v0.5.99 and v0.5.104 releases, cherry-picked commit by commit onto this
 fork, followed by a repair pass over the conflicts the cherry-picks left behind
 and a decomposition of the three files the sync pushed past 1k lines. Every
@@ -138,21 +138,28 @@ the release candidate.
 
 ## Tests
 
-- Full suite: 429 test files, 4560 tests passed, 121 skipped, 1 todo
+- Full suite: 436 test files, 4686 tests passed, 121 skipped, 1 todo
   (`CI=true pnpm test -- --hookTimeout=30000`, exit 0).
 - `pnpm run lint` exit 0 (0 errors); `node scripts/lint-undef.cjs` clean; the
   project's react-hooks regression guard reports zero errors.
 - `pnpm run build` exit 0 — "Compiled successfully", 0 "Attempted import
   error" lines.
 - Local atomic deploy: `node scripts/deploy-atomic.cjs` exit 0, release
-  `2026-10-21T12-34-44-749Z-3781770` activated. After the deploy:
+  `2026-10-21T20-31-20-529Z-226327` activated. After the deploy:
   `GET /api/health` -> `{"ok":true}`, `GET /api/ready` -> `{"ok":true,
   "database":"ready"}`, `GET /api/version` -> `0.91.62`, build id
-  `Aahtr-ZxX39q4KHwhZBTI`.
-- Live API-key request through the OpenCode Free lane: `oc/deepseek-v4.1-flash-free`
-  answered `PONG` (finish_reason `stop`) and `oc/beam-free` answered through the
-  same path. `GET /v1/models` lists exactly the eight curated OpenCode Free
-  models.
+  `LA5BMDInpIIlAWIqHW4xw`.
+- Live API-key request through the OpenCode Free lane: all seven curated free
+  models complete a real tool round-trip against the deployed release — a
+  `get_weather` tool is called with the right arguments, the tool result is
+  submitted back, and the model answers using it. `GET /v1/models` lists
+  exactly those seven.
+- The curated free list is the set that actually answers, not the set the
+  upstream catalogue publishes. The catalogue lists ten `*-free` ids;
+  `flint-40b-free` answers 503, `jev-1.13-free` is a decision model on the
+  SystemOne endpoint (400 "Model does not support this protocol") and
+  `longcat-2.5-preview-free` answers 402 — so the chat list is seven models
+  and `jev-1.13-free` is declared with `kind: "systemone"`.
 - New coverage: the Cursor KV ack round-trip, the Muse Responses wire, the
   MiniMax Code provider and usage, the Netlify relay, the model picker search
   filter and the deactivated-provider rendering, the Qoder add-on buckets, and
