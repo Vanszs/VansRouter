@@ -107,6 +107,7 @@ export default function ModelSelectModal({
   };
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- load on open; the fetched data is external state
     if (isOpen) fetchConnections();
   }, [isOpen]);
 
