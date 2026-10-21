@@ -16,6 +16,12 @@ const DEFAULT_SETTINGS = {
   comboStrategy: "fallback",
   comboStickyRoundRobinLimit: 1,
   comboStrategies: {},
+  capacityAdapter: {
+    vision: { enabled: true, roundRobin: false, models: [] },
+    pdf: { enabled: false, roundRobin: false, models: [] },
+    audioInput: { enabled: true, roundRobin: false, models: [] },
+    videoInput: { enabled: false, roundRobin: false, models: [] },
+  },
   requireLogin: true,
   requireApiKey: process.env.REQUIRE_API_KEY === "true",
   allowRemoteNoApiKey: false,
@@ -66,6 +72,16 @@ function mergeWithDefaults(raw) {
         merged[key] = true;
       } else {
         merged[key] = defVal;
+      }
+    }
+  }
+  if (merged.capacityAdapter && typeof merged.capacityAdapter === "object") {
+    for (const capKey of Object.keys(merged.capacityAdapter)) {
+      const entry = merged.capacityAdapter[capKey];
+      if (Array.isArray(entry?.models)) {
+        entry.models = entry.models.map((m) =>
+          m === "oc/mimo-v2.5-free" ? "oc/mimo-v2.6-flash-free" : m
+        );
       }
     }
   }
