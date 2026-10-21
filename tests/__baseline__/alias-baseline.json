@@ -93,7 +93,13 @@
     "polly": "aws-polly",
     "aws-polly": "aws-polly",
     "bb": "blackbox",
-    "blackbox": "blackbox"
+    "blackbox": "blackbox",
+    "br": "bedrock",
+    "bedrock": "bedrock",
+    "aws-bedrock": "bedrock",
+    "brx": "bedrock-xai",
+    "bedrock-xai": "bedrock-xai",
+    "bedrock-grok": "bedrock-xai"
   },
   "idToAlias": {
     "a6api": "a6api",
@@ -115,6 +121,9 @@
     "baidu": "qianfan",
     "baseten": "baseten",
     "bazaarlink": "bzl",
+    "bedrock": "br",
+    "bedrock-xai": "brx",
+    "black-forest-labs": "black-forest-labs",
     "blackbox": "blackbox",
     "bluesminds": "bm",
     "byteplus": "byteplus",
@@ -234,6 +243,8 @@
     "black-forest-labs",
     "blackbox",
     "bm",
+    "br",
+    "brx",
     "byteplus",
     "bytez",
     "bzl",
