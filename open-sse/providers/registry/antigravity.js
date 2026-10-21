@@ -22,7 +22,8 @@ export default {
   serviceKinds: ["llm", "image", "webSearch"],
   transport: {
     baseUrls: [
-      "https://daily-cloudcode-pa.googleapis.com",
+      // The daily IDE cloudcode host serves the free tier; the constant is the
+      // same host since the 2.22.0 fingerprint bump, so list it once.
       ANTIGRAVITY_IDE_BASE_URL,
     ],
     format: "antigravity",
