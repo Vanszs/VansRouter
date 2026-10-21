@@ -61,6 +61,10 @@ const eslintConfig = defineConfig([
     // Default ignores of eslint-config-next:
     ".next/**",
     ".next-cli-build/**",
+    // Atomic deploy staging directories: build output, not source. They are
+    // gitignored but eslint still walked them, and a stale release could fail
+    // the lint gate on bundled code the project never edited.
+    ".next-atomic-*/**",
     "out/**",
     "build/**",
     "next-env.d.ts",
