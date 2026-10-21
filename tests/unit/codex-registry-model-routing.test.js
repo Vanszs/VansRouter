@@ -22,6 +22,14 @@ const codexSrc = fs.readFileSync(
   path.resolve(__dirname, "../../open-sse/providers/registry/codex.js"),
   "utf-8"
 );
+const codexImageSrc = fs.readFileSync(
+  path.resolve(__dirname, "../../open-sse/handlers/imageProviders/codex.js"),
+  "utf-8"
+);
+const quotaPingSrc = fs.readFileSync(
+  path.resolve(__dirname, "../../src/shared/constants/config.js"),
+  "utf-8"
+);
 
 describe("Codex registry — ghost models removed (#4202)", () => {
   it("gpt-5.4 is removed", () => {
@@ -52,11 +60,19 @@ describe("Codex registry — new models added (#4202)", () => {
   });
 });
 
-describe("Codex registry — still-live models kept (#4202 regression guard)", () => {
-  it("gpt-5.5 still present", () => {
-    expect(codexSrc).toContain('"gpt-5.5"');
+describe("Codex registry — retired models removed (#4848)", () => {
+  it("removes gpt-5.5 chat and image variants from Codex", () => {
+    expect(codexSrc).not.toMatch(/id:\s*"gpt-5\.5(?:-review|-image)?"/);
+    expect(codexImageSrc).not.toContain('"gpt-5.5"');
+    expect(quotaPingSrc).toContain('pingModel: "gpt-5.6-sol"');
   });
 
+  it("keeps gpt-5.6 as the supported replacement", () => {
+    expect(codexSrc).toContain('"gpt-5.6-sol"');
+  });
+});
+
+describe("Codex registry — still-live models kept (#4202 regression guard)", () => {
   it("gpt-5.6-terra still present", () => {
     expect(codexSrc).toContain('"gpt-5.6-terra"');
   });

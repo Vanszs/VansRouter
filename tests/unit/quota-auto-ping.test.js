@@ -37,7 +37,7 @@ vi.mock("@/shared/constants/config", () => ({
         resetAtDriftMs: 30000,
         minPingIntervalMs: 600000,
         skipWhenBlockingQuotaExhausted: true,
-        pingModel: "gpt-5.5",
+        pingModel: "gpt-5.6-sol",
         pingText: "hi",
         pingInstructions: "Reply with OK.",
         pingReasoningEffort: "none",
@@ -283,7 +283,7 @@ describe("quota auto-ping", () => {
     expect(deps.updateProviderConnection).not.toHaveBeenCalled();
   });
 
-  it("sends one tiny gpt-5.5 Codex request through the executor", async () => {
+  it("sends one tiny supported gpt-5.6-sol Codex request through the executor", async () => {
     deps.getSettings.mockResolvedValue({ codexAutoPing: { connections: { "codex-1": true } } });
     deps.getProviderConnections.mockImplementation(async ({ provider }) => (
       provider === "codex"
@@ -300,7 +300,7 @@ describe("quota auto-ping", () => {
     const executor = deps.getExecutor.mock.results[0].value;
     expect(deps.getExecutor).toHaveBeenCalledWith("codex");
     expect(executor.execute).toHaveBeenCalledWith(expect.objectContaining({
-      model: "gpt-5.5",
+      model: "gpt-5.6-sol",
       stream: true,
       credentials: expect.objectContaining({
         accessToken: "token",
@@ -308,7 +308,7 @@ describe("quota auto-ping", () => {
         providerSpecificData: { workspaceId: "ws-1" },
       }),
       body: {
-        model: "gpt-5.5",
+        model: "gpt-5.6-sol",
         input: [{
           type: "message",
           role: "user",
