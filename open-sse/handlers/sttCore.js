@@ -274,8 +274,11 @@ export async function handleSttCore({ provider, model, formData, credentials, st
   const file = formData.get("file");
   if (!file) return createErrorResult(HTTP_STATUS.BAD_REQUEST, "Missing required field: file");
 
-  const cfg = sttConfig;
+  let cfg = sttConfig;
   if (!cfg) return createErrorResult(HTTP_STATUS.BAD_REQUEST, `Provider '${provider}' does not support STT`);
+
+  const overrideUrl = credentials?.providerSpecificData?.baseUrl;
+  if (overrideUrl) cfg = { ...cfg, baseUrl: String(overrideUrl).replace(/\/+$/, "") };
 
   const token = cfg.authType === "none" ? null : (credentials?.apiKey || credentials?.accessToken);
   if (cfg.authType !== "none" && !token) {
