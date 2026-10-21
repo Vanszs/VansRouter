@@ -1,3 +1,178 @@
+# v0.91.62 (2026-10-21)
+
+46 commits over the v0.91.61 tag: an upstream sync of decolua/9router v0.5.99 →
+v0.5.104 (38 commits in the range, plus the still-unadopted tail of the v0.5.95 →
+v0.5.99 range), cherry-picked commit by commit onto this fork, followed by a
+repair pass over the conflicts the cherry-picks left behind. 172 files,
++9499/-897. No push and no tag yet — this entry is the release candidate for
+the branch, and the four upstream items that were deliberately not adopted are
+listed under "Skipped" below.
+
+## Features
+
+- **MiniMax Code (mcode)**: new provider with its own executor, OAuth login
+  (`minimax-code` and `minimax-code-global`), live catalogue filter, usage
+  tracker, and the `x-api-key` / `X-Mavis-*` header profile the upstream
+  requires (`85bc33cea`).
+- **Claude Opus 5.5**: the model is listed for the claude provider again and
+  the capability table carries the opus-5-5 and sonnet-5-5 tier entries with
+  `thinkingCanDisable:false` and `forcedToolChoice:false`, so the picker stops
+  offering a "none" level for a model that is always on (`a07ed95be`).
+- **Antigravity**: the model catalogue is refreshed — the 3.6 tiered ids, the
+  Gemini 3.1 Pro High mapping, and the Claude Sonnet 5.5 / Opus 5.5 tiered
+  variants with their effort suffixes; the retired 3.5 and 3-flash models are
+  dropped; the MITM default moves to `gemini-3.8-flash-medium`
+  (`24034f69c`, `a07ed95be`).
+- **Cursor**: IDE quota via the Cursor DashboardService (spend and request
+  buckets), "Auto (Server Picks)" resolves to the account's default agent
+  model, and long sessions that come back with an empty AgentService turn are
+  retried with the tail of the conversation instead of surfacing an empty
+  answer (`3ef4d8e3`, `f6c26d8ea`, `e7f41c13`).
+- **Quota auto-ping**: the ping schedule is anchored at fixed local times
+  instead of drifting with the reset window, and the reactive ("on reset") and
+  scheduled modes are unified in one place — the connection row tooltip now
+  names the modes that are actually active (`be51142b4`, `28d40159`).
+- **Model picker**: regex and negation search, batch select, and provider
+  filtering in the model selection modal (`da1756a8`).
+- **CodeBuddy CN**: the catalogue follows the gateway's 2026-09-30
+  product-config payload — the published list is the contract, so models the
+  server no longer lists are removed even where the chat endpoint still
+  answers them (`63de82b8e`).
+- **Netlify relay proxy pool**: a Netlify relay pool type, with the deploy
+  endpoint and the relay helper (`4fa46034a`).
+- **CLI**: `9router connect` takes its model list from the server and
+  `9router show` prints what the local tools are currently configured with
+  (`8a90d3c9d`).
+- **9Remote**: the sidebar item opens the 9Remote website directly instead of
+  a promo modal (`2d94d3ab`).
+- **Nous Research**: the OAuth provider and free-tier models are live
+  (`165f9b90`).
+
+## Reliability & Compatibility
+
+- **OpenCode Free**: the free lane is pinned to the eight models the upstream
+  actually serves, each with a real capability entry (without one,
+  `getCapabilitiesForModel()` falls through to the default, which reports
+  `reasoning:false` and strips the client's `reasoning_effort` — issue #2690).
+  The stale ids that the live catalogue no longer serves are filtered out of
+  the model gate, the discovery path and the suggested-models list. The client
+  fingerprint moves to the current `opencode/latest/<version>/cli` form, the
+  provider thinking mode is expressed as `reasoning_effort` (the lane rejects
+  an Anthropic thinking block), and a 403 FreeTierError from a relay or a
+  proxy pool is replayed once over a different egress — with `strictProxy` still
+  winning, so a request that must not leave the configured route is never
+  replayed over a direct connection. `space-bunny-free` is gone: the upstream
+  answers 410 and names `minimax-m3.1-flash-free` as its replacement.
+- **Muse**: a Responses-only model requested by an OpenAI client is routed to
+  the transport its body was translated for, and the strict Responses API gets
+  the nested `reasoning: {effort, summary}` shape it demands instead of a
+  top-level `reasoning_effort` (`b00ba1aa4`).
+- **Thinking suffix**: `getModelUpstreamId` keeps the `(level)` suffix so
+  `applyThinking` can see the requested effort, and `chatCore` strips it again
+  before the model id goes on the wire (`a74c7020`).
+- **Compatible nodes**: the API dialect of an OpenAI-compatible node is
+  resolved from its stored `apiType` first and from the provider id second, so
+  a node whose type was edited after creation now reaches the endpoint it was
+  configured for — and the Nous attribution check looks at the same URL the
+  request is sent to (`44b7c1dd`).
+- **Combo**: a seat that answers HTTP 200 with neither content, tool calls nor
+  reasoning is not treated as a success; the combo falls through to the next
+  member instead of handing the caller an empty answer (`8f4e3800`).
+- **Headroom**: the phantom-savings warning needs both the body size and the
+  message size to have shrunk, so a body that shrank because the tool schemas
+  were stripped is not reported as a compression win (`db81a8c9`).
+- **Codex**: the retired gpt-5.5 is dropped from the registry, from the image
+  generator and from the quota auto-ping, so a probe cannot target a model the
+  backend no longer serves (`7878f53b`).
+- **GitHub embeddings**: the Copilot embeddings move to
+  `api.githubcopilot.com/embeddings` with the Copilot request headers, and the
+  advertised model changes to the one that lane serves (`51a1827e`).
+- **Antigravity**: the IDE fingerprint moves to 2.22.0, the model-catalog
+  request keeps the client's own identity so newer releases see current models
+  (upstream #3414), and the daily IDE cloudcode host is listed once
+  (`cff2b1d9`, `f68d2f5e`).
+- **CodeBuddy thinking levels**: the `codebuddy-intl` DeepSeek entry sits
+  above the unqualified `*deepseek-v4.*` glob again, so the intl models get
+  the gateway's own level set instead of the generic one (`ba72b046`).
+- **Usage stats**: the live-history branch falls back to `input_tokens` and the
+  persisted `promptTokens` column, and the API key is trimmed before the
+  lookup so a whitespace variant resolves to the same key — the grouping key
+  stays the masked key, so no raw key reaches the response payload
+  (`813a0121`).
+- **Nous**: API-key requests through a compatible connection carry the
+  neutral attribution tags the portal requires, without putting the credential
+  in the tags (`90f89471`).
+- **Qoder**: the add-on (free-credit promo) bucket, the never-expires sentinel
+  and the "see details" link are rendered in the usage page's own table
+  layout (`b2aaf83b`).
+
+## Frontend & Accessibility
+
+- **Mobile layouts**: the endpoint key row wraps a long key instead of
+  overflowing, the provider model chips go full width on a narrow viewport, and
+  the cli-tools model input and its select button share a row
+  (`eea082157`).
+- **Proxy dropdown and tooltips**: both render through a portal with fixed
+  viewport positioning, so the scrollable connections list can no longer clip
+  them (`d95bb8ea`).
+- **Claude PDF input**: the current Claude families advertise PDF input, so a
+  PDF attachment is no longer dropped before it reaches the upstream
+  (`f5f88039`).
+
+## Tests
+
+- Full suite: 429 test files, 4560 tests passed, 121 skipped, 1 todo
+  (`CI=true pnpm test -- --hookTimeout=30000`, exit 0).
+- `pnpm run lint` exit 0 (0 errors); `node scripts/lint-undef.cjs` clean; the
+  project's react-hooks regression guard reports zero errors.
+- `pnpm run build` exit 0 — "Compiled successfully", 0 "Attempted import
+  error" lines.
+- Local atomic deploy: `node scripts/deploy-atomic.cjs` exit 0, release
+  `2026-10-21T12-34-44-749Z-3781770` activated. After the deploy:
+  `GET /api/health` -> `{"ok":true}`, `GET /api/ready` -> `{"ok":true,
+  "database":"ready"}`, `GET /api/version` -> `0.91.62`, build id
+  `Aahtr-ZxX39q4KHwhZBTI`.
+- Live API-key request through the OpenCode Free lane: `oc/deepseek-v4.1-flash-free`
+  answered `PONG` (finish_reason `stop`) and `oc/beam-free` answered through the
+  same path. `GET /v1/models` lists exactly the eight curated OpenCode Free
+  models.
+- New coverage: the Cursor KV ack round-trip, the Muse Responses wire, the
+  MiniMax Code provider and usage, the Netlify relay, the model picker search
+  filter and the deactivated-provider rendering, the Qoder add-on buckets, and
+  golden url/header snapshots for the new providers.
+
+## Skipped
+
+These upstream changes were **not** adopted, with the reason recorded:
+
+- **AWS Bedrock** (`a9d0ad269`): needs a new dependency
+  (`@aws-sdk/credential-providers`) and touches the protected
+  `src/app/api/providers/route.js`. Adding a dependency is out of scope for
+  this sync.
+- **Hermes per-profile configuration** (`a9c9f6836`) and **Hermes audio
+  transcription** (`d6431f8b`): both rewrite the `hermes-settings` route,
+  which this fork deliberately hardened — the route validates the role name
+  and the YAML values before it writes the config file. Upstream's version of
+  that route does not carry the validation, so a straight port would
+  reintroduce the regex/YAML injection the earlier audit found.
+- **Per-API-key access control** (`d8c585fb7`) and **per-key token quotas**
+  (`2aa9307f5`): they touch the protected ACL files
+  (`src/sse/handlers/chat.js`, `src/app/api/v1/models/route.js`) and the fork
+  already has its own per-key ACL (`allowedProviders` / `allowedCombos` /
+  `allowedKinds`). Upstream reverted both commits itself in `6ed88685`.
+- **The OpenCode lane changes** (`ef4679df`, `e964e482`, `59e9b526`,
+  `5bdcd5e7`, `c8644368`): out of scope for this pass. `5bdcd5e7` is
+  additionally contradicted by the live probe kept in
+  `.audit/probe-opencode-zen-2026-10-17.txt` — `/zen/v1` does not reject
+  everything for this fork's client shape, so the premise the commit is based
+  on does not hold here.
+- **The OpenCode Free Muse Spark entries** (`acb5c34c`): the Free-lane Muse
+  Spark models were deliberately removed from this fork, so only the Meta
+  provider half of the change is taken.
+- The upstream changelog-only commits (`3c48d275`, `87a74e1b`): this fork
+  writes its own entries in its own style.
+
+
 # v0.91.61 (2026-10-02)
 
 128 commits over the v0.91.51 tag: an upstream sync to decolua/9router v0.5.95
