@@ -107,6 +107,7 @@ export default function ModelSelectModal({
   };
 
   useEffect(() => {
+    /* eslint-disable-next-line react-hooks/set-state-in-effect -- fetch providers on open */
     if (isOpen) fetchConnections();
   }, [isOpen]);
 
