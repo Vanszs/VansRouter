@@ -330,6 +330,15 @@ function ensureObjectType(obj) {
 function ensureArrayItems(obj) {
   if (!obj || typeof obj !== "object") return;
   if (obj.type === "array" && !obj.items) obj.items = { type: "string" };
+  // `items` describes the element shape of an array. Gemini rejects a node
+  // that carries it without being an array — "field predicate failed: $type ==
+  // Type.ARRAY" (issue #163). A node with no type and no properties is an
+  // array that lost its type; anything else is an object that must not have
+  // `items` at all.
+  if (obj.items && obj.type !== "array") {
+    if (obj.type === undefined && !obj.properties) obj.type = "array";
+    else delete obj.items;
+  }
   for (const v of Object.values(obj)) if (v && typeof v === "object") ensureArrayItems(v);
 }
 
