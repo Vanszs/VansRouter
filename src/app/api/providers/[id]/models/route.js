@@ -4,7 +4,7 @@ import { isOpenAICompatibleProvider, isAnthropicCompatibleProvider } from "@/sha
 import { GEMINI_CONFIG } from "@/lib/oauth/constants/oauth";
 import { refreshGoogleToken, refreshCodexToken, updateProviderCredentials } from "@/sse/services/tokenRefresh";
 import { resolveOllamaLocalHost, getStaticProviderModels } from "open-sse/config/providers.js";
-import { PROVIDERS, PROVIDER_OAUTH } from "open-sse/providers/index.js";
+import { PROVIDERS, PROVIDER_MEDIA, PROVIDER_OAUTH } from "open-sse/providers/index.js";
 import { deriveValidateUrl } from "open-sse/providers/schema.js";
 import { resolveKiroModels } from "open-sse/services/kiroModels.js";
 import { resolveQoderModels } from "open-sse/services/qoderModels.js";
@@ -620,7 +620,13 @@ export async function GET(request, { params }) {
     let config = PROVIDER_MODELS_CONFIG[connection.provider];
     if (!config) {
       const regCfg = PROVIDERS[connection.provider];
-      const validateUrl = deriveValidateUrl(regCfg);
+      // The registry's modelsFetcher is the catalogue the provider actually
+      // serves. Deriving the URL from the chat base instead points at the wrong
+      // path — the OpenCode Free lane's base is https://opencode.ai, so the
+      // derived URL was https://opencode.ai/models while the catalogue lives at
+      // https://opencode.ai/zen/v1/models (issue #166).
+      const validateUrl = PROVIDER_MEDIA[connection.provider]?.modelsFetcher?.url
+        || deriveValidateUrl(regCfg);
       if (validateUrl && connection.apiKey) {
         config = createOpenAIModelsConfig(validateUrl, regCfg);
       }
