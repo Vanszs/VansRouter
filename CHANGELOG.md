@@ -1,16 +1,20 @@
-# v0.91.62 (2026-10-21)
+# v0.91.80 (2026-10-22)
 
-82 commits over the v0.91.61 tag: an upstream sync of decolua/9router across the
+88 commits over the v0.91.61 tag: an upstream sync of decolua/9router across the
 v0.5.95, v0.5.99 and v0.5.104 releases, cherry-picked commit by commit onto this
-fork, followed by a repair pass over the conflicts the cherry-picks left behind
-and a decomposition of the three files the sync pushed past 1k lines. Every
-upstream commit in the range is either adopted or listed under "Skipped" with
-its reason; the per-commit mapping is in
-`.audit/sync-ledger-0.5.99-0.5.104.md`. No push and no tag yet — this entry is
-the release candidate.
+fork, followed by a repair pass over the conflicts the cherry-picks left behind,
+a decomposition of the three files the sync pushed past 1k lines, and the dead
+config and dependencies a repo-wide audit found. Every upstream commit in the
+range is either adopted or listed under "Skipped" with its reason; the
+per-commit mapping is in `.audit/sync-ledger-0.5.99-0.5.104.md`. No push and no
+tag yet — this entry is the release candidate.
 
 ## Features
 
+- **CodeBuddy CN**: the catalogue now mirrors the gateway's 2026-09-30
+  product-config payload. The published list is the contract, so a model the
+  server no longer lists is dropped even where the chat endpoint still answers
+  it.
 - **AWS Bedrock**: new `bedrock` and `bedrock-xai` providers with static-key and
   AWS SSO profile credential modes, a hand-rolled SigV4 signer on node:crypto,
   and region/profile validation before the values are used. The AWS
@@ -59,6 +63,16 @@ the release candidate.
 
 ## Reliability & Compatibility
 
+- **Provider model catalogue**: the per-provider models route now uses the
+  registry's `modelsFetcher.url` when the provider declares one. Deriving the
+  URL from the chat base pointed the OpenCode Free lane at
+  `https://opencode.ai/models` — a 404 — while its catalogue lives at
+  `https://opencode.ai/zen/v1/models` (issue #166).
+- **Gemini tool schemas**: a schema node that carried `items` without being an
+  array took the whole request down with a 400, "field predicate failed:
+  $type == Type.ARRAY" (issue #163). The sanitiser now drops `items` from a
+  node that is not an array, and types a node that carries `items` but no type
+  as an array.
 - **Hermes**: the route keeps this fork's validation of the role name, the
   model and the base URL before it writes the config file, and the new
   speech-to-text model is validated the same way — upstream's version of the
@@ -136,19 +150,29 @@ the release candidate.
   four copies of the same form, and the Netlify dialog the sync added is
   reachable from the menu item that opens it.
 
+## Changed
+
+- **Dead config**: `cacheTTLMs` and `freeMonthlyQuota` were declared in 12
+  search provider entries each and read nowhere in the tree. Removed.
+- **Dead dependencies**: `@next/third-parties` was a direct dependency of both
+  the app and the CLI app with nothing importing it since the GoogleAnalytics
+  import was dropped as YAGNI. `postcss` was a direct devDependency of both
+  manifests although the Tailwind PostCSS plugin ships its own and Next
+  resolves it from its own dependency tree. Both removed.
+
 ## Tests
 
-- Full suite: 436 test files, 4686 tests passed, 121 skipped, 1 todo
+- Full suite: 438 test files, 4693 tests passed, 121 skipped, 1 todo
   (`CI=true pnpm test -- --hookTimeout=30000`, exit 0).
 - `pnpm run lint` exit 0 (0 errors); `node scripts/lint-undef.cjs` clean; the
   project's react-hooks regression guard reports zero errors.
 - `pnpm run build` exit 0 — "Compiled successfully", 0 "Attempted import
   error" lines.
 - Local atomic deploy: `node scripts/deploy-atomic.cjs` exit 0, release
-  `2026-10-21T20-31-20-529Z-226327` activated. After the deploy:
+  `2026-10-22T06-05-31-834Z-946885` activated. After the deploy:
   `GET /api/health` -> `{"ok":true}`, `GET /api/ready` -> `{"ok":true,
-  "database":"ready"}`, `GET /api/version` -> `0.91.62`, build id
-  `LA5BMDInpIIlAWIqHW4xw`.
+  "database":"ready"}`, `GET /api/version` -> `0.91.80`, build id
+  `2WdtM76Hd1LGYvKXtb5c1`.
 - Live API-key request through the OpenCode Free lane: all seven curated free
   models complete a real tool round-trip against the deployed release — a
   `get_weather` tool is called with the right arguments, the tool result is
@@ -162,8 +186,9 @@ the release candidate.
   and `jev-1.13-free` is declared with `kind: "systemone"`.
 - New coverage: the Cursor KV ack round-trip, the Muse Responses wire, the
   MiniMax Code provider and usage, the Netlify relay, the model picker search
-  filter and the deactivated-provider rendering, the Qoder add-on buckets, and
-  golden url/header snapshots for the new providers.
+  filter and the deactivated-provider rendering, the Qoder add-on buckets, the
+  provider catalogue URL (issue #166), the Gemini non-array `items` schema
+  (issue #163), and golden url/header snapshots for the new providers.
 
 ## Skipped
 
