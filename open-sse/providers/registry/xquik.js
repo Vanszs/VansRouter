@@ -29,7 +29,6 @@ export default {
     defaultMaxResults: 5,
     maxMaxResults: 100,
     timeoutMs: 10000,
-    cacheTTLMs: 60000,
     creditsPerResult: 1
   }
 };

@@ -22,7 +22,6 @@ export default {
     authType: "apikey",
     authHeader: "bearer",
     costPerQuery: 0.002,
-    freeMonthlyQuota: 500,
     formats: [
       "markdown",
       "html",

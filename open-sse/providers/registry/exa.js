@@ -23,7 +23,6 @@ export default {
     authType: "apikey",
     authHeader: "bearer",
     costPerQuery: 0.007,
-    freeMonthlyQuota: 1000,
     searchTypes: [
       "web",
       "news"
@@ -31,8 +30,7 @@ export default {
     exaSearchTypes: ["instant", "fast", "auto", "deep-lite", "deep", "deep-reasoning"],
     defaultMaxResults: 5,
     maxMaxResults: 100,
-    timeoutMs: 10000,
-    cacheTTLMs: 300000
+    timeoutMs: 10000
   },
   fetchConfig: {
     baseUrl: "https://api.exa.ai/contents",
@@ -40,7 +38,6 @@ export default {
     authType: "apikey",
     authHeader: "x-api-key",
     costPerQuery: 0.001,
-    freeMonthlyQuota: 1000,
     formats: [
       "text",
       "markdown"
