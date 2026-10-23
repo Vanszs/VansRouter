@@ -155,6 +155,28 @@ function inspectLocalPlatform(image) {
   }
 }
 
+// The containerd image store keeps a multi-platform pull as an index, so
+// `image inspect` reports an empty Os/Architecture ("/"). That is "unknown",
+// not a mismatch: the architecture that actually runs is asserted from inside
+// the container by verifyContainerArchitecture.
+function isUnknownPlatform(value) {
+  return !value || value === "/";
+}
+
+// Node reports x64 where Docker says amd64, and ia32 where Docker says 386.
+const NODE_ARCH = { amd64: "x64", "386": "ia32", arm: "arm", arm64: "arm64", ppc64le: "ppc64", s390x: "s390x" };
+
+function verifyContainerArchitecture(containerName, platform, dockerFn = docker) {
+  const arch = platformPair(platform).split("/")[1];
+  const expected = NODE_ARCH[arch] || arch;
+  const actual = String(
+    dockerFn(["exec", containerName, "node", "-p", "process.arch"], { stdio: ["ignore", "pipe", "ignore"] }),
+  ).trim();
+  if (actual !== expected) {
+    throw new Error(`Container runs ${actual || "unknown"}, expected ${expected}`);
+  }
+}
+
 function ensureImageForPlatform(image, platform, {
   dockerFn = docker,
   inspectFn = inspectLocalPlatform,
@@ -164,7 +186,9 @@ function ensureImageForPlatform(image, platform, {
   const local = inspectFn(image);
   if (!pull && local === expected) return;
 
-  if (local !== null) {
+  // Only a known, different platform justifies removing the local image; an
+  // unattributable index must be left alone.
+  if (local !== null && !isUnknownPlatform(local)) {
     try {
       dockerFn(["image", "rm", image], { stdio: "ignore" });
     } catch (error) {
@@ -174,8 +198,8 @@ function ensureImageForPlatform(image, platform, {
 
   dockerFn(["pull", "--platform", platform, image], { stdio: "inherit" });
   const pulled = inspectFn(image);
-  if (pulled !== expected) {
-    throw new Error(`Pulled image ${image} reports platform ${pulled || "unknown"}, expected ${expected}`);
+  if (pulled !== expected && !isUnknownPlatform(pulled)) {
+    throw new Error(`Pulled image ${image} reports platform ${pulled}, expected ${expected}`);
   }
 }
 
@@ -212,6 +236,7 @@ async function runContainerSmoke({
 
     const baseUrl = `http://127.0.0.1:${port}`;
     await waitForJson(`${baseUrl}/api/ready`, (body) => body?.ok === true && body?.database === "ready");
+    verifyContainerArchitecture(name, platform, dockerFn);
     verifyContainerOpenClosure(name, dockerFn);
     const health = await requestJson(`${baseUrl}/api/health`);
     if (health.status !== 200) throw new Error(`Health check failed: ${health.status}`);
@@ -245,6 +270,7 @@ module.exports = {
   inspectLocalPlatform,
   ensureImageForPlatform,
   verifyContainerOpenClosure,
+  verifyContainerArchitecture,
   verifyProductionLogin,
   verifyRemoteLoginIsGrantOnly,
   runContainerSmoke,
