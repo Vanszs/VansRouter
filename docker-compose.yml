@@ -47,7 +47,7 @@ services:
     container_name: headroom
     restart: unless-stopped
     ports:
-      - "${HEADROOM_PORT:-8787}:8787"
+      - "127.0.0.1:${HEADROOM_PORT:-8787}:8787"
 
 volumes:
   9router-data:
