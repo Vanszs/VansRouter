@@ -162,8 +162,13 @@ tag yet — this entry is the release candidate.
 
 ## Tests
 
-- Full suite: 438 test files, 4693 tests passed, 121 skipped, 1 todo
-  (`CI=true pnpm test -- --hookTimeout=30000`, exit 0).
+- Full suite: 439 test files, 4696 tests passed, 121 skipped, 1 todo
+  (`CI=true pnpm test`, exit 0 — the hook timeout the suite needs is already
+  configured in tests/vitest.config.js, so no CLI flag is required).
+- `tests/unit/cli-connect.test.js` pins `XDG_CONFIG_HOME` in its `connect
+  run()` block. The crush writer honours that variable, so on a runner that
+  exports it the config was written outside the mocked home and the suite went
+  red on CI while passing locally, where the variable is unset.
 - `pnpm run lint` exit 0 (0 errors); `node scripts/lint-undef.cjs` clean; the
   project's react-hooks regression guard reports zero errors.
 - `pnpm run build` exit 0 — "Compiled successfully", 0 "Attempted import
@@ -188,7 +193,8 @@ tag yet — this entry is the release candidate.
   MiniMax Code provider and usage, the Netlify relay, the model picker search
   filter and the deactivated-provider rendering, the Qoder add-on buckets, the
   provider catalogue URL (issue #166), the Gemini non-array `items` schema
-  (issue #163), and golden url/header snapshots for the new providers.
+  (issue #163), the thinking-suffix wire invariant, and golden url/header
+  snapshots for the new providers.
 
 ## Skipped
 
