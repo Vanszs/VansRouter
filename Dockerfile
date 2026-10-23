@@ -1,10 +1,13 @@
 # syntax=docker/dockerfile:1.7@sha256:a57df69d0ea827fb7266491f2813635de6f17269be881f696fbfdf2d83dda33e
+ARG NODE_IMAGE=node:22.23.4-alpine
+ARG ALPINE_MIRROR=dl-cdn.alpinelinux.org
+ARG NPM_REGISTRY=https://registry.npmjs.org/
 ARG APP_VERSION=unknown
 ARG VCS_REF=unknown
 
 # Step 1: Build the Next.js app on the native host CPU (BUILDPLATFORM).
 # Running Webpack and bundling under native architecture is ~20x faster than QEMU emulation.
-FROM --platform=$BUILDPLATFORM node:22-alpine@sha256:0a7108bf6c7bf5de370ffb1a3ed6be93d405b43ff159f681a8d18c0e2bc2e402 AS builder
+FROM --platform=$BUILDPLATFORM node:22.23.4-alpine@sha256:fe4f6d74e20370acb04ad889077d14d0f64a9c8ea6a42bc60cddf1e844699914 AS builder
 WORKDIR /app
 
 RUN apk add --no-cache python3 make g++ linux-headers
@@ -28,7 +31,7 @@ RUN pnpm run build && \
 
 # Step 2: Stage target-native runtime modules (better-sqlite3) for the TARGETPLATFORM.
 # The target binary is checksum-pinned and avoids running heavy Next.js build or extracting 500+ unrelated packages under QEMU.
-FROM node:22-alpine@sha256:0a7108bf6c7bf5de370ffb1a3ed6be93d405b43ff159f681a8d18c0e2bc2e402 AS native-deps
+FROM node:22.23.4-alpine@sha256:fe4f6d74e20370acb04ad889077d14d0f64a9c8ea6a42bc60cddf1e844699914 AS native-deps
 ARG TARGETARCH
 WORKDIR /app
 
@@ -78,7 +81,7 @@ RUN apk add --no-cache curl ca-certificates && \
   cp /tmp/tailscale_${TS_VERSION}_${TS_ARCH}/tailscaled /out/tailscaled && \
   chmod +x /out/tailscale /out/tailscaled
 
-FROM node:22-alpine@sha256:0a7108bf6c7bf5de370ffb1a3ed6be93d405b43ff159f681a8d18c0e2bc2e402 AS runner
+FROM node:22.23.4-alpine@sha256:fe4f6d74e20370acb04ad889077d14d0f64a9c8ea6a42bc60cddf1e844699914 AS runner
 ARG APP_VERSION
 ARG VCS_REF
 WORKDIR /app
