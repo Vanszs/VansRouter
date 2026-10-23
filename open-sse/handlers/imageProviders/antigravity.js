@@ -66,7 +66,23 @@ export default {
 
     if (!result.response.ok) {
       const text = await result.response.text();
-      throw new Error(text || `HTTP ${result.response.status}`);
+      const err = new Error(text || `HTTP ${result.response.status}`);
+      err.status = result.response.status;
+      try {
+        const json = JSON.parse(text);
+        const details = json.error?.details || [];
+        for (const d of details) {
+          const resetTimeStr = d.metadata?.quotaResetTimeStamp;
+          if (resetTimeStr) {
+            const ms = new Date(resetTimeStr).getTime();
+            if (ms > Date.now()) {
+              err.resetsAtMs = ms;
+              break;
+            }
+          }
+        }
+      } catch {}
+      throw err;
     }
 
     return result.response.json();
