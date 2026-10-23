@@ -344,7 +344,7 @@ export function resolveKiroModel(model) {
     thinking = true;
     upstream = stripThinkingSuffix(upstream);
   }
-  return { upstream, agentic, thinking };
+  return { upstream: normalizeKiroUpstreamModelId(upstream), agentic, thinking };
 }
 
 /**
