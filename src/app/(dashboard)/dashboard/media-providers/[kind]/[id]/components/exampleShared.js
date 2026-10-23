@@ -49,6 +49,8 @@ export const KIND_EXAMPLE_CONFIG = {
       { key: "response_format", label: "Format", type: "select", default: "", options: ["", "url", "b64_json"] },
       { key: "image_detail", label: "Image Detail", type: "select", default: "high", options: ["auto", "low", "high", "original"] },
       { key: "output_format", label: "Codec", type: "select", default: "png", options: ["png", "jpeg", "webp"] },
+      { key: "watermark", label: "Watermark", type: "boolean", default: true },
+      { key: "prompt_extend", label: "Prompt Extend", type: "boolean", default: true },
     ],
   },
   imageToText: {

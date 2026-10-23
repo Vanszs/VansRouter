@@ -162,6 +162,7 @@ import p159 from "./minimax-code.js";
 import p160 from "./minimax-code-global.js";
 import p161 from "./bedrock.js";
 import p162 from "./bedrock-xai.js";
+import p163 from "./sensenova.js";
 
 // Auto-generated: static imports for all registry entries
 import p68z from "./opencode-zen.js";
@@ -257,6 +258,7 @@ export default [
   p81,
   p82,
   p83,
+  p139,
   p84,
   p84z,
   p85,
@@ -337,5 +339,6 @@ export default [
   p160,
   p161,
   p162,
+  p163,
   nousProvider
 ];

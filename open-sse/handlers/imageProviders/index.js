@@ -22,6 +22,7 @@ const ADAPTERS = {
   tokenharbor: createOpenAIAdapter("tokenharbor"),
   "vercel-ai-gateway": createOpenAIAdapter("vercel-ai-gateway"),
   xai: createOpenAIAdapter("xai"),
+  sensenova: createOpenAIAdapter("sensenova"),
   gemini,
   codex,
   sdwebui,
