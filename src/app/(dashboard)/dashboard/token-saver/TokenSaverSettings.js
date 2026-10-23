@@ -35,6 +35,11 @@ export default function TokenSaverSettings({
   handlePonytailLevel,
   ponytailLevel,
   handlePonytailEnabled,
+  customPromptEnabled,
+  customPrompt,
+  setCustomPrompt,
+  handleCustomPromptEnabled,
+  handleCustomPromptBlur,
   pxpipeChipClass,
   pxpipeStatusLabel,
   setShowPxpipeModal,
@@ -303,6 +308,38 @@ export default function TokenSaverSettings({
           />
         </div>
       </div>
+      {/* Custom system prompt */}
+      <div className="flex items-center justify-between pt-4 mt-4 border-t border-border gap-4 flex-wrap">
+        <div className="min-w-0 flex-1">
+          <p className="font-medium">Custom system prompt</p>
+          <p className="text-sm text-text-muted">
+            Appends your own instruction to every request, independently of the
+            savers above
+          </p>
+        </div>
+        <Toggle
+          checked={customPromptEnabled}
+          onChange={() => handleCustomPromptEnabled(!customPromptEnabled)}
+        />
+      </div>
+      {customPromptEnabled && (
+        <div className="pt-3">
+          <textarea
+            id="custom-prompt"
+            aria-label="Custom system prompt"
+            value={customPrompt}
+            onChange={(e) => setCustomPrompt(e.target.value)}
+            onBlur={handleCustomPromptBlur}
+            rows={4}
+            placeholder="e.g. Prefer editing existing files over creating new ones."
+            className="w-full rounded border border-border bg-transparent p-2 text-xs"
+          />
+          <p className="text-xs text-text-muted mt-1">
+            Applied to every provider and model. Sent as-is to upstream; an
+            empty prompt injects nothing.
+          </p>
+        </div>
+      )}
       {/* PXPIPE integration card */}
       <div className="flex items-center justify-between pt-4 mt-4 border-t border-border gap-4 flex-wrap">
         <div className="min-w-0 flex-1">
