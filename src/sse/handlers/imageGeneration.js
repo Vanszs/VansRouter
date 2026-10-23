@@ -15,6 +15,7 @@ import { getSettings } from "@/lib/localDb";
 import { getModelInfo, getComboModels } from "../services/model.js";
 import { isModelAllowed } from "../services/allowedModels.js";
 import { handleImageGenerationCore } from "open-sse/handlers/imageGenerationCore.js";
+import { getImageAdapter } from "open-sse/handlers/imageProviders/index.js";
 import { errorResponse, unavailableResponse } from "open-sse/utils/error.js";
 import { HTTP_STATUS } from "open-sse/config/runtimeConfig.js";
 import { updateProviderCredentials, checkAndRefreshToken } from "../services/tokenRefresh.js";
@@ -159,6 +160,17 @@ async function handleSingleModelImage(body, modelStr, { wantsStream, binaryOutpu
     }
 
     const refreshedCredentials = await checkAndRefreshToken(provider, credentials);
+
+    // Skip accounts the adapter knows cannot generate images (e.g. ChatGPT Free on codex)
+    // without locking them: they stay usable for chat.
+    const adapter = getImageAdapter(provider);
+    if (adapter?.canUseCredentials && !adapter.canUseCredentials(refreshedCredentials)) {
+      log.info("IMAGE", `[${provider}/${model}] skip connection ${credentials.connectionId.slice(0, 8)}: plan not entitled to image generation`);
+      excludeConnectionIds.add(credentials.connectionId);
+      lastError = lastError || "No account entitled to image generation (ChatGPT Free plans are not supported)";
+      lastStatus = lastStatus || HTTP_STATUS.FORBIDDEN;
+      continue;
+    }
 
     const result = await handleImageGenerationCore({
       body,
