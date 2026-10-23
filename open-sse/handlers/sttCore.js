@@ -1,6 +1,7 @@
 import { Buffer } from "node:buffer";
 import { createErrorResult } from "../utils/error.js";
 import { transcribeGeminiLive } from "./geminiLiveStt.js";
+import { transcribeCodex } from "./codexStt.js";
 import { PROVIDER_MODELS, PROVIDER_ID_TO_ALIAS } from "../config/providerModels.js";
 import { HTTP_STATUS } from "../config/runtimeConfig.js";
 
@@ -270,7 +271,7 @@ function resolveModelTransport(provider, model) {
  * it in the app layer; built-ins fall back to the registry entry marker).
  * @returns {Promise<{success, response, status?, error?}>}
  */
-export async function handleSttCore({ provider, model, formData, credentials, sttConfig, transport }) {
+export async function handleSttCore({ provider, model, formData, credentials, sttConfig, transport, signal, proxyOptions }) {
   const file = formData.get("file");
   if (!file) return createErrorResult(HTTP_STATUS.BAD_REQUEST, "Missing required field: file");
 
@@ -278,6 +279,11 @@ export async function handleSttCore({ provider, model, formData, credentials, st
   // override. Checking after applying the override would let a connection with a
   // baseUrl synthesise a cfg for a provider that has no STT support at all.
   if (!sttConfig) return createErrorResult(HTTP_STATUS.BAD_REQUEST, `Provider '${provider}' does not support STT`);
+
+  // OAuth transcription uses a fixed ChatGPT endpoint; never honor connection URL overrides.
+  if (provider === "codex" && sttConfig.format === "codex-transcribe") {
+    return transcribeCodex({ formData, credentials, signal, proxyOptions });
+  }
 
   // A connection may point a provider at a different host (e.g. the EU
   // ElevenLabs endpoint); that override must win over the registry default,
