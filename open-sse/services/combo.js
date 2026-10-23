@@ -8,6 +8,23 @@ import { DEFAULT_COMBO_TARGET_TIMEOUT_MS } from "../config/runtimeConfig.js";
 import { getCapabilitiesForModel } from "../providers/capabilities.js";
 import { parseModel } from "./model.js";
 import { extractTextContent } from "../translator/formats/gemini.js";
+import { peekStreamForContent, reconstructStream, isNoRetryFinish } from "./emptyFailover.js";
+
+// Peek a 2xx combo response for real content. Returns null for non-SSE responses (leave
+// them untouched). For SSE, returns { outcome: "content"|"empty", finishReason, response }
+// where `response` is a faithful replay of the original stream (head buffer + live reader).
+async function peekComboResponse(result, log) {
+  const ct = (result.headers.get("content-type") || "").toLowerCase();
+  if (!result.body || !ct.includes("text/event-stream")) return null;
+  const peeked = await peekStreamForContent(result.body);
+  const response = new Response(reconstructStream(peeked.head, peeked.reader, peeked.pendingRead), {
+    status: result.status,
+    statusText: result.statusText,
+    headers: result.headers,
+  });
+  return { outcome: peeked.outcome, finishReason: peeked.finishReason, timedOut: peeked.timedOut, response };
+}
+
 
 // Strip "combo/" prefix from model string (e.g. "combo/coding-stack" → "coding-stack")
 export function stripComboPrefix(modelStr) {
@@ -438,25 +455,72 @@ export async function handleComboChat({ body, models, handleSingleModel, log, co
         }
       }
 
-      // A non-final JSON seat with no usable output should not block fallback.
-      if (result.ok && i < rotatedModels.length - 1
-        && (result.headers.get("content-type") || "").includes("application/json")) {
-        try {
-          if (isZeroContentResponse(await result.clone().json())) {
-            lastError = "Zero usable content";
-            lastStatus = result.status;
-            log.warn("COMBO", `Model ${modelStr} returned HTTP ${result.status} with zero usable content, trying next`);
-            continue;
-          }
-        } catch {
-          // Leave unparseable JSON responses unchanged.
-        }
-      }
-
-      // Success (2xx) - return response
+      // Success (2xx). A 2xx is necessary but NOT sufficient: Gemini aborts (e.g.
+      // MALFORMED_FUNCTION_CALL) still return 200 and stream empty content, which would
+      // otherwise be delivered as a successful empty answer with no failover.
+      // Peek the stream for real content before committing to this candidate.
       if (result.ok) {
-        log.info("COMBO", `Model ${modelStr} succeeded`);
-        return result;
+        let peeked = null;
+        try {
+          peeked = await peekComboResponse(result, log);
+        } catch (peekErr) {
+          // peekStreamForContent is written not to throw; if reconstruction/Response
+          // construction ever does, result.body is already locked by getReader() and can no
+          // longer be streamed. Returning `result` would hand the client a locked, unreadable
+          // body. Degrade to a clean, valid (empty) SSE stream instead.
+          log.warn("COMBO", `empty-peek error on ${modelStr}, returning empty SSE: ${peekErr?.message || peekErr}`);
+          return new Response("data: [DONE]\n\n", {
+            status: 200,
+            headers: { "Content-Type": "text/event-stream" },
+          });
+        }
+
+        if (!peeked) {
+          // Non-streaming (or non-SSE) response — not this peek's job. The zero-content
+          // JSON check still applies on a non-final seat.
+          const isLastModel = i === rotatedModels.length - 1;
+          if (!isLastModel) {
+            const contentType = result.headers?.get?.("content-type") || "";
+            if (contentType.includes("application/json")) {
+              try {
+                const peekBody = await result.clone().json();
+                if (isZeroContentResponse(peekBody)) {
+                  log.warn("COMBO", `Model ${modelStr} returned HTTP 200 with zero usable content, falling back to next model`);
+                  lastError = "Zero usable content";
+                  lastStatus = 200;
+                  continue;
+                }
+              } catch {
+                // Ignore JSON parse errors
+              }
+            }
+          }
+
+          log.info("COMBO", `Model ${modelStr} succeeded`);
+          return result;
+        }
+
+        if (peeked.outcome === "content") {
+          log.info("COMBO", `Model ${modelStr} succeeded${peeked.timedOut ? " (peek deadline; committed)" : ""}`);
+          return peeked.response;
+        }
+
+        // Empty generation. Fall through to the next candidate unless this is a legitimately
+        // empty class (content filter) or the last candidate — in which case return the
+        // (empty) response as-is, preserving prior behaviour rather than manufacturing a 5xx.
+        const reasonLabel = peeked.finishReason || "no-content";
+        const isLast = i === rotatedModels.length - 1;
+        if (isNoRetryFinish(peeked.finishReason) || isLast) {
+          log.warn("COMBO", `Model ${modelStr} returned empty (${reasonLabel}) — ${isNoRetryFinish(peeked.finishReason) ? "no-retry class" : "last candidate"}, returning as-is`);
+          return peeked.response;
+        }
+
+        log.warn("COMBO", `Model ${modelStr} returned empty (${reasonLabel}) — falling through to next candidate`);
+        // Drain/close the discarded stream in the background so its usage logging still runs.
+        peeked.response.body?.cancel?.().catch(() => {});
+        lastError = `empty generation (${reasonLabel})`;
+        if (!lastStatus) lastStatus = 502;
+        continue;
       }
 
       // Extract error info from response
