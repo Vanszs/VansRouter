@@ -73,6 +73,12 @@ const PATTERN_THINKING = [
   // unqualified, so it would otherwise shadow this entry and hand the intl
   // models the generic DeepSeek level set instead of the gateway's own.
   { provider: "codebuddy-intl", pattern: "deepseek-v4*", levels: ["low", "high", "xhigh"] },
+  // OpenCode Zen free tier (oc / ocz) — the free id of the same v4.1-flash model
+  // publishes low|high|max as well, and unlike DeepSeek's own API the upstream
+  // forwards the level verbatim (no low→high collapse). The generic
+  // *deepseek-v4.* glob below would advertise medium/xhigh, which the model does
+  // not serve, so this entry MUST stay above it.
+  { pattern: "*deepseek-v4.1-flash-free*", levels: ["low", "high", "max"] },
   { pattern: "*deepseek-v4.*", levels: ["none", "low", "medium", "high", "xhigh", "max"] },
   // codebuddy-cn per-model effort sets — the server's product-config payload
   // publishes `reasoning.supportedEfforts` per model. NOTE: the chat endpoint

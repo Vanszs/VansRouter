@@ -361,11 +361,16 @@ function applyFormat(fmt, body, cfg, caps, supportedLevels, display, model = "")
     case "deepseek": {
       if (none && canDisable) { body.thinking = { type: "disabled" }; break; }
       body.thinking = { type: "enabled" };
-      // DeepSeek: low/medium→high, xhigh/max→max. Some backends (mimo v2.5-pro/v2.6
-      // on opencode-go, probed live) 400 on "max" — clamp to high when the declared
-      // levels exclude it.
+      // DeepSeek's own API collapses low/medium→high and xhigh/max→max, so the wire
+      // stays on {high,max} for it. The declared levels win where they disagree:
+      // zen's free deepseek-v4.1-flash publishes low|high|max and its upstream takes
+      // the level verbatim, so collapsing "low" would make that level unreachable.
+      // Some backends (mimo v2.5-pro/v2.6 on opencode-go, probed live) 400 on "max"
+      // — clamp to high when the declared levels exclude it.
       const level = toLevel(eff);
-      const want = level === "xhigh" || level === "max" ? "max" : "high";
+      const want = level === "xhigh" || level === "max" ? "max"
+        : (level === "low" || level === "minimal") && supportedLevels?.includes("low") ? "low"
+        : "high";
       body.reasoning_effort = want === "max" && supportedLevels && !supportedLevels.includes("max") ? "high" : want;
       break;
     }
