@@ -332,6 +332,12 @@ export const MODEL_CAPABILITIES = {
     contextWindow: 64000,
     maxOutput: 16384,
   },
+  // GLM-5.2 has 1M context and maxOutput 131072. An exact entry shadows the
+  // *glm-5.2* pattern, so repeat its thinkingEffortSupported flag.
+  "glm-5.2":           { reasoning: true, thinkingFormat: "zai", thinkingEffortSupported: true, thinkingCanDisable: false, contextWindow: 1000000, maxOutput: 131072 },
+  // OpenCode serves the same weights under this free id from its own inference
+  // service, which accepts reasoning_effort but rejects the zai `thinking` object.
+  "glm-5.3-flash-free": { vision: true, videoInput: true, pdf: true, reasoning: true, thinkingFormat: "openai", thinkingCanDisable: false, contextWindow: 1000000, maxOutput: 128000 },
 
   // DeepSeek's first V4 model with image input; text limits match V4-Flash.
   "deepseek-v4-flash-vision-exp": {
