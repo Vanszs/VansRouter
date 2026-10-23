@@ -1,3 +1,35 @@
+# v0.91.81 (2026-10-23)
+
+The `v0.91.80` tag points at a commit on `main`, but that tag never produced a
+release: its Release workflow failed in `build-and-verify-ghcr`, so `publish-npm`
+and `promote-ghcr` were skipped and nothing reached npm or the promoted GHCR
+tags. Release tags are immutable here, so the fix ships as 0.91.81.
+
+## Fixed
+
+- The arm64 container smoke test no longer fails a correct multi-platform image
+  on hosts that use Docker's containerd image store. Between v0.91.61 and this
+  release the `ubuntu-latest` runner moved from Docker 28.0.4 with `overlay2` to
+  Docker 29.4.2 with the containerd snapshotter, where `docker image inspect
+  --format '{{.Os}}/{{.Architecture}}'` reports an empty platform for a pulled
+  index. The guard read that as `reports platform /, expected linux/arm64` and
+  failed the job. An unattributable platform is now treated as unknown rather
+  than as a mismatch, and such an image is never removed; a known, different
+  platform is still rejected.
+- The smoke test now asserts the architecture the container actually runs
+  (`node -p process.arch`, mapped from Docker's architecture name), so an index
+  that cannot be attributed is still proven to serve the requested platform
+  rather than merely existing in a manifest.
+
+## Tests
+
+- Full suite: 439 test files, 4699 tests passed, 121 skipped, 1 todo
+  (`CI=true pnpm test`, exit 0).
+- Three new unit tests pin the store-independence: an unattributable index is
+  pulled without being removed, a known different platform still fails, and the
+  runtime check accepts `x64` for `linux/amd64` and rejects a mismatch.
+- `pnpm run lint` exit 0 (0 errors); `node scripts/lint-undef.cjs` clean.
+
 # v0.91.80 (2026-10-22)
 
 88 commits over the v0.91.61 tag: an upstream sync of decolua/9router across the
