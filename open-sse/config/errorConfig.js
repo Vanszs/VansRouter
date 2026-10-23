@@ -90,6 +90,8 @@ export const ERROR_RULES = [
   { text: "rate limit",               backoff: true },
   { text: "too many requests",        backoff: true },
   { text: "quota exceeded",           backoff: true },
+  { text: "insufficient credit",      backoff: true },
+  { text: "credit balance is too low", backoff: true },
   { text: "capacity",                 backoff: true },
   { text: "overloaded",               backoff: true },
 
