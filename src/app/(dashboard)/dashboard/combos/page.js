@@ -18,6 +18,7 @@ export default function CombosPage() {
   const [bulkBusy, setBulkBusy] = useState(false);
   const { getCaps } = useModelCaps();
   const [confirmState, setConfirmState] = useState(null);
+  const [searchQuery, setSearchQuery] = useState("");
   const { copied, copy } = useCopyToClipboard();
 
   /* eslint-disable react-hooks/immutability, react-hooks/set-state-in-effect --
@@ -33,14 +34,27 @@ export default function CombosPage() {
   }, [combos]);
 
   const selectedCombos = combos.filter((c) => selectedIds.includes(c.id));
-  const allSelected = combos.length > 0 && selectedIds.length === combos.length;
   const someSelected = selectedIds.length > 0;
+
+  // Case-insensitive search over the combo name and its model ids, so both
+  // "deepseek" and "deepseek-v4.1-flash" find the right rows.
+  const normalizedQuery = searchQuery.trim().toLowerCase();
+  const filteredCombos = normalizedQuery
+    ? combos.filter((c) => {
+        if (String(c.name || "").toLowerCase().includes(normalizedQuery)) return true;
+        return (c.models || []).some((m) => String(m).toLowerCase().includes(normalizedQuery));
+      })
+    : combos;
+
+  // Select-all follows the search: with a query active it must only reach the
+  // rows on screen, otherwise the bulk Delete would take out hidden combos.
+  const allSelected = filteredCombos.length > 0 && filteredCombos.every((c) => selectedIds.includes(c.id));
 
   const toggleSelect = (id) => {
     setSelectedIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
   };
 
-  const toggleSelectAll = () => setSelectedIds(allSelected ? [] : combos.map((c) => c.id));
+  const toggleSelectAll = () => setSelectedIds(allSelected ? [] : filteredCombos.map((c) => c.id));
   const clearSelection = () => setSelectedIds([]);
 
   const fetchData = async () => {
@@ -340,6 +354,29 @@ export default function CombosPage() {
           </p>
         </div>
         <div className="flex w-full flex-col gap-2 sm:w-auto sm:shrink-0">
+          <div className="relative w-full sm:w-64">
+            <span className="material-symbols-outlined pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[18px] text-text-muted">
+              search
+            </span>
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search combos…"
+              aria-label="Search combos"
+              className="w-full rounded-[10px] border border-transparent bg-surface-2 py-2 pl-10 pr-9 text-sm text-text-main transition-all duration-150 ease-out placeholder-text-muted/70 focus:border-brand-500/40 focus:outline-none focus:ring-2 focus:ring-brand-500/30"
+            />
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => setSearchQuery("")}
+                aria-label="Clear search"
+                className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-1 text-text-muted transition-colors hover:text-text-main"
+              >
+                <span className="material-symbols-outlined text-[16px]">close</span>
+              </button>
+            )}
+          </div>
           <Button icon="add" onClick={() => setShowCreateModal(true)} className="w-full sm:w-auto whitespace-nowrap">
             Create Combo
           </Button>
@@ -402,11 +439,16 @@ export default function CombosPage() {
               <span>
                 {someSelected
                   ? `${selectedIds.length} selected`
-                  : `Select all (${combos.length})`}
+                  : `Select all (${filteredCombos.length})`}
               </span>
             </label>
 
             <div className="flex min-w-0 flex-wrap items-center gap-2">
+              {normalizedQuery && (
+                <span className="text-xs text-text-muted">
+                  {filteredCombos.length} of {combos.length} shown
+                </span>
+              )}
               {someSelected && (
                 <>
                   <div className="w-full min-w-[160px] sm:w-[200px]">
@@ -447,22 +489,32 @@ export default function CombosPage() {
           </div>
 
           <div className="flex flex-col gap-3">
-            {combos.map((combo) => (
-              <ComboCard
-                key={combo.id}
-                combo={combo}
-                getCaps={getCaps}
-                activeProviders={activeProviders}
-                copied={copied}
-                onCopy={copy}
-                onEdit={() => setEditingCombo(combo)}
-                onDelete={() => handleDelete(combo.id)}
-                strategy={comboStrategies[combo.name] || {}}
-                onSetStrategy={(patch) => handleSetComboStrategy(combo.name, patch)}
-                selected={selectedIds.includes(combo.id)}
-                onToggleSelect={() => toggleSelect(combo.id)}
-              />
-            ))}
+            {filteredCombos.length === 0 ? (
+              <Card>
+                <div className="text-center py-10">
+                  <p className="text-text-main font-medium mb-1">No combos match “{searchQuery.trim()}”</p>
+                  <p className="text-sm text-text-muted mb-4">Try a shorter query, or clear the search to see all {combos.length} combos.</p>
+                  <Button variant="secondary" onClick={() => setSearchQuery("")}>Clear search</Button>
+                </div>
+              </Card>
+            ) : (
+              filteredCombos.map((combo) => (
+                <ComboCard
+                  key={combo.id}
+                  combo={combo}
+                  getCaps={getCaps}
+                  activeProviders={activeProviders}
+                  copied={copied}
+                  onCopy={copy}
+                  onEdit={() => setEditingCombo(combo)}
+                  onDelete={() => handleDelete(combo.id)}
+                  strategy={comboStrategies[combo.name] || {}}
+                  onSetStrategy={(patch) => handleSetComboStrategy(combo.name, patch)}
+                  selected={selectedIds.includes(combo.id)}
+                  onToggleSelect={() => toggleSelect(combo.id)}
+                />
+              ))
+            )}
           </div>
         </div>
       )}
