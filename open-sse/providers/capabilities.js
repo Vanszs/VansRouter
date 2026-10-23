@@ -1296,6 +1296,9 @@ export const PATTERN_CAPABILITIES = [
     pattern: "*grok-code*",
     caps: { reasoning: true, thinkingFormat: "openai", contextWindow: 256000 },
   },
+  // Grok 4.7: 500k context, same envelope as 4.6. Without its own row it fell to the
+  // `*grok-4*` catch-all (256k), and stripHistoryForContext() trims at 80% of that.
+  { pattern: "*grok-4.7*",      caps: { vision: true, reasoning: true, search: true, thinkingFormat: "openai", contextWindow: 500000, maxOutput: 500000 } },
   // Grok 4.6: 500k context, no text output limit (docs.x.ai/developers/grok-4-6)
   {
     pattern: "*grok-4.6*",
