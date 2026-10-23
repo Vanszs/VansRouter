@@ -195,9 +195,14 @@ describe("connect run()", () => {
     home = fs.mkdtempSync(path.join(os.tmpdir(), "9r-connect-run-"));
     vi.spyOn(os, "homedir").mockReturnValue(home);
     vi.spyOn(console, "log").mockImplementation(() => {});
+    // crush resolves its config through XDG_CONFIG_HOME when set, so a runner
+    // that exports it writes outside the temp home and the assertions below
+    // read a file nobody created. Pin it empty to force the $HOME/.config path.
+    vi.stubEnv("XDG_CONFIG_HOME", "");
   });
   afterEach(() => {
     vi.restoreAllMocks();
+    vi.unstubAllEnvs();
     fs.rmSync(home, { recursive: true, force: true });
   });
 
