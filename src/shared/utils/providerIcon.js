@@ -11,6 +11,10 @@ const ICON_ALIASES = {
   "codebuddy-intl": "codebuddy-cn",
   "alims-intl": "alicode-intl",
   "qoder-cn": "qoder",
+
+  "ollama-search": "ollama",
+  "minimax-code": "minimax",
+  "minimax-code-global": "minimax",
 };
 
 // Runtime only — first 404 remembers id for the whole session

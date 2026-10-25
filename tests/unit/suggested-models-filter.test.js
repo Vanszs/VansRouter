@@ -1,9 +1,3 @@
-// The suggested-models filter used to carry a hardcoded DEAD_FREE_OPENCODE_MODELS
-// set — a snapshot of which free-tier ids upstream rejects. That snapshot could
-// not expire, protected nothing (/v1/models and request routing never consulted
-// it), and was wrong twice: it hid two live models, and one of its four entries
-// was unreachable behind the "-free" suffix rule. The contract is now simply:
-// offer what upstream lists, and let the request error name the bad id.
 import { describe, it, expect } from "vitest";
 import { readFileSync } from "node:fs";
 import { FILTERS } from "@/app/api/providers/suggested-models/filters.js";
@@ -11,16 +5,28 @@ import { FILTERS } from "@/app/api/providers/suggested-models/filters.js";
 const suggest = (ids) => FILTERS["opencode-free"](ids.map((id) => ({ id }))).map((m) => m.id);
 
 describe("opencode-free suggestion filter", () => {
-  it("offers every free id upstream lists, including ones previously called dead", () => {
-    // If upstream ever revives one of these, it must reappear without a code edit.
-    const ids = ["space-bunny-free", "big-pickle", "hy3-free", "deepseek-v4-flash-free", "jev-1.13-free"];
-    expect(suggest(ids)).toEqual(ids);
+  it("offers only the curated available models", () => {
+    const available = [
+      "beam-free",
+      "mimo-v2.6-flash-free",
+      "nemotron-3.5-super-vl-free",
+      "nemotron-3.5-lightning-free",
+      "deepseek-v4.1-flash-free",
+      "glm-5.3-flash-free",
+      "minimax-m3.1-flash-free",
+    ];
+    expect(suggest([
+      "big-pickle",
+      ...available,
+      "space-bunny-free",
+      "hy3-free",
+      "gpt-4o",
+    ])).toEqual(available);
   });
 
-  it("keeps the -free suffix and the known non-suffix id as the only rules", () => {
-    expect(suggest(["space-bunny-free", "big-pickle", "gpt-4o", "claude-3"])).toEqual([
-      "space-bunny-free",
-      "big-pickle",
+  it("filters deprecated and non-available ids", () => {
+    expect(suggest(["space-bunny-free", "big-pickle", "minimax-m3.1-flash-free", "gpt-4o", "claude-3"])).toEqual([
+      "minimax-m3.1-flash-free",
     ]);
   });
 
@@ -30,6 +36,6 @@ describe("opencode-free suggestion filter", () => {
   });
 
   it("tolerates a missing id rather than throwing", () => {
-    expect(suggest([undefined, "space-bunny-free"])).toEqual(["space-bunny-free"]);
+    expect(suggest([undefined, "minimax-m3.1-flash-free"])).toEqual(["minimax-m3.1-flash-free"]);
   });
 });

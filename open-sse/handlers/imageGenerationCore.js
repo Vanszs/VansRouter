@@ -24,6 +24,12 @@ function serializeRequestBody(requestBody) {
  * @param {boolean} [options.binaryOutput] - Return raw image bytes
  * @param {function} [options.onCredentialsRefreshed]
  * @param {function} [options.onRequestSuccess]
+ * @param {function} [options.onUsage] - Receives exact provider-reported usage when available.
+ *   Only the parseResponse adapter path can supply it; adapter.useExecutor bypasses
+ *   request building entirely and its executeViaExecutor return shape carries no
+ *   usage, so executor-delegating adapters (e.g. antigravity) simply never call it.
+ *   ponytail: wired for one producer (codex). Extend executeViaExecutor's contract
+ *   when a second executor-based provider surfaces exact usage.
  * @returns {Promise<{ success: boolean, response: Response, status?: number, error?: string }>}
  */
 export async function handleImageGenerationCore({
@@ -35,6 +41,7 @@ export async function handleImageGenerationCore({
   binaryOutput = false,
   onCredentialsRefreshed,
   onRequestSuccess,
+  onUsage,
 }) {
   const { provider, model } = modelInfo;
 
@@ -170,6 +177,7 @@ export async function handleImageGenerationCore({
         log,
         streamToClient,
         onRequestSuccess,
+        onUsage,
         url,
         requestBody,
         model,

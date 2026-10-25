@@ -83,7 +83,6 @@ export default {
     defaultMaxResults: 5,
     maxMaxResults: 50,
     timeoutMs: 10000,
-    cacheTTLMs: 300000,
   },
   features: {
     usage: true,

@@ -29,7 +29,9 @@ export async function GET(request) {
     // Resolve registry entry by provider name so filters can use the registry as source of truth.
     // Convention: <provider>-free key → strip suffix to find registry id (e.g. "nvidia-free" → "nvidia").
     const providerId = type.endsWith("-free") ? type.slice(0, -"-free".length) : type;
-    const data = filter(Array.isArray(raw) ? raw : []);
+    // Object-shaped catalogs (minimax-code's {providers:[…]}) ride in as a
+    // single-element array so every filter keeps an array input contract.
+    const data = filter(Array.isArray(raw) ? raw : typeof raw === "object" && raw !== null ? [raw] : []);
     return NextResponse.json({ data });
   } catch {
     return NextResponse.json({ data: [] });

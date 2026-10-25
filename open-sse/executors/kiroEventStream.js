@@ -1,10 +1,10 @@
 import { resolveKiroModel } from "../config/kiroConstants.js";
 import { SSE_DONE, SSE_HEADERS } from "../utils/sseConstants.js";
 import { getCapabilitiesForModel } from "../providers/capabilities.js";
+import { crc32, parseEventFrame } from "../utils/awsEventStream.js";
+import { AWS_EVENTSTREAM } from "../config/awsConstants.js";
 
 const KIRO_REPAIR_BUFFER_MAX_BYTES = 8 * 1024 * 1024;
-const EVENTSTREAM_MAX_MESSAGE_BYTES = 24 * 1024 * 1024;
-const EVENTSTREAM_MAX_HEADERS_BYTES = 128 * 1024;
 const KIRO_EVENT_TYPES = new Set([
   "assistantResponseEvent",
   "reasoningContentEvent",
@@ -19,20 +19,6 @@ const KIRO_EVENT_TYPES = new Set([
 ]);
 const encoder = new TextEncoder();
 const decoder = new TextDecoder();
-const CRC32_TABLE = Uint32Array.from({ length: 256 }, (_, index) => {
-  let value = index;
-  for (let bit = 0; bit < 8; bit++) {
-    value = (value >>> 1) ^ ((value & 1) ? 0xedb88320 : 0);
-  }
-  return value >>> 0;
-});
-
-function crc32(bytes) {
-  let crc = 0xffffffff;
-  for (const byte of bytes) crc = CRC32_TABLE[(crc ^ byte) & 0xff] ^ (crc >>> 8);
-  return (crc ^ 0xffffffff) >>> 0;
-}
-
 function normalizeStopReason(value) {
   const reason = String(value || "").trim().replace(/([a-z])([A-Z])/g, "$1_$2").toLowerCase().replace(/[\s-]+/g, "_");
   if (["endturn", "end_turn", "stop", "stop_sequence"].includes(reason)) return "end_turn";
@@ -363,7 +349,7 @@ export function transformEventStreamToSSE(response, model, options = {}) {
   };
   const processBytes = (chunk, controller) => {
     const combinedLength = state.buffer.byteLength + chunk.byteLength;
-    if (combinedLength > (options.maxRawBytes || EVENTSTREAM_MAX_MESSAGE_BYTES)) {
+    if (combinedLength > (options.maxRawBytes || AWS_EVENTSTREAM.maxMessageBytes)) {
       fail(
         controller,
         "corrupt_eventstream_frame",
@@ -389,8 +375,8 @@ export function transformEventStreamToSSE(response, model, options = {}) {
       }
       const totalLength = view.getUint32(0, false);
       const headersLength = view.getUint32(4, false);
-      if (totalLength < 16 || totalLength > EVENTSTREAM_MAX_MESSAGE_BYTES ||
-          headersLength > EVENTSTREAM_MAX_HEADERS_BYTES || headersLength > totalLength - 16) {
+      if (totalLength < 16 || totalLength > AWS_EVENTSTREAM.maxMessageBytes ||
+          headersLength > AWS_EVENTSTREAM.maxHeadersBytes || headersLength > totalLength - 16) {
         fail(controller, "corrupt_eventstream_frame", "kiro_missing_terminal", "Kiro EventStream frame bounds are invalid");
         return false;
       }
@@ -603,94 +589,4 @@ export function transformEventStreamToSSE(response, model, options = {}) {
     statusText: response.statusText,
     headers: { ...SSE_HEADERS }
   });
-}
-
-/**
- * Parse AWS EventStream frame
- */
-
-export function parseEventFrame(data) {
-  if (!(data instanceof Uint8Array) || data.byteLength < 16) {
-    throw new Error("AWS EventStream frame is shorter than 16 bytes");
-  }
-  const view = new DataView(data.buffer, data.byteOffset, data.byteLength);
-  const totalLength = view.getUint32(0, false);
-  const headersLength = view.getUint32(4, false);
-  if (totalLength !== data.byteLength) {
-    throw new Error("AWS EventStream frame length does not match its prelude");
-  }
-  if (totalLength > EVENTSTREAM_MAX_MESSAGE_BYTES ||
-      headersLength > EVENTSTREAM_MAX_HEADERS_BYTES ||
-      headersLength > totalLength - 16) {
-    throw new Error("AWS EventStream frame bounds are invalid");
-  }
-  if (view.getUint32(8, false) !== crc32(data.subarray(0, 8))) {
-    throw new Error("AWS EventStream prelude CRC mismatch");
-  }
-  if (view.getUint32(totalLength - 4, false) !== crc32(data.subarray(0, totalLength - 4))) {
-    throw new Error("AWS EventStream message CRC mismatch");
-  }
-
-  const headers = Object.create(null);
-  const names = new Set();
-  let offset = 12;
-  const headerEnd = offset + headersLength;
-  const requireBytes = (count) => {
-    if (offset + count > headerEnd) {
-      throw new Error("AWS EventStream header exceeds its declared bounds");
-    }
-  };
-
-  while (offset < headerEnd) {
-    requireBytes(1);
-    const nameLength = data[offset++];
-    requireBytes(nameLength + 1);
-    const name = decoder.decode(data.subarray(offset, offset + nameLength));
-    offset += nameLength;
-    if (names.has(name)) throw new Error(`AWS EventStream contains duplicate header: ${name}`);
-    names.add(name);
-    const type = data[offset++];
-
-    if (type === 0 || type === 1) {
-      headers[name] = type === 0;
-    } else if (type === 2) {
-      requireBytes(1);
-      headers[name] = view.getInt8(offset);
-      offset += 1;
-    } else if (type === 3) {
-      requireBytes(2);
-      headers[name] = view.getInt16(offset, false);
-      offset += 2;
-    } else if (type === 4) {
-      requireBytes(4);
-      headers[name] = view.getInt32(offset, false);
-      offset += 4;
-    } else if (type === 5 || type === 8) {
-      requireBytes(8);
-      offset += 8;
-    } else if (type === 6 || type === 7) {
-      requireBytes(2);
-      const valueLength = view.getUint16(offset, false);
-      offset += 2;
-      requireBytes(valueLength);
-      const bytes = data.subarray(offset, offset + valueLength);
-      headers[name] = type === 7 ? decoder.decode(bytes) : bytes;
-      offset += valueLength;
-    } else if (type === 9) {
-      requireBytes(16);
-      offset += 16;
-    } else {
-      throw new Error(`AWS EventStream header ${name} has unknown type ${type}`);
-    }
-  }
-
-  const payloadBytes = data.subarray(headerEnd, totalLength - 4);
-  if (payloadBytes.byteLength === 0) return { headers, payload: null };
-  const payloadText = decoder.decode(payloadBytes);
-  if (!payloadText.trim()) return { headers, payload: null };
-  try {
-    return { headers, payload: JSON.parse(payloadText) };
-  } catch (error) {
-    throw new Error(`AWS EventStream payload is not valid JSON (${error.message})`);
-  }
 }

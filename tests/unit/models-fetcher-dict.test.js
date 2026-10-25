@@ -1,8 +1,5 @@
-// Regression: opencode (and other noAuth modelsFetcher providers) pull models
-// from https://models.dev/api.json which returns a DICT shape:
-//   { "opencode": { "models": { "deepseek-v4-flash-free": {...}, ... } } }
-// The old parser only accepted array/`data.data`/array-`data.models`, so the
-// dict-shaped `data.models` produced `[]` → no oc/* models in /v1/models.
+// OpenCode Free's modelsFetcher must parse dict-shaped catalogues while keeping
+// only the explicitly verified available model IDs.
 import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
 import { fetchModelsFetcherIds } from "../../src/sse/services/allowedModels.js";
 
@@ -15,7 +12,7 @@ describe("fetchModelsFetcherIds", () => {
     globalThis.fetch = originalFetch;
   });
 
-  it("handles models.dev dict shape for opencode-free fetcher", async () => {
+  it("filters OpenCode Free dict results to tested available IDs", async () => {
     const pid = "opencode-dict-test";
     globalThis.fetch.mockResolvedValue({
       ok: true,
@@ -23,8 +20,17 @@ describe("fetchModelsFetcherIds", () => {
         [pid]: {
           id: pid,
           models: {
-            "deepseek-v4-flash-free": { id: "deepseek-v4-flash-free" },
-            "ling-3.0-flash-free": { id: "ling-3.0-flash-free" },
+            "big-pickle": { id: "big-pickle" },
+            "beam-free": { id: "beam-free" },
+            "mimo-v2.6-flash-free": { id: "mimo-v2.6-flash-free" },
+            "nemotron-3.5-super-vl-free": { id: "nemotron-3.5-super-vl-free" },
+            "nemotron-3.5-lightning-free": { id: "nemotron-3.5-lightning-free" },
+            "jev-1.13-free": { id: "jev-1.13-free" },
+            "longcat-2.5-preview-free": { id: "longcat-2.5-preview-free" },
+            "deepseek-v4.1-flash-free": { id: "deepseek-v4.1-flash-free" },
+            "glm-5.3-flash-free": { id: "glm-5.3-flash-free" },
+            "space-bunny-free": { id: "space-bunny-free" },
+            "minimax-m3.1-flash-free": { id: "minimax-m3.1-flash-free" },
             "claude-sonnet-4-6": { id: "claude-sonnet-4-6" },
           },
         },
@@ -37,9 +43,15 @@ describe("fetchModelsFetcherIds", () => {
       modelsFetcher: { url: "https://models.dev/api.json", type: "opencode-free" },
     });
 
-    expect(ids).toContain("deepseek-v4-flash-free");
-    expect(ids).toContain("ling-3.0-flash-free");
-    expect(ids).not.toContain("claude-sonnet-4-6"); // non-free filtered
+    expect(ids.sort()).toEqual([
+      "beam-free",
+      "mimo-v2.6-flash-free",
+      "nemotron-3.5-super-vl-free",
+      "nemotron-3.5-lightning-free",
+      "deepseek-v4.1-flash-free",
+      "glm-5.3-flash-free",
+      "minimax-m3.1-flash-free",
+    ].sort());
   });
 
   it("still supports array shapes", async () => {

@@ -43,6 +43,16 @@ export default {
     { id: "google/gemini-3.1-flash-lite-preview", name: "Gemini 3.1 Flash Lite Preview" },
     { id: "kwaipilot/kat-coder-pro", name: "KAT Coder Pro" },
   ],
+  // The Cline catalogue (462 models at time of writing) answers this endpoint
+  // without any credentials, so the fetcher needs no token. Ids are owner/model
+  // and the 8 static entries above stay as the fallback.
+  modelsFetcher: { url: "https://api.cline.bot/api/v1/models", type: "openai" },
+  // Opt in to feeding the chat allowlist from the live catalogue, so a catalogue
+  // id is accepted by the chat gate (issue #159).
+  // Deliberately NOT passthroughModels: the picker branches on that flag BEFORE
+  // it reads the live catalogue, so setting it would hide the fetched models and
+  // show only the static list — the opposite of the intent.
+  liveCatalog: true,
   oauth: {
     appBaseUrl: "https://app.cline.bot",
     apiBaseUrl: "https://api.cline.bot",

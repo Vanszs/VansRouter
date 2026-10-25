@@ -18,22 +18,33 @@ const assertCanonical = (id, prefix) => {
 describe("OpenCode free-tier request identity", () => {
   const executor = new OpenCodeExecutor();
 
-  it("defaults to a versioned User-Agent and canonical session/request ids", () => {
+  it("defaults to the current channel-form CLI identity and canonical ids", () => {
     const headers = executor.buildHeaders({}, true);
-    expect(headers["User-Agent"]).toBe("opencode/1.18.31");
+    expect(headers["User-Agent"]).toBe("opencode/latest/2.0.29/cli");
+    expect(headers["x-opencode-client"]).toBe("cli");
     assertCanonical(headers["x-opencode-session"], "ses");
     assertCanonical(headers["x-opencode-request"], "msg");
   });
 
-  it("keeps a client User-Agent that carries a supported version", () => {
+  it("forwards a supported channel-form downstream identity", () => {
+    const headers = executor.buildHeaders({ rawHeaders: {
+      "user-agent": "opencode/latest/2.0.31/cli",
+      "x-opencode-client": "desktop",
+    } }, true);
+    expect(headers["User-Agent"]).toBe("opencode/latest/2.0.31/cli");
+    expect(headers["x-opencode-client"]).toBe("desktop");
+  });
+
+  it("keeps a supported legacy User-Agent", () => {
     const headers = executor.buildHeaders({ rawHeaders: { "user-agent": "opencode/1.17.2" } }, true);
     expect(headers["User-Agent"]).toBe("opencode/1.17.2");
   });
 
-  it("replaces a version-less or too-old client User-Agent", () => {
+  it("replaces version-less or invalid client identity with current CLI defaults", () => {
     for (const ua of ["opencode", "opencode/1.4.0", "claude-cli/2.0"]) {
-      const headers = executor.buildHeaders({ rawHeaders: { "user-agent": ua } }, true);
-      expect(headers["User-Agent"]).toBe("opencode/1.18.31");
+      const headers = executor.buildHeaders({ rawHeaders: { "user-agent": ua, "x-opencode-client": "" } }, true);
+      expect(headers["User-Agent"]).toBe("opencode/latest/2.0.29/cli");
+      expect(headers["x-opencode-client"]).toBe("cli");
     }
   });
 

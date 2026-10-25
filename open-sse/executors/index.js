@@ -1,5 +1,6 @@
 import { AntigravityExecutor } from "./antigravity.js";
 import { AzureExecutor } from "./azure.js";
+import { BedrockExecutor } from "./bedrock.js";
 import { GeminiCLIExecutor } from "./gemini-cli.js";
 import { GithubExecutor } from "./github.js";
 import { IFlowExecutor } from "./iflow.js";
@@ -22,10 +23,14 @@ import { ZcodeExecutor } from "./zcode.js";
 import { CodeBuddyExecutor } from "./codebuddy-cn.js";
 import { AgentRouterExecutor } from "./agentrouter.js";
 import { MuseSparkWebExecutor } from "./muse-spark-web.js";
-import { DevinCliExecutor } from "./devin-cli.js";
+
 import { CodeBuddyIntlExecutor } from "./codebuddy-intl.js";
-import FreebuffExecutor from "./freebuff.js";
 import { DefaultExecutor } from "./default.js";
+import { MinimaxCodeExecutor } from "./minimax-code.js";
+import { DevinCliExecutor } from "./devin-cli.js";
+
+import FreebuffExecutor from "./freebuff.js";
+
 
 const executors = {
   antigravity: new AntigravityExecutor(),
@@ -60,9 +65,20 @@ const executors = {
   "codebuddy-cn": new CodeBuddyExecutor(),
   agentrouter: new AgentRouterExecutor(),
   "muse-spark-web": new MuseSparkWebExecutor(),
-  "devin-cli": new DevinCliExecutor(),
+
   "codebuddy-intl": new CodeBuddyIntlExecutor(),
+  "minimax-code": new MinimaxCodeExecutor("minimax-code"),
+  "minimax-code-global": new MinimaxCodeExecutor("minimax-code-global"),
+  "devin-cli": new DevinCliExecutor(),
+
   freebuff: new FreebuffExecutor(),
+  bedrock: new BedrockExecutor(),
+  br: new BedrockExecutor(), // Alias for bedrock
+  // Second Bedrock entry for xAI's Grok, which speaks OpenAI Chat Completions rather than the
+  // Anthropic Messages format. Same executor, different registry transport format — the pattern
+  // vertex / vertex-partner already uses.
+  "bedrock-xai": new BedrockExecutor("bedrock-xai"),
+  brx: new BedrockExecutor("bedrock-xai"), // Alias for bedrock-xai
 };
 
 const defaultCache = new Map();
@@ -80,6 +96,7 @@ export function hasSpecializedExecutor(provider) {
 export { BaseExecutor } from "./base.js";
 export { AntigravityExecutor } from "./antigravity.js";
 export { AzureExecutor } from "./azure.js";
+export { BedrockExecutor } from "./bedrock.js";
 export { GeminiCLIExecutor } from "./gemini-cli.js";
 export { GithubExecutor } from "./github.js";
 export { IFlowExecutor } from "./iflow.js";

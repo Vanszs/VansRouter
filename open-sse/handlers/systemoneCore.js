@@ -1,7 +1,11 @@
 import { createErrorResult, parseUpstreamError, formatProviderError } from "../utils/error.js";
 import { HTTP_STATUS, FETCH_CONNECT_TIMEOUT_MS } from "../config/runtimeConfig.js";
 import { PROVIDER_MEDIA } from "../providers/index.js";
-import { generateSessionId } from "../executors/opencode-zen.js";
+import { getModelUpstreamId } from "../config/providerModels.js";
+// opencode-zen.js does not exist in this fork: the zen executor was merged into
+// opencode.js, which owns generateSessionId. Point at the real module so this
+// handler is importable instead of throwing ERR_MODULE_NOT_FOUND.
+import { generateSessionId } from "../executors/opencode.js";
 
 /**
  * Core System One (Jev) handler — native decision payload pass-through.
@@ -19,12 +23,26 @@ export async function handleSystemoneCore({
 }) {
   const { provider, model } = modelInfo;
   const cfg = PROVIDER_MEDIA[provider]?.systemoneConfig;
-  const targetUrl = credentials?.providerSpecificData?.baseUrl || cfg?.baseUrl;
+  let targetUrl = credentials?.providerSpecificData?.baseUrl || cfg?.baseUrl;
   if (!targetUrl) {
     return createErrorResult(
       HTTP_STATUS.BAD_REQUEST,
       `Provider '${provider}' does not support System One.`
     );
+  }
+  // Cloudflare-style endpoints embed the account and model in the path.
+  if (targetUrl.includes("{accountId}")) {
+    const accountId = credentials?.providerSpecificData?.accountId;
+    if (!accountId) {
+      return createErrorResult(
+        HTTP_STATUS.BAD_REQUEST,
+        `Provider '${provider}' requires accountId in providerSpecificData.`
+      );
+    }
+    targetUrl = targetUrl.replace("{accountId}", accountId);
+  }
+  if (targetUrl.includes("{model}")) {
+    targetUrl = targetUrl.replace(/\{model\}/g, model);
   }
 
   // Validate input at the trust boundary; question-level shape is upstream's job.
@@ -44,7 +62,8 @@ export async function handleSystemoneCore({
     // Zen lanes expect the official client session header on every request.
     "x-opencode-session": generateSessionId(),
   };
-  const requestBody = { ...body, model };
+  // Cloudflare validates the body model as a short selector (e.g. "clef-flash"), not the full id.
+  const requestBody = { ...body, model: getModelUpstreamId(provider, model) || model };
 
   log?.debug?.("SYSTEMONE", `${provider.toUpperCase()} | ${model}`);
 

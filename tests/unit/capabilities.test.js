@@ -51,6 +51,20 @@ describe("getCapabilitiesForModel", () => {
     }
   });
 
+  it("advertises PDF input on current Claude model families", () => {
+    for (const model of [
+      "claude-fable-5-1",
+      "claude-opus-5.5",
+      "claude-opus-4.6",
+      "claude-opus-4.7",
+      "claude-opus-4.8",
+      "claude-sonnet-4.6",
+      "claude-sonnet-5-5",
+    ]) {
+      expect(getCapabilitiesForModel("claude", model).pdf, model).toBe(true);
+    }
+  });
+
   it("reports Kiro Claude Opus 4.8 as a 1M context model", () => {
     expect(getCapabilitiesForModel("kiro", "claude-opus-4.8").contextWindow).toBe(1000000);
     expect(getCapabilitiesForModel("kiro", "anthropic/claude-opus-4.8").contextWindow).toBe(1000000);
@@ -130,5 +144,44 @@ describe("opencode-go glm-5.3-flash", () => {
     expect(getThinkingLevels("opencode-go", "glm-5.3-flash")).toEqual([
       "minimal", "low", "medium", "high", "xhigh",
     ]);
+  });
+});
+
+describe("OpenCode Free ids newer than the capability tables", () => {
+  // ids missing here fall through to DEFAULT_CAPABILITIES (reasoning: false),
+  // and applyThinking() then deletes the client's reasoning_effort — see #2690.
+  // Modalities/limits are taken verbatim from models.dev.
+  it.each([
+    ["beam-free", { reasoning: true, vision: false, contextWindow: 1048576, maxOutput: 131072 }],
+    ["mimo-v2.6-flash-free", { reasoning: true, vision: true, audioInput: true, videoInput: true, contextWindow: 200000, maxOutput: 32000 }],
+    ["nemotron-3.5-super-vl-free", { reasoning: true, vision: true, contextWindow: 1048576, maxOutput: 131072 }],
+    ["nemotron-3.5-lightning-free", { reasoning: true, vision: false, contextWindow: 262144, maxOutput: 262144 }],
+    ["deepseek-v4.1-flash-free", { reasoning: true, vision: true, thinkingFormat: "deepseek", contextWindow: 200000, maxOutput: 32000 }],
+    ["glm-5.3-flash-free", { reasoning: true, vision: true, videoInput: true, pdf: true, contextWindow: 200000, maxOutput: 32000 }],
+    ["minimax-m3.1-flash-free", { reasoning: true, vision: true, videoInput: true, contextWindow: 1000000, maxOutput: 512000 }],
+  ])("reports current upstream metadata for %s", (model, expected) => {
+    expect(getCapabilitiesForModel("opencode", model)).toMatchObject(expected);
+  });
+
+  it("keeps per-id modalities and limits instead of a generic floor", () => {
+    // text-only, small context — a shared pattern rule would overstate both.
+    expect(getCapabilitiesForModel(undefined, "big-pickle")).toMatchObject({
+      reasoning: true,
+      vision: false,
+      contextWindow: 200000,
+      maxOutput: 32000,
+    });
+    expect(getCapabilitiesForModel(undefined, "ring-2.6-1t-free")).toMatchObject({
+      reasoning: true,
+      vision: false,
+      contextWindow: 262000,
+      maxOutput: 66000,
+    });
+    expect(getCapabilitiesForModel(undefined, "exo-free")).toMatchObject({
+      reasoning: true,
+      vision: true,
+      contextWindow: 1048576,
+      maxOutput: 131072,
+    });
   });
 });

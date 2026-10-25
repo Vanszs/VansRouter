@@ -21,6 +21,12 @@ const DISPLAY_MODEL_ID_FIELD = 3;
 const DISPLAY_NAME_FIELD = 4;
 const DISPLAY_NAME_SHORT_FIELD = 5;
 const RESPONSE_MODELS_FIELD = 1;
+const RESPONSE_AVAILABLE_MODELS_FIELD = 2;
+const AVAILABLE_MODEL_NAME_FIELD = 1;
+const AVAILABLE_MODEL_DEFAULT_ON_FIELD = 2;
+const AVAILABLE_MODEL_IS_CHAT_ONLY_FIELD = 4;
+const AVAILABLE_MODEL_SUPPORTS_AGENT_FIELD = 5;
+const AVAILABLE_MODEL_IS_HIDDEN_FIELD = 35;
 
 /** @type {Map<string, { expiresAt: number, models: { id: string, name: string }[] }>} */
 const catalogCache = new Map();
@@ -44,6 +50,10 @@ function firstString(fields, fieldNumber) {
   const value = fields.get(fieldNumber)?.[0]?.value;
   if (!value || typeof value === "number") return "";
   return Buffer.from(value).toString("utf8");
+}
+
+function firstBool(fields, fieldNumber) {
+  return fields.get(fieldNumber)?.[0]?.value === 1;
 }
 
 /**
@@ -157,7 +167,41 @@ async function fetchCursorCatalog(credentials, signal) {
     throw error;
   }
 
-  return parseCursorUsableModels(new Uint8Array(response.body));
+  return mergeCursorModelFlags(
+    parseCursorUsableModels(new Uint8Array(response.body)),
+    new Uint8Array(response.body),
+  );
+}
+
+export function parseCursorAvailableModels(payload) {
+  const response = decodeMessage(payload);
+  const models = [];
+  for (const entry of response.get(RESPONSE_AVAILABLE_MODELS_FIELD) || []) {
+    if (!entry?.value || typeof entry.value === "number") continue;
+    const fields = decodeMessage(entry.value);
+    const id = firstString(fields, AVAILABLE_MODEL_NAME_FIELD).trim();
+    if (!id) continue;
+    models.push({
+      id,
+      defaultOn: firstBool(fields, AVAILABLE_MODEL_DEFAULT_ON_FIELD),
+      isChatOnly: firstBool(fields, AVAILABLE_MODEL_IS_CHAT_ONLY_FIELD),
+      supportsAgent: firstBool(fields, AVAILABLE_MODEL_SUPPORTS_AGENT_FIELD),
+      isHidden: firstBool(fields, AVAILABLE_MODEL_IS_HIDDEN_FIELD),
+    });
+  }
+  return models;
+}
+
+export function mergeCursorModelFlags(models, payload) {
+  const flags = new Map(parseCursorAvailableModels(payload).map((model) => [model.id, model]));
+  return Array.isArray(models) ? models.map((model) => ({ ...model, ...flags.get(model.id) })) : models;
+}
+
+export function resolveAutoModelSelection(models) {
+  if (!Array.isArray(models)) return null;
+  const usable = models.filter((model) => model.supportsAgent === true && model.isChatOnly !== true && model.isHidden !== true);
+  if (!usable.length) return null;
+  return { modelId: (usable.find((model) => model.defaultOn) || usable[0]).id, matchedBy: "auto-default" };
 }
 
 /**

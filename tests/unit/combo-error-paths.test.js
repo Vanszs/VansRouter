@@ -1,7 +1,7 @@
 // Verify that combo strategies preserve X-VansRoute-Selected-Connection-Id
 // headers from underlying model calls and degrade gracefully on total failure.
 import { describe, it, expect, vi } from "vitest";
-import { handleComboChat, handleFusionChat } from "../../open-sse/services/combo.js";
+import { handleComboChat, handleFusionChat, isZeroContentResponse } from "../../open-sse/services/combo.js";
 
 const log = { info: () => {}, warn: () => {}, debug: () => {} };
 
@@ -244,6 +244,57 @@ describe("combo per-target timeout", () => {
     expect(res.ok).toBe(false);
     expect(res.status).toBe(524);
     expect(handleSingleModel).toHaveBeenCalledTimes(2);
+  });
+
+  it("falls back after a non-final empty 200 and returns the next response", async () => {
+    const empty = new Response(JSON.stringify({ choices: [{ message: { role: "assistant", content: "" }, finish_reason: "incomplete" }] }), {
+      status: 200,
+      headers: { "content-type": "application/json" },
+    });
+    const handleSingleModel = vi.fn(async (_body, model) =>
+      model === "openai/empty" ? empty : okResponse("backup answer", "conn-backup"));
+
+    const result = await handleComboChat({
+      body: { messages: [{ role: "user", content: "hi" }] },
+      models: ["openai/empty", "gemini/gemini-1.5-flash"],
+      handleSingleModel,
+      log,
+      comboName: "empty-content-fallback",
+      comboStrategy: "fallback",
+    });
+
+    expect(result.ok).toBe(true);
+    expect(await result.json()).toMatchObject({ choices: [{ message: { content: "backup answer" } }] });
+    expect(handleSingleModel).toHaveBeenCalledTimes(2);
+  });
+
+  it("keeps the final seat's empty 200 response", async () => {
+    const empty = new Response(JSON.stringify({ choices: [{ message: { role: "assistant", content: "" } }] }), {
+      status: 200,
+      headers: { "content-type": "application/json" },
+    });
+    const handleSingleModel = vi.fn(async () => empty);
+
+    const result = await handleComboChat({
+      body: { messages: [{ role: "user", content: "hi" }] },
+      models: ["openai/only"],
+      handleSingleModel,
+      log,
+      comboName: "empty-final-seat",
+      comboStrategy: "fallback",
+    });
+
+    expect(result).toBe(empty);
+    expect(handleSingleModel).toHaveBeenCalledTimes(1);
+  });
+
+  it("detects empty JSON chat and Anthropic responses but preserves valid tool calls", () => {
+    expect(isZeroContentResponse({ choices: [] })).toBe(true);
+    expect(isZeroContentResponse({ choices: [{ message: { content: " " } }] })).toBe(true);
+    expect(isZeroContentResponse({ choices: [{ message: { tool_calls: [{ id: "call_1" }] }, finish_reason: "tool_calls" }] })).toBe(false);
+    expect(isZeroContentResponse({ content: [], stop_reason: "in_progress" })).toBe(true);
+    expect(isZeroContentResponse({ content: [{ type: "tool_use" }], stop_reason: "tool_use" })).toBe(false);
+    expect(isZeroContentResponse({ candidates: [] })).toBe(false);
   });
 
   it("passes maxQueueSize through to the model handler", async () => {

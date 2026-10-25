@@ -1,121 +1,46 @@
 import { describe, expect, it } from "vitest";
 import { getCapabilitiesForModel } from "../../open-sse/providers/capabilities.js";
 import { PROVIDER_MODELS, getModelTargetFormat } from "../../open-sse/config/providerModels.js";
-import { getThinkingLevels } from "../../open-sse/providers/thinkingLevels.js";
-import { FORMATS } from "../../open-sse/translator/formats.js";
 import { OpenCodeExecutor } from "../../open-sse/executors/opencode.js";
-import "../translator/registerAll.js";
-import { translateRequest } from "../../open-sse/translator/index.js";
 
-const MODEL = "muse-spark-1.2-contributor-free";
-const PROVIDER = "opencode";
+const AVAILABLE_FREE_IDS = [
+  "beam-free",
+  "mimo-v2.6-flash-free",
+  "nemotron-3.5-super-vl-free",
+  "nemotron-3.5-lightning-free",
+  "deepseek-v4.1-flash-free",
+  "glm-5.3-flash-free",
+  "minimax-m3.1-flash-free",
+];
 
-const input = [{
-  type: "message",
-  role: "user",
-  content: [{ type: "input_text", text: "Think, then answer: 2 + 2?" }],
-}];
-
-describe("OpenCode Free Muse Spark thinking", () => {
-  it("advertises reasoning and the requested model limits", () => {
-    expect(PROVIDER_MODELS.oc?.some((model) => model.id === MODEL)).toBe(true);
-    expect(getCapabilitiesForModel(PROVIDER, MODEL)).toMatchObject({
+describe("OpenCode Free available catalog", () => {
+  it("contains only the verified chat-capable Free IDs", () => {
+    // The registry also declares jev-1.13-free, a decision model served on the
+    // SystemOne endpoint — it is not a chat model and is not in the chat list.
+    const registryIds = PROVIDER_MODELS.oc.map(({ id }) => id);
+    expect(registryIds.filter((id) => !AVAILABLE_FREE_IDS.includes(id))).toEqual(["jev-1.13-free"]);
+    expect(AVAILABLE_FREE_IDS.every((id) => registryIds.includes(id))).toBe(true);
+    expect(getCapabilitiesForModel("opencode", "minimax-m3.1-flash-free")).toMatchObject({
       reasoning: true,
-      thinkingFormat: "openai",
-      contextWindow: 1048576,
-      maxOutput: 131072,
+      vision: true,
+      videoInput: true,
+      contextWindow: 1000000,
+      maxOutput: 512000,
     });
-    expect(getCapabilitiesForModel(PROVIDER, `oc/${MODEL}`)).toMatchObject({
+  });
+
+  it("routes available models to Chat Completions and exposes verified DeepSeek limits", () => {
+    const executor = new OpenCodeExecutor();
+    for (const id of AVAILABLE_FREE_IDS) {
+      expect(executor.buildUrl(id)).toBe("https://opencode.ai/zen/v1/chat/completions");
+    }
+    expect(getModelTargetFormat("oc", "deepseek-v4.1-flash-free")).toBeNull();
+    expect(getCapabilitiesForModel("opencode", "deepseek-v4.1-flash-free")).toMatchObject({
       reasoning: true,
-      contextWindow: 1048576,
-      maxOutput: 131072,
+      vision: true,
+      thinkingFormat: "deepseek",
+      contextWindow: 200000,
+      maxOutput: 32000,
     });
-    expect(getThinkingLevels(PROVIDER, MODEL)).toEqual([
-      "none",
-      "minimal",
-      "low",
-      "medium",
-      "high",
-      "xhigh",
-    ]);
-  });
-
-  it("clamps max to xhigh and emits the Responses reasoning shape", () => {
-    const body = {
-      input,
-      reasoning: { effort: "max" },
-      max_tokens: 131072,
-    };
-
-    const out = new OpenCodeExecutor().transformRequest(MODEL, body, true, {
-      connectionId: "opencode-muse-spark-test",
-    });
-
-    expect(out.reasoning).toEqual({ effort: "xhigh", summary: "auto" });
-    expect(out.reasoning_effort).toBeUndefined();
-    expect(out.max_output_tokens).toBe(131072);
-    expect(out.max_tokens).toBeUndefined();
-  });
-
-  it("routes Union Alpha through the Messages API", () => {
-    expect(getModelTargetFormat("oc", "union-alpha")).toBe(FORMATS.CLAUDE);
-
-    const executor = new OpenCodeExecutor();
-    const url = executor.buildUrl("union-alpha");
-    expect(url).toBe("https://opencode.ai/zen/v1/messages");
-    expect(executor.buildHeaders({}, true, url, "union-alpha")).toMatchObject({
-      "anthropic-version": "2023-06-01",
-    });
-    expect(executor.buildHeaders({}, true, executor.buildUrl("big-pickle"), "big-pickle")).not.toHaveProperty("anthropic-version");
-
-    const translated = translateRequest(
-      FORMATS.OPENAI,
-      FORMATS.CLAUDE,
-      "union-alpha",
-      { messages: [{ role: "user", content: "ping" }], max_tokens: 1 },
-      false,
-      {},
-      PROVIDER,
-    );
-    expect(translated).toMatchObject({
-      model: "union-alpha",
-      messages: [{ role: "user", content: [{ type: "text", text: "ping" }] }],
-      max_tokens: 1,
-    });
-  });
-
-  it("leaves the other free models on Chat Completions", () => {
-    const executor = new OpenCodeExecutor();
-    const body = { messages: [{ role: "user", content: "hi" }], max_tokens: 1024 };
-    executor.transformRequest("big-pickle", body, true, {});
-    expect(executor.buildUrl("big-pickle")).toBe("https://opencode.ai/zen/v1/chat/completions");
-    expect(body.max_tokens).toBe(1024);
-    expect(body.max_output_tokens).toBeUndefined();
-  });
-
-  it("translates Chat Completions max thinking into a Responses request", () => {
-    const body = {
-      model: `oc/${MODEL}`,
-      messages: [{ role: "user", content: "Think, then answer: 2 + 2?" }],
-      reasoning_effort: "max",
-      max_tokens: 131072,
-    };
-
-    const translated = translateRequest(
-      FORMATS.OPENAI,
-      FORMATS.OPENAI_RESPONSES,
-      MODEL,
-      body,
-      true,
-      {},
-      PROVIDER,
-    );
-    const out = new OpenCodeExecutor().transformRequest(MODEL, translated, true, {
-      connectionId: "opencode-muse-spark-translation-test",
-    });
-
-    expect(out.reasoning).toEqual({ effort: "xhigh", summary: "auto" });
-    expect(out.max_output_tokens).toBe(131072);
-    expect(out.max_tokens).toBeUndefined();
   });
 });

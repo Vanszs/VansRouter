@@ -1,12 +1,259 @@
-# v0.91.61 (2026-10-02)
+# v0.91.81 (2026-10-23)
 
-128 commits over the v0.91.51 tag: an upstream sync to decolua/9router v0.5.95
-cherry-picked commit by commit onto this fork, adding three OAuth-capable
-providers and GPT-6.1-era model support, followed by a repair pass over the
-conflicts the cherry-picks left behind, a merge of upstream's grok-cli 426-gate
-fix that landed on `main` mid-release, and a measured performance pass over the
-dashboard. 271 files, +16094/-1420.
+The `v0.91.80` tag points at a commit on `main`, but that tag never produced a
+release: its Release workflow failed in `build-and-verify-ghcr`, so `publish-npm`
+and `promote-ghcr` were skipped and nothing reached npm or the promoted GHCR
+tags. Release tags are immutable here, so the fix ships as 0.91.81.
 
+## Fixed
+
+- The arm64 container smoke test no longer fails a correct multi-platform image
+  on hosts that use Docker's containerd image store. Between v0.91.61 and this
+  release the `ubuntu-latest` runner moved from Docker 28.0.4 with `overlay2` to
+  Docker 29.4.2 with the containerd snapshotter, where `docker image inspect
+  --format '{{.Os}}/{{.Architecture}}'` reports an empty platform for a pulled
+  index. The guard read that as `reports platform /, expected linux/arm64` and
+  failed the job. An unattributable platform is now treated as unknown rather
+  than as a mismatch, and such an image is never removed; a known, different
+  platform is still rejected.
+- The smoke test now asserts the architecture the container actually runs
+  (`node -p process.arch`, mapped from Docker's architecture name), so an index
+  that cannot be attributed is still proven to serve the requested platform
+  rather than merely existing in a manifest.
+
+## Tests
+
+- Full suite: 439 test files, 4699 tests passed, 121 skipped, 1 todo
+  (`CI=true pnpm test`, exit 0).
+- Three new unit tests pin the store-independence: an unattributable index is
+  pulled without being removed, a known different platform still fails, and the
+  runtime check accepts `x64` for `linux/amd64` and rejects a mismatch.
+- `pnpm run lint` exit 0 (0 errors); `node scripts/lint-undef.cjs` clean.
+
+# v0.91.80 (2026-10-22)
+
+88 commits over the v0.91.61 tag: an upstream sync of decolua/9router across the
+v0.5.95, v0.5.99 and v0.5.104 releases, cherry-picked commit by commit onto this
+fork, followed by a repair pass over the conflicts the cherry-picks left behind,
+a decomposition of the three files the sync pushed past 1k lines, and the dead
+config and dependencies a repo-wide audit found. Every upstream commit in the
+range is either adopted or listed under "Skipped" with its reason; the
+per-commit mapping is in `.audit/sync-ledger-0.5.99-0.5.104.md`. No push and no
+tag yet — this entry is the release candidate.
+
+## Features
+
+- **CodeBuddy CN**: the catalogue now mirrors the gateway's 2026-09-30
+  product-config payload. The published list is the contract, so a model the
+  server no longer lists is dropped even where the chat endpoint still answers
+  it.
+- **AWS Bedrock**: new `bedrock` and `bedrock-xai` providers with static-key and
+  AWS SSO profile credential modes, a hand-rolled SigV4 signer on node:crypto,
+  and region/profile validation before the values are used. The AWS
+  EventStream framing is now one shared implementation, so a bounds or CRC fix
+  cannot land in only one of Bedrock and Kiro.
+- **Hermes**: per-profile configuration across the API, the dashboard card and
+  the CLI, plus speech-to-text wired through 9router's
+  `/v1/audio/transcriptions`.
+- **MiniMax Code (mcode)**: new provider with its own executor, OAuth login
+  (`minimax-code` and `minimax-code-global`), live catalogue filter, usage
+  tracker, and the `x-api-key` / `X-Mavis-*` header profile the upstream
+  requires (`85bc33cea`).
+- **Claude Opus 5.5**: the model is listed for the claude provider again and
+  the capability table carries the opus-5-5 and sonnet-5-5 tier entries with
+  `thinkingCanDisable:false` and `forcedToolChoice:false`, so the picker stops
+  offering a "none" level for a model that is always on (`a07ed95be`).
+- **Antigravity**: the model catalogue is refreshed — the 3.6 tiered ids, the
+  Gemini 3.1 Pro High mapping, and the Claude Sonnet 5.5 / Opus 5.5 tiered
+  variants with their effort suffixes; the retired 3.5 and 3-flash models are
+  dropped; the MITM default moves to `gemini-3.8-flash-medium`
+  (`24034f69c`, `a07ed95be`).
+- **Cursor**: IDE quota via the Cursor DashboardService (spend and request
+  buckets), "Auto (Server Picks)" resolves to the account's default agent
+  model, and long sessions that come back with an empty AgentService turn are
+  retried with the tail of the conversation instead of surfacing an empty
+  answer (`3ef4d8e3`, `f6c26d8ea`, `e7f41c13`).
+- **Quota auto-ping**: the ping schedule is anchored at fixed local times
+  instead of drifting with the reset window, and the reactive ("on reset") and
+  scheduled modes are unified in one place — the connection row tooltip now
+  names the modes that are actually active (`be51142b4`, `28d40159`).
+- **Model picker**: regex and negation search, batch select, and provider
+  filtering in the model selection modal (`da1756a8`).
+- **CodeBuddy CN**: the catalogue follows the gateway's 2026-09-30
+  product-config payload — the published list is the contract, so models the
+  server no longer lists are removed even where the chat endpoint still
+  answers them (`63de82b8e`).
+- **Netlify relay proxy pool**: a Netlify relay pool type, with the deploy
+  endpoint and the relay helper (`4fa46034a`).
+- **CLI**: `9router connect` takes its model list from the server and
+  `9router show` prints what the local tools are currently configured with
+  (`8a90d3c9d`).
+- **9Remote**: the sidebar item opens the 9Remote website directly instead of
+  a promo modal (`2d94d3ab`).
+- **Nous Research**: the OAuth provider and free-tier models are live
+  (`165f9b90`).
+
+## Reliability & Compatibility
+
+- **Provider model catalogue**: the per-provider models route now uses the
+  registry's `modelsFetcher.url` when the provider declares one. Deriving the
+  URL from the chat base pointed the OpenCode Free lane at
+  `https://opencode.ai/models` — a 404 — while its catalogue lives at
+  `https://opencode.ai/zen/v1/models` (issue #166).
+- **Gemini tool schemas**: a schema node that carried `items` without being an
+  array took the whole request down with a 400, "field predicate failed:
+  $type == Type.ARRAY" (issue #163). The sanitiser now drops `items` from a
+  node that is not an array, and types a node that carries `items` but no type
+  as an array.
+- **Hermes**: the route keeps this fork's validation of the role name, the
+  model and the base URL before it writes the config file, and the new
+  speech-to-text model is validated the same way — upstream's version of the
+  route has neither.
+- **OpenCode Free**: the free lane is pinned to the eight models the upstream
+  actually serves, each with a real capability entry (without one,
+  `getCapabilitiesForModel()` falls through to the default, which reports
+  `reasoning:false` and strips the client's `reasoning_effort` — issue #2690).
+  The stale ids that the live catalogue no longer serves are filtered out of
+  the model gate, the discovery path and the suggested-models list. The client
+  fingerprint moves to the current `opencode/latest/<version>/cli` form, the
+  provider thinking mode is expressed as `reasoning_effort` (the lane rejects
+  an Anthropic thinking block), and a 403 FreeTierError from a relay or a
+  proxy pool is replayed once over a different egress — with `strictProxy` still
+  winning, so a request that must not leave the configured route is never
+  replayed over a direct connection. `space-bunny-free` is gone: the upstream
+  answers 410 and names `minimax-m3.1-flash-free` as its replacement.
+- **Muse**: a Responses-only model requested by an OpenAI client is routed to
+  the transport its body was translated for, and the strict Responses API gets
+  the nested `reasoning: {effort, summary}` shape it demands instead of a
+  top-level `reasoning_effort` (`b00ba1aa4`).
+- **Thinking suffix**: `getModelUpstreamId` keeps the `(level)` suffix so
+  `applyThinking` can see the requested effort, and `chatCore` strips it again
+  before the model id goes on the wire (`a74c7020`).
+- **Compatible nodes**: the API dialect of an OpenAI-compatible node is
+  resolved from its stored `apiType` first and from the provider id second, so
+  a node whose type was edited after creation now reaches the endpoint it was
+  configured for — and the Nous attribution check looks at the same URL the
+  request is sent to (`44b7c1dd`).
+- **Combo**: a seat that answers HTTP 200 with neither content, tool calls nor
+  reasoning is not treated as a success; the combo falls through to the next
+  member instead of handing the caller an empty answer (`8f4e3800`).
+- **Headroom**: the phantom-savings warning needs both the body size and the
+  message size to have shrunk, so a body that shrank because the tool schemas
+  were stripped is not reported as a compression win (`db81a8c9`).
+- **Codex**: the retired gpt-5.5 is dropped from the registry, from the image
+  generator and from the quota auto-ping, so a probe cannot target a model the
+  backend no longer serves (`7878f53b`).
+- **GitHub embeddings**: the Copilot embeddings move to
+  `api.githubcopilot.com/embeddings` with the Copilot request headers, and the
+  advertised model changes to the one that lane serves (`51a1827e`).
+- **Antigravity**: the IDE fingerprint moves to 2.22.0, the model-catalog
+  request keeps the client's own identity so newer releases see current models
+  (upstream #3414), and the daily IDE cloudcode host is listed once
+  (`cff2b1d9`, `f68d2f5e`).
+- **CodeBuddy thinking levels**: the `codebuddy-intl` DeepSeek entry sits
+  above the unqualified `*deepseek-v4.*` glob again, so the intl models get
+  the gateway's own level set instead of the generic one (`ba72b046`).
+- **Usage stats**: the live-history branch falls back to `input_tokens` and the
+  persisted `promptTokens` column, and the API key is trimmed before the
+  lookup so a whitespace variant resolves to the same key — the grouping key
+  stays the masked key, so no raw key reaches the response payload
+  (`813a0121`).
+- **Nous**: API-key requests through a compatible connection carry the
+  neutral attribution tags the portal requires, without putting the credential
+  in the tags (`90f89471`).
+- **Qoder**: the add-on (free-credit promo) bucket, the never-expires sentinel
+  and the "see details" link are rendered in the usage page's own table
+  layout (`b2aaf83b`).
+
+## Frontend & Accessibility
+
+- **Mobile layouts**: the endpoint key row wraps a long key instead of
+  overflowing, the provider model chips go full width on a narrow viewport, and
+  the cli-tools model input and its select button share a row
+  (`eea082157`).
+- **Proxy dropdown and tooltips**: both render through a portal with fixed
+  viewport positioning, so the scrollable connections list can no longer clip
+  them (`d95bb8ea`).
+- **Claude PDF input**: the current Claude families advertise PDF input, so a
+  PDF attachment is no longer dropped before it reaches the upstream
+  (`f5f88039`).
+- **Relay deploy modals**: the four "deploy a relay to an edge provider"
+  dialogs (Vercel, Cloudflare, Deno, Netlify) share one component instead of
+  four copies of the same form, and the Netlify dialog the sync added is
+  reachable from the menu item that opens it.
+
+## Changed
+
+- **Dead config**: `cacheTTLMs` and `freeMonthlyQuota` were declared in 12
+  search provider entries each and read nowhere in the tree. Removed.
+- **Dead dependencies**: `@next/third-parties` was a direct dependency of both
+  the app and the CLI app with nothing importing it since the GoogleAnalytics
+  import was dropped as YAGNI. `postcss` was a direct devDependency of both
+  manifests although the Tailwind PostCSS plugin ships its own and Next
+  resolves it from its own dependency tree. Both removed.
+
+## Tests
+
+- Full suite: 439 test files, 4696 tests passed, 121 skipped, 1 todo
+  (`CI=true pnpm test`, exit 0 — the hook timeout the suite needs is already
+  configured in tests/vitest.config.js, so no CLI flag is required).
+- `tests/unit/cli-connect.test.js` pins `XDG_CONFIG_HOME` in its `connect
+  run()` block. The crush writer honours that variable, so on a runner that
+  exports it the config was written outside the mocked home and the suite went
+  red on CI while passing locally, where the variable is unset.
+- `pnpm run lint` exit 0 (0 errors); `node scripts/lint-undef.cjs` clean; the
+  project's react-hooks regression guard reports zero errors.
+- `pnpm run build` exit 0 — "Compiled successfully", 0 "Attempted import
+  error" lines.
+- Local atomic deploy: `node scripts/deploy-atomic.cjs` exit 0, release
+  `2026-10-22T06-05-31-834Z-946885` activated. After the deploy:
+  `GET /api/health` -> `{"ok":true}`, `GET /api/ready` -> `{"ok":true,
+  "database":"ready"}`, `GET /api/version` -> `0.91.80`, build id
+  `2WdtM76Hd1LGYvKXtb5c1`.
+- Live API-key request through the OpenCode Free lane: all seven curated free
+  models complete a real tool round-trip against the deployed release — a
+  `get_weather` tool is called with the right arguments, the tool result is
+  submitted back, and the model answers using it. `GET /v1/models` lists
+  exactly those seven.
+- The curated free list is the set that actually answers, not the set the
+  upstream catalogue publishes. The catalogue lists ten `*-free` ids;
+  `flint-40b-free` answers 503, `jev-1.13-free` is a decision model on the
+  SystemOne endpoint (400 "Model does not support this protocol") and
+  `longcat-2.5-preview-free` answers 402 — so the chat list is seven models
+  and `jev-1.13-free` is declared with `kind: "systemone"`.
+- New coverage: the Cursor KV ack round-trip, the Muse Responses wire, the
+  MiniMax Code provider and usage, the Netlify relay, the model picker search
+  filter and the deactivated-provider rendering, the Qoder add-on buckets, the
+  provider catalogue URL (issue #166), the Gemini non-array `items` schema
+  (issue #163), the thinking-suffix wire invariant, and golden url/header
+  snapshots for the new providers.
+
+## Skipped
+
+These upstream changes were **not** adopted, with the reason recorded:
+
+- **Per-API-key access control** (`d8c585fb7`) and **per-key token quotas**
+  (`2aa9307f5`): they touch the protected ACL files
+  (`src/sse/handlers/chat.js`, `src/app/api/v1/models/route.js`) and the fork
+  already has its own per-key ACL (`allowedProviders` / `allowedCombos` /
+  `allowedKinds`). Upstream reverted both commits itself in `6ed88685`.
+- **The OpenCode lane changes** (`ef4679df`, `e964e4826`, `59e9b5264`,
+  `5bdcd5e7`, `c86443689`): `ef4679df` is already covered by the fork's own
+  `4f5bb8d93`, which additionally encodes the request id, splits the id cache
+  so request churn cannot evict a live session id, and covers the
+  `opencode-zen` lane through the same executor. The rest are out of scope for
+  this pass. `5bdcd5e7` is additionally contradicted by the live probe kept in
+  `.audit/probe-opencode-zen-2026-10-17.txt` — `/zen/v1` does not reject
+  everything for this fork's client shape, so the premise the commit is based
+  on does not hold here.
+- **The OpenCode Free Muse Spark entries** (`acb5c34c`): the Free-lane Muse
+  Spark models were deliberately removed from this fork, so only the Meta
+  provider half of the change is taken.
+- The upstream changelog-only commits (`3c48d275`, `87a74e1bd`): this fork
+  writes its own entries in its own style.
+
+The per-commit mapping, including the fork fixes and the decompositions this
+sync forced, is in `.audit/sync-ledger-0.5.99-0.5.104.md`.
 ## Features
 
 - **Codex**: GPT-6.1 Sol with its own 272k capability entry, 1M-context variants

@@ -75,7 +75,7 @@ describe("fetchModelsFetcherIds dict resolution", () => {
     globalThis.fetch.mockResolvedValue({
       ok: true,
       json: async () => ({
-        opencode: { models: { "deepseek-v4-flash-free": { id: "deepseek-v4-flash-free" } } },
+        opencode: { models: { "deepseek-v4.1-flash-free": { id: "deepseek-v4.1-flash-free" } } },
         "another-provider": { models: { "not-free": { id: "not-free" } } },
       }),
     });
@@ -84,7 +84,7 @@ describe("fetchModelsFetcherIds dict resolution", () => {
       alias: "oc",
       modelsFetcher: { url: "https://models.dev/api.json", type: "opencode-free" },
     });
-    expect(ids).toEqual(["deepseek-v4-flash-free"]);
+    expect(ids).toEqual(["deepseek-v4.1-flash-free"]);
   });
 
   it("resolves dict by alias when provider id absent", async () => {
@@ -92,7 +92,7 @@ describe("fetchModelsFetcherIds dict resolution", () => {
     globalThis.fetch.mockResolvedValue({
       ok: true,
       json: async () => ({
-        oc: { models: { "ling-3.0-flash-free": { id: "ling-3.0-flash-free" } } },
+        oc: { models: { "minimax-m3.1-flash-free": { id: "minimax-m3.1-flash-free" } } },
       }),
     });
     const ids = await fetchModelsFetcherIds(pid, {
@@ -100,7 +100,7 @@ describe("fetchModelsFetcherIds dict resolution", () => {
       alias: "oc",
       modelsFetcher: { url: "https://models.dev/api.json", type: "opencode-free" },
     });
-    expect(ids).toEqual(["ling-3.0-flash-free"]);
+    expect(ids).toEqual(["minimax-m3.1-flash-free"]);
   });
 
   it("returns empty on missing provider key (no first-value fallback)", async () => {

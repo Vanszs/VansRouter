@@ -4,7 +4,7 @@ import { isOpenAICompatibleProvider, isAnthropicCompatibleProvider } from "@/sha
 import { GEMINI_CONFIG } from "@/lib/oauth/constants/oauth";
 import { refreshGoogleToken, refreshCodexToken, updateProviderCredentials } from "@/sse/services/tokenRefresh";
 import { resolveOllamaLocalHost, getStaticProviderModels } from "open-sse/config/providers.js";
-import { PROVIDERS, PROVIDER_OAUTH } from "open-sse/providers/index.js";
+import { PROVIDERS, PROVIDER_MEDIA, PROVIDER_OAUTH } from "open-sse/providers/index.js";
 import { deriveValidateUrl } from "open-sse/providers/schema.js";
 import { resolveKiroModels } from "open-sse/services/kiroModels.js";
 import { resolveQoderModels } from "open-sse/services/qoderModels.js";
@@ -13,9 +13,21 @@ import { resolveConnectionProxyConfig } from "@/lib/network/connectionProxy";
 import { resolveCursorModels } from "open-sse/services/cursorModels.js";
 import { getKimchiUserAgent } from "open-sse/utils/kimchiUserAgent.js";
 import { ANTHROPIC_API_VERSION } from "open-sse/providers/shared.js";
+import { NOUS_MODELS_URL, normalizeNousModels } from "open-sse/services/nous.js";
 import codexProvider from "open-sse/providers/registry/codex.js";
+import clineProvider from "open-sse/providers/registry/cline.js";
+import cursorProvider from "open-sse/providers/registry/cursor.js";
+import antigravityProvider from "open-sse/providers/registry/antigravity.js";
+import { fetchModelsFetcherIds } from "@/sse/services/allowedModels.js";
 
 const GEMINI_CLI_MODELS_URL = "https://cloudcode-pa.googleapis.com/v1internal:fetchAvailableModels";
+
+// The sandbox host / `v1internal:models` path used previously answers 404 with an
+// HTML error page, so discovery never returned a single model. The live catalogue
+// lives on the production host behind `v1internal:fetchAvailableModels` (POST,
+// `{project}` body) and requires the Antigravity IDE User-Agent — without it the
+// same request is rejected with 403 PERMISSION_DENIED.
+const ANTIGRAVITY_MODELS_URL = "https://daily-cloudcode-pa.googleapis.com/v1internal:fetchAvailableModels";
 
 // Model discovery must identify as the same Codex CLI version as inference.
 const CODEX_MODELS_URL = `https://chatgpt.com/backend-api/codex/models?client_version=${codexProvider.transport.cliVersion}`;
@@ -44,6 +56,17 @@ const parseGeminiCliModels = (data) => {
 
   return [];
 };
+
+// The live Antigravity catalogue carries two unshipped preview slots
+// (`tab_flash_lite_preview` / `tab_jump_flash_lite_preview`) which are NOT
+// flagged isInternal, so parseGeminiCliModels would surface them in the picker.
+// They are identified by the `tab_` prefix alone: the payload's own `model`
+// field is MODEL_PLACEHOLDER_* for real models too (gemini-3.8-flash-tiered and
+// claude-sonnet-4-6 among them), so filtering on that string deletes valid
+// entries. Filtered here rather than in the shared parser so gemini-cli keeps
+// its current output untouched.
+const parseAntigravityModels = (data) =>
+  parseGeminiCliModels(data).filter((model) => !model.id.startsWith("tab_"));
 
 const appendCodexReviewModels = (models) => models.flatMap((model) => {
   const id = model?.id || model?.slug || model?.model || model?.name;
@@ -88,8 +111,27 @@ const resolveQwenModelsUrl = (connection) => {
   return `https://${value.replace(/\/$/, "")}/v1/models`;
 };
 
+const normalizeRoutedNousModels = (data) => normalizeNousModels(data).map((model) => ({
+  ...model,
+  // Live upstream IDs include a vendor namespace (for example,
+  // stepfun/step-5-preview:free). Prefix the owning 9router provider so Basic
+  // Chat does not parse that namespace as the provider itself.
+  id: `nous/${model.id}`,
+  upstreamModelId: model.id,
+}));
+
 // Generic custom resolver for OAuth providers that need refresh-on-401 + token persist.
 // Receives a `fetchFn(token)` and returns parsed models or throws.
+// Every fetch a fetchFn performs must go through `timedFetch`: an unresponsive
+// provider endpoint would otherwise hold the route handler open indefinitely.
+// Same budget as the canonical fetchModelsFetcherIds helper. A timeout surfaces
+// as an AbortError and takes the existing fall-to-static path.
+const MODELS_FETCH_TIMEOUT_MS = 8000;
+const timedFetch = (url, options = {}) =>
+  fetch(url, { ...options, signal: options.signal || AbortSignal.timeout(MODELS_FETCH_TIMEOUT_MS) });
+
+// Fails the module if a future fetchFn bypasses timedFetch: a bare `fetch(` call
+// inside this file's buildOAuthResolver wiring is the bug this guards.
 const buildOAuthResolver = ({ refreshFn, fetchFn, parseFn, errorLabel }) => async (connection) => {
   const { accessToken, refreshToken } = connection;
   if (!accessToken) {
@@ -165,7 +207,7 @@ const PROVIDER_MODELS_CONFIG = {
   codex: {
     customResolver: buildOAuthResolver({
       refreshFn: (conn) => refreshCodexToken(conn.refreshToken),
-      fetchFn: (token) => fetch(CODEX_MODELS_URL, {
+      fetchFn: (token) => timedFetch(CODEX_MODELS_URL, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -179,13 +221,27 @@ const PROVIDER_MODELS_CONFIG = {
     })
   },
   antigravity: {
-    url: "https://daily-cloudcode-pa.sandbox.googleapis.com/v1internal:models",
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    authHeader: "Authorization",
-    authPrefix: "Bearer ",
-    body: {},
-    parseResponse: (data) => data.models || []
+    customResolver: buildOAuthResolver({
+      refreshFn: (conn) => refreshGoogleToken(
+        conn.refreshToken,
+        antigravityProvider.transport.clientId,
+        antigravityProvider.transport.clientSecret
+      ),
+      fetchFn: (token, conn) => {
+        const projectId = conn.projectId || conn.providerSpecificData?.projectId;
+        return timedFetch(ANTIGRAVITY_MODELS_URL, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`,
+            "User-Agent": antigravityProvider.transport.headers["User-Agent"]
+          },
+          body: JSON.stringify(projectId ? { project: projectId } : {})
+        });
+      },
+      parseFn: parseAntigravityModels,
+      errorLabel: "Failed to fetch Antigravity models"
+    })
   },
   github: {
     url: "https://api.githubcopilot.com/models",
@@ -218,6 +274,10 @@ const PROVIDER_MODELS_CONFIG = {
   },
   openai: createOpenAIModelsConfig("https://api.openai.com/v1/models"),
   openrouter: createOpenAIModelsConfig("https://openrouter.ai/api/v1/models"),
+  nous: {
+    ...createOpenAIModelsConfig(NOUS_MODELS_URL),
+    parseResponse: normalizeRoutedNousModels,
+  },
   anthropic: {
     url: "https://api.anthropic.com/v1/models",
     method: "GET",
@@ -292,6 +352,22 @@ const PROVIDER_MODELS_CONFIG = {
     authPrefix: "Bearer ",
     parseResponse: (data) => data?.data || data?.models || [],
   },
+  // Cline's catalogue is public, so this resolver never needs the connection
+  // token and cannot spend quota. Reuses the canonical fetcher helper rather than
+  // a bespoke fetch: that helper already carries the bounded timeout, the
+  // response-shape handling and the cache. owner/model ids are served verbatim.
+  cline: {
+    customResolver: async () => {
+      const ids = await fetchModelsFetcherIds("cline", clineProvider);
+      if (ids.length > 0) {
+        return { models: ids.map((id) => ({ id, name: id })) };
+      }
+      return {
+        models: getStaticProviderModels(clineProvider.alias),
+        warning: "Failed to fetch Cline models; falling back to static catalog.",
+      };
+    },
+  },
   cursor: {
     customResolver: async (connection) => {
       const result = await resolveCursorModels({
@@ -300,7 +376,7 @@ const PROVIDER_MODELS_CONFIG = {
       }, { log: console });
       if (result?.models?.length) return { models: result.models };
       return {
-        models: getStaticProviderModels("cursor"),
+        models: getStaticProviderModels(cursorProvider.alias),
         warning: "Cursor returned no live models; falling back to static catalog.",
       };
     },
@@ -393,7 +469,7 @@ const PROVIDER_MODELS_CONFIG = {
       fetchFn: (token, conn) => {
         const projectId = conn.projectId || conn.providerSpecificData?.projectId;
         const body = projectId ? { project: projectId } : {};
-        return fetch(GEMINI_CLI_MODELS_URL, {
+        return timedFetch(GEMINI_CLI_MODELS_URL, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -440,7 +516,7 @@ const PROVIDER_MODELS_CONFIG = {
   "ollama-local": {
     customResolver: async (connection) => {
       const url = `${resolveOllamaLocalHost(connection)}/api/tags`;
-      const response = await fetch(url, {
+      const response = await timedFetch(url, {
         method: "GET",
         headers: { "Content-Type": "application/json" }
       });
@@ -473,7 +549,7 @@ export async function GET(request, { params }) {
         return NextResponse.json({ error: "No base URL configured for OpenAI compatible provider" }, { status: 400 });
       }
       const url = `${baseUrl.replace(/\/$/, "")}/models`;
-      const response = await fetch(url, {
+      const response = await timedFetch(url, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -512,7 +588,7 @@ export async function GET(request, { params }) {
       }
 
       const url = `${baseUrl}/models`;
-      const response = await fetch(url, {
+      const response = await timedFetch(url, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -544,7 +620,13 @@ export async function GET(request, { params }) {
     let config = PROVIDER_MODELS_CONFIG[connection.provider];
     if (!config) {
       const regCfg = PROVIDERS[connection.provider];
-      const validateUrl = deriveValidateUrl(regCfg);
+      // The registry's modelsFetcher is the catalogue the provider actually
+      // serves. Deriving the URL from the chat base instead points at the wrong
+      // path — the OpenCode Free lane's base is https://opencode.ai, so the
+      // derived URL was https://opencode.ai/models while the catalogue lives at
+      // https://opencode.ai/zen/v1/models (issue #166).
+      const validateUrl = PROVIDER_MEDIA[connection.provider]?.modelsFetcher?.url
+        || deriveValidateUrl(regCfg);
       if (validateUrl && connection.apiKey) {
         config = createOpenAIModelsConfig(validateUrl, regCfg);
       }
@@ -602,7 +684,7 @@ export async function GET(request, { params }) {
       fetchOptions.body = JSON.stringify(config.body);
     }
 
-    const response = await fetch(url, fetchOptions);
+    const response = await timedFetch(url, fetchOptions);
 
     if (!response.ok) {
       const errorText = await response.text();

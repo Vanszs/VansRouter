@@ -27,6 +27,11 @@ export default {
       "User-Agent": "connect-es/1.6.1",
     },
     clientVersion: CURSOR_IDE_VERSION,
+    usage: {
+      url: "https://api2.cursor.sh/aiserver.v1.DashboardService/GetCurrentPeriodUsage",
+      planInfoUrl: "https://api2.cursor.sh/aiserver.v1.DashboardService/GetPlanInfo",
+      authUsageUrl: "https://api2.cursor.sh/auth/usage",
+    },
   },
   models: [
     { id: "default", name: "Auto (Server Picks)" },
@@ -45,6 +50,7 @@ export default {
     { id: "gpt-5.3-codex", name: "GPT 5.3 Codex" },
     { id: "composer-2.5", name: "Composer 2.5" },
   ],
+  features: { usage: true },
   oauth: {
     apiEndpoint: "https://api2.cursor.sh",
     chatEndpoint: "/aiserver.v1.ChatService/StreamUnifiedChatWithTools",

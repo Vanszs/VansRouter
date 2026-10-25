@@ -32,7 +32,17 @@ import { ANTHROPIC_API_VERSION } from "open-sse/providers/shared.js";
 
 const UPSTREAM_CONNECTION_RE = /[-_][0-9a-f]{8,}$/i;
 const LLM_KIND = "llm";
-const ALL_KINDS = [LLM_KIND, "tts", "embedding", "image", "imageToText", "stt", "video", "webSearch", "webFetch"];
+const ALL_KINDS = [LLM_KIND, "tts", "embedding", "image", "imageToText", "stt", "video", "webSearch", "webFetch", "systemone"];
+const OPENCODE_FREE_MODEL_IDS = new Set([
+  "beam-free",
+
+  "mimo-v2.6-flash-free",
+  "nemotron-3.5-super-vl-free",
+  "deepseek-v4.1-flash-free",
+  "glm-5.3-flash-free",
+  "nemotron-3.5-lightning-free",
+  "minimax-m3.1-flash-free",
+]);
 
 const MODEL_TYPE_TO_KIND = {
   image: "image",
@@ -41,6 +51,10 @@ const MODEL_TYPE_TO_KIND = {
   embedding: "embedding",
   stt: "stt",
   imageToText: "imageToText",
+  // Decision models (v1m, Cloudflare clef-flash) ride a non-chat wire; without
+  // this they resolved as `llm` and were offered to chat clients that would then
+  // POST to a /chat/completions URL the model does not serve.
+  systemone: "systemone",
 };
 
 const LIVE_MODEL_RESOLVERS = {
@@ -326,7 +340,7 @@ export async function fetchModelsFetcherIds(providerId, providerInfo) {
     if (fetcher.type === "opencode-free") {
       ids = rawModels.reduce((acc, m) => {
         const id = m?.id || m?.name || m?.model;
-        if (typeof id === "string" && id.trim() !== "" && id.endsWith("-free")) acc.push(id);
+        if (typeof id === "string" && OPENCODE_FREE_MODEL_IDS.has(id)) acc.push(id);
         return acc;
       }, []);
     } else {
@@ -483,7 +497,7 @@ async function buildAllModelEntries(kindFilter, combos, customModels, modelAlias
       if (!providerMatchesKinds(providerId, kindFilter)) continue;
       for (const model of providerModels) {
         if (!kindFilter.has(modelKind(model))) continue;
-        if (isDisabled(alias, model.id)) continue;
+        if (isDisabled(alias, model.id) || isDisabled(providerId, model.id)) continue;
         entries.push({
           id: `${alias}/${model.id}`,
           object: "model",
@@ -498,6 +512,7 @@ async function buildAllModelEntries(kindFilter, combos, customModels, modelAlias
       appendConfiguredMediaModels(entries, providerInfo, alias, kindFilter, isDisabled);
     }
     for (const customModel of customModels) {
+      if (customModel?.providerAlias === "oc" && !OPENCODE_FREE_MODEL_IDS.has(customModel.id)) continue;
       if (!customModel?.id || (customModel.type && customModel.type !== "llm")) continue;
       if (!kindFilter.has(LLM_KIND)) continue;
       const providerAlias = customModel.providerAlias;
@@ -556,7 +571,6 @@ async function buildConnectedProviderIds(providerId, conn, kindFilter, customMod
   const hasExplicitEnabledModels = Array.isArray(enabledModels) && enabledModels.length > 0;
   const isCompatibleProvider =
     isOpenAICompatibleProvider(providerId) || isAnthropicCompatibleProvider(providerId);
-  const isPassthroughProvider = AI_PROVIDERS[providerId]?.passthroughModels === true;
 
   const staticModelKindById = new Map(providerModels.map((m) => [m.id, modelKind(m)]));
 
@@ -569,17 +583,18 @@ async function buildConnectedProviderIds(providerId, conn, kindFilter, customMod
   }
 
   const providerInfo = AI_PROVIDERS[providerId];
-  if (providerInfo?.noAuth && providerInfo?.modelsFetcher) {
+
+  // A provider that publishes a live catalogue owns ids the static registry
+  // cannot know, and isModelAllowed() runs this on every chat request — so the
+  // merge must be opt-in per provider, not implied by declaring a fetcher.
+  // Gating on noAuth alone (the previous rule) silently excluded OAuth
+  // providers such as cline, which is how issue #159 happened; gating on
+  // modelsFetcher alone would instead pull 15 unrelated catalogues (openrouter,
+  // venice, nvidia, ...) into the allowlist with an 8s outbound fetch each.
+  // liveCatalog makes the intent explicit. skipDynamicFetch opts out wholesale.
+  if (providerInfo?.liveCatalog === true && providerInfo?.modelsFetcher && !hasExplicitEnabledModels && !skipDynamicFetch) {
     const fetcherIds = await fetchModelsFetcherIds(providerId, providerInfo);
     rawModelIds = Array.from(new Set([...rawModelIds, ...fetcherIds]));
-  }
-
-  if (isPassthroughProvider && rawModelIds.length === 0) {
-    rawModelIds = providerModels.map((m) => m.id);
-  }
-
-  if (isPassthroughProvider && !hasExplicitEnabledModels) {
-    rawModelIds = providerModels.map((m) => m.id);
   }
 
   const liveResolver = LIVE_MODEL_RESOLVERS[providerId];
@@ -656,11 +671,12 @@ async function buildConnectedProviderIds(providerId, conn, kindFilter, customMod
 
   const mergedModelIds = Array.from(new Set([...modelIds, ...customModelIds, ...aliasModelIds]));
   for (const modelId of mergedModelIds) {
+    if (providerInfo?.modelsFetcher?.type === "opencode-free" && !OPENCODE_FREE_MODEL_IDS.has(modelId)) continue;
     const customKind = customModelKindById.get(modelId);
     const kind = staticModelKindById.get(modelId) || customKind || inferKindFromUnknownModelId(modelId);
     const allowAsLlm = kind === "imageToText" && kindFilter.has(LLM_KIND);
     if (!kindFilter.has(kind) && !allowAsLlm) continue;
-    if (isDisabled(outputAlias, modelId) || isDisabled(staticAlias, modelId)) continue;
+    if (isDisabled(outputAlias, modelId) || isDisabled(staticAlias, modelId) || isDisabled(providerId, modelId)) continue;
 
     const entry = {
       id: `${outputAlias}/${modelId}`,
@@ -713,7 +729,20 @@ async function buildFreeProviderIds(providerId, providerInfo, kindFilter, custom
     return acc;
   }, []);
 
-  const mergedModelIds = Array.from(new Set([...modelIds, ...fetcherModelIds, ...customModelIds, ...aliasModelIds]));
+  const isOpenCodeFree = providerInfo.modelsFetcher?.type === "opencode-free";
+  const curatedModelIds = isOpenCodeFree
+    ? fetcherModelIds.filter((id) => OPENCODE_FREE_MODEL_IDS.has(id))
+    : fetcherModelIds;
+  const safeAliases = isOpenCodeFree
+    ? aliasModelIds.filter((id) => OPENCODE_FREE_MODEL_IDS.has(id))
+    : aliasModelIds;
+  const safeStaticIds = isOpenCodeFree
+    ? modelIds.filter((id) => OPENCODE_FREE_MODEL_IDS.has(id))
+    : modelIds;
+  const safeCustomModelIds = isOpenCodeFree
+    ? customModelIds.filter((id) => OPENCODE_FREE_MODEL_IDS.has(id))
+    : customModelIds;
+  const mergedModelIds = Array.from(new Set([...safeStaticIds, ...curatedModelIds, ...safeCustomModelIds, ...safeAliases]));
   for (const modelId of mergedModelIds) {
     const kind = staticModelKindById.get(modelId) || inferKindFromUnknownModelId(modelId);
     if (!kindFilter.has(kind)) continue;
@@ -767,6 +796,7 @@ export async function buildModelsList(kindFilter, options = {}) {
     const cachedDbModels = await getCachedProviderModels();
     if (cachedDbModels.length > 0) {
       for (const model of cachedDbModels) {
+        if (model.id?.startsWith("oc/") && !OPENCODE_FREE_MODEL_IDS.has(model.id.slice(3))) continue;
         if (!seen.has(model.id)) {
           seen.add(model.id);
           dedupedModels.push(model);

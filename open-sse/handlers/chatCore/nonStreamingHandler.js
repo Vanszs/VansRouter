@@ -25,7 +25,11 @@ export function openaiToClaudeNonStreaming(openaiBody, model) {
   const choice = openaiBody.choices[0];
   const message = choice.message || {};
   const text = message.content || "";
-  const reasoning = message.reasoning_content || "";
+  // Upstreams differ on where they put the reasoning text: some set
+  // message.reasoning_content, others only provider_specific_fields.
+  const reasoning = message.reasoning_content
+    || message.provider_specific_fields?.reasoning_content
+    || "";
   const toolCalls = message.tool_calls || [];
 
   // Build Claude content array
@@ -48,6 +52,9 @@ export function openaiToClaudeNonStreaming(openaiBody, model) {
       input: args
     });
   }
+  // The Claude shape always carries content, so an empty completion (and one
+  // whose only output is reasoning) falls back to an empty text block.
+  if (content.length === 0) content.push({ type: "text", text: "" });
 
   // Map finish reason
   let stopReason = choice.finish_reason;

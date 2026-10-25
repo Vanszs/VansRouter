@@ -1,11 +1,17 @@
 import { getProviderConnectionById, updateProviderConnection } from "@/lib/localDb";
 import { resolveConnectionProxyConfig } from "@/lib/network/connectionProxy";
 import { testProxyUrl } from "@/lib/network/proxyTest";
-import { isOpenAICompatibleProvider, isAnthropicCompatibleProvider } from "@/shared/constants/providers";
+import { isOpenAICompatibleProvider, isAnthropicCompatibleProvider, AI_PROVIDERS } from "@/shared/constants/providers";
 import { getDefaultModel } from "open-sse/config/providerModels.js";
+import { probeBedrockCredentials } from "open-sse/executors/bedrock.js";
 import { resolveOllamaLocalHost, PROVIDERS } from "open-sse/config/providers.js";
-import { CODEX_CLI_VERSION } from "open-sse/config/appConstants.js";
-import { GROK_CLI_PAGER_USER_AGENT, GROK_CLI_VERSION } from "open-sse/config/grokCli.js";
+import { OPENCODE_UA } from "open-sse/executors/opencode.js";
+import { decodeJwtPayload } from "@/lib/oauth/kiroExternalIdp.js";
+import {
+  createNousApiKeyProbe,
+  getNousApiKeyValidationError,
+  isNousApiKeyAccepted,
+} from "open-sse/services/nous.js";
 import {
   refreshProviderCredentials,
   shouldRefreshCredentials,
@@ -16,138 +22,10 @@ import {
   KIRO_CONFIG,
   CLAUDE_CONFIG,
   CLINE_CONFIG,
-  KILOCODE_CONFIG,
   KIMCHI_CONFIG,
 } from "@/lib/oauth/constants/oauth";
 import { buildClineHeaders } from "@/shared/utils/clineAuth";
-
-// OAuth provider test endpoints
-const OAUTH_TEST_CONFIG = {
-  claude: { checkExpiry: true, refreshable: true },
-  codex: {
-    url: "https://chatgpt.com/backend-api/codex/responses",
-    method: "POST",
-    authHeader: "Authorization",
-    authPrefix: "Bearer ",
-    extraHeaders: { "Content-Type": "application/json", "originator": "codex_cli_rs", "User-Agent": `codex_cli_rs/${CODEX_CLI_VERSION}` },
-    // Minimal invalid body — triggers fast 400 without consuming quota
-    body: JSON.stringify({ model: "gpt-5.3-codex", input: [], stream: false, store: false }),
-    // 400 (bad request) means auth succeeded; only 401/403 means token is bad
-    acceptStatuses: [400],
-    refreshable: true,
-  },
-  "gemini-cli": {
-    url: "https://www.googleapis.com/oauth2/v1/userinfo?alt=json",
-    method: "GET",
-    authHeader: "Authorization",
-    authPrefix: "Bearer ",
-    refreshable: true,
-  },
-  antigravity: {
-    url: "https://www.googleapis.com/oauth2/v1/userinfo?alt=json",
-    method: "GET",
-    authHeader: "Authorization",
-    authPrefix: "Bearer ",
-    refreshable: true,
-  },
-  github: {
-    url: "https://api.github.com/user",
-    method: "GET",
-    authHeader: "Authorization",
-    authPrefix: "Bearer ",
-    extraHeaders: { "User-Agent": "9Router", "Accept": "application/vnd.github+json" },
-  },
-  iflow: {
-    // iFlow getUserInfo requires accessToken as query param, not header
-    buildUrl: (token) => `https://iflow.cn/api/oauth/getUserInfo?accessToken=${encodeURIComponent(token)}`,
-    method: "GET",
-    noAuth: true,
-  },
-  kiro: { checkExpiry: true, refreshable: true },
-  qoder: {
-    // Test by hitting Qoder's userinfo endpoint with the device token.
-    // refreshable: false because the device-flow refresh endpoint returns
-    // 403 for our flow (users re-login when expired). No checkExpiry —
-    // we want the actual URL probe to run so revoked tokens surface.
-    url: "https://openapi.qoder.sh/api/v1/userinfo",
-    method: "GET",
-    authHeader: "Authorization",
-    authPrefix: "Bearer ",
-    refreshable: false,
-  },
-  "qoder-cn": {
-    // Same shape as intl qoder, CN host.
-    url: "https://openapi.qoder.com.cn/api/v1/userinfo",
-    method: "GET",
-    authHeader: "Authorization",
-    authPrefix: "Bearer ",
-    refreshable: false,
-  },
-  kimi: { checkExpiry: true, refreshable: true },
-  "kimi-coding": { checkExpiry: true, refreshable: true },
-  cursor: { tokenExists: true },
-  kilocode: {
-    url: `${KILOCODE_CONFIG.apiBaseUrl}/api/profile`,
-    method: "GET",
-    authHeader: "Authorization",
-    authPrefix: "Bearer ",
-  },
-  cline: { refreshable: true },
-  gitlab: {
-    // Test by hitting the GitLab user API — requires api or read_user scope
-    url: "https://gitlab.com/api/v4/user",
-    method: "GET",
-    authHeader: "Authorization",
-    authPrefix: "Bearer ",
-  },
-  "codebuddy-cn": { tokenExists: true },
-  // codebuddy-intl uses the same JWT token structure as codebuddy-cn
-  // (access + refresh token pair, ~1-year expiry) — same test strategy (#4232).
-  "codebuddy-intl": { tokenExists: true },
-  kimchi: {
-    url: KIMCHI_CONFIG.validationUrl || "https://api.cast.ai/v1/llm/openai/supported-providers",
-    method: "GET",
-    authHeader: "Authorization",
-    authPrefix: "Bearer ",
-    extraHeaders: {
-      Accept: "application/json",
-      "User-Agent": "kimchi/0.1.40",
-    },
-    refreshable: false,
-  },
-  // Grok CLI / Grok Build — probe /v1/user (no inference quota). Headers mirror official CLI.
-  "grok-cli": {
-    url: PROVIDERS["grok-cli"]?.userUrl || "https://cli-chat-proxy.grok.com/v1/user",
-    method: "GET",
-    authHeader: "Authorization",
-    authPrefix: "Bearer ",
-    extraHeaders: {
-      Accept: "application/json",
-      ...(PROVIDERS["grok-cli"]?.headers || {
-        "User-Agent": GROK_CLI_PAGER_USER_AGENT,
-        "x-xai-token-auth": "xai-grok-cli",
-        "x-grok-client-identifier": "grok-pager",
-        "x-grok-client-version": GROK_CLI_VERSION,
-      }),
-    },
-    refreshable: true,
-    // Subscription spending-limit is not an auth failure — token is fine, credits aren't.
-    // Accept 402 so the connection stays "active" with a warning (same idea as Codex 400).
-    acceptStatuses: [402],
-    softFailMessage: {
-      402: "Connected, but Grok Build credits are exhausted (spending limit). Add credits or upgrade SuperGrok.",
-    },
-  },
-  // Muse Code subscription — probe /v1/models with the minted LLM|… key
-  "muse": {
-    url: "https://api.meta.ai/v1/models",
-    method: "GET",
-    authHeader: "Authorization",
-    authPrefix: "Bearer ",
-    extraHeaders: { "x-api-version": "1.0.0" },
-    refreshable: false,
-  },
-};
+import { OAUTH_TEST_CONFIG } from "./oauthTestConfig.js";
 
 /**
  * Classify an OAuth probe response as success / soft-success / hard-fail.
@@ -260,7 +138,7 @@ async function refreshOAuthToken(connection) {
       return { accessToken: data.access_token, expiresIn: data.expires_in, refreshToken: data.refresh_token || refreshToken };
     }
 
-    if (provider === "codex" || provider === "grok-cli" || provider === "xai") {
+    if (provider === "codex" || provider === "grok-cli" || provider === "xai" || provider === "nous") {
       return await refreshProviderCredentials(provider, connection, console);
     }
 
@@ -339,34 +217,40 @@ function isTokenExpired(connection) {
   return shouldRefreshCredentials(connection.provider, connection);
 }
 
+// tokenExists providers whose tokens are JWTs: an expired one still "exists",
+// so the token-exists strategy must inspect exp or an expired import reports as
+// connected. Cursor has no probe endpoint (protobuf API); CodeBuddy exposes only
+// /v2/chat/completions, which would spend quota.
+const JWT_TOKEN_EXPIRED_MESSAGE = {
+  cursor: "Cursor token expired. Please re-import token from Cursor IDE.",
+  "codebuddy-cn": "CodeBuddy access token expired. Please re-connect your CodeBuddy account.",
+  "codebuddy-intl": "CodeBuddy access token expired. Please re-connect your CodeBuddy account.",
+};
+
 export async function testOAuthConnection(connection, effectiveProxy = null) {
   const config = OAUTH_TEST_CONFIG[connection.provider];
   if (!config) return { valid: false, error: "Provider test not supported", refreshed: false };
   if (!connection.accessToken) return { valid: false, error: "No access token", refreshed: false };
 
-  // Cursor uses protobuf API - can only verify token exists, not test endpoint
   if (config.tokenExists) {
-    // Cursor sessions are JWTs: an expired one still "exists", so the token-exists
-    // strategy must inspect exp or an expired import reports as connected.
-    if (connection.provider === "cursor" && connection.accessToken) {
-      try {
-        const payload = JSON.parse(Buffer.from(String(connection.accessToken).split(".")[1], "base64url").toString("utf8"));
-        const exp = Number(payload?.exp);
-        if (Number.isFinite(exp)) {
-          const expMs = exp > 1e12 ? exp : exp * 1000;   // accept seconds and milliseconds
-          if (expMs <= Date.now()) {
-            return { valid: false, error: "Cursor token expired. Please re-import token from Cursor IDE." };
-          }
+    if (JWT_TOKEN_EXPIRED_MESSAGE[connection.provider]) {
+      // Canonical decoder (src/lib/oauth/kiroExternalIdp.js) rather than an
+      // inline split: it validates the 3-part shape and restores base64 padding,
+      // and returns null instead of throwing on a non-JWT.
+      const payload = decodeJwtPayload(connection.accessToken);
+      const exp = Number(payload?.exp);
+      if (Number.isFinite(exp)) {
+        const expMs = exp > 1e12 ? exp : exp * 1000;   // accept seconds and milliseconds
+        if (expMs <= Date.now()) {
+          return { valid: false, error: JWT_TOKEN_EXPIRED_MESSAGE[connection.provider] };
         }
-      } catch {
-        // not a JWT — fall through to the plain existence check
       }
     }
 
     return { valid: true, error: null, refreshed: false, newTokens: null };
   }
 
-  let accessToken = connection.accessToken;
+  let accessToken = config.useApiKey ? (connection.apiKey || connection.accessToken) : connection.accessToken;
   let refreshed = false;
   let newTokens = null;
 
@@ -374,7 +258,7 @@ export async function testOAuthConnection(connection, effectiveProxy = null) {
   if (config.refreshable && tokenExpired && connection.refreshToken) {
     const tokens = await refreshOAuthToken(connection);
     if (tokens) {
-      accessToken = tokens.accessToken;
+      accessToken = config.useApiKey ? (tokens.apiKey || tokens.accessToken) : tokens.accessToken;
       refreshed = true;
       newTokens = tokens;
     } else {
@@ -455,10 +339,11 @@ export async function testOAuthConnection(connection, effectiveProxy = null) {
     if (res.status === 401 && config.refreshable && !refreshed && connection.refreshToken) {
       const tokens = await refreshOAuthToken(connection);
       if (tokens) {
-        const retryUrl = config.buildUrl ? config.buildUrl(tokens.accessToken) : testUrl;
+        const retryToken = config.useApiKey ? (tokens.apiKey || tokens.accessToken) : tokens.accessToken;
+        const retryUrl = config.buildUrl ? config.buildUrl(retryToken) : testUrl;
         const retryHeaders = config.noAuth
           ? { ...config.extraHeaders }
-          : { [config.authHeader]: `${config.authPrefix}${tokens.accessToken}`, ...config.extraHeaders };
+          : { [config.authHeader]: `${config.authPrefix}${retryToken}`, ...config.extraHeaders };
         const retryOpts = { method: config.method, headers: retryHeaders };
         if (config.body) retryOpts.body = config.body;
         const retryRes = await fetchWithConnectionProxy(retryUrl, retryOpts, effectiveProxy);
@@ -554,6 +439,19 @@ async function testApiKeyConnection(connection, effectiveProxy = null) {
     }
   }
 
+  // AWS-signed providers (Bedrock): without this every Test ends in the switch's default,
+  // "Provider test not supported", and marks a working connection as errored.
+  if (AI_PROVIDERS[connection.provider]?.credentialForm === "aws") {
+    try {
+      return await probeBedrockCredentials(
+        connection,
+        (url, options) => fetchWithConnectionProxy(url, options, effectiveProxy),
+      );
+    } catch (err) {
+      return { valid: false, error: err.message };
+    }
+  }
+
   try {
     switch (connection.provider) {
       case "cloudflare-ai": {
@@ -608,6 +506,20 @@ async function testApiKeyConnection(connection, effectiveProxy = null) {
       case "openrouter": {
         const res = await fetchWithConnectionProxy("https://openrouter.ai/api/v1/auth/key", { headers: { Authorization: `Bearer ${connection.apiKey}` } }, effectiveProxy);
         return { valid: res.ok, error: res.ok ? null : "Invalid API key" };
+      }
+      case "nous": {
+        // /models is public on Nous; a minimal chat request is required to
+        // distinguish an accepted Portal key from an arbitrary Bearer value.
+        const probe = createNousApiKeyProbe(connection.apiKey);
+        const res = await fetchWithConnectionProxy(probe.url, {
+          ...probe.options,
+          signal: AbortSignal.timeout(8000),
+        }, effectiveProxy);
+        const valid = isNousApiKeyAccepted(res.status);
+        return {
+          valid,
+          error: valid ? null : getNousApiKeyValidationError(res.status),
+        };
       }
       case "glm": {
         const res = await fetchWithConnectionProxy("https://api.z.ai/api/anthropic/v1/messages", {
@@ -801,7 +713,7 @@ async function testApiKeyConnection(connection, effectiveProxy = null) {
       }
       case "opencode": {
         const res = await fetchWithConnectionProxy("https://opencode.ai/zen/v1/models", {
-          headers: { Authorization: "Bearer public", "User-Agent": "opencode/1.18.31" },
+          headers: { Authorization: "Bearer public", "User-Agent": OPENCODE_UA },
         }, effectiveProxy);
         return { valid: res.ok, error: res.ok ? null : "OpenCode free tier unavailable" };
       }
@@ -932,6 +844,7 @@ export async function testSingleConnection(id, overrides = null) {
   if (result.refreshed && result.newTokens) {
     if (result.newTokens.accessToken) updateData.accessToken = result.newTokens.accessToken;
     if (result.newTokens.refreshToken) updateData.refreshToken = result.newTokens.refreshToken;
+    if (result.newTokens.apiKey) updateData.apiKey = result.newTokens.apiKey;
     if (result.newTokens.idToken) updateData.idToken = result.newTokens.idToken;
     if (result.newTokens.lastRefreshAt) updateData.lastRefreshAt = result.newTokens.lastRefreshAt;
     if (result.newTokens.expiresIn) updateData.expiresIn = result.newTokens.expiresIn;

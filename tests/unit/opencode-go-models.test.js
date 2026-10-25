@@ -348,7 +348,10 @@ describe("OpenCode Go responses-only routing (registry-driven)", () => {
         "openai-responses",
       ]);
       expect(getModelTargetFormat("opencode-go", m)).toBe("openai-responses");
-      expect(getModelUpstreamId("opencode-go", m)).toBe(m.replace("(high)", ""));
+      // The suffix survives the id resolution on purpose: applyThinking has to
+      // see it to honour the requested effort. chatCore strips it again before
+      // the id goes on the wire.
+      expect(getModelUpstreamId("opencode-go", m)).toBe(m);
     }
   });
 

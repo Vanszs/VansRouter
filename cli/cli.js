@@ -83,6 +83,20 @@ if (args[0] === "xai" && args[1] === "video") {
 // Runtime provisioning is deliberately deferred until after argument parsing.
 // `--help` and `--version` must remain side-effect free and must not invoke npm.
 
+// `9router connect <url>` configures local CLI tools against a remote server, and
+// `9router show` prints what they're currently set to — no local server, no
+// runtime deps. Usable via `npx 9router …`.
+if (args[0] === "connect" || args[0] === "show") {
+  const { run } = require(args[0] === "show" ? "./src/cli/commands/show" : "./src/cli/commands/connect");
+  run(args.slice(1))
+    .then((code) => process.exit(code))
+    .catch((err) => {
+      console.error(`❌ ${err?.message || err}`);
+      process.exit(1);
+    });
+  return;
+}
+
 // Configuration constants
 const APP_NAME = pkg.name; // Use from package.json
 const INSTALL_CMD_LATEST = `npm i -g ${APP_NAME}@latest --prefer-online`;
@@ -151,6 +165,8 @@ Options:
 Commands:
   connect <server-url> Configure Claude Code for a remote 9router server
                       (npx 9router connect http://host:20128 — no install needed)
+  show [tool…]        Show each CLI tool's current 9router config and models
+                      (e.g. 9router show claude)
   xai video --prompt "..." --output video.mp4
                       Generate a Grok Imagine video via the running gateway
                       (see: ${APP_NAME} xai video --help)

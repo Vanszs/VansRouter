@@ -15,11 +15,11 @@ import fs from "fs";
 import path from "path";
 
 // Read the source file and verify the config entry is present.
-// testUtils.js is a Next.js server file so we inspect the source text
+// oauthTestConfig.js is a Next.js server file so we inspect the source text
 // rather than importing it (avoids next/server bootstrap requirements).
 
 const src = fs.readFileSync(
-  path.resolve(__dirname, "../../src/app/api/providers/[id]/test/testUtils.js"),
+  path.resolve(__dirname, "../../src/app/api/providers/[id]/test/oauthTestConfig.js"),
   "utf-8"
 );
 

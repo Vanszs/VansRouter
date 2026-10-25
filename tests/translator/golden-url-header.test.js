@@ -45,7 +45,13 @@ function sanitize(headers) {
           .replace(/^\d+\.\d+\.\d+$/, "<VER>")
           .replace(new RegExp(`VansRouter/${escapeRegExp(APP_VERSION)}`, "g"), "VansRouter/<VER>")
           .replace(new RegExp(dynamicValues.map(escapeRegExp).join("|"), "g"), "<ENV>")
+          // Per-request session ids (MiniMax X-Mavis-Session-Id) are random per
+          // call, so they can never be part of a stable snapshot.
+          .replace(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi, "<UUID>")
       : v;
+    // The MiniMax timezone offset is the host's offset, not a constant: it
+    // differs per machine, so it cannot be pinned in a snapshot either.
+    if (k === "X-Mavis-Timezone-Offset") out[k] = "<TZ>";
   }
   return out;
 }

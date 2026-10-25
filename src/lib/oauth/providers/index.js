@@ -29,6 +29,10 @@ import trae from "./trae.js";
 import windsurf from "./windsurf.js";
 import zed from "./zed.js";
 import glm from "./glm.js";
+import nous from "./nous.js";
+
+import minimaxCode from "./minimax-code.js";
+import minimaxCodeGlobal from "./minimax-code-global.js";
 
 // Provider configurations
 const PROVIDERS = {
@@ -57,6 +61,10 @@ const PROVIDERS = {
   windsurf,
   zed,
   glm,
+  nous,
+
+  "minimax-code": minimaxCode,
+  "minimax-code-global": minimaxCodeGlobal,
 };
 
 export { PROVIDERS };

@@ -11,6 +11,7 @@ import {
   decodeMcpArgs,
 } from "../utils/cursorProtobuf.js";
 import { buildCursorHeaders } from "../utils/cursorChecksum.js";
+import { resolveAutoModelSelection, resolveCursorModels } from "../services/cursorModels.js";
 import { estimateUsage } from "../utils/usageTracking.js";
 import { SSE_DONE, SSE_HEADERS } from "../utils/sseConstants.js";
 import { chatChunkSse, sseChunk } from "../utils/sse.js";
@@ -47,6 +48,31 @@ const COMPRESS_FLAG = {
 const AGENT_RUN_PATH = "/agent.v1.AgentService/Run";
 const PROTOBUF_LEN = 2;
 const PROTOBUF_VARINT = 0;
+
+// A client may send the effort either flat (reasoning_effort) or nested
+// (reasoning.effort). Both Cursor paths must read it the same way, or the same
+// body would carry effort in Agent mode but silently drop it in classic mode.
+function reasoningEffortOf(body) {
+  return body?.reasoning_effort || body?.reasoning?.effort || null;
+}
+
+const CURSOR_EMPTY_TURN_MIN_MESSAGES = 80;
+
+export function tailOnlyCursorMessages(messages) {
+  if (!Array.isArray(messages) || messages.length === 0) return messages || [];
+  const systemMessages = messages.filter((message) => message?.role === ROLE.SYSTEM);
+  const chatMessages = messages.filter((message) => message?.role !== ROLE.SYSTEM);
+  let anchor = -1;
+  for (let i = chatMessages.length - 1; i >= 0; i--) {
+    if (chatMessages[i]?.role === ROLE.USER) {
+      anchor = i;
+      break;
+    }
+  }
+  if (anchor < 0) return [...systemMessages, ...chatMessages.slice(-2)];
+  const tailStart = anchor > 0 && chatMessages[anchor - 1]?.role === ROLE.ASSISTANT ? anchor - 1 : anchor;
+  return [...systemMessages, ...chatMessages.slice(tailStart)];
+}
 
 function concatBuffers(...parts) {
   const length = parts.reduce((total, part) => total + part.length, 0);
@@ -102,7 +128,7 @@ function encodeHistoryMessage(message) {
   return agentMessage(1, agentMessage(1, agentMessage(1, text)));
 }
 
-export function buildAgentRunFrame(messages, model, tools = []) {
+export function buildAgentRunFrame(messages, model, tools = [], reasoningEffort = null) {
   // custom_system_prompt (RunRequest field 8) makes AgentService return an
   // empty turn. Fold system text into the current user message instead.
   const system = messages
@@ -137,7 +163,18 @@ export function buildAgentRunFrame(messages, model, tools = []) {
     ...(conversationHistory ? [agentMessage(7, conversationHistory)] : []),
   );
   const conversationAction = agentMessage(1, userAction);
-  const requestedModel = concatBuffers(agentString(1, model), agentBool(7, true));
+  const effort = String(reasoningEffort || "").toLowerCase();
+  const effortValue = effort === "ultra" ? "max" : effort === "minimal" ? "low" : effort;
+  const parameter = effortValue && effortValue !== "none"
+    ? agentMessage(3, concatBuffers(
+      agentString(1, /gpt-/i.test(model) ? "reasoning" : "effort"),
+      agentString(2, effortValue),
+    ))
+    : null;
+  const requestedModel = concatBuffers(
+    agentString(1, model), agentBool(7, true),
+    ...(parameter ? [parameter] : []),
+  );
   // ModelDetails (field 3): thinking variants (Composer, Grok, *-thinking)
   // return an empty turn when only RequestedModel (field 9) is set.
   const modelDetails = concatBuffers(
@@ -232,7 +269,7 @@ function rejectExecRequest(execRequest) {
   return wrapExecClientMessage(id, execId, resultField, rejected);
 }
 
-function encodeKvClientMessage(kvId, resultField, resultPayload, metadata) {
+export function encodeKvClientMessage(kvId, resultField, resultPayload, metadata) {
   const parts = [];
   if (kvId) parts.push(encodeField(1, PROTOBUF_VARINT, kvId));
   parts.push(encodeField(resultField, PROTOBUF_LEN, resultPayload || new Uint8Array()));
@@ -392,7 +429,7 @@ export class CursorExecutor extends BaseExecutor {
     // Do NOT call openaiToCursorRequest again — double-translation drops tool_results
     const messages = body.messages || [];
     const tools = body.tools || [];
-    const reasoningEffort = body.reasoning_effort || null;
+    const reasoningEffort = reasoningEffortOf(body);
     // Detect Claude Code UA to force Agent mode (issue #643)
     const ua = credentials?.rawHeaders?.["user-agent"] || "";
     // cu/default + cu/auto must also run through Agent mode, otherwise Cursor
@@ -576,9 +613,18 @@ export class CursorExecutor extends BaseExecutor {
     };
   }
 
-  async executeAgent({ model, body, stream, credentials, signal, log }) {
+  async executeAgent({ model, body, stream, credentials, signal, log, proxyOptions = null }) {
     const agentEndpoint = PROVIDER_OAUTH.cursor?.agentEndpoint;
     if (!agentEndpoint) throw new Error("Cursor AgentService endpoint is not configured");
+    const proxyIntended = Boolean(
+      proxyOptions?.proxyPoolId
+      || proxyOptions?.enabled === true
+      || proxyOptions?.connectionProxyEnabled === true
+      || (proxyOptions?.url || proxyOptions?.connectionProxyUrl || "").trim().length > 0,
+    );
+    if (proxyOptions?.strictProxy === true && proxyIntended && !proxyOptions.vercelRelayUrl) {
+      throw new Error("Cursor AgentService HTTP/2 transport cannot honor the configured strict proxy");
+    }
 
     const url = `${agentEndpoint}${AGENT_RUN_PATH}`;
     const headers = this.buildHeaders(credentials);
@@ -587,12 +633,25 @@ export class CursorExecutor extends BaseExecutor {
       signal.addEventListener("abort", () => requestController.abort(signal.reason), { once: true });
     }
 
+    const originalMessages = body.messages || [];
     let session;
     const tools = body.tools || [];
-    const upstreamModel = resolveCursorUpstreamModel(model);
+    let upstreamModel = resolveCursorUpstreamModel(model);
+    if (model === "default" || model === "auto") {
+      const catalog = await resolveCursorModels(credentials, { signal, log });
+      const autoModel = resolveAutoModelSelection(catalog?.models);
+      if (autoModel) {
+        upstreamModel = autoModel.modelId;
+        log?.info?.("CURSOR", `auto model resolved: ${model} → ${autoModel.modelId}`);
+      }
+    }
+    const openSession = (messages) => {
+      const next = this.openAgentHttp2Stream(url, headers, requestController.signal);
+      next.write(buildAgentRunFrame(messages, upstreamModel, tools, reasoningEffortOf(body)));
+      return next;
+    };
     try {
-      session = this.openAgentHttp2Stream(url, headers, requestController.signal);
-      session.write(buildAgentRunFrame(body.messages || [], upstreamModel, tools));
+      session = openSession(originalMessages);
     } catch (error) {
       throw new Error(`Cursor AgentService request failed: ${error.message}`);
     }
@@ -651,7 +710,20 @@ export class CursorExecutor extends BaseExecutor {
     };
 
     const consume = async (onEvent) => {
-      let trailerErrorOccurred = false;
+      pending = Buffer.alloc(0);
+      finished = false;
+      thinkingAcc = "";
+      emittedVisible = 0;
+      emittedText = false;
+      // A turn that produced no text is an error, not a silent success. A trailer
+      // frame sets `finished` before emitting its own error, so finishTurn only
+      // runs for the paths that still owe the client a terminal event.
+      const finishTurn = () => {
+        flushThinkingFallback(onEvent);
+        finished = true;
+        if (emittedText) onEvent({ type: "done" });
+        else onEvent({ type: "error", value: "Cursor AgentService returned an empty turn" });
+      };
       try {
         while (!finished) {
           const { done, value } = await session.read();
@@ -669,7 +741,6 @@ export class CursorExecutor extends BaseExecutor {
                 }
               })();
               finished = true;
-              trailerErrorOccurred = true;
               const errorValue = {
                 ...meta?.raw,
                 error: trailerError,
@@ -709,9 +780,7 @@ export class CursorExecutor extends BaseExecutor {
               }
               // Keep unsigned reasoning upstream-only for Anthropic clients.
               if (update.has(14)) {
-                flushThinkingFallback(onEvent);
-                finished = true;
-                onEvent({ type: "done" });
+                finishTurn();
               }
             }
 
@@ -769,14 +838,56 @@ export class CursorExecutor extends BaseExecutor {
             }
           });
         }
+        if (!finished) finishTurn();
       } finally {
         try { session.end(); } catch {}
         try { session.close(); } catch {}
-        if (!finished && !trailerErrorOccurred) {
-          flushThinkingFallback(onEvent);
-          onEvent({ type: "done" });
-        }
       }
+    };
+
+    const runWithRetry = async (onEvent) => {
+      let turnError = null;
+      let outputStarted = false;
+      const canRetry = originalMessages.length >= CURSOR_EMPTY_TURN_MIN_MESSAGES && !requestController.signal.aborted;
+      const handleEvent = (event) => {
+        if (event.type === "error" && canRetry && !outputStarted) {
+          turnError = event;
+          return;
+        }
+        if (event.type === "text" || event.type === "thinking" || event.type === "tool_call") outputStarted = true;
+        onEvent(event);
+      };
+
+      try {
+        await consume(handleEvent);
+      } catch (error) {
+        log?.warn?.("CURSOR", `AgentService stream failed: ${error?.message || error}`);
+        if (!canRetry || outputStarted) throw error;
+        turnError = { type: "error", value: error.message || "Cursor AgentService stream failed" };
+      }
+
+      if (!turnError) return;
+      log?.info?.("CURSOR", `empty turn on ${originalMessages.length}-message session; retrying with latest turn`);
+      try {
+        session = openSession(tailOnlyCursorMessages(originalMessages));
+        const retryHeaders = await session.responseHeaders;
+        if (Number(retryHeaders[":status"] || 0) !== 200) {
+          onEvent(turnError);
+          return;
+        }
+        turnError = null;
+        await consume((event) => {
+          if (event.type === "error") turnError = event;
+          else {
+            if (event.type === "text" || event.type === "thinking" || event.type === "tool_call") outputStarted = true;
+            onEvent(event);
+          }
+        });
+      } catch (error) {
+        log?.warn?.("CURSOR", `tail-only retry failed: ${error?.message || error}`);
+        turnError ||= { type: "error", value: error.message || "Cursor tail-only retry failed" };
+      }
+      if (turnError) onEvent(turnError);
     };
 
     if (stream === false) {
@@ -785,7 +896,7 @@ export class CursorExecutor extends BaseExecutor {
       let agentError = null;
       const toolCalls = [];
       let finishReason = "stop";
-      await consume((event) => {
+      await runWithRetry((event) => {
         if (event.type === "text") content += event.value;
         else if (event.type === "thinking") reasoning += event.value;
         else if (event.type === "tool_call") {
@@ -856,7 +967,7 @@ export class CursorExecutor extends BaseExecutor {
           closed = true;
           try { controller.error(err); } catch {}
         };
-        consume((event) => {
+        runWithRetry((event) => {
           if (closed) return;
           if (event.type === "text") {
             controller.enqueue(encoder.encode(chatChunkSse({ id: responseId, created, model, delta: { content: event.value } })));
@@ -922,7 +1033,7 @@ export class CursorExecutor extends BaseExecutor {
   async execute({ model, body, stream, credentials, signal, log, proxyOptions = null }) {
     if (isAgentCapableRequest(body)) {
       try {
-        return await this.executeAgent({ model, body, stream, credentials, signal, log });
+        return await this.executeAgent({ model, body, stream, credentials, signal, log, proxyOptions });
       } catch (error) {
         return {
           response: new Response(JSON.stringify({

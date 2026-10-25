@@ -1,4 +1,3 @@
-import { PROVIDERS } from "./providers.js";
 import REGISTRY from "../providers/registry/index.js";
 // PROVIDER_MODELS now built from providers/registry (transport + models co-located)
 import { PROVIDER_MODELS } from "../providers/index.js";
@@ -96,15 +95,31 @@ export function getModelType(aliasOrId, modelId) {
   return found?.kind || found?.type || null;
 }
 
+// Raw registry entry for a model (suffix-aware) — executor lookups of per-model hints (e.g. defaultLocation).
+export function getModelMeta(aliasOrId, modelId) {
+  return findModel(PROVIDER_MODELS[aliasOrId], modelId, aliasOrId) || null;
+}
+
 export function getModelUpstreamId(aliasOrId, modelId) {
+  // Split off the thinking suffix "(level)" so the lookup hits the base id, then
+  // re-append it to the result: downstream applyThinking still has to see the
+  // suffix (body.model is stripped separately).
+  const sufMatch = typeof modelId === "string" ? modelId.match(/\([^()]+\)\s*$/) : null;
+  const suffix = sufMatch ? sufMatch[0] : "";
+  const baseId = suffix ? modelId.slice(0, sufMatch.index).trim() : modelId;
   const models = PROVIDER_MODELS[aliasOrId];
-  const found = findModel(models, modelId, aliasOrId);
-  if (found?.upstreamModelId) return found.upstreamModelId;
-  if (found?.id) return found.id;
-  if (aliasOrId === "cx" && typeof modelId === "string" && modelId.endsWith(CODEX_REVIEW_SUFFIX)) {
-    return modelId.slice(0, -CODEX_REVIEW_SUFFIX.length);
+  const found = findModel(models, baseId, aliasOrId);
+  const resolvedId = found?.upstreamModelId || found?.id;
+  if (resolvedId) {
+    const presetMatch = resolvedId.match(/\([^()]+\)\s*$/);
+    const presetSuffix = presetMatch?.[0] || "";
+    const resolvedBase = presetSuffix ? resolvedId.slice(0, presetMatch.index).trim() : resolvedId;
+    return resolvedBase + (suffix || presetSuffix);
   }
-  return modelId;
+  if (aliasOrId === "cx" && typeof baseId === "string" && baseId.endsWith(CODEX_REVIEW_SUFFIX)) {
+    return baseId.slice(0, -CODEX_REVIEW_SUFFIX.length) + suffix;
+  }
+  return baseId + suffix;
 }
 
 export function resolveAntigravityUpstreamModel(model) {
@@ -123,9 +138,13 @@ export const OAUTH_ALIASES = Object.fromEntries(
   REGISTRY.filter(r => r.alias && r.alias !== r.id).map(r => [r.id, r.alias])
 );
 
-// Derived from PROVIDERS — no need to maintain manually
+// Derived from REGISTRY — no need to maintain manually. REGISTRY (not PROVIDERS):
+// media-only entries (elevenlabs, cartesia, inworld, ...) declare no transport, so
+// keying off PROVIDERS dropped their alias and made their registry `models`
+// unreachable — the exact same map PROVIDER_MODELS is keyed by
+// (`entry.alias || entry.id` in providers/index.js).
 export const PROVIDER_ID_TO_ALIAS = Object.fromEntries(
-  Object.keys(PROVIDERS).map(id => [id, OAUTH_ALIASES[id] || id])
+  REGISTRY.map(r => [r.id, r.alias || r.id])
 );
 
 export function getModelsByProviderId(providerId) {

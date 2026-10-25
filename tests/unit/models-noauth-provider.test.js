@@ -1,5 +1,13 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
+const OPENCODE_FREE_IDS = [
+  "beam-free", "mimo-v2.6-flash-free", "nemotron-3.5-super-vl-free",
+  "nemotron-3.5-lightning-free", "deepseek-v4.1-flash-free", "glm-5.3-flash-free",
+  "minimax-m3.1-flash-free",
+];
+const oldFetcherIds = ["deepseek-v4-flash-free", "mimo-v2.5-free", "qwen3.6-plus-free", "minimax-m3-free", "nemotron-3-super-free"];
+let mockFetcherIds = oldFetcherIds;
+
 const AI_PROVIDERS = {
   claude: { id: "claude", alias: "cc", name: "Claude Code", noAuth: false },
   opencode: { id: "opencode", alias: "oc", name: "OpenCode Free", noAuth: true, passthroughModels: true, modelsFetcher: { url: "https://opencode.ai/zen/v1/models", type: "opencode-free" } },
@@ -58,11 +66,16 @@ function isProviderAllowed(apiKeyInfo, providerIdOrAlias) {
   return allowed.includes(providerIdOrAlias);
 }
 
-const mockFetcherIds = ["deepseek-v4-flash-free", "mimo-v2.5-free", "qwen3.6-plus-free", "minimax-m3-free", "nemotron-3-super-free"];
-
 async function fetchModelsFetcherIds(providerId, providerInfo) {
   if (providerInfo?.modelsFetcher?.type === "opencode-free") {
-    return mockFetcherIds;
+    return [
+      ...OPENCODE_FREE_IDS,
+      "space-bunny-free",
+      "jev-1.13-free",
+      "hy3-free",
+      "x-preview-f-free",
+      "big-pickle",
+    ];
   }
   return [];
 }
@@ -106,6 +119,7 @@ async function buildModelsList(kindFilter, { connections = [], customModels = []
         rawModelIds = Array.from(new Set([...rawModelIds, ...fetcherIds]));
       }
       for (const modelId of rawModelIds) {
+        if (providerInfo.modelsFetcher?.type === "opencode-free" && !OPENCODE_FREE_IDS.includes(modelId)) continue;
         const kind = staticModelKindById.get(modelId) || inferKindFromUnknownModelId(modelId);
         if (!kindFilter.includes(kind)) continue;
         if (isDisabled(outputAlias, modelId)) continue;
@@ -131,6 +145,7 @@ async function buildModelsList(kindFilter, { connections = [], customModels = []
       const modelIds = rawModelIds.filter((modelId) => typeof modelId === "string" && modelId.trim() !== "");
       const mergedModelIds = Array.from(new Set([...modelIds]));
       for (const modelId of mergedModelIds) {
+        if (connectedProviderInfo?.modelsFetcher?.type === "opencode-free" && !OPENCODE_FREE_IDS.includes(modelId)) continue;
         const kind = staticModelKindById.get(modelId) || inferKindFromUnknownModelId(modelId);
         if (!kindFilter.includes(kind)) continue;
         if (isDisabled(outputAlias, modelId) || isDisabled(staticAlias, modelId)) continue;
@@ -159,6 +174,7 @@ async function buildModelsList(kindFilter, { connections = [], customModels = []
         .filter((m) => {
           if (!m?.id || (m.type && m.type !== "llm")) return false;
           const alias = m.providerAlias;
+          if (providerInfo.modelsFetcher?.type === "opencode-free") return alias === outputAlias && OPENCODE_FREE_IDS.includes(m.id);
           return alias === outputAlias || alias === providerId;
         })
         .map((m) => String(m.id).trim())
@@ -176,8 +192,22 @@ async function buildModelsList(kindFilter, { connections = [], customModels = []
         })
         .filter((id) => typeof id === "string" && id.trim() !== "");
 
-      const mergedModelIds = Array.from(new Set([...rawModelIds, ...customModelIds, ...aliasModelIds]));
+      const curatedModelIds = providerInfo.modelsFetcher?.type === "opencode-free"
+        ? rawModelIds.filter((id) => OPENCODE_FREE_IDS.includes(id))
+        : rawModelIds;
+      const safeCustomModelIds = customModelIds;
+      const safeAliasModelIds = providerInfo.modelsFetcher?.type === "opencode-free"
+        ? aliasModelIds.filter((id) => OPENCODE_FREE_IDS.includes(id))
+        : aliasModelIds;
+      const mergedModelIds = Array.from(new Set([...curatedModelIds, ...safeCustomModelIds, ...safeAliasModelIds]));
       for (const modelId of mergedModelIds) {
+        if (providerInfo.modelsFetcher?.type === "opencode-free"
+          && !OPENCODE_FREE_IDS.includes(modelId)
+          && aliasModelIds.includes(modelId)) continue;
+        if (providerInfo.modelsFetcher?.type === "opencode-free" && customModelIds.includes(modelId)) {
+          models.push({ id: `${outputAlias}/${modelId}`, object: "model", owned_by: outputAlias });
+          continue;
+        }
         const kind = staticModelKindById.get(modelId) || inferKindFromUnknownModelId(modelId);
         if (!kindFilter.includes(kind)) continue;
         if (isDisabled(outputAlias, modelId)) continue;
@@ -216,15 +246,21 @@ describe("buildModelsList — noAuth providers", () => {
     vi.clearAllMocks();
   });
 
-  it("includes opencode (noAuth LLM) models when claude connection exists but opencode has no connection", async () => {
-    const result = await buildModelsList(["llm"], {
-      connections: [{ provider: "claude", apiKey: "test-key" }],
-    });
-
-    const ocModels = result.filter((m) => m.id.startsWith("oc/"));
-    expect(ocModels.length).toBeGreaterThan(0);
-    expect(ocModels.map((m) => m.id)).toContain("oc/deepseek-v4-flash-free");
-    expect(ocModels.map((m) => m.id)).toContain("oc/mimo-v2.5-free");
+  it("includes only curated OpenCode Free models from live discovery", async () => {
+    const previousFetcherIds = mockFetcherIds;
+    mockFetcherIds = [
+      ...OPENCODE_FREE_IDS,
+      "space-bunny-free", "jev-1.13-free", "hy3-free", "x-preview-f-free", "big-pickle",
+    ];
+    try {
+      const result = await buildModelsList(["llm"], {
+        connections: [{ provider: "claude", apiKey: "test-key" }],
+      });
+      const ocModels = result.filter((m) => m.id.startsWith("oc/")).map((m) => m.id);
+      expect(ocModels.sort()).toEqual(OPENCODE_FREE_IDS.map((id) => `oc/${id}`).sort());
+    } finally {
+      mockFetcherIds = previousFetcherIds;
+    }
   });
 
   it("includes claude models from active connection alongside noAuth models", async () => {
@@ -239,14 +275,21 @@ describe("buildModelsList — noAuth providers", () => {
     expect(ccModels.map((m) => m.id)).toContain("cc/claude-opus-4-8");
   });
 
-  it("includes opencode models when opencode has an active connection (modelsFetcher from connection loop)", async () => {
-    const result = await buildModelsList(["llm"], {
-      connections: [{ provider: "opencode", apiKey: "test-key" }],
-    });
-
-    const ocModels = result.filter((m) => m.id.startsWith("oc/"));
-    expect(ocModels.length).toBeGreaterThan(0);
-    expect(ocModels.map((m) => m.id)).toContain("oc/deepseek-v4-flash-free");
+  it("filters unavailable OpenCode Free ids even when it has an active connection", async () => {
+    const previousFetcherIds = mockFetcherIds;
+    mockFetcherIds = [
+      ...OPENCODE_FREE_IDS,
+      "space-bunny-free", "jev-1.13-free", "hy3-free", "x-preview-f-free", "big-pickle",
+    ];
+    try {
+      const result = await buildModelsList(["llm"], {
+        connections: [{ provider: "opencode", apiKey: "test-key" }],
+      });
+      const ocModels = result.filter((m) => m.id.startsWith("oc/")).map((m) => m.id);
+      expect(ocModels.sort()).toEqual(OPENCODE_FREE_IDS.map((id) => `oc/${id}`).sort());
+    } finally {
+      mockFetcherIds = previousFetcherIds;
+    }
   });
 
   it("skips noAuth providers that don't match kindFilter (searxng is webSearch, not LLM)", async () => {
@@ -268,14 +311,19 @@ describe("buildModelsList — noAuth providers", () => {
     expect(sxModels.map((m) => m.id)).toContain("searxng/search");
   });
 
-  it("includes all noAuth LLM models even with no connections at all", async () => {
-    const result = await buildModelsList(["llm"], {
-      connections: [],
-    });
-
-    const ocModels = result.filter((m) => m.id.startsWith("oc/"));
-    expect(ocModels.length).toBeGreaterThan(0);
-    expect(ocModels.map((m) => m.id)).toContain("oc/deepseek-v4-flash-free");
+  it("includes only curated OpenCode Free models with no connections", async () => {
+    const previousFetcherIds = mockFetcherIds;
+    mockFetcherIds = [
+      ...OPENCODE_FREE_IDS,
+      "space-bunny-free", "jev-1.13-free", "hy3-free", "x-preview-f-free", "big-pickle",
+    ];
+    try {
+      const result = await buildModelsList(["llm"], { connections: [] });
+      const ocModels = result.filter((m) => m.id.startsWith("oc/")).map((m) => m.id);
+      expect(ocModels.sort()).toEqual(OPENCODE_FREE_IDS.map((id) => `oc/${id}`).sort());
+    } finally {
+      mockFetcherIds = previousFetcherIds;
+    }
   });
 
   it("respects disabledByAlias for noAuth models", async () => {
@@ -286,45 +334,80 @@ describe("buildModelsList — noAuth providers", () => {
 
     const ocModels = result.filter((m) => m.id.startsWith("oc/"));
     expect(ocModels.map((m) => m.id)).not.toContain("oc/deepseek-v4-flash-free");
-    expect(ocModels.map((m) => m.id)).toContain("oc/mimo-v2.5-free");
+    expect(ocModels.map((m) => m.id)).toContain("oc/mimo-v2.6-flash-free");
   });
 
-  it("respects custom models for noAuth provider", async () => {
+  it("does not append unverified custom models to OpenCode Free", async () => {
     const result = await buildModelsList(["llm"], {
       connections: [{ provider: "claude", apiKey: "test-key" }],
       customModels: [{ id: "custom-free-model", providerAlias: "oc", type: "llm" }],
     });
 
-    const ocModels = result.filter((m) => m.id.startsWith("oc/"));
-    expect(ocModels.map((m) => m.id)).toContain("oc/custom-free-model");
+    const ocModels = result.filter((m) => m.id.startsWith("oc/")).map((m) => m.id);
+    expect(ocModels).not.toContain("oc/custom-free-model");
+    expect(ocModels).toContain("oc/minimax-m3.1-flash-free");
   });
 
-  it("respects model aliases for noAuth provider", async () => {
+  it("does not expose aliases to unverified OpenCode Free model IDs", async () => {
     const result = await buildModelsList(["llm"], {
       connections: [{ provider: "claude", apiKey: "test-key" }],
-      modelAliases: { alias1: "oc/big-pickle" },
+      modelAliases: { stale: "oc/big-pickle", current: "oc/minimax-m3.1-flash-free" },
     });
 
-    const ocModels = result.filter((m) => m.id.startsWith("oc/"));
-    expect(ocModels.map((m) => m.id)).toContain("oc/big-pickle");
+    const ocModels = result.filter((m) => m.id.startsWith("oc/")).map((m) => m.id);
+    expect(ocModels).not.toContain("oc/big-pickle");
+    expect(ocModels).toContain("oc/minimax-m3.1-flash-free");
+  });
+
+  it("filters stale fetched, custom, and aliased OpenCode IDs", async () => {
+    const previousFetcherIds = mockFetcherIds;
+    mockFetcherIds = [
+      ...OPENCODE_FREE_IDS,
+      "space-bunny-free", "jev-1.13-free", "hy3-free", "x-preview-f-free", "big-pickle",
+    ];
+    try {
+      const result = await buildModelsList(["llm"], {
+        connections: [{ provider: "claude", apiKey: "test-key" }],
+        customModels: [
+          { id: "custom-free-model", providerAlias: "oc", type: "llm" },
+          { id: "minimax-m3.1-flash-free", providerAlias: "oc", type: "llm" },
+        ],
+        modelAliases: { live: "oc/deepseek-v4.1-flash-free", stale: "oc/space-bunny-free", unavailable: "oc/minimax-m3.1-flash-free" },
+      });
+      const ids = result.map((model) => model.id).filter((id) => id.startsWith("oc/"));
+      expect(new Set(ids)).toEqual(new Set(OPENCODE_FREE_IDS.map((id) => `oc/${id}`)));
+      expect(ids.filter((id) => id === "oc/minimax-m3.1-flash-free")).toHaveLength(1);
+      expect(ids).not.toContain("oc/custom-free-model");
+      expect(ids).not.toContain("oc/space-bunny-free");
+      expect(ids).not.toContain("oc/hy3-free");
+      expect(ids).toContain("oc/minimax-m3.1-flash-free");
+    } finally {
+      mockFetcherIds = previousFetcherIds;
+    }
   });
 });
 
 describe("isProviderAllowed + buildModelsList — API key with all providers", () => {
-  it("apiKey with allowedProviders=null should see noAuth models after filtering", async () => {
-    const apiKeyInfo = { allowedProviders: null };
-    const models = await buildModelsList(["llm"], {
-      connections: [{ provider: "claude", apiKey: "test-key" }],
-    });
-
-    const filtered = models.filter((model) => {
-      const providerAlias = model.id.includes("/") ? model.id.split("/")[0] : model.owned_by;
-      return isProviderAllowed(apiKeyInfo, providerAlias);
-    });
-
-    const ocModels = filtered.filter((m) => m.id.startsWith("oc/"));
-    expect(ocModels.length).toBeGreaterThan(0);
-    expect(ocModels.map((m) => m.id)).toContain("oc/deepseek-v4-flash-free");
+  it("apiKey with allowedProviders=null sees only curated OpenCode Free models", async () => {
+    const previousFetcherIds = mockFetcherIds;
+    mockFetcherIds = [
+      ...OPENCODE_FREE_IDS,
+      "space-bunny-free", "jev-1.13-free", "hy3-free", "x-preview-f-free", "big-pickle",
+    ];
+    try {
+      const apiKeyInfo = { allowedProviders: null };
+      const models = await buildModelsList(["llm"], {
+        connections: [{ provider: "claude", apiKey: "test-key" }],
+      });
+      const filtered = models.filter((model) => {
+        const providerAlias = model.id.includes("/") ? model.id.split("/")[0] : model.owned_by;
+        return isProviderAllowed(apiKeyInfo, providerAlias);
+      });
+      const ocModels = filtered.filter((m) => m.id.startsWith("oc/")).map((m) => m.id);
+      expect(ocModels.sort()).toEqual(OPENCODE_FREE_IDS.map((id) => `oc/${id}`).sort());
+    } finally {
+      mockFetcherIds = previousFetcherIds;
+    }
   });
 
   it("apiKey with allowedProviders=[cc] should NOT see opencode models", async () => {
@@ -345,19 +428,25 @@ describe("isProviderAllowed + buildModelsList — API key with all providers", (
   });
 
   it("apiKey with allowedProviders=[cc,oc] should see both claude and opencode models", async () => {
-    const apiKeyInfo = { allowedProviders: ["cc", "oc"] };
-    const models = await buildModelsList(["llm"], {
-      connections: [{ provider: "claude", apiKey: "test-key" }],
-    });
+    const previousFetcherIds = mockFetcherIds;
+    mockFetcherIds = [...OPENCODE_FREE_IDS, "space-bunny-free", "jev-1.13-free", "hy3-free"];
+    try {
+      const apiKeyInfo = { allowedProviders: ["cc", "oc"] };
+      const models = await buildModelsList(["llm"], {
+        connections: [{ provider: "claude", apiKey: "test-key" }],
+      });
 
-    const filtered = models.filter((model) => {
-      const providerAlias = model.id.includes("/") ? model.id.split("/")[0] : model.owned_by;
-      return isProviderAllowed(apiKeyInfo, providerAlias);
-    });
+      const filtered = models.filter((model) => {
+        const providerAlias = model.id.includes("/") ? model.id.split("/")[0] : model.owned_by;
+        return isProviderAllowed(apiKeyInfo, providerAlias);
+      });
 
-    const ccModels = filtered.filter((m) => m.id.startsWith("cc/"));
-    const ocModels = filtered.filter((m) => m.id.startsWith("oc/"));
-    expect(ccModels.length).toBeGreaterThan(0);
-    expect(ocModels.length).toBeGreaterThan(0);
+      const ccModels = filtered.filter((m) => m.id.startsWith("cc/"));
+      const ocModels = filtered.filter((m) => m.id.startsWith("oc/")).map((m) => m.id);
+      expect(ccModels.length).toBeGreaterThan(0);
+      expect(ocModels.sort()).toEqual(OPENCODE_FREE_IDS.map((id) => `oc/${id}`).sort());
+    } finally {
+      mockFetcherIds = previousFetcherIds;
+    }
   });
 });

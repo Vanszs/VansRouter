@@ -22,14 +22,12 @@ export default {
     authType: "none",
     authHeader: "none",
     costPerQuery: 0,
-    freeMonthlyQuota: 999999,
     searchTypes: [
       "web",
       "news"
     ],
     defaultMaxResults: 5,
     maxMaxResults: 50,
-    timeoutMs: 10000,
-    cacheTTLMs: 180000
+    timeoutMs: 10000
   }
 };

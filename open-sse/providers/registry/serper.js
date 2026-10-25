@@ -22,14 +22,12 @@ export default {
     authType: "apikey",
     authHeader: "x-api-key",
     costPerQuery: 0.001,
-    freeMonthlyQuota: 2500,
     searchTypes: [
       "web",
       "news"
     ],
     defaultMaxResults: 5,
     maxMaxResults: 100,
-    timeoutMs: 10000,
-    cacheTTLMs: 300000
+    timeoutMs: 10000
   }
 };

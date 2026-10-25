@@ -1,89 +1,14 @@
 import { describe, expect, it, vi } from "vitest";
-import { PROVIDERS } from "../../open-sse/config/providers.js";
 import { OpenCodeExecutor } from "../../open-sse/executors/opencode.js";
-import { proxyAwareFetch } from "../../open-sse/utils/proxyFetch.js";
+import { PROVIDER_MODELS } from "../../open-sse/config/providerModels.js";
+import { takeRenamedToolNames, restoreToolNames } from "../../open-sse/utils/opencodeFingerprint.js";
+import { parseSSEToOpenAIResponse } from "../../open-sse/handlers/chatCore/sseToJsonHandler.js";
 
-vi.mock("../../open-sse/utils/proxyFetch.js", () => ({
-  proxyAwareFetch: vi.fn(async () => ({ ok: true, status: 200, headers: { get: () => "" } })),
-}));
-
-// OpenCode Free answers 400 for muse-spark-1.3-contributor-free unless
-// tool_choice is "auto", so named/required/none must be demoted.
-const FREE_13 = "muse-spark-1.3-contributor-free";
 const CREDS = { connectionId: "opencode-free-tool-choice-test" };
-const INPUT = [{ type: "message", role: "user", content: [{ type: "input_text", text: "hi" }] }];
-const TOOLS = [{ type: "function", name: "get_weather", description: "w", parameters: { type: "object", properties: {} } }];
 const QUARTET = ["bash", "glob", "grep", "read"];
-
-function responsesBody(model, tool_choice) {
-  const body = { model, input: structuredClone(INPUT), tools: structuredClone(TOOLS) };
-  if (tool_choice !== undefined) body.tool_choice = tool_choice;
-  return body;
-}
-
-describe("opencode Free 1.3 tool_choice auto-only", () => {
-  it("declares the quirk for the 1.3-Free model only", () => {
-    expect(PROVIDERS.opencode.quirks?.forceAutoToolChoiceModels).toEqual([FREE_13]);
-  });
-
-  it.each([
-    ["Responses named", { type: "function", name: "get_weather" }],
-    ["Chat function named", { type: "function", function: { name: "get_weather" } }],
-    ["Claude tool named", { type: "tool", name: "get_weather" }],
-    ["required", "required"],
-    ["none", "none"],
-  ])("demotes %s to auto (plain and thinking variant)", (_label, choice) => {
-    for (const model of [FREE_13, `${FREE_13}(max)`]) {
-      const body = responsesBody(model, structuredClone(choice));
-      const out = new OpenCodeExecutor().transformRequest(model, body, true, CREDS);
-      expect(out.tool_choice).toBe("auto");
-      expect(out.input).toEqual(INPUT);
-    }
-  });
-
-  it("leaves tool_choice of other models untouched", () => {
-    const choice = { type: "function", name: "get_weather" };
-    for (const model of ["muse-spark-1.2-contributor-free", "muse-spark-1.4-contributor-free", "big-pickle"]) {
-      const body = responsesBody(model, structuredClone(choice));
-      const out = new OpenCodeExecutor().transformRequest(model, body, true, CREDS);
-      expect(out.tool_choice).toEqual(choice);
-    }
-  });
-
-  it("wire: execute sends the demoted choice to /zen/v1/responses", async () => {
-    proxyAwareFetch.mockClear();
-    const body = responsesBody(FREE_13, { type: "function", name: "get_weather" });
-    const { url, transformedBody } = await new OpenCodeExecutor().execute({
-      model: FREE_13, body, stream: true, credentials: CREDS,
-    });
-    expect(url).toBe("https://opencode.ai/zen/v1/responses");
-    expect(transformedBody.tool_choice).toBe("auto");
-    expect(proxyAwareFetch).toHaveBeenCalledTimes(1);
-    const [actualUrl, actualInit] = proxyAwareFetch.mock.calls[0];
-    expect(actualUrl).toBe("https://opencode.ai/zen/v1/responses");
-    const sent = JSON.parse(actualInit.body);
-    expect(sent.tool_choice).toBe("auto");
-    expect(sent.model).toBe(FREE_13);
-    expect(sent.input).toEqual(INPUT);
-  });
-});
 
 describe("opencode free-tier fingerprint tools", () => {
   const executor = new OpenCodeExecutor();
-
-  it("appends the flat quartet to Responses requests beside client tools", () => {
-    const body = responsesBody(FREE_13, undefined);
-    const out = executor.transformRequest(FREE_13, body, true, CREDS);
-    expect(out.tools[0]).toEqual(TOOLS[0]);
-    expect(out.tools).toHaveLength(TOOLS.length + QUARTET.length);
-    for (const name of QUARTET) {
-      expect(out.tools.find((tool) => tool.name === name)).toMatchObject({
-        type: "function",
-        parameters: { type: "object", properties: {} },
-      });
-    }
-    expect(out.tool_choice).toBe("auto");
-  });
 
   it("never duplicates a quartet member the caller already declares", () => {
     for (const spelling of ["bash", "Bash"]) {
@@ -129,9 +54,79 @@ describe("opencode free-tier fingerprint tools", () => {
       messages: [{ role: "user", content: "hi" }],
       tools: [{ name: "get_weather", description: "w", input_schema: { type: "object", properties: {} } }],
     };
-    const out = executor.transformRequest("union-alpha", body, true, CREDS);
+    const out = executor.transformRequest("big-pickle", body, true, {
+      ...CREDS,
+      runtimeTransport: { format: "claude" },
+    });
     expect(out.tools.map((tool) => tool.name)).toEqual(["get_weather", ...QUARTET]);
     expect(out.tools[1]).toMatchObject({ name: "bash", input_schema: { type: "object", properties: {} } });
     expect("tool_choice" in out).toBe(false);
+  });
+
+  it("exposes the live free models verified by required tool calls", () => {
+    const ids = PROVIDER_MODELS.oc.map(({ id }) => id);
+    expect(ids).toEqual([
+      "beam-free",
+      // A decision model on the SystemOne endpoint, not a chat model.
+      "jev-1.13-free",
+      "mimo-v2.6-flash-free",
+      "nemotron-3.5-super-vl-free",
+      "deepseek-v4.1-flash-free",
+      "glm-5.3-flash-free",
+      "nemotron-3.5-lightning-free",
+      "minimax-m3.1-flash-free",
+    ]);
+  });
+
+  it("round-trips tool-result continuation through the real chat handler path", () => {
+    const assistantMessage = {
+      role: "assistant",
+      content: null,
+      tool_calls: [{
+        id: "call-1",
+        type: "function",
+        function: { name: "report_weather", arguments: '{"city":"Paris"}' },
+      }],
+    };
+    const toolResult = { role: "tool", tool_call_id: "call-1", content: "Sunny, 18C" };
+    const body = { messages: [{ role: "user", content: "Weather?" }, assistantMessage, toolResult] };
+    const out = executor.transformRequest("deepseek-v4.1-flash-free", body, true, CREDS);
+
+    expect(out.messages[0]).toEqual(body.messages[0]);
+    expect(out.messages[1]).toMatchObject({
+      role: "assistant",
+      content: null,
+      tool_calls: assistantMessage.tool_calls,
+    });
+    expect(out.messages[2]).toEqual(toolResult);
+  });
+
+  it("aggregates streamed tool-call deltas and restores the original caller name", () => {
+    const body = {
+      messages: [{ role: "user", content: "find files" }],
+      tools: [{ type: "function", function: { name: "Grep", parameters: { type: "object" } } }],
+    };
+    executor.transformRequest("deepseek-v4.1-flash-free", body, true, CREDS);
+    const toolNameMap = takeRenamedToolNames(body);
+    const sse = [
+      'data: {"id":"c1","model":"deepseek-v4.1-flash-free","choices":[{"index":0,"delta":{"tool_calls":[{"index":0,"id":"call-1","type":"function","function":{"name":"grep","arguments":"{\\"query\\":"}}]},"finish_reason":null}]}',
+      'data: {"id":"c1","model":"deepseek-v4.1-flash-free","choices":[{"index":0,"delta":{"tool_calls":[{"index":0,"function":{"arguments":"\\"TODO\\"}"}}]},"finish_reason":null}]}',
+      'data: {"id":"c1","model":"deepseek-v4.1-flash-free","choices":[{"index":0,"delta":{},"finish_reason":"tool_calls"}]}',
+      "data: [DONE]",
+    ].join("\n");
+
+    const parsed = parseSSEToOpenAIResponse(sse, "deepseek-v4.1-flash-free");
+    expect(parsed.choices[0].finish_reason).toBe("tool_calls");
+    expect(restoreToolNames(parsed, toolNameMap).choices[0].message.tool_calls).toEqual([{
+      id: "call-1",
+      type: "function",
+      function: { name: "Grep", arguments: '{"query":"TODO"}' },
+    }]);
+  });
+
+  it("does not advertise space-bunny after upstream deprecates it", () => {
+    const ids = PROVIDER_MODELS.oc.map(({ id }) => id);
+    expect(ids).not.toContain("space-bunny-free");
+    expect(ids).toContain("minimax-m3.1-flash-free");
   });
 });

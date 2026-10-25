@@ -17,6 +17,7 @@ import {
   isAgentCapableRequest,
   buildAgentRunFrame,
   resolveCursorUpstreamModel,
+  tailOnlyCursorMessages,
   decodeAgentFrames,
 } from "../../open-sse/executors/cursor.js";
 
@@ -34,6 +35,29 @@ const entry = (k, v) => Buffer.concat([
 ]);
 
 describe("Cursor AgentService codec (cursorProtobuf.js)", () => {
+  for (const [model, effort, key, value] of [
+    ["gpt-5.2", "high", "reasoning", "high"],
+    ["claude-4.6-opus", "minimal", "effort", "low"],
+    ["composer-2.5", "ultra", "effort", "max"],
+  ]) {
+    it(`forwards ${effort} as a RequestedModel parameter for ${model}`, () => {
+      const frame = buildAgentRunFrame([{ role: "user", content: "hi" }], model, [], effort);
+      const run = decodeMessage(decodeMessage(frame.subarray(5)).get(1)[0].value);
+      const requested = decodeMessage(run.get(9)[0].value);
+      const parameter = decodeMessage(requested.get(3)[0].value);
+      expect(Buffer.from(parameter.get(1)[0].value).toString()).toBe(key);
+      expect(Buffer.from(parameter.get(2)[0].value).toString()).toBe(value);
+      expect(Buffer.from(requested.get(1)[0].value).toString()).toBe(model);
+      expect(run.has(3)).toBe(true);
+    });
+  }
+  for (const effort of [null, "none", ""]) {
+    it(`does not invent a RequestedModel parameter for ${String(effort)}`, () => {
+      const frame = buildAgentRunFrame([{ role: "user", content: "hi" }], "gpt-5.2", [], effort);
+      const run = decodeMessage(decodeMessage(frame.subarray(5)).get(1)[0].value);
+      expect(decodeMessage(run.get(9)[0].value).has(3)).toBe(false);
+    });
+  }
   describe("google.protobuf.Value round-trip", () => {
     const cases = [
       ["null", null],
@@ -403,7 +427,7 @@ function parseAgentSSE(text) {
     .map((data) => JSON.parse(data));
 }
 
-async function runAgent({ frames, stream, model = "gpt-5.2", tools }) {
+async function runAgent({ frames, stream, model = "gpt-5.2", tools, proxyOptions }) {
   const executor = new CursorExecutor();
   const written = stubAgentSession(executor, frames);
   const result = await executor.executeAgent({
@@ -411,11 +435,86 @@ async function runAgent({ frames, stream, model = "gpt-5.2", tools }) {
     body: { messages: [{ role: "user", content: "hi" }], ...(tools ? { tools } : {}) },
     stream,
     credentials: agentCredentials,
+    proxyOptions,
   });
   return { result, written };
 }
 
 describe("CursorExecutor AgentService exec_request handling", () => {
+  it("keeps the latest complete user turn when trimming long-session history", () => {
+    const messages = [
+      { role: "system", content: "system" },
+      { role: "user", content: "old request" },
+      { role: "assistant", content: "old answer" },
+      { role: "assistant", content: "tool call", tool_calls: [{ id: "call-1" }] },
+      { role: "tool", tool_call_id: "call-1", content: "tool output" },
+      { role: "user", content: "current request" },
+      { role: "assistant", content: "current tool call" },
+      { role: "tool", tool_call_id: "call-2", content: "current tool output" },
+    ];
+
+    expect(tailOnlyCursorMessages(messages)).toEqual([
+      { role: "system", content: "system" },
+      { role: "user", content: "current request" },
+      { role: "assistant", content: "current tool call" },
+      { role: "tool", tool_call_id: "call-2", content: "current tool output" },
+    ]);
+  });
+
+  it("retries an empty turn once with tail-only history for a long session", async () => {
+    const executor = new CursorExecutor();
+    const messages = [
+      ...Array.from({ length: 79 }, (_, index) => ({
+        role: index % 2 === 0 ? "user" : "assistant",
+        content: `turn ${index}`,
+      })),
+      { role: "user", content: "turn 79" },
+    ];
+    let attempt = 0;
+    const written = [];
+    executor.openAgentHttp2Stream = () => {
+      const frames = attempt++ === 0 ? [turnEndedFrame()] : [textFrame("recovered")];
+      return {
+        responseHeaders: Promise.resolve({ ":status": 200 }),
+        write: (frame) => written.push(Buffer.from(frame)),
+        end() {},
+        close() {},
+        async read() {
+          if (!frames.length) return { value: undefined, done: true };
+          return { value: frames.shift(), done: false };
+        },
+      };
+    };
+
+    const { response } = await executor.executeAgent({
+      model: "gpt-5.2",
+      body: { messages },
+      stream: false,
+      credentials: agentCredentials,
+    });
+
+    const payload = await response.json();
+    expect(payload.choices[0].message.content).toBe("recovered");
+    expect(written).toHaveLength(2);
+    const retryRun = decodeMessage(decodeMessage(written[1].subarray(5)).get(1)[0].value);
+    const runAction = decodeMessage(retryRun.get(2)[0].value);
+    const currentUser = decodeMessage(decodeMessage(runAction.get(1)[0].value).get(1)[0].value);
+    expect(Buffer.from(currentUser.get(1)[0].value).toString("utf8")).toContain("turn 79");
+    expect(Buffer.from(currentUser.get(1)[0].value).toString("utf8")).not.toContain("turn 0");
+  });
+
+  it("fails closed when strict proxy intent would use the direct h2 path", async () => {
+    const executor = new CursorExecutor();
+    executor.openAgentHttp2Stream = () => { throw new Error("must not open direct h2 session"); };
+    await expect(executor.executeAgent({
+      model: "gpt-5.2",
+      body: { messages: [{ role: "user", content: "hi" }] },
+      stream: false,
+      credentials: agentCredentials,
+      proxyOptions: { strictProxy: true, proxyPoolId: "strict-pool" },
+    })).rejects.toThrow(/strict proxy/);
+  });
+
   it("acks request_context with the exec ids and without echoing client tools", async () => {
     const { written, result } = await runAgent({
       tools: [{ function: { name: "read_file", parameters: { type: "object" } } }],

@@ -217,7 +217,9 @@ jobs:
     environment:
       name: release
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    # The registry can take several minutes to list a fresh version; the verify
+    # loop below waits up to ~15 minutes, so the job has to outlive it.
+    timeout-minutes: 25
     permissions:
       actions: read
       contents: read
@@ -268,14 +270,32 @@ jobs:
             exit 1
           fi
           if [ "$existing_integrity" = "MISSING" ]; then
-            npm publish "$tarball" --provenance
+            if ! publish_log="$(npm publish "$tarball" --provenance 2>&1)"; then
+              printf '%s\n' "$publish_log"
+              # A slow registry (or a concurrent run) can publish the version
+              # between the lookup and this call. The verification loop decides:
+              # matching integrity is success, anything else fails loudly.
+              if printf '%s' "$publish_log" | grep -q "previously published versions"; then
+                echo "::warning::${RELEASE_VERSION} appeared while publishing; verifying the published artifact instead"
+              else
+                echo "::error::npm publish failed"
+                exit 1
+              fi
+            else
+              printf '%s\n' "$publish_log"
+            fi
           elif [ "$existing_integrity" = "$EXPECTED_INTEGRITY" ]; then
             echo "npm version ${RELEASE_VERSION} is already published with the expected artifact"
           else
             echo "::error::npm version ${RELEASE_VERSION} already exists with a different artifact"
             exit 1
           fi
-          for attempt in 1 2 3 4 5 6 7 8 9 10 11 12; do
+          # npm accepts a publish before the version is readable (it reports
+          # "being processed"), and the delay has been observed at ~9 minutes.
+          # 60 attempts at 15s bounds the wait at ~15 minutes.
+          attempts=60
+          delay=15
+          for attempt in $(seq 1 "$attempts"); do
             if ! published_integrity="$(node scripts/npm-integrity.cjs "vansrouter@${RELEASE_VERSION}")"; then
               echo "::error::Unable to verify npm registry after publish"
               exit 1
@@ -288,9 +308,12 @@ jobs:
               echo "::error::npm published an unexpected integrity for ${RELEASE_VERSION}"
               exit 1
             fi
-            sleep 5
+            if [ "$attempt" -lt "$attempts" ]; then
+              echo "npm does not list ${RELEASE_VERSION} yet (attempt ${attempt}/${attempts}); retrying in ${delay}s"
+              sleep "$delay"
+            fi
           done
-          echo "::error::npm publish did not become visible with the expected integrity after ${attempt} attempts"
+          echo "::error::npm publish did not become visible with the expected integrity after ${attempts} attempts"
           exit 1
 
   promote-ghcr:

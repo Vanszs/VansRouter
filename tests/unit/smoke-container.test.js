@@ -10,6 +10,7 @@ const {
   ensureImageForPlatform,
   runContainerSmoke,
   verifyContainerOpenClosure,
+  verifyContainerArchitecture,
   verifyProductionLogin,
   verifyRemoteLoginIsGrantOnly,
 } = require("../../scripts/smoke-container.cjs");
@@ -39,6 +40,40 @@ describe("container release smoke test", () => {
       ["image", "rm", "example/image"],
       ["pull", "--platform", "linux/arm64", "example/image"],
     ]);
+  });
+
+  it("accepts a multi-platform index whose platform cannot be attributed", () => {
+    // The containerd image store reports "/" for a pulled index. Removing the
+    // image there would delete a good index, and failing would block every
+    // release now that runners default to that store.
+    const calls = [];
+    ensureImageForPlatform("example/image", "linux/arm64", {
+      inspectFn: () => "/",
+      dockerFn: (args) => { calls.push(args); },
+      pull: true,
+    });
+    expect(calls).toEqual([["pull", "--platform", "linux/arm64", "example/image"]]);
+  });
+
+  it("still rejects a pulled image that reports a different known platform", () => {
+    expect(() => ensureImageForPlatform("example/image", "linux/arm64", {
+      inspectFn: () => "linux/amd64",
+      dockerFn: () => {},
+      pull: true,
+    })).toThrow("Pulled image example/image reports platform linux/amd64, expected linux/arm64");
+  });
+
+  it("verifies the architecture the container actually runs", () => {
+    const seen = [];
+    verifyContainerArchitecture("c1", "linux/amd64", (args) => {
+      seen.push(args);
+      return "x64\n";
+    });
+    expect(seen).toEqual([["exec", "c1", "node", "-p", "process.arch"]]);
+    expect(() => verifyContainerArchitecture("c2", "linux/arm64", () => "x64\n"))
+      .toThrow("Container runs x64, expected arm64");
+    expect(() => verifyContainerArchitecture("c3", "linux/arm64", () => ""))
+      .toThrow("Container runs unknown, expected arm64");
   });
 
   it("smoke-tests the production password bootstrap", async () => {

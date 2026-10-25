@@ -24,6 +24,15 @@ function getOpenAICompatibleType(provider) {
   return provider.includes("responses") ? "responses" : "chat";
 }
 
+// Resolve the API dialect of an OpenAI-compatible node. The node's stored
+// apiType wins over the provider id, because the id bakes the type in at
+// creation time and a later edit of the node only updates the stored value.
+export function resolveOpenAICompatibleApiType(provider, credentials = null) {
+  const stored = credentials?.providerSpecificData?.apiType;
+  if (stored === "chat" || stored === "responses") return stored;
+  return getOpenAICompatibleType(provider);
+}
+
 // Detect request format from body structure
 export function detectFormat(body) {
   // OpenAI Responses API: has input (array or string) instead of messages[]

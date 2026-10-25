@@ -25,11 +25,9 @@ export default {
     authType: "apikey",
     authHeader: "bearer",
     costPerQuery: 0,
-    freeMonthlyQuota: 1000,
     searchTypes: ["web"],
     defaultMaxResults: 5,
     maxMaxResults: 10,
     timeoutMs: 10000,
-    cacheTTLMs: 300000,
   },
 };

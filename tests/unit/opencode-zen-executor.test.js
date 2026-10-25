@@ -45,7 +45,8 @@ describe("opencode-zen fingerprint executor (issue #2507)", () => {
     );
     const headers = executor.buildHeaders(credentials, true, "deepseek-v4-flash-free");
     expect(headers["Authorization"]).toBe("Bearer sk-zen-test");
-    expect(headers["User-Agent"]).toMatch(/^opencode\/\d+\./);
+    expect(headers["User-Agent"]).toBe("opencode/latest/2.0.29/cli");
+    expect(headers["x-opencode-client"]).toBe("cli");
     expect(headers["x-opencode-session"]).toMatch(SESS_RE);
     expect(headers["x-opencode-request"]).toMatch(REQ_RE);
   });

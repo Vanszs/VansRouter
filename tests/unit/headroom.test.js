@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
-import { compressWithHeadroom, formatHeadroomLog } from "../../open-sse/rtk/headroom.js";
+import { compressWithHeadroom, formatHeadroomLog, isHeadroomPhantomSavings } from "../../open-sse/rtk/headroom.js";
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -303,5 +303,23 @@ describe("formatHeadroomLog", () => {
   it("formats reported token deltas without implying provider billing savings", () => {
     expect(formatHeadroomLog({ tokens_before: 100, tokens_after: 25, tokens_saved: 75 }))
       .toBe("reported token delta=75 before=100 after=25 (75.0%)");
+  });
+});
+
+describe("isHeadroomPhantomSavings", () => {
+  const stats = { tokens_saved: 500 };
+
+  it("does not warn when tool schemas keep the body large but messages shrink", () => {
+    expect(isHeadroomPhantomSavings(stats, {
+      before: { bodyBytes: 100000, messageBytes: 1000 },
+      after: { bodyBytes: 99500, messageBytes: 500 },
+    })).toBe(false);
+  });
+
+  it("warns when messages barely shrink despite reported savings", () => {
+    expect(isHeadroomPhantomSavings(stats, {
+      before: { bodyBytes: 100000, messageBytes: 1000 },
+      after: { bodyBytes: 99500, messageBytes: 990 },
+    })).toBe(true);
   });
 });

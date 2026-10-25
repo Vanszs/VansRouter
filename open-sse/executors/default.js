@@ -1,7 +1,9 @@
 import { BaseExecutor } from "./base.js";
+import { randomUUID } from "node:crypto";
 import { PROVIDERS, PROVIDER_OAUTH } from "../config/providers.js";
 import { ANTHROPIC_API_VERSION, OPENAI_COMPAT_BASE, ANTHROPIC_COMPAT_BASE, applyAuth, mergeAnthropicBeta } from "../providers/shared.js";
-import { OAUTH_ENDPOINTS, buildKimiHeaders } from "../config/appConstants.js";
+import { OAUTH_ENDPOINTS, buildKimiHeaders, NOUS_ATTRIBUTION } from "../config/appConstants.js";
+import { resolveOpenAICompatibleApiType } from "../services/provider.js";
 import { buildClineHeaders } from "../shared/clineAuth.js";
 import { getCachedClaudeHeaders } from "../utils/claudeHeaderCache.js";
 import { proxyAwareFetch } from "../utils/proxyFetch.js";
@@ -10,6 +12,7 @@ import { stripUnsupportedParams } from "../translator/concerns/paramSupport.js";
 import { getCapabilitiesForModel } from "../providers/capabilities.js";
 import { getKimchiUserAgent } from "../utils/kimchiUserAgent.js";
 import { extractClaudeSessionIdFromUserId } from "../utils/claudeCloaking.js";
+import { refreshCodebuddyToken } from "../services/tokenRefresh/providers/index.js";
 
 // Auth header descriptors — derived from registry transport.auth, fallback to hardcoded defaults.
 const BEARER = { combined: true, header: "Authorization", scheme: "bearer" };
@@ -25,6 +28,15 @@ const HEADER_HOOKS = {
   // Stable device_id from OAuth connection (CLIProxyAPI KimiTokenStorage.DeviceID)
   kimiHeaders: (h, c) => Object.assign(h, buildKimiHeaders(c?.providerSpecificData?.deviceId)),
   kimchiHeaders: (h) => { h["User-Agent"] = getKimchiUserAgent(); },
+
+  // MiniMax Code (mcode): the placeholder x-api-key rides every request next
+  // to the Bearer token, plus per-request session/timezone headers. Static
+  // teammates (User-Agent, X-Mavis-Agent-Id) live in the registry transport.
+  minimaxHeaders: (h) => {
+    h["x-api-key"] = "sk-xxx";
+    h["X-Mavis-Timezone-Offset"] = String(new Date().getTimezoneOffset() * -60);
+    if (!h["X-Mavis-Session-Id"]) h["X-Mavis-Session-Id"] = randomUUID();
+  },
   // Muse: x-api-version only on subscription (minted key) requests — plain
   museHeaders: (h, c) => { if (c?.accessToken && !c?.apiKey) h["x-api-version"] = "1.0.0"; },
   clineHeaders: (h, c) => Object.assign(h, buildClineHeaders(c.apiKey || c.accessToken)),
@@ -139,8 +151,34 @@ export class DefaultExecutor extends BaseExecutor {
     return { matched, replacementBody };
   }
 
-  transformRequest(model, body) {
-    const transformed = this.applyJsonSchemaFallback(body);
+  // Nous Portal requires attribution tags on API-key requests. Only the
+  // Nous-hosted compatible node gets them, and only when the caller did not
+  // already supply a non-empty value for the same key.
+  applyNousAttribution(model, body, stream, credentials) {
+    if (!this.provider?.startsWith?.("openai-compatible-") || !credentials?.apiKey
+      || !body || typeof body !== "object" || Array.isArray(body)
+      || (body.tags != null && !Array.isArray(body.tags))) return body;
+
+    try {
+      const url = new URL(this.buildUrl(model, stream, 0, credentials));
+      if (url.protocol !== "https:" || url.hostname !== NOUS_ATTRIBUTION.hostname
+        || url.pathname !== NOUS_ATTRIBUTION.chatCompletionsPath) return body;
+    } catch {
+      return body;
+    }
+
+    let tags = Array.isArray(body.tags) ? [...body.tags] : [];
+    for (const fallback of NOUS_ATTRIBUTION.tags) {
+      const prefix = fallback.slice(0, fallback.indexOf("=") + 1);
+      // Empty attribution values do not satisfy the upstream requirement.
+      tags = tags.filter((tag) => typeof tag !== "string" || !tag.startsWith(prefix) || tag.slice(prefix.length).trim());
+      if (!tags.some((tag) => typeof tag === "string" && tag.startsWith(prefix))) tags.push(fallback);
+    }
+    return { ...body, tags: [...new Set(tags)] };
+  }
+
+  transformRequest(model, body, stream, credentials) {
+    const transformed = this.applyJsonSchemaFallback(this.applyNousAttribution(model, body, stream, credentials));
 
     if (transformed && typeof transformed === "object") {
       // quirk: some openai-compatible providers reject Anthropic's client_metadata field
@@ -226,7 +264,7 @@ export class DefaultExecutor extends BaseExecutor {
     if (this.provider?.startsWith?.("openai-compatible-")) {
       const baseUrl = credentials?.providerSpecificData?.baseUrl || OPENAI_COMPAT_BASE;
       const normalized = baseUrl.replace(/\/$/, "");
-      const path = this.provider.includes("responses") ? "/responses" : "/chat/completions";
+      const path = resolveOpenAICompatibleApiType(this.provider, credentials) === "responses" ? "/responses" : "/chat/completions";
       return `${normalized}${path}`;
     }
     if (this.provider?.startsWith?.("anthropic-compatible-")) {
@@ -353,7 +391,13 @@ export class DefaultExecutor extends BaseExecutor {
       clinepass: () => this.refreshCline(credentials.refreshToken, proxyOptions),
       kimi: () => this.refreshKimi(credentials, proxyOptions),
       "kimi-coding": () => this.refreshKimi(credentials, proxyOptions),
-      kilocode: () => this.refreshKilocode(credentials.refreshToken, proxyOptions)
+      kilocode: () => this.refreshKilocode(credentials.refreshToken, proxyOptions),
+      // CodeBuddy's access token lives ~1 year, so the pre-flight expiry check
+      // never fires; without this entry a 401 could not be retried with a fresh
+      // token and the connection stayed broken until re-auth. Manual token paste
+      // has no refresh token, so this no-ops there (guarded above).
+      "codebuddy-cn": () => refreshCodebuddyToken(credentials.refreshToken, log, "codebuddy-cn"),
+      "codebuddy-intl": () => refreshCodebuddyToken(credentials.refreshToken, log, "codebuddy-intl")
     };
 
     const refresher = refreshers[this.provider];

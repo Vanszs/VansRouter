@@ -1,6 +1,6 @@
 {
   "name": "vansrouter-app",
-  "version": "0.91.61",
+  "version": "0.91.81",
   "description": "9Router web dashboard",
   "private": true,
   "packageManager": "pnpm@9.15.9",
@@ -33,7 +33,6 @@
     "@monaco-editor/react": "^4.7.0",
     "@swc/helpers": "^0.5.15",
     "@next/env": "^16.1.6",
-    "@next/third-parties": "^16.2.9",
     "@xyflow/react": "^12.10.1",
     "bcryptjs": "^3.0.3",
     "confbox": "^0.2.4",
@@ -57,14 +56,15 @@
     "zustand": "^5.0.10"
   },
   "optionalDependencies": {
+    "@aws-sdk/credential-providers": "^3.1135.0",
     "better-sqlite3": "^12.6.2"
   },
-  "comment_better_sqlite3": "kept in optionalDependencies so npm install doesn't fail on systems without build tools — sql.js is used as fallback at runtime",
+  "comment_better_sqlite3": "kept in optionalDependencies so npm install doesn't fail on systems without build tools \u2014 sql.js is used as fallback at runtime",
+  "comment_aws_sdk_credential_providers": "kept in optionalDependencies (npm still installs these by default) and imported lazily in shared/awsCredentials.js \u2014 only AWS Bedrock connections using profile/SSO mode need it; static accessKeyId/secretAccessKey connections never load it",
   "devDependencies": {
     "@tailwindcss/postcss": "^4.1.18",
     "eslint": "^9",
     "eslint-config-next": "16.1.6",
-    "postcss": "^8.5.6",
     "tailwindcss": "^4",
     "eslint-plugin-react-hooks": "^7.1.1",
     "esbuild": "^0.28.1",

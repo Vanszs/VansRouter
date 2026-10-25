@@ -241,3 +241,27 @@ describe("extractReasoningText (response shapes)", () => {
     expect(extractReasoningText({ content: "hello" })).toBe("");
   });
 });
+
+describe("OpenCode Free reasoning capabilities", () => {
+  const minimax = (effort) => ({
+    model: "oc/minimax-m3.1-flash-free",
+    messages: [{ role: "user", content: "hi" }],
+    reasoning_effort: effort,
+  });
+
+  it("keeps the client reasoning_effort for minimax-m3.1-flash-free", () => {
+    for (const level of ["low", "medium", "high", "xhigh", "none"]) {
+      expect(apply("openai", "oc/minimax-m3.1-flash-free", minimax(level), "oc").reasoning_effort).toBe(level);
+      expect(apply("openai-responses", "oc/minimax-m3.1-flash-free", minimax(level), "oc").reasoning_effort).toBe(level);
+    }
+  });
+
+  it("clamps max to xhigh (openai format has no max)", () => {
+    expect(apply("openai", "oc/minimax-m3.1-flash-free", minimax("max"), "oc").reasoning_effort).toBe("xhigh");
+    expect(apply("openai-responses", "oc/minimax-m3.1-flash-free", minimax("max"), "oc").reasoning_effort).toBe("xhigh");
+  });
+
+  it("strips reasoning for an unknown model", () => {
+    expect(apply("openai", "oc/no-such-model-xyz", minimax("high"), "oc").reasoning_effort).toBeUndefined();
+  });
+});

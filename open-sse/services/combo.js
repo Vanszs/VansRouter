@@ -272,12 +272,33 @@ export function resetComboRotation(comboName) {
   else comboRotationState.clear();
 }
 
-/**
- * Get combo models from combos data
- * @param {string} modelStr - Model string to check
- * @param {Array|Object} combosData - Array of combos or object with combos
- * @returns {string[]|null} Array of models or null if not a combo
- */
+/** Detect successful JSON responses that contain no usable assistant output. */
+export function isZeroContentResponse(data) {
+  if (!data || typeof data !== "object") return false;
+
+  if (Array.isArray(data.choices)) {
+    const choice = data.choices[0];
+    if (!choice) return true;
+    const message = choice.message || choice.delta || {};
+    const hasContent = typeof message.content === "string"
+      ? message.content.trim().length > 0
+      : Array.isArray(message.content) && message.content.length > 0;
+    const hasTools = (Array.isArray(message.tool_calls) && message.tool_calls.length > 0) || Boolean(message.function_call);
+    const hasReasoning = typeof message.reasoning_content === "string" && message.reasoning_content.trim().length > 0;
+    return !hasContent && !hasTools && !hasReasoning
+      && !["stop", "length", "tool_calls", "function_call"].includes(choice.finish_reason);
+  }
+
+  if (Array.isArray(data.content)) {
+    const hasContent = data.content.some((block) =>
+      (block?.type === "text" && typeof block.text === "string" && block.text.trim())
+      || block?.type === "tool_use");
+    return !hasContent && (!data.stop_reason || data.stop_reason === "in_progress" || data.stop_reason === "incomplete");
+  }
+
+  return false;
+}
+
 export function getComboModelsFromData(modelStr, combosData) {
   // Don't check if it's in provider/model format
   if (modelStr.includes("/")) return null;
@@ -412,6 +433,21 @@ export async function handleComboChat({ body, models, handleSingleModel, log, co
           ]);
         } finally {
           clearTimeout(timeoutId);
+        }
+      }
+
+      // A non-final JSON seat with no usable output should not block fallback.
+      if (result.ok && i < rotatedModels.length - 1
+        && (result.headers.get("content-type") || "").includes("application/json")) {
+        try {
+          if (isZeroContentResponse(await result.clone().json())) {
+            lastError = "Zero usable content";
+            lastStatus = result.status;
+            log.warn("COMBO", `Model ${modelStr} returned HTTP ${result.status} with zero usable content, trying next`);
+            continue;
+          }
+        } catch {
+          // Leave unparseable JSON responses unchanged.
         }
       }
 

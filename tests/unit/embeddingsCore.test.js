@@ -31,6 +31,8 @@ vi.mock("../../open-sse/utils/proxyFetch.js", () => ({
 }));
 
 import { handleEmbeddingsCore } from "../../open-sse/handlers/embeddingsCore.js";
+import githubEmbeddingAdapter from "../../open-sse/handlers/embeddingProviders/github.js";
+import { getEmbeddingAdapter } from "../../open-sse/handlers/embeddingProviders/index.js";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -100,6 +102,29 @@ describe("buildEmbeddingsBody", () => {
     expect(sent.model).toBe("text-embedding-ada-002");
     expect(sent.input).toBe("Hello world");
     expect(sent.encoding_format).toBe("float");
+  });
+
+  it("registers the GitHub adapter and uses its current endpoint and Copilot identity headers", () => {
+    expect(getEmbeddingAdapter("github")).toBe(githubEmbeddingAdapter);
+    expect(githubEmbeddingAdapter.buildUrl()).toBe("https://api.githubcopilot.com/embeddings");
+    expect(githubEmbeddingAdapter.buildHeaders({
+      accessToken: "gh-token",
+      copilotToken: "cp-token",
+    })).toMatchObject({
+      Authorization: "Bearer cp-token",
+      "copilot-integration-id": "vscode-chat",
+      "editor-version": "vscode/1.110.0",
+      "editor-plugin-version": "copilot-chat/0.38.0",
+      "user-agent": "GitHubCopilotChat/0.38.0",
+      "x-github-api-version": "2025-04-01",
+    });
+  });
+
+  it("GitHub Copilot adapter uses stored Copilot tokens before the GitHub token", () => {
+    expect(githubEmbeddingAdapter.buildHeaders({
+      accessToken: "gh-token",
+      providerSpecificData: { copilotToken: "stored-cp-token" },
+    }).Authorization).toBe("Bearer stored-cp-token");
   });
 
   it("array input — passes array as-is", async () => {
@@ -583,6 +608,30 @@ describe("handleEmbeddingsCore — provider error handling", () => {
 
     expect(body).toHaveProperty("error");
     expect(body.error).toHaveProperty("message");
+  });
+});
+
+describe("GitHub Copilot embeddings adapter", () => {
+  it("uses the retired-host replacement and Copilot identity headers", () => {
+    expect(githubEmbeddingAdapter.buildUrl()).toBe("https://api.githubcopilot.com/embeddings");
+    expect(githubEmbeddingAdapter.buildHeaders({
+      accessToken: "gh-token",
+      copilotToken: "cp-token",
+    })).toMatchObject({
+      Authorization: "Bearer cp-token",
+      "copilot-integration-id": "vscode-chat",
+      "editor-version": "vscode/1.110.0",
+      "editor-plugin-version": "copilot-chat/0.38.0",
+      "user-agent": "GitHubCopilotChat/0.38.0",
+      "x-github-api-version": "2025-04-01",
+    });
+  });
+
+  it("falls back to the stored Copilot token when credentials lack the top-level token", () => {
+    expect(githubEmbeddingAdapter.buildHeaders({
+      accessToken: "gh-token",
+      providerSpecificData: { copilotToken: "stored-cp-token" },
+    }).Authorization).toBe("Bearer stored-cp-token");
   });
 });
 

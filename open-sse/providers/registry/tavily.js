@@ -23,15 +23,13 @@ export default {
     authType: "apikey",
     authHeader: "bearer",
     costPerQuery: 0.008,
-    freeMonthlyQuota: 1000,
     searchTypes: [
       "web",
       "news"
     ],
     defaultMaxResults: 5,
     maxMaxResults: 20,
-    timeoutMs: 10000,
-    cacheTTLMs: 300000
+    timeoutMs: 10000
   },
   fetchConfig: {
     baseUrl: "https://api.tavily.com/extract",
@@ -39,7 +37,6 @@ export default {
     authType: "apikey",
     authHeader: "bearer",
     costPerQuery: 0.008,
-    freeMonthlyQuota: 1000,
     formats: [
       "markdown",
       "text"
