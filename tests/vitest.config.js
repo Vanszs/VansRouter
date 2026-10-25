@@ -26,6 +26,15 @@ export default defineConfig({
       API_KEY_SECRET: "test-api-key-secret-for-ci-only",
     },
   },
+  // Next.js compiles JSX in .js files through SWC; esbuild's default loader
+  // treats .js as plain JS and refuses to parse component sources. Tests that
+  // render a client component need this to import it.
+  esbuild: {
+    loader: "jsx",
+    jsx: "automatic",
+    include: /[\\/]src[\\/].*\.js$/,
+    exclude: /node_modules/,
+  },
   resolve: {
     // Use array form so subpath aliases (e.g. "@/lib/db/index.js") resolve correctly.
     alias: [

@@ -15,7 +15,7 @@ export default function RelayDeployModal({
   title,
   intro,
   bullets,
-  tokenSteps,
+  tokenSteps = [],
   tokenStepsTitle,
   fields,
   deployLabel,
