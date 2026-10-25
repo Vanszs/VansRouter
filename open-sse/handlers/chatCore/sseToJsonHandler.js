@@ -5,7 +5,7 @@ import { FORMATS } from "../../translator/formats.js";
 import { PROVIDERS } from "../../config/providers.js";
 import { buildRequestDetail, extractRequestConfig, saveUsageStats } from "./requestDetail.js";
 import { extractToolNames, fuzzyMatchToolName } from "../../translator/concerns/toolCall.js";
-import { openaiToClaudeNonStreaming } from "./nonStreamingHandler.js";
+import { openAICompletionToClaudeMessage } from "../../translator/concerns/claudeMessage.js";
 import { decloakToolNames } from "../../utils/claudeCloaking.js";
 import { restoreToolNames } from "../../utils/opencodeFingerprint.js";
 
@@ -246,7 +246,7 @@ export async function handleForcedSSEToJson({ providerResponse, sourceFormat, pr
           usage: { prompt_tokens: inTokens, completion_tokens: outTokens }
         };
         if (hasToolCalls) openaiBody.choices[0].message.tool_calls = toolCalls;
-        const reversed = openaiToClaudeNonStreaming(openaiBody, model);
+        const reversed = openAICompletionToClaudeMessage(openaiBody, model);
         finalResp = decloakToolNames(reversed, toolNameMap);
       } else {
         const message = { role: "assistant", content: textContent || (hasToolCalls ? null : "") };
@@ -326,7 +326,7 @@ export async function handleForcedSSEToJson({ providerResponse, sourceFormat, pr
     //  streaming response was aggregated to OpenAI JSON, must convert back)
     let finalResp = parsed;
     if (sourceFormat === FORMATS.CLAUDE) {
-      const reversed = openaiToClaudeNonStreaming(parsed, model);
+      const reversed = openAICompletionToClaudeMessage(parsed, model);
       finalResp = decloakToolNames(reversed, toolNameMap);
     }
 

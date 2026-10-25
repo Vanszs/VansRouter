@@ -9,7 +9,7 @@
 import { describe, it, expect } from "vitest";
 import { openaiToClaudeRequest } from "../../open-sse/translator/request/openai-to-claude.js";
 import { openaiToClaudeResponse } from "../../open-sse/translator/response/openai-to-claude.js";
-import { openaiToClaudeNonStreaming } from "../../open-sse/handlers/chatCore/nonStreamingHandler.js";
+import { openAICompletionToClaudeMessage } from "../../open-sse/translator/concerns/claudeMessage.js";
 import { decloakToolNames } from "../../open-sse/utils/claudeCloaking.js";
 
 describe("openaiToClaudeRequest", () => {
@@ -215,7 +215,7 @@ describe("openaiToClaudeResponse", () => {
   });
 });
 
-describe("openaiToClaudeNonStreaming", () => {
+describe("openAICompletionToClaudeMessage", () => {
   it("translates OpenAI text and reasoning content to Claude blocks", () => {
     const openaiBody = {
       id: "chatcmpl-123",
@@ -238,7 +238,7 @@ describe("openaiToClaudeNonStreaming", () => {
       }
     };
 
-    const result = openaiToClaudeNonStreaming(openaiBody, "claude-3-5-sonnet");
+    const result = openAICompletionToClaudeMessage(openaiBody, "claude-3-5-sonnet");
 
     expect(result.id).toBe("msg_123");
     expect(result.type).toBe("message");
@@ -281,7 +281,7 @@ describe("openaiToClaudeNonStreaming", () => {
       }
     };
 
-    const result = openaiToClaudeNonStreaming(openaiBody);
+    const result = openAICompletionToClaudeMessage(openaiBody);
 
     expect(result.id).toBe("msg_456");
     expect(result.stop_reason).toBe("tool_use");
@@ -321,7 +321,7 @@ describe("openaiToClaudeNonStreaming", () => {
     };
 
     const toolNameMap = new Map([["read_file_cc", "read_file"]]);
-    const reversed = openaiToClaudeNonStreaming(openaiBody, "claude-3-5-sonnet");
+    const reversed = openAICompletionToClaudeMessage(openaiBody, "claude-3-5-sonnet");
     const result = decloakToolNames(reversed, toolNameMap);
 
     expect(result.content[0].name).toBe("read_file");
@@ -329,7 +329,7 @@ describe("openaiToClaudeNonStreaming", () => {
 
   it("handles missing choices gracefully", () => {
     const emptyBody = { choices: [] };
-    expect(openaiToClaudeNonStreaming(emptyBody)).toEqual(emptyBody);
-    expect(openaiToClaudeNonStreaming(null)).toBeNull();
+    expect(openAICompletionToClaudeMessage(emptyBody)).toEqual(emptyBody);
+    expect(openAICompletionToClaudeMessage(null)).toBeNull();
   });
 });

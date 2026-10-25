@@ -218,8 +218,20 @@ function fixToolUseOrdering(messages) {
 // Models that reject thinking.type "adaptive" + output_config.effort (Opus 4.5+/Sonnet 4.6+ only)
 const ADAPTIVE_THINKING_UNSUPPORTED = /haiku/i;
 
+// Anthropic rejects empty thinking text. Only plain thinking blocks carry
+// `thinking`; redacted_thinking blocks carry `data` and must be preserved.
+function isBlankThinkingBlock(block) {
+  return block?.type === CLAUDE_BLOCK.THINKING && !String(block.thinking ?? "").trim();
+}
+
+// Providers whose upstream is Anthropic itself and therefore accepts
+// Anthropic-only request fields. Everything else must not receive them.
+function isAnthropicServing(provider) {
+  return provider === "claude" || provider?.startsWith?.("anthropic-compatible");
+}
+
 function handlesThinkingBlocks(provider) {
-  return provider === "claude" || provider?.startsWith("anthropic-compatible") || provider === "deepseek";
+  return isAnthropicServing(provider) || provider === "deepseek";
 }
 
 function buildThinkingPlaceholder(provider, unsigned = false) {
@@ -348,7 +360,8 @@ export function normalizeClaudePassthrough(body, model = "") {
       if (typeof msg.content === "string") return msg.content.trim().length > 0;
       if (!Array.isArray(msg.content)) return true;
       msg.content = msg.content.filter(block =>
-        !(block?.type === CLAUDE_BLOCK.TEXT && !String(block.text ?? "").trim()));
+        !(block?.type === CLAUDE_BLOCK.TEXT && !String(block.text ?? "").trim())
+        && !isBlankThinkingBlock(block));
       return msg.content.length > 0;
     });
     body.messages = ensureTrailingUserTurn(body.messages, originalLastRole);
@@ -409,6 +422,15 @@ export function prepareClaudeRequest(body, provider = null, apiKey = null, conne
   // quirk: MiniMax's Claude-compatible endpoint rejects Anthropic's output_config (400 invalid params)
   if (PROVIDERS[provider]?.quirks?.dropOutputConfig) {
     delete body.output_config;
+  }
+
+  // Claude Code sends a context-editing strategy that only Anthropic accepts;
+  // other Claude-transport engines reject the field outright (400
+  // "context_management: Extra inputs are not permitted"). Same-format
+  // claude→claude requests skip body rebuilding, so this is the last chance to
+  // drop it before the body reaches a non-Anthropic upstream.
+  if (!isAnthropicServing(provider)) {
+    delete body.context_management;
   }
 
   // Models whose API rejects thinking "disabled" and forced tool use with a 400
@@ -537,6 +559,7 @@ export function prepareClaudeRequest(body, provider = null, apiKey = null, conne
           for (const block of msg.content) {
             const isThinking = block.type === CLAUDE_BLOCK.THINKING || block.type === CLAUDE_BLOCK.REDACTED_THINKING;
             if (isThinking) {
+              if (isBlankThinkingBlock(block)) continue;
               if (isClaudeNative) {
                 if (isValidClaudeSignature(block.signature)) {
                   hasKeptThinking = true;
