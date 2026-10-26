@@ -1250,6 +1250,9 @@ export const PATTERN_CAPABILITIES = [
   { pattern: "*gemma*",         caps: { vision: true, contextWindow: 128000 } },
   { pattern: "*nanobanana*",    caps: { vision: true, imageOutput: true } },
   // ── OpenAI GPT-6.x (vision + thinking + web search) ──────────────
+  // Image variants ("-image" suffix) are image models, not chat models — first
+  // match wins, so they must precede the generic family entry below.
+  { pattern: "*gpt-6*image*",   caps: { imageOutput: true } },
   // 1.05M is the API window for the whole gpt-6 family (astra, luna, sol alike).
   // A gateway that truncates lower records its own number in
   // PROVIDER_CAPABILITIES, which wins over this pattern — Kiro at 272k, Codex

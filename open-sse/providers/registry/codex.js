@@ -77,65 +77,15 @@ export default {
     // Codex CLI's auto-review virtual model. Unlike the "-review" variants above it is not derived
     // from a base model, so it is forwarded verbatim instead of having "-review" stripped.
     { id: "codex-auto-review", name: "Codex Auto Review", upstreamModelId: "codex-auto-review", quotaFamily: "review" },
-    {
-      id: "gpt-image-2.5",
-      name: "GPT Image 2.5",
-      capabilities: ["text2img", "edit", "multiImage"],
-      params: ["size", "quality", "background", "image_detail", "output_format"],
-      kind: "image",
-    },
-    {
-      id: "gpt-image-2.5-flare",
-      name: "GPT Image 2.5 Flare",
-      capabilities: ["text2img", "edit", "multiImage"],
-      params: ["size", "quality", "background", "image_detail", "output_format"],
-      kind: "image",
-    },
-    {
-      id: "gpt-image-2.5-sunburst",
-      name: "GPT Image 2.5 Sunburst",
-      capabilities: ["text2img", "edit", "multiImage"],
-      params: ["size", "quality", "background", "image_detail", "output_format"],
-      kind: "image",
-    },
-    {
-      id: "gpt-image-2",
-      name: "GPT Image 2",
-      capabilities: ["text2img", "edit", "multiImage"],
-      params: ["size", "quality", "background", "image_detail", "output_format"],
-      kind: "image",
-    },
-    {
-      id: "gpt-image-1.5",
-      name: "GPT Image 1.5",
-      capabilities: ["text2img", "edit", "multiImage"],
-      params: ["size", "quality", "background", "image_detail", "output_format"],
-      kind: "image",
-    },
-    {
-      id: "gpt-5.6-sol-image",
-      name: "GPT 5.6 Sol Image",
-      capabilities: ["text2img", "edit"],
-      params: ["size", "quality", "background", "image_detail", "output_format"],
-      kind: "image",
-    },
-    {
-      id: "gpt-5.6-terra-image",
-      name: "GPT 5.6 Terra Image",
-      capabilities: ["text2img", "edit"],
-      params: ["size", "quality", "background", "image_detail", "output_format"],
-      kind: "image",
-    },
-    {
-      id: "gpt-5.6-luna-image",
-      name: "GPT 5.6 Luna Image",
-      capabilities: ["text2img", "edit"],
-      params: ["size", "quality", "background", "image_detail", "output_format"],
-      kind: "image",
-    },
-    // gpt-5.5-image retired alongside the GPT-5.5 Codex model (#4848).
-    // gpt-5.4-image removed alongside gpt-5.4 (both are dead on the backend) (#4202).
-    { id: "gpt-5.3-image", name: "GPT 5.3 Image", capabilities: ["text2img","edit"], params: ["size","quality","background","image_detail","output_format"], kind: "image" },
+    { id: "gpt-image-2.5", name: "GPT Image 2.5", capabilities: ["text2img","edit","multiImage"], params: ["size","quality","background","image_detail","output_format"], kind: "image" },
+    { id: "gpt-image-2.5-flare", name: "GPT Image 2.5 Flare", capabilities: ["text2img","edit","multiImage"], params: ["size","quality","background","image_detail","output_format"], kind: "image" },
+    { id: "gpt-image-2.5-sunburst", name: "GPT Image 2.5 Sunburst", capabilities: ["text2img","edit","multiImage"], params: ["size","quality","background","image_detail","output_format"], kind: "image" },
+    { id: "gpt-image-2", name: "GPT Image 2", capabilities: ["text2img","edit","multiImage"], params: ["size","quality","background","image_detail","output_format"], kind: "image" },
+    { id: "gpt-image-1.5", name: "GPT Image 1.5", capabilities: ["text2img","edit","multiImage"], params: ["size","quality","background","image_detail","output_format"], kind: "image" },
+    { id: "gpt-6-sol-image", name: "GPT 6.0 Sol Image", capabilities: ["text2img","edit"], params: ["size","quality","background","image_detail","output_format"], kind: "image" },
+    { id: "transcribe", name: "Codex Transcription", kind: "stt", params: ["response_format"], responseFormats: ["json", "text"] },
+    // gpt-5.5-image / gpt-5.4-image / gpt-5.3-image removed alongside base models.
+    // gpt-5.6-{sol,terra,luna}-image removed: superseded by gpt-6-sol-image.
   ],
   serviceKinds: ["llm","image"],
   oauth: {
