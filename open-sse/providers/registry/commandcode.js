@@ -39,6 +39,7 @@ export default {
     { id: "Qwen/Qwen3.6-Max-Preview", name: "Qwen 3.6 Max Preview" },
     { id: "Qwen/Qwen3.6-Plus", name: "Qwen 3.6 Plus" },
     { id: "stepfun/Step-3.5-Flash", name: "Step 3.5 Flash" },
+    { id: "moonshotai/Kimi-K3.1-Pro", name: "Kimi K3.1 Pro" },
     { id: "moonshotai/Kimi-K2.7-Code", name: "Kimi K2.7 Code" },
     { id: "moonshotai/Kimi-K2.7-Code-Highspeed", name: "Kimi K2.7 Code HighSpeed" },
     { id: "zai-org/GLM-5.2", name: "GLM 5.2" },
