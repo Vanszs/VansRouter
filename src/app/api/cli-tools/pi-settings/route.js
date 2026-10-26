@@ -157,7 +157,9 @@ export async function POST(request) {
       return {
         ...prev,
         ...m,
-        name: m.name || prev.name || m.id,
+        // The card always sends name === id, so treat that as "unset" and keep
+        // a display name the user set by hand in models.json.
+        name: m.name && m.name !== m.id ? m.name : (prev.name || m.id),
         contextWindow: cap(m.contextWindow ?? prev.contextWindow, 200000, 2000000),
         maxTokens: cap(m.maxTokens ?? prev.maxTokens, 64000, 200000),
       };
