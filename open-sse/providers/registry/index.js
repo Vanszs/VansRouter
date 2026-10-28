@@ -164,6 +164,7 @@ import p161 from "./bedrock.js";
 import p162 from "./bedrock-xai.js";
 import p163 from "./sensenova.js";
 import p164 from "./runcrate.js";
+import p165 from "./nace.js";
 
 // Auto-generated: static imports for all registry entries
 import p68z from "./opencode-zen.js";
@@ -342,5 +343,6 @@ export default [
   p162,
   p163,
   p164,
+  p165,
   nousProvider
 ];
