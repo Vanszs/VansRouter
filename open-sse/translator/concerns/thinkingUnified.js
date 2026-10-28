@@ -261,7 +261,7 @@ function stripAll(body) {
 }
 
 // Apply unified thinking config to body in the resolved provider-native format.
-function applyFormat(fmt, body, cfg, caps, supportedLevels, display) {
+function applyFormat(fmt, body, cfg, caps, supportedLevels, display, model = "") {
   const none = cfg.mode === "none";
   const canDisable = caps.thinkingCanDisable !== false;
   // Model cannot disable thinking → clamp "none" to minimal effort instead.
@@ -293,16 +293,15 @@ function applyFormat(fmt, body, cfg, caps, supportedLevels, display) {
     }
     case "claude-adaptive": {
       if (none && canDisable) { body.thinking = { type: "disabled" }; break; }
-      // output_config.effort alone does NOT turn thinking on: Anthropic requires
-      // an explicit thinking:{type:"adaptive"} on Opus 4.6/4.7/4.8 and Sonnet 4.6
-      // ("thinking is off unless you explicitly set it"), and Anthropic-compatible
-      // shims (e.g. GitHub Copilot /v1/messages) default thinking off even for
-      // Sonnet 5. Send both fields — the documented adaptive-thinking shape.
-      // A model that cannot turn thinking off (Opus 5.5, Fable 5.1) is always
-      // on, so the effort alone is enough and the switch is left out.
-      if (canDisable) body.thinking = { type: "adaptive", ...(display ? { display } : {}) };
-      else delete body.thinking;
       const level = toLevel(eff);
+      // Models that can disable thinking need the explicit adaptive switch.
+      // Permanently adaptive models such as Fable 5.1 accept effort directly. Claude
+      // ones still get the switch when it carries a requested display: display
+      // defaults to "omitted" there, so dropping it hides the thinking text. A
+      // thinking-off request (clamped to minimal) asks for no thinking text.
+      if (canDisable) body.thinking = { type: "adaptive", ...(display ? { display } : {}) };
+      else if (display && level !== "minimal" && /claude/i.test(model)) body.thinking = { type: "adaptive", display };
+      else delete body.thinking;
       // xhigh is model-gated (Opus/Sonnet 4.6 reject it) — clamp when not advertised.
       // Claude effort has no "minimal" (always-on models clamp "none" to it).
       body.output_config = { effort: level === "auto" ? "high"
@@ -479,6 +478,6 @@ export function applyThinking(targetFormat, model, body, provider = null, intent
   stripAll(body);
   // Declared level ceiling for this model, so a format's effort mapping can clamp
   // a level the model rejects (e.g. deepseek "max" on the mimo v2.5-pro/v2.6 backends).
-  applyFormat(fmt, body, effectiveCfg, caps, getThinkingLevels(provider, cleanModel), display);
+  applyFormat(fmt, body, effectiveCfg, caps, getThinkingLevels(provider, cleanModel), display, cleanModel);
   return body;
 }
