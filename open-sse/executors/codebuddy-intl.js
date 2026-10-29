@@ -76,7 +76,11 @@ export class CodeBuddyIntlExecutor extends DefaultExecutor {
     headers["X-Conversation-ID"] = conversationKey
       ? stableUuidFrom(conversationKey)
       : randomUUID();
-    headers["X-Conversation-Request-ID"] = randomUUID();
+    // The channel check wants one request id shared by the request and
+    // conversation-request headers; the hook already set both, so reuse it.
+    const requestId = headers["X-Request-ID"] || randomUUID();
+    headers["X-Request-ID"] = requestId;
+    headers["X-Conversation-Request-ID"] = requestId;
     headers["X-Conversation-Message-ID"] = randomUUID();
 
     return headers;
