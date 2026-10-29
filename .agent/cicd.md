@@ -28,42 +28,49 @@ RELEASE_TAG_REF=refs/tags/release-validation node cli/scripts/validate-release.c
 3. Run validation and build.
 4. Update the top `CHANGELOG.md` entry with the final version and verified changes.
 5. Commit `CHANGELOG.md` alone. This must be the final commit before the tag.
-6. Create and push an annotated tag:
+6. Push the commits to a temporary branch and open a pull request against `main`.
+   Never push directly to `main`: the required check must already exist on the
+   commit, and a check run produced for another branch is not counted for a
+   direct push, so the push is rejected with `Required status check ... is
+   expected` even when that check passed (verified on v0.91.85).
+7. Wait for `Validate (Ubuntu / Node 22)` on the pull request, then merge with
+   **Rebase and merge**. Rebase keeps the commit order, so the merged tip is
+   still the changelog-only commit that `--pretag` requires. A merge commit
+   fails validation because it does not change only `CHANGELOG.md`.
+8. Sync `main` from the merged tip, re-run `--pretag` on it, then create and
+   push the annotated tag.
+
+`gh` resolves this checkout to the upstream `decolua/9router` repository
+because an `upstream` remote exists, so every `gh` command below names
+`-R Vanszs/VansRouter` explicitly.
 
 ```bash
+git switch -c release/vX.Y.Z
+git push origin release/vX.Y.Z
+
+gh pr create -R Vanszs/VansRouter --base main --head release/vX.Y.Z \
+  --title "Release vX.Y.Z" --body "Release vX.Y.Z"
+
+# Wait until "Validate (Ubuntu / Node 22)" succeeds on the pull request.
+gh pr merge -R Vanszs/VansRouter --rebase --delete-branch
+
+git fetch origin main
+git switch -C main origin/main
+node cli/scripts/validate-release.cjs vX.Y.Z --pretag
 git tag -a vX.Y.Z -m "Release vX.Y.Z"
 git push origin vX.Y.Z
 ```
 
-### Example: Release `v0.91.10`
-
-Use the exact release version everywhere. Do not combine the changelog commit with code, workflow, or package-version changes.
-
-```bash
-# Commit 1: code, CI, tests, and package version bump
-git add package.json cli/package.json .github/workflows/release.yml cli/scripts AGENTS.md .agent/cicd.md
-git commit -m "chore: prepare release 0.91.10"
-
-# Commit 2: changelog only; must remain the final commit before the tag
-git add CHANGELOG.md
-git diff --cached --name-only
-# Expected output: CHANGELOG.md
-git commit -m "docs(changelog): release v0.91.10"
-
-git push origin main
-node cli/scripts/validate-release.cjs v0.91.10 --pretag
-git tag -a v0.91.10 -m "Release v0.91.10"
-git push origin v0.91.10
-```
-
-Before using another version, replace every `0.91.10` occurrence above with the new `X.Y.Z`. Confirm both package files and the top changelog heading use the same version.
+Use the exact release version everywhere. Do not combine the changelog commit
+with code, workflow, or package-version changes.
 
 ## Pre-Tag Validation
 
-Run from a clean `main` checkout:
+Run from a clean `main` checkout at the merged release tip:
 
 ```bash
-git pull --ff-only origin main
+git fetch origin main
+git switch -C main origin/main
 git status --short
 git -c core.whitespace=cr-at-eol diff --check
 node -e 'const a=require("./package.json"),b=require("./cli/package.json"); if(a.version!==b.version) throw Error(`${a.version} !== ${b.version}`); console.log(a.version)'
@@ -81,12 +88,14 @@ The `--pretag` command checks the changelog-only commit before the tag exists. A
 - The build must use `pnpm install --frozen-lockfile` with the repository lockfile. The native dependency stage must use its committed `docker/native-deps/package-lock.json` and `npm ci --ignore-scripts`; the target-specific `better-sqlite3` musl binary is downloaded separately for the pinned Node ABI and SHA-256 verified before use.
 - Node/Alpine base images and external Tailscale archives are digest/checksum pinned; the bundled Tailscale release is kept current.
 - The image must retain provenance and SBOM attestations, and the release workflow must promote the exact Buildx digest rather than a mutable staging tag. Registry inspection errors are fatal; only an explicit not-found result permits tag creation.
-- The staging image is pushed under the single fixed tag `ghcr.io/vanszs/vansrouter:staging`, never a unique `release-<run_id>-<run_attempt>` tag. Nothing reads the staging tag by name (verification and promotion use the digest) and the `release` concurrency group serializes runs, so per-run tags only accumulated orphan tags in GHCR. Tag growth must stay bounded.
+- The staging image is pushed under the single fixed tag `ghcr.io/vanszs/vansrouter:staging`, never a unique `release-<run_id>-<run_attempt>` tag. Nothing reads the staging tag by name (verification and promotion use the digest) and the `release` concurrency group serializes runs, so per-run tags only accumulated orphan tags in GHCR. Tag growth must stay bounded: provenance and SBOM attestations still add one `sha256-<digest>` tag per build, and cleanup must not delete it.
 - The image smoke test must force a platform-specific pull, start the published image, and verify `/api/ready`, `/api/health`, and `/api/version` on both `linux/amd64` and `linux/arm64`.
 
 ## CI Gates
 
 For `origin/main` branch protection, the required status check is exactly `Validate (Ubuntu / Node 22)` from `.github/workflows/ci.yml`. The cross-platform matrix is conditional and must not be a required check because GitHub may legitimately skip it on non-platform changes. Branch protection also requires the branch to be up to date, blocks force-push/deletion, enforces admin rules, and requires conversation resolution.
+
+The required check is evaluated on pull requests. A check run attached to a release branch does not satisfy a direct push to `main`, and posting a commit status to fake that link bypasses the control; use the pull-request flow above instead.
 
 The release workflow must complete in this order:
 
@@ -116,7 +125,7 @@ Before the next release, repository administrators must enable and verify:
 - repository-level Actions SHA pinning enforcement;
 - Dependabot updates for GitHub Actions, Docker, and the CLI npm lockfile.
 
-These are host settings, not repository files. CI must not be considered release-hardened until the settings are verified through the GitHub API.
+These are host settings, not repository files. CI must not be considered release-hardened until the settings are verified through the GitHub API. Verified on 2026-10-29: the tag ruleset, Actions SHA pinning, and required reviewer approval on the `release` environment are enabled; v0.91.85 itself ran before the reviewer gate existed.
 
 ## Deployment Rules
 
@@ -138,9 +147,11 @@ curl -fsS http://127.0.0.1:3003/api/health
 ## Failure Recovery
 
 - `check-branch` or package failure: fix the branch and create a new version/tag.
+- `GH006 Required status check ... is expected` on `git push origin main`: this is branch protection working as designed, not a CI failure. Use the pull-request flow; do not disable protection or post a synthetic commit status.
+- v0.91.85 was released by relaying a green `Validate` result to the commit as a status before this rule existed. That workaround is retired; use the pull-request flow.
 - Once a tag is pushed, it is immutable even if CI fails. Never delete, move, force-push, or rerun under the same tag after a release-gate bug; fix the workflow and use the next version.
 - `v0.91.3` and `v0.91.4` are historical failed tags (release-validation ref bug). `v0.91.11` failed due to missing QEMU in multi-arch GHCR build. Do not reuse them; `v0.91.12` resolved multi-arch with the QEMU action.
-- GHCR staging failure: do not promote its staging tag.
+- GHCR staging failure: do not promote that run's digest. The shared `staging` tag is mutable and does not identify a run.
 - npm publish timeout: query npm first; never retry blindly. If the published integrity matches the package job output, a rerun is safe; if it differs, stop and investigate:
 
 ```bash
