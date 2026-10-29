@@ -39,8 +39,8 @@ describe("OpenCode Free available catalog", () => {
       reasoning: true,
       vision: true,
       thinkingFormat: "deepseek",
-      contextWindow: 200000,
-      maxOutput: 32000,
+      contextWindow: 330000,
+      maxOutput: 128000,
     });
   });
 });

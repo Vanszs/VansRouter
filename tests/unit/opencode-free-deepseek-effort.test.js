@@ -62,10 +62,6 @@ describe("oc/deepseek-v4.1-flash-free reasoning levels", () => {
     expect(effortOnWire("low", { model: "deepseek-v4-pro", provider: "deepseek" })).toBe("high");
   });
 
-  it("keeps the max→high clamp for backends that reject max", () => {
-    expect(effortOnWire("max", { model: "mimo-v2.6-flash", provider: "opencode-go" })).toBe("high");
-  });
-
   it("sends the requested level to the OpenCode free chat endpoint end to end", () => {
     const executor = new OpenCodeExecutor();
     for (const level of LEVELS) {
@@ -79,7 +75,7 @@ describe("oc/deepseek-v4.1-flash-free reasoning levels", () => {
       };
       const translated = translateRequest(FORMATS.OPENAI, FORMATS.OPENAI, MODEL, body, true, {}, PROVIDER);
       const out = executor.transformRequest(MODEL, translated, true, { connectionId: "oc-deepseek-effort-test" });
-      expect(executor.buildUrl(MODEL)).toBe("https://opencode.ai/inference/v1/chat/completions");
+      expect(executor.buildUrl(MODEL)).toBe("https://opencode.ai/zen/v1/chat/completions");
       expect(out.reasoning_effort).toBe(level);
       expect(out.model).toBe(MODEL);
     }

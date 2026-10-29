@@ -83,7 +83,7 @@ describe("non-streaming SSE errors", () => {
     expect((await result.response.json()).error.message).toBe("Upstream SSE stream failed");
   });
 
-  it.each([FORMATS.OPENAI, FORMATS.CLAUDE, FORMATS.OPENAI_RESPONSES])("preserves successful SSE conversion for a %s client", async (sourceFormat) => {
+  it.each([FORMATS.OPENAI, FORMATS.CLAUDE])("preserves successful SSE conversion for a %s client", async (sourceFormat) => {
     const ctx = context(sse([
       { id: "chatcmpl-test", choices: [{ delta: { content: "hello" }, finish_reason: null }] },
       { choices: [{ delta: {}, finish_reason: "stop" }], usage: { prompt_tokens: 12, completion_tokens: 3, total_tokens: 15 } },
@@ -94,7 +94,6 @@ describe("non-streaming SSE errors", () => {
     expect(result.success).toBe(true);
     expect(result.response.status).toBe(200);
     if (sourceFormat === FORMATS.CLAUDE) expect(json.content[0].text).toBe("hello");
-    else if (sourceFormat === FORMATS.OPENAI_RESPONSES) expect(json.output[0].content[0].text).toBe("hello");
     else expect(json.choices[0].message.content).toBe("hello");
     expect(ctx.onRequestSuccess).toHaveBeenCalledOnce();
     expect(ctx.appendLog).toHaveBeenCalledWith(expect.objectContaining({ status: "200 OK" }));

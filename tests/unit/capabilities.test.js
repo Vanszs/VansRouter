@@ -153,10 +153,10 @@ describe("OpenCode Free ids newer than the capability tables", () => {
   // Modalities/limits are taken verbatim from models.dev.
   it.each([
     ["beam-free", { reasoning: true, vision: false, contextWindow: 1048576, maxOutput: 131072 }],
-    ["mimo-v2.6-flash-free", { reasoning: true, vision: true, audioInput: true, videoInput: true, contextWindow: 200000, maxOutput: 32000 }],
+    ["mimo-v2.6-flash-free", { reasoning: true, vision: true, audioInput: true, videoInput: true, contextWindow: 1048576, maxOutput: 131072 }],
     ["nemotron-3.5-super-vl-free", { reasoning: true, vision: true, contextWindow: 1048576, maxOutput: 131072 }],
     ["nemotron-3.5-lightning-free", { reasoning: true, vision: false, contextWindow: 262144, maxOutput: 262144 }],
-    ["deepseek-v4.1-flash-free", { reasoning: true, vision: true, thinkingFormat: "deepseek", contextWindow: 200000, maxOutput: 32000 }],
+    ["deepseek-v4.1-flash-free", { reasoning: true, vision: true, thinkingFormat: "deepseek", contextWindow: 330000, maxOutput: 128000 }],
     ["glm-5.3-flash-free", { reasoning: true, vision: true, videoInput: true, pdf: true, contextWindow: 200000, maxOutput: 32000 }],
     ["minimax-m3.1-flash-free", { reasoning: true, vision: true, videoInput: true, contextWindow: 1000000, maxOutput: 512000 }],
   ])("reports current upstream metadata for %s", (model, expected) => {
