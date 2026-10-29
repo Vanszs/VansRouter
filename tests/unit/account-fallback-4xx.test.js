@@ -22,7 +22,7 @@ describe("checkFallbackError — request-scoped vs account-scoped failures", () 
 
   it("does not cool the account down for other request-scoped 4xx", () => {
     for (const status of [400, 406, 408, 409, 410, 422]) {
-      expect(checkFallbackError(status, "nope")).toEqual({ shouldFallback: false, cooldownMs: 0 });
+      expect(checkFallbackError(status, "nope")).toEqual({ shouldFallback: false, cooldownMs: 0, requestScoped: true });
     }
   });
 
