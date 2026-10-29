@@ -65,13 +65,14 @@ describe("release hardening contracts", () => {
     expect(workflow).toContain("scripts/inspect-image-digest.cjs");
     expect(workflow).toContain("scripts/npm-integrity.cjs");
     expect(workflow).not.toContain("get_digest()");
-    // The public package must only receive promoted digests. The build lands in
-    // the separate staging package, and the attestation lives in GitHub's store
-    // so no public sha256-<digest> tag is created.
-    expect(workflow).toContain("GHCR_STAGING_IMAGE: ghcr.io/vanszs/vansrouter-staging");
-    expect(workflow).toMatch(/tags: \$\{\{ env\.GHCR_STAGING_IMAGE \}\}:staging/);
-    expect(workflow).toContain('source_image="${GHCR_STAGING_IMAGE}@${STAGING_DIGEST}"');
+    // The public package must only receive promoted digests. The build pushes
+    // the index by digest without a tag, and the attestation lives in GitHub's
+    // store so no public sha256-<digest> tag is created.
+    expect(workflow).toContain("push-by-digest=true");
+    expect(workflow).toContain('name=${{ env.GHCR_IMAGE }},push-by-digest=true');
+    expect(workflow).toContain('source_image="${GHCR_IMAGE}@${STAGING_DIGEST}"');
     expect(workflow).toContain("push-to-registry: false");
+    expect(workflow).not.toContain("GHCR_STAGING_IMAGE");
   });
 
   it("waits long enough for the registry to list a freshly published version", () => {

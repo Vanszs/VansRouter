@@ -16,9 +16,6 @@ concurrency:
 
 env:
   GHCR_IMAGE: ghcr.io/vanszs/vansrouter
-  # Builds land here, never in the public package. Promotion copies the verified
-  # digest into GHCR_IMAGE, so users only ever see version tags and latest.
-  GHCR_STAGING_IMAGE: ghcr.io/vanszs/vansrouter-staging
 
 jobs:
   check-branch:
@@ -83,17 +80,16 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build and push staging image
+      - name: Build and push by digest
         id: build
         uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
         with:
           context: .
-          push: true
-          # The build lands in the staging package, never in the public one.
-          # All verification and promotion read the Buildx digest, so the
-          # mutable staging tag is internal only; users only ever see the
-          # promoted version tag and latest in GHCR_IMAGE.
-          tags: ${{ env.GHCR_STAGING_IMAGE }}:staging
+          # No tag is created here. The multi-arch index is pushed by digest and
+          # the promote job attaches the version tag and latest to that exact
+          # digest, so an unverified image never carries a user-facing tag and
+          # no staging or attestation tag appears in the package.
+          outputs: type=image,name=${{ env.GHCR_IMAGE }},push-by-digest=true,name-canonical=true,push=true
           github-token: ${{ secrets.GITHUB_TOKEN }}
           cache-from: type=gha,scope=release
           cache-to: type=gha,scope=release,mode=max,ignore-error=true,timeout=5m
@@ -110,13 +106,13 @@ jobs:
         run: |
           set -euo pipefail
           test -n "$IMAGE_DIGEST"
-          docker buildx imagetools inspect "$GHCR_STAGING_IMAGE@$IMAGE_DIGEST" | tee /tmp/image-manifest.txt
+          docker buildx imagetools inspect "$GHCR_IMAGE@$IMAGE_DIGEST" | tee /tmp/image-manifest.txt
           grep -q 'linux/amd64' /tmp/image-manifest.txt
           grep -q 'linux/arm64' /tmp/image-manifest.txt
 
       - name: Verify native SQLite in image
         env:
-          IMAGE: ${{ env.GHCR_STAGING_IMAGE }}@${{ steps.build.outputs.digest }}
+          IMAGE: ${{ env.GHCR_IMAGE }}@${{ steps.build.outputs.digest }}
         run: |
           set -euo pipefail
           docker pull --platform linux/amd64 "$IMAGE"
@@ -125,13 +121,13 @@ jobs:
 
       - name: Smoke-test the published server on amd64
         env:
-          IMAGE: ${{ env.GHCR_STAGING_IMAGE }}@${{ steps.build.outputs.digest }}
+          IMAGE: ${{ env.GHCR_IMAGE }}@${{ steps.build.outputs.digest }}
           RELEASE_VERSION: ${{ needs.check-branch.outputs.version }}
         run: node scripts/smoke-container.cjs "$IMAGE" "$RELEASE_VERSION" --platform linux/amd64 --pull
 
       - name: Smoke-test the published server on arm64
         env:
-          IMAGE: ${{ env.GHCR_STAGING_IMAGE }}@${{ steps.build.outputs.digest }}
+          IMAGE: ${{ env.GHCR_IMAGE }}@${{ steps.build.outputs.digest }}
           RELEASE_VERSION: ${{ needs.check-branch.outputs.version }}
         run: node scripts/smoke-container.cjs "$IMAGE" "$RELEASE_VERSION" --platform linux/arm64 --pull
 
@@ -362,7 +358,7 @@ jobs:
         run: |
           set -euo pipefail
           [[ "$STAGING_DIGEST" =~ ^sha256:[0-9a-f]{64}$ ]]
-          source_image="${GHCR_STAGING_IMAGE}@${STAGING_DIGEST}"
+          source_image="${GHCR_IMAGE}@${STAGING_DIGEST}"
           release_digest="$(node scripts/inspect-image-digest.cjs "$RELEASE_IMAGE")"
           if [ "$release_digest" = "MISSING" ]; then
             docker buildx imagetools create --tag "$RELEASE_IMAGE" "$source_image"

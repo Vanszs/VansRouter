@@ -88,7 +88,7 @@ The `--pretag` command checks the changelog-only commit before the tag exists. A
 - The build must use `pnpm install --frozen-lockfile` with the repository lockfile. The native dependency stage must use its committed `docker/native-deps/package-lock.json` and `npm ci --ignore-scripts`; the target-specific `better-sqlite3` musl binary is downloaded separately for the pinned Node ABI and SHA-256 verified before use.
 - Node/Alpine base images and external Tailscale archives are digest/checksum pinned; the bundled Tailscale release is kept current.
 - The image must retain provenance and SBOM attestations, and the release workflow must promote the exact Buildx digest rather than a mutable staging tag. Registry inspection errors are fatal; only an explicit not-found result permits tag creation.
-- The build pushes to the separate package `ghcr.io/vanszs/vansrouter-staging` under its fixed `staging` tag. The public package `ghcr.io/vanszs/vansrouter` receives only the promoted version tag and `latest`, so users never see a staging or attestation tag. The attestation is stored by GitHub (`push-to-registry: false`) and verified with `gh attestation verify`; the image index still embeds the Buildx provenance and SBOM. The staging package is internal and may be pruned; never prune the public package per version.
+- The build pushes the multi-arch index to the public package by digest only, with no tag. Promotion attaches the version tag and `latest` to that exact digest, so an unverified image never carries a user-facing tag and no staging or attestation tag appears in the package. The attestation is stored by GitHub (`push-to-registry: false`) and verified with `gh attestation verify`; the image index still embeds the Buildx provenance and SBOM. Never prune the public package per version.
 - The image smoke test must force a platform-specific pull, start the published image, and verify `/api/ready`, `/api/health`, and `/api/version` on both `linux/amd64` and `linux/arm64`.
 
 ## CI Gates
@@ -151,7 +151,7 @@ curl -fsS http://127.0.0.1:3003/api/health
 - v0.91.85 was released by relaying a green `Validate` result to the commit as a status before this rule existed. That workaround is retired; use the pull-request flow.
 - Once a tag is pushed, it is immutable even if CI fails. Never delete, move, force-push, or rerun under the same tag after a release-gate bug; fix the workflow and use the next version.
 - `v0.91.3` and `v0.91.4` are historical failed tags (release-validation ref bug). `v0.91.11` failed due to missing QEMU in multi-arch GHCR build. Do not reuse them; `v0.91.12` resolved multi-arch with the QEMU action.
-- GHCR staging failure: do not promote that run's digest. The staging package's `staging` tag is mutable and does not identify a run.
+- GHCR build failure: do not promote that run's digest. The build leaves only an untagged digest; the promote job is the only step that attaches a user-facing tag.
 - npm publish timeout: query npm first; never retry blindly. If the published integrity matches the package job output, a rerun is safe; if it differs, stop and investigate:
 
 ```bash
