@@ -1,3 +1,45 @@
+# v0.91.86 (2026-10-29)
+
+v0.91.85 stopped the per-run tag leak by pushing every build to a single
+`ghcr.io/vanszs/vansrouter:staging` tag. That fixed tag growth but left a
+mutable tag in the public package, and the `sha256-<digest>` attestation
+version sorted ahead of the release: the GitHub package page labelled the
+attestation "Latest" and its default pull command fetched the attestation
+instead of the image. This release moves the build out of the public package.
+
+## Release engineering
+
+- Builds now push to the separate, private package
+  `ghcr.io/vanszs/vansrouter-staging` under its fixed `staging` tag. All
+  verification still reads the Buildx digest, and promotion copies that exact
+  digest into `ghcr.io/vanszs/vansrouter` as the version tag and `latest`. The
+  public package therefore contains released images only: no `staging` tag and
+  no attestation tag are visible to users.
+- The image attestation is stored by GitHub (`push-to-registry: false`)
+  instead of being pushed as a public `sha256-<digest>` tag. `gh attestation
+  verify` reads it from GitHub's attestation store; verified against v0.91.85
+  after its registry attestation tags were removed. The image index still
+  embeds the Buildx provenance and SBOM.
+- Cross-repository promotion was verified before this release: copying the
+  multi-arch index from the staging package to the public package preserves
+  the digest (`sha256:b606b855…` for v0.91.81), so promotion still compares a
+  single digest end to end.
+- The staging package is internal and may be pruned; the public package is
+  never pruned per version.
+
+## Tests
+
+- `tests/unit/release-hardening.test.js` pins the new contract: the build tags
+  the staging package, promotion reads
+  `${GHCR_STAGING_IMAGE}@${STAGING_DIGEST}`, and the attestation is not pushed
+  to the registry.
+- Full suite: 445 test files, 4733 tests passed, 121 skipped, 1 todo
+  (`CI=true pnpm test`, exit 0).
+- `pnpm run lint` exit 0 (0 errors); `node scripts/lint-undef.cjs` and
+  `node scripts/lint-reacthooks.cjs` clean.
+- Production build: `SKIP_PREBUILD_LINT=1 pnpm build` exit 0, `✅ build
+  complete`, `.next/standalone/server.js` emitted.
+
 # v0.91.85 (2026-10-29)
 
 Version numbers 0.91.82, 0.91.83 and 0.91.84 were never tagged and never
