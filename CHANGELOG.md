@@ -1,3 +1,39 @@
+# v0.91.87 (2026-10-29)
+
+v0.91.86 moved the build into a separate staging package to keep the public
+package clean, but GitHub creates that package with the repository's public
+visibility and exposes no API to change it. This release removes the staging
+package entirely: the build pushes the multi-arch index to the public package
+by digest only, and promotion attaches the version tag and `latest` to that
+same digest.
+
+## Release engineering
+
+- The build no longer pushes a tag. `docker/build-push-action` publishes the
+  index with `push-by-digest=true`; the `promote-ghcr` job tags that exact
+  digest as `X.Y.Z` and `latest`. An unverified image therefore never carries
+  a user-facing tag, and the package contains no `staging`,
+  `sha256-<digest>` or `release-*` tag.
+- The attestation remains in GitHub's attestation store
+  (`push-to-registry: false`) and is verified with `gh attestation verify`;
+  the image index keeps the Buildx provenance and SBOM. Verified for v0.91.86:
+  one attestation, subject `ghcr.io/vanszs/vansrouter`, digest matching the
+  published image.
+- The `ghcr.io/vanszs/vansrouter-staging` package from v0.91.86 was removed;
+  the public v0.91.86 image is unaffected.
+
+## Tests
+
+- `tests/unit/release-hardening.test.js` pins the digest-only build
+  (`push-by-digest=true`), same-repository promotion
+  (`${GHCR_IMAGE}@${STAGING_DIGEST}`), and the absence of a staging package.
+- Full suite: 445 test files, 4733 tests passed, 121 skipped, 1 todo
+  (`CI=true pnpm test`, exit 0).
+- `pnpm run lint` exit 0 (0 errors); `node scripts/lint-undef.cjs` and
+  `node scripts/lint-reacthooks.cjs` clean.
+- Production build: `SKIP_PREBUILD_LINT=1 pnpm build` exit 0, `✅ build
+  complete`, `.next/standalone/server.js` emitted.
+
 # v0.91.86 (2026-10-29)
 
 v0.91.85 stopped the per-run tag leak by pushing every build to a single
