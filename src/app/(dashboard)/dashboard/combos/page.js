@@ -1,10 +1,42 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Card, Button, CardSkeleton, ModelSelectModal, ConfirmModal, CapacityBadges, Select, ComboFormModal } from "@/shared/components";
+import { Card, Button, CardSkeleton, ModelSelectModal, ConfirmModal, CapacityBadges, Select, ComboFormModal, Toggle } from "@/shared/components";
 import { useCopyToClipboard } from "@/shared/hooks/useCopyToClipboard";
 import { useModelCaps } from "@/shared/hooks/useModelCaps";
 import { isOpenAICompatibleProvider, isAnthropicCompatibleProvider } from "@/shared/constants/providers";
+
+// Capacity adapter: global fallback pools of models per input-modality capability.
+// A request needing a capability the target model/combo lacks switches straight
+// to the first enabled model here instead of erroring or dropping the data.
+const CAPACITY_ADAPTER_CAPS = [
+  { key: "vision", label: "Vision", icon: "visibility", desc: "images (png, jpg, webp, …)" },
+  // pdf, videoInput temporarily hidden — no translator support yet for those blocks.
+  { key: "audioInput", label: "Audio", icon: "graphic_eq", desc: "audio input" },
+];
+const DEFAULT_FALLBACK_MODEL = "oc/mimo-v2.6-flash-free";
+const EMPTY_CAP_ENTRY = { enabled: true, roundRobin: false, models: [] };
+const EMPTY_CAPACITY_ADAPTER = {
+  vision: { ...EMPTY_CAP_ENTRY },
+  pdf: { ...EMPTY_CAP_ENTRY },
+  audioInput: { ...EMPTY_CAP_ENTRY },
+  videoInput: { ...EMPTY_CAP_ENTRY },
+};
+const upgradeLegacyModel = (m) => (m === "oc/mimo-v2.5-free" ? DEFAULT_FALLBACK_MODEL : m);
+
+function normalizeCapEntry(entry) {
+  if (Array.isArray(entry)) {
+    return { enabled: true, roundRobin: false, models: entry.map((e) => upgradeLegacyModel(e?.model || e)).filter(Boolean) };
+  }
+  if (entry && typeof entry === "object") {
+    return {
+      enabled: entry.enabled !== false,
+      roundRobin: !!entry.roundRobin,
+      models: Array.isArray(entry.models) ? entry.models.map(upgradeLegacyModel).filter(Boolean) : [],
+    };
+  }
+  return { ...EMPTY_CAP_ENTRY };
+}
 
 export default function CombosPage() {
   const [combos, setCombos] = useState([]);
@@ -13,6 +45,7 @@ export default function CombosPage() {
   const [editingCombo, setEditingCombo] = useState(null);
   const [activeProviders, setActiveProviders] = useState([]);
   const [comboStrategies, setComboStrategies] = useState({});
+  const [capacityAdapter, setCapacityAdapter] = useState(EMPTY_CAPACITY_ADAPTER);
   const [presetLoading, setPresetLoading] = useState(null);
   const [selectedIds, setSelectedIds] = useState([]);
   const [bulkBusy, setBulkBusy] = useState(false);
@@ -75,10 +108,29 @@ export default function CombosPage() {
         setActiveProviders((providersData.connections || []).filter((c) => c.isActive !== false));
       }
       setComboStrategies(settingsData.comboStrategies || {});
+      const rawAdapter = settingsData.capacityAdapter || {};
+      const normalized = {};
+      for (const cap of CAPACITY_ADAPTER_CAPS) {
+        normalized[cap.key] = normalizeCapEntry(rawAdapter[cap.key]);
+      }
+      setCapacityAdapter(normalized);
     } catch (error) {
       console.log("Error fetching data:", error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleSetCapacityAdapter = async (next) => {
+    setCapacityAdapter(next);
+    try {
+      await fetch("/api/settings", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ capacityAdapter: next }),
+      });
+    } catch (error) {
+      console.log("Error updating capacity adapter:", error);
     }
   };
 
@@ -519,6 +571,14 @@ export default function CombosPage() {
         </div>
       )}
 
+      {/* Capacity Adapter */}
+      <CapacityAdapterSection
+        capacityAdapter={capacityAdapter}
+        onChange={handleSetCapacityAdapter}
+        activeProviders={activeProviders}
+        getCaps={getCaps}
+      />
+
       {/* Create Modal - Use key to force remount and reset state */}
       {showCreateModal && (
         <ComboFormModal
@@ -692,6 +752,211 @@ function ComboCard({ combo, getCaps, activeProviders = [], copied, onCopy, onEdi
           title="Select Judge Model"
           addedModelValues={judge ? [judge] : []}
           closeOnSelect={true}
+        />
+      )}
+    </Card>
+  );
+}
+
+function CapacityAdapterSection({ capacityAdapter, onChange, activeProviders, getCaps }) {
+  return (
+    <div className="flex flex-col gap-3">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="min-w-0">
+          <p className="text-sm font-medium">Vision Adapter</p>
+          <p className="text-xs text-text-muted mt-0.5">
+            Your model can&apos;t read image/audio? Auto-switches to a model in the pool below.
+          </p>
+        </div>
+      </div>
+      <div className="flex flex-col gap-4">
+        {CAPACITY_ADAPTER_CAPS.map((cap) => (
+          <CapacityAdapterCap
+            key={cap.key}
+            cap={cap}
+            entry={capacityAdapter[cap.key] || EMPTY_CAP_ENTRY}
+            onChange={(entry) => onChange({ ...capacityAdapter, [cap.key]: entry })}
+            activeProviders={activeProviders}
+            getCaps={getCaps}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function CapacityAdapterCap({ cap, entry, onChange, activeProviders, getCaps }) {
+  const [showModelSelect, setShowModelSelect] = useState(false);
+  const { enabled, roundRobin, models } = entry;
+
+  const patch = (p) => onChange({ ...entry, ...p });
+
+  const handleAdd = (model) => {
+    const value = model?.value || model?.name || model;
+    if (!value || models.includes(value)) return;
+    patch({ models: [...models, value] });
+  };
+
+  const handleDeselect = (model) => {
+    const value = model?.value || model?.name || model;
+    const next = models.filter((m) => m !== value);
+    patch({ models: next.length === 0 ? [DEFAULT_FALLBACK_MODEL] : next });
+  };
+
+  const handleRemove = (index) => {
+    const next = models.filter((_, i) => i !== index);
+    patch({ models: next.length === 0 ? [DEFAULT_FALLBACK_MODEL] : next });
+  };
+
+  const handleMove = (index, delta) => {
+    const target = index + delta;
+    if (target < 0 || target >= models.length) return;
+    const next = [...models];
+    [next[index], next[target]] = [next[target], next[index]];
+    patch({ models: next });
+  };
+
+  return (
+    <Card padding="sm" className={`group ${!enabled ? "opacity-50" : ""}`}>
+      <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        {/* Master toggle + icon + label */}
+        <div className="flex min-w-0 flex-1 items-start gap-2.5 sm:items-center">
+          <Toggle
+            checked={enabled}
+            onChange={(v) => patch({ enabled: v })}
+            aria-label={`Enable ${cap.label} adapter`}
+          />
+          <div className="size-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+            <span className="material-symbols-outlined text-primary text-[18px]">{cap.icon}</span>
+          </div>
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-1.5">
+              <code className="font-mono text-sm font-medium">{cap.label}</code>
+              <span className="text-[10px] text-text-muted">— {cap.desc}</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Actions: Round-robin toggle + Add Model */}
+        <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center sm:gap-3 sm:shrink-0">
+          <label className="flex items-center gap-1.5 text-xs text-text-muted cursor-pointer select-none">
+            <Toggle
+              checked={roundRobin}
+              onChange={(v) => patch({ roundRobin: v })}
+              disabled={!enabled}
+              aria-label={`Round-robin ${cap.label} adapter`}
+            />
+            <span>Round</span>
+          </label>
+          <Button
+            icon="add"
+            variant="ghost"
+            size="sm"
+            onClick={() => setShowModelSelect(true)}
+            disabled={!enabled}
+            title={`Add ${cap.label} model`}
+          >
+            Add Model
+          </Button>
+        </div>
+      </div>
+
+      {/* Model pool list/table */}
+      {models.length === 0 ? (
+        <div className="mt-3 py-2 text-center text-xs text-text-muted italic">
+          No models in pool (will fallback to {DEFAULT_FALLBACK_MODEL})
+        </div>
+      ) : (
+        <div className="mt-3 overflow-hidden rounded-lg border border-border/50">
+          <table className="w-full text-left text-xs">
+            <thead>
+              <tr className="border-b border-border/40 bg-black/[0.02] text-text-muted dark:bg-white/[0.02]">
+                <th className="w-12 px-3 py-1.5 font-medium text-center">#</th>
+                <th className="px-3 py-1.5 font-medium">Model</th>
+                <th className="w-24 px-3 py-1.5 font-medium text-center">Order</th>
+                <th className="w-12 px-3 py-1.5 font-medium text-right"></th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border/30 font-mono">
+              {models.map((model, index) => (
+                <tr key={`${model}-${index}`} className="hover:bg-black/[0.02] dark:hover:bg-white/[0.02] transition-colors">
+                  <td className="px-3 py-2 text-center text-text-muted text-[11px] font-sans">
+                    #{index + 1}
+                  </td>
+                  <td className="px-3 py-2 text-text-main">
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <span className="truncate">{model}</span>
+                      <CapacityBadges caps={getCaps?.(model)} />
+                      {model === DEFAULT_FALLBACK_MODEL && (
+                        <span className="rounded bg-emerald-500/10 px-1.5 py-0.5 font-sans text-[10px] font-medium text-emerald-600 dark:text-emerald-400">
+                          free default
+                        </span>
+                      )}
+                    </div>
+                  </td>
+                  <td className="px-3 py-2 text-center">
+                    <div className="inline-flex items-center gap-1">
+                      <button
+                        type="button"
+                        onClick={() => handleMove(index, -1)}
+                        disabled={!enabled || index === 0}
+                        className={`p-1 rounded transition-colors ${
+                          !enabled || index === 0
+                            ? "text-text-muted/20 cursor-not-allowed"
+                            : "text-text-muted hover:text-primary hover:bg-black/5 dark:hover:bg-white/5"
+                        }`}
+                        title="Move up"
+                      >
+                        <span className="material-symbols-outlined text-[16px] leading-none">arrow_upward</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleMove(index, 1)}
+                        disabled={!enabled || index === models.length - 1}
+                        className={`p-1 rounded transition-colors ${
+                          !enabled || index === models.length - 1
+                            ? "text-text-muted/20 cursor-not-allowed"
+                            : "text-text-muted hover:text-primary hover:bg-black/5 dark:hover:bg-white/5"
+                        }`}
+                        title="Move down"
+                      >
+                        <span className="material-symbols-outlined text-[16px] leading-none">arrow_downward</span>
+                      </button>
+                    </div>
+                  </td>
+                  <td className="px-3 py-2 text-right">
+                    <button
+                      type="button"
+                      onClick={() => handleRemove(index)}
+                      disabled={!enabled}
+                      className={`p-1 rounded transition-colors ${
+                        !enabled
+                          ? "text-text-muted/20 cursor-not-allowed"
+                          : "text-text-muted hover:text-red-500 hover:bg-red-500/10"
+                      }`}
+                      title="Remove model"
+                    >
+                      <span className="material-symbols-outlined text-[16px] leading-none">close</span>
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {showModelSelect && (
+        <ModelSelectModal
+          isOpen={showModelSelect}
+          onClose={() => setShowModelSelect(false)}
+          onSelect={handleAdd}
+          onDeselect={handleDeselect}
+          activeProviders={activeProviders}
+          title={`Add ${cap.label} Model`}
+          addedModelValues={models}
+          capFilter={cap.key}
+          closeOnSelect={false}
         />
       )}
     </Card>
