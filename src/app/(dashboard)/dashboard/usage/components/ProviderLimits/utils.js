@@ -676,8 +676,13 @@ export function parseQuotaData(provider, data) {
               percentage: quota.percentage,
               colorPercentage: quota.colorPercentage,
               percentageIsUsed: quota.percentageIsUsed === true,
+              remainingPercentage: quota.remainingPercentage,
               resetAt: quota.resetAt || null,
               emptyMessage: quota.emptyMessage || null,
+              isCreditBalance: quota.isCreditBalance,
+              currency: quota.currency,
+              unit: quota.unit,
+              unlimited: quota.unlimited,
             });
           });
         }
