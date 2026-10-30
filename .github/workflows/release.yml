@@ -223,9 +223,10 @@ jobs:
     environment:
       name: release
     runs-on: ubuntu-latest
-    # The registry can take several minutes to list a fresh version; the verify
-    # loop below waits up to ~15 minutes, so the job has to outlive it.
-    timeout-minutes: 25
+    # npm can accept a publish into its staged-publish window and keep the
+    # version out of the packument for ~17 minutes (npm/cli#9889). The verify
+    # loop below waits up to 20 minutes, so the job has to outlive it.
+    timeout-minutes: 35
     permissions:
       actions: read
       contents: read
@@ -278,11 +279,16 @@ jobs:
           if [ "$existing_integrity" = "MISSING" ]; then
             if ! publish_log="$(npm publish "$tarball" --provenance 2>&1)"; then
               printf '%s\n' "$publish_log"
-              # A slow registry (or a concurrent run) can publish the version
-              # between the lookup and this call. The verification loop decides:
-              # matching integrity is success, anything else fails loudly.
-              if printf '%s' "$publish_log" | grep -q "previously published versions"; then
-                echo "::warning::${RELEASE_VERSION} appeared while publishing; verifying the published artifact instead"
+              # Two races leave the version out of the packument even though the
+              # registry accepted it: a concurrent run published it between the
+              # lookup and this call, or the publish landed in npm's staged
+              # window (npm/cli#9889, observed on v0.91.87: the PUT returned 202,
+              # the version stayed invisible for >15 minutes, and a retry got
+              # E409 "previously staged version"). Both mean "already accepted";
+              # the verification loop below decides by integrity. Any other
+              # failure, or a conflict naming a different version, stays fatal.
+              if printf '%s' "$publish_log" | grep -Eq "previously published versions:? *\"?${RELEASE_VERSION//./\\.}\"?|previously staged version \"?${RELEASE_VERSION//./\\.}\"?"; then
+                echo "::warning::${RELEASE_VERSION} is already published or staged; verifying the registry artifact instead"
               else
                 echo "::error::npm publish failed"
                 exit 1
@@ -297,9 +303,10 @@ jobs:
             exit 1
           fi
           # npm accepts a publish before the version is readable (it reports
-          # "being processed"), and the delay has been observed at ~9 minutes.
-          # 60 attempts at 15s bounds the wait at ~15 minutes.
-          attempts=60
+          # "being processed"). The observed delays are ~9 minutes normally and
+          # up to ~17 minutes when the publish lands in the staged window
+          # (npm/cli#9889). 80 attempts at 15s bounds the wait at 20 minutes.
+          attempts=80
           delay=15
           for attempt in $(seq 1 "$attempts"); do
             if ! published_integrity="$(node scripts/npm-integrity.cjs "vansrouter@${RELEASE_VERSION}")"; then

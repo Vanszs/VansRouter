@@ -114,6 +114,7 @@ Required evidence:
 - Artifact smoke test: extracted CLI starts with a temporary `DATA_DIR`, responds to `/api/settings`, creates `db/data.sqlite`, and migrates legacy `db.json`; `VANROUTER_SKIP_UPDATE_CHECK=1` makes the version assertion independent of the public npm registry.
 - `build-and-verify-ghcr`: the pushed digest contains `linux/amd64` and `linux/arm64`; native SQLite and container health/version smoke tests pass; the digest is attested.
 - `publish-npm`: publishes the exact validated artifact, treats only an explicit npm `E404` as unpublished, fails closed on other registry errors, verifies its SHA-512 integrity, and is safe to rerun only when the registry already contains the same artifact.
+- `publish-npm` must treat npm's staged-publish window as "accepted, not yet visible": a `PUT` can return `202` while the version stays out of the packument for up to ~17 minutes, and a retry for that same version returns `E409 Cannot publish over previously staged version`. The workflow accepts `E409` only when the message names the exact release version, then keeps polling for the expected integrity; a conflict naming any other version, or any other publish error, stays fatal. Never bump the version to work around a staged publish.
 - `promote-ghcr`: promotes the verified digest to `X.Y.Z` and `latest` only after npm succeeds; it refuses to overwrite a different version digest.
 
 ## Repository Controls Required
@@ -157,6 +158,8 @@ curl -fsS http://127.0.0.1:3003/api/health
 ```bash
 npm view vansrouter@X.Y.Z dist.integrity --json
 ```
+
+- `E409 Cannot publish over previously staged version "X.Y.Z"`: the registry already accepted that publish and is holding it in the staged window; the version is not lost. Do not bump the version and do not publish again. Wait for the version to appear and rerun only the failed `publish-npm` job, which verifies the integrity and then promotes GHCR. If the version never appears, reject the staged package on npmjs.com (or `npm stage reject` on npm ≥ 11.15) and then rerun the same version. Verified on 2026-10-30: `v0.91.87` run `40911040743` failed `publish-npm` after the 15-minute wait and a retry hit `E409` for `0.91.87`; the version later became public with integrity `sha512-d7De5LJT…`, while GHCR `0.91.87` and the GitHub Release were never created. That is the failure this rule prevents.
 
 - npm already published but GHCR promotion failed: rerun the failed promotion job or the idempotent release workflow. It must use the recorded Buildx digest and must never republish or overwrite a different version digest.
 - Production health failure: rollback to the previous immutable image tag; preserve the DB volume and inspect migration backups.
