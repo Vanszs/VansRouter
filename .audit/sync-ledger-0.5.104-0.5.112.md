@@ -38,6 +38,14 @@ provider commits are deferred with the reasons at the end. No push, no tag.
 | `a3ca2f9b` | `c08d81cd` | Correct API key visibility guidance (i18n) |
 | `3b137aa6` | `f3f39ea5` | Back off blocked CodeBuddy international connections |
 | `d07e5bc3` | `94aa1fff` | Let a transport declare its thinking shape |
+| `351b04cb` | `63646f4e` | Add the SenseNova provider |
+| `b9c27225` | `9893babf` | Add the Runcrate provider |
+| `f7f6f5ed` | `f5dd88bc` | Add the Nace Drex provider (System One) |
+| `5cd4a756` | `8ab9b5a8` | Add Kimi K3.1 Pro to OpenCode Go |
+| `acb3c080` | `6508cb2d` | Add GPT-6.1 Terra to Codex |
+| `3ce2b828` | `0528bef0` | Normalize Anthropic ids onto Kiro aliases |
+| `161e3493` | `2871a31c` | Reference images for Gemini; MITM directory |
+| `a3bdaf6d` | `3e237e3f` | Add Kimi K3.1 Pro to CommandCode |
 
 ## Fork fixes and test triage
 
@@ -47,6 +55,8 @@ provider commits are deferred with the reasons at the end. No push, no tag.
 | `3cb858a8` | Credit wording is account-scoped (backoff), not request-scoped |
 | `b5f249d9` | Restore the Copilot GPT/Claude rows, drop the duplicate DeepSeek id, keep GLM-5.3-Flash-Free always-on |
 | `654ede02` | Align upstream fixtures with the fork: CodeBuddy snapshots, retired OpenCode ids, fork limits, request-scoped combo semantics, Responses fixture |
+| `06985d7c` | Restore `normalizeKiroUpstreamModelId`, dropped by the Kiro conflict resolution (177 Kiro tests) |
+| `0d62b4dc` | Drop ZCode from the custom-logic label (`agent.md` + skill); the provider code is unchanged |
 
 ## Deferred / skipped upstream commits
 
@@ -64,11 +74,10 @@ provider commits are deferred with the reasons at the end. No push, no tag.
 | `85d73bd6` | MiniMax lease auth; touches the fork's dashboardGuard paths |
 | `e70ea24d`, `ce060c79` | OpenCode fixes; the fork's lane diverged |
 | `fbac1220` | Codex image routing; fork path differs |
-| `a3bdaf6d`, `b1effa03` | CommandCode catalog/headers; provider batch deferred |
+| `b1effa03` | CommandCode header alignment; the fork's executor/usage path differs |
 | `72cb589e`, `50dcaa0c` | Pi settings; deferred |
 | `00dd3dfc` | Media providers; deferred |
 | `bc4a3cc7` | Ollama System One; deferred |
-| `161e3493` | Image/MITM reference images; deferred |
 | `f3f86fdd` | Smart Router; touches the fork's `chat.js` ACL path |
 | `8a842043` | RTK custom system prompt; touches the fork's `chat.js` |
 | `9b4ea9eb` | Combo search UI; deferred |
@@ -76,17 +85,13 @@ provider commits are deferred with the reasons at the end. No push, no tag.
 | `82aeb907`, `f172c3c4` | Antigravity catalog/UA; deferred |
 | `b6a9ca43` | Upstream test triage; superseded by the local triage commit |
 | `5883110b` | Monaco 0.57; dependency upgrade deferred |
-| `3ce2b828` | Kiro model ids; deferred |
-| `351b04cb`, `b9c27225`, `f7f6f5ed` | SenseNova, Runcrate, Nace Drex providers; provider batch deferred |
 | `10cd6c08`, `31a9d262`, `421f2262` | Ollama embedding/TTS, Codex OAuth STT; deferred |
-| `5cd4a756`, `acb3c080` | Kimi K3.1, GPT-6.1; deferred |
 | `1fe586bb`, `3a978a63`, `f39d8f07` | Upstream release commits (version/changelog); skipped by design |
 
 ## Verification
 
-- Full suite: 464 files, 4927 tests passed, 121 skipped, 1 todo
+- Full suite: 468 files, 4963 tests passed, 121 skipped, 1 todo
   (`CI=true pnpm test`, exit 0).
 - Lint: `pnpm run lint` exit 0 (0 errors); `node scripts/lint-undef.cjs` and
   `node scripts/lint-reacthooks.cjs` clean.
-- Production build: `SKIP_PREBUILD_LINT=1 pnpm build` exit 0, `✅ build
-  complete`, `.next/standalone/server.js` emitted.
+- Production build: pending.
