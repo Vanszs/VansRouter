@@ -1,6 +1,6 @@
 {
   "name": "vansrouter-app",
-  "version": "0.91.88",
+  "version": "0.91.89",
   "description": "9Router web dashboard",
   "private": true,
   "packageManager": "pnpm@9.15.9",
