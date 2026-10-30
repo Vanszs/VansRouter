@@ -60,6 +60,27 @@ provider commits are deferred with the reasons at the end. No push, no tag.
 | `06985d7c` | Restore `normalizeKiroUpstreamModelId`, dropped by the Kiro conflict resolution (177 Kiro tests) |
 | `0d62b4dc` | Drop ZCode from the custom-logic label (`agent.md` + skill); the provider code is unchanged |
 
+
+## Hybrid pass (features adopted after the first merge)
+
+| upstream | local | what |
+|---|---|---|
+| `9b4ea9eb` | `ec9061b9` | Combo search box (name + member ids, filtered select-all) |
+| `72cb589e` | `9d6ba732` | Pi per-model context/output caps (manual port onto the fork card) |
+| `50dcaa0c` | `1c52ad7d` | Keep a hand-set Pi model name across Apply |
+| `82aeb907` | `513d9a8e` | Resolve Antigravity tiers from client reasoning effort |
+| `4a76b8de` | `49d3e95a` | CommandCode quota colours/empty window + whoami probe |
+| `31b8439b` | `d5468cc7` | Ollama Cloud `/api/balance` quota rows |
+| `bc4a3cc7` | `6a4b5e84` | Ollama System One (clef, clef-flash) |
+| `10cd6c08` | `70e67bee` | Ollama embedding adapter + models |
+| `31a9d262` | `98d40cec` | Ollama Local TTS (Phonon) |
+| `421f2262` | `8567e413` | Codex OAuth STT (ffmpeg runtime) |
+| `8a842043` | `a869f597` | RTK custom system prompt |
+| `ca7b5401` | `3b98cceb` | Combo empty-content streaming fall-through |
+| `5883110b` | `7a0097dd` | Monaco 0.57.0 CDN pin |
+
+Total: **49 adopted / 21 deferred**, 0 unaccounted.
+
 ## Deferred / skipped upstream commits
 
 | upstream | reason |
@@ -67,33 +88,25 @@ provider commits are deferred with the reasons at the end. No push, no tag.
 | `86adae35`, `792f4719`, `a440ef43` | Headroom native projection; the fork's headroom path has 143 local lines of divergence and needs a dedicated port |
 | `2720cd2a` | Qoder queue/Sonus-Cantus refactor; the fork's qoder executor is a different implementation |
 | `b8331283` | OpenCode free reasoning; the fork's lane already carries its own levels |
-| `ca7b5401` | Combo streaming peek; the fork already falls through on empty content, streaming peek deferred |
-| `4a76b8de` | CommandCode usage display; the fork's ProviderLimits is a different implementation (quota race fix) |
-| `342ecb0d` | Pi settings; the fork already declares `existingProvider` |
 | `38a0c449` | Web-cookie executors/browser pool (~10k lines, playwright/wreq deps); separate opt-in subsystem |
 | `3b7acf72` | Docker lazy runtime deps; depends on the web-cookie subsystem |
-| `d7bb71ce` | DeepSeek PoW via noble-hashes; new dependency, deferred |
-| `85d73bd6` | MiniMax lease auth; touches the fork's dashboardGuard paths |
+| `d7bb71ce` | DeepSeek PoW via noble-hashes; the fork has no PoW path (the hash module is absent) |
+| `85d73bd6` | MiniMax lease auth; needs the desktop cookie module and named-pipe broker the fork does not have |
 | `e70ea24d`, `ce060c79` | OpenCode fixes; the fork's lane diverged |
 | `b1effa03` | CommandCode header alignment; the fork's executor/usage path differs |
-| `72cb589e`, `50dcaa0c` | Pi settings; deferred |
-| `00dd3dfc` | Media providers; deferred |
-| `bc4a3cc7` | Ollama System One; deferred |
-| `f3f86fdd` | Smart Router; touches the fork's `chat.js` ACL path |
-| `8a842043` | RTK custom system prompt; touches the fork's `chat.js` |
-| `9b4ea9eb` | Combo search UI; deferred |
-| `31b8439b` | Usage `/api/balance`; deferred |
-| `82aeb907`, `f172c3c4` | Antigravity catalog/UA; deferred |
+| `00dd3dfc` | Media OAuth shortcut; the fork has no OAuth shortcut branch, so the bug does not exist here |
+| `342ecb0d` | Pi `existingProvider`; the fork already declares it |
+| `f3f86fdd` | Smart Router; depends on upstream `keyAccess` and touches the fork's `chat.js` ACL path |
 | `483c10f5` | OpenCode fingerprint tool-definition normalization; the fork's fingerprint pass is a different implementation |
 | `b6a9ca43` | Upstream test triage; superseded by the local triage commit |
-| `5883110b` | Monaco 0.57; dependency upgrade deferred |
-| `10cd6c08`, `31a9d262`, `421f2262` | Ollama embedding/TTS, Codex OAuth STT; deferred |
+| `f172c3c4` | Antigravity Gemini 4 Argon catalog/UA; contradicts the fork's 2026-10-17 live probe (Argon 404) and has no fork-side verification |
 | `1fe586bb`, `3a978a63`, `f39d8f07` | Upstream release commits (version/changelog); skipped by design |
 
 ## Verification
 
-- Full suite: 470 files, 4975 tests passed, 121 skipped, 1 todo
-  (`CI=true pnpm test`, exit 0).
+- Full suite: 481 files, 5115 tests passed, 121 skipped, 1 todo
+  (`CI=true pnpm test`, exit 0). Codex STT transport tests ran with a static
+  ffmpeg 7.0.2 in `PATH`; the runtime image installs ffmpeg.
 - Lint: `pnpm run lint` exit 0 (0 errors); `node scripts/lint-undef.cjs` and
   `node scripts/lint-reacthooks.cjs` clean.
 - Production build: `SKIP_PREBUILD_LINT=1 pnpm build` exit 0, `✅ build
