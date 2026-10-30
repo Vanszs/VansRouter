@@ -13,6 +13,10 @@ vi.mock("../../src/sse/services/auth.js", () => ({
   clearAccountError: vi.fn(),
   extractApiKey: () => "client-key",
   isValidApiKey: vi.fn(),
+  isProviderAllowed: vi.fn(() => true),
+  isComboAllowed: vi.fn(() => true),
+  isKindAllowed: vi.fn(() => true),
+  isTrustedInternalRequest: vi.fn(async () => false),
 }));
 
 vi.mock("@/lib/localDb", () => ({
