@@ -94,4 +94,5 @@ provider commits are deferred with the reasons at the end. No push, no tag.
   (`CI=true pnpm test`, exit 0).
 - Lint: `pnpm run lint` exit 0 (0 errors); `node scripts/lint-undef.cjs` and
   `node scripts/lint-reacthooks.cjs` clean.
-- Production build: pending.
+- Production build: `SKIP_PREBUILD_LINT=1 pnpm build` exit 0, `✅ build
+  complete`, `.next/standalone/server.js` emitted.
