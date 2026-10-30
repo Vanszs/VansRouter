@@ -260,7 +260,6 @@ export default [
   p81,
   p82,
   p83,
-  p139,
   p84,
   p84z,
   p85,

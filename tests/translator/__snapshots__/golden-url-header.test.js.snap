@@ -1890,6 +1890,25 @@ exports[`GOLDEN buildHeaders (default executor providers) > sambanova → header
 }
 `;
 
+exports[`GOLDEN buildHeaders (default executor providers) > sensenova → headers (apiKey / oauth) 1`] = `
+{
+  "apiKey": {
+    "Accept": "text/event-stream",
+    "Authorization": "Bearer <TOK>",
+    "Content-Type": "application/json",
+  },
+  "nonStream": {
+    "Authorization": "Bearer <TOK>",
+    "Content-Type": "application/json",
+  },
+  "oauth": {
+    "Accept": "text/event-stream",
+    "Authorization": "Bearer <TOK>",
+    "Content-Type": "application/json",
+  },
+}
+`;
+
 exports[`GOLDEN buildHeaders (default executor providers) > siliconflow → headers (apiKey / oauth) 1`] = `
 {
   "apiKey": {
@@ -2835,6 +2854,13 @@ exports[`GOLDEN buildUrl (default executor providers) > sambanova → url (strea
 {
   "nonStream": "https://api.sambanova.ai/v1/chat/completions",
   "stream": "https://api.sambanova.ai/v1/chat/completions",
+}
+`;
+
+exports[`GOLDEN buildUrl (default executor providers) > sensenova → url (stream + non-stream) 1`] = `
+{
+  "nonStream": "https://token.sensenova.cn/v1/chat/completions",
+  "stream": "https://token.sensenova.cn/v1/chat/completions",
 }
 `;
 
