@@ -1,3 +1,77 @@
+# v0.91.89 (2026-10-30)
+
+This release adds the hybrid feature pass on top of the v0.5.112 sync. The
+v0.91.88 release was prepared and merged but never tagged, so its content ships
+here: 49 upstream commits adopted, 21 deferred with a recorded reason in
+`.audit/sync-ledger-0.5.104-0.5.112.md`, and every commit in the range is
+accounted for. Fork-owned behavior is unchanged: per-key ACL, multiple
+connections per node, quota latest-wins/provider scoping, Proxy Fitness, and the
+Vercel/Cloudflare relay deploy modals.
+
+## Features
+
+- **Combo search** by combo name and member model id, with a filtered
+  select-all so bulk actions only touch visible rows.
+- **Pi per-model caps**: context-window and max-output selectors, validated
+  before write, with hand-set values preserved across Apply.
+- **Antigravity tier resolution** from the client's reasoning effort, suffix or
+  token budget; the fork keeps its probed `gemini-3.8-flash-tiered` wire ids.
+- **Quota table**: honours provider-reported remaining percentages and shows an
+  explicit empty-window message; adds a dedicated CommandCode
+  `/alpha/whoami?limits=1` connection probe. (The CommandCode usage service is
+  not wired in this fork, so only the shared table improvements and the probe
+  apply.)
+- **Ollama Cloud balance**: `/api/balance` session (5h), weekly (7d), allowance
+  and purchased-credit rows when `/api/usage` no longer reports limits.
+- **Ollama System One** decision models (`clef`, `clef-flash`) on Cloud and
+  Local, with the saved host joined to the registry path.
+- **Ollama embedding** adapter and model catalog.
+- **Ollama Local TTS** (Phonon) with per-model voice/format handling.
+- **Codex OAuth STT**: `cx/transcribe` through the fixed ChatGPT endpoint, with
+  ffmpeg audio conversion in the runtime image.
+- **RTK custom system prompt**: a user-authored instruction appended
+  independently of Caveman and Ponytail, with its own toggle and textarea.
+- **Combo empty-content fall-through**: a streaming member that returns 200 but
+  never emits content falls through to the next member instead of delivering an
+  empty answer.
+- **Monaco 0.57.0** pinned in the shared loader so the dashboard fetches the
+  patched build (DOMPurify 3.4.15) instead of the 0.55.1 CDN copy.
+
+## Reliability & Compatibility
+
+- The sync carries the v0.5.104 → v0.5.112 provider and translator fixes:
+  SenseNova, Runcrate, Nace Drex, Kimi K3.1 Pro, GPT-6.1 Terra, Kiro model-id
+  normalization, CodeBuddy headers/backoff, Gemini protobuf predicates, tool-call
+  id repair, NUL stripping, undici 7.30.1, and Node 22.23.4.
+- The Codex STT handler keeps the fork's ACL checks (`isProviderAllowed`,
+  `isKindAllowed`, `isTrustedInternalRequest`) and the per-connection base URL
+  override for every other STT provider.
+- The combo peek keeps the fork's per-model timeout race and request-scoped 4xx
+  fall-through.
+- `Dockerfile` keeps the fork entrypoint, Tailscale capabilities and migration
+  helper; only `ffmpeg` was added to the runtime packages.
+
+## Release Infrastructure
+
+- `publish-npm` treats npm's staged-publish window as accepted-but-not-yet
+  visible: a conflict is accepted only when it names the exact release version,
+  then integrity verification continues for 20 minutes inside a 35-minute job.
+  Any other version or error stays fatal. Documented in `.agent/cicd.md` with
+  the v0.91.87 evidence.
+
+## Tests
+
+- Full suite: 481 test files, 5115 tests passed, 121 skipped, 1 todo
+  (`CI=true pnpm test`, exit 0). Codex STT transport tests ran with a static
+  ffmpeg 7.0.2 in `PATH`.
+- `pnpm run lint` exit 0 (0 errors); `node scripts/lint-undef.cjs` and
+  `node scripts/lint-reacthooks.cjs` clean.
+- Production build: `SKIP_PREBUILD_LINT=1 pnpm build` exit 0, `✅ build
+  complete`, `.next/standalone/server.js` emitted.
+- New coverage: Pi caps (`cli-tools-generic-settings`), Antigravity tiers
+  (`gemini-38-integration`), Ollama balance/System One/embedding/TTS, Codex OAuth
+  STT, combo empty-content fall-through, and Monaco pinning.
+
 # v0.91.88 (2026-10-30)
 
 This release syncs the fork with upstream `decolua/9router` v0.5.104 → v0.5.112
