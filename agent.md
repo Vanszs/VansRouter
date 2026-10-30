@@ -76,16 +76,14 @@ git diff <v0.9.0-commit> dev --stat  # pastikan tidak ada file custom hilang
 | 7 | Trusted internal call (`isTrustedInternalRequest`) | `src/sse/services/auth.js` |
 | 8 | Remote bypass guard (`allowRemoteNoApiKey`) | `src/dashboardGuard.js` |
 | 9 | DB folder constant (`APP_NAME = "9router"`) | `src/lib/dataDir.js` |
-| 10 | Local ZCode provider | `open-sse/providers/registry/zcode.js` |
-| 11 | ZCode executor | `open-sse/executors/zcode.js` |
-| 12 | 429 classification (`classify429`) | `open-sse/services/accountFallback.js` |
-| 13 | YAGNI ponytail mode | `open-sse/rtk/ponytail.js` |
-| 14 | Terse caveman mode | `open-sse/rtk/caveman.js` |
-| 15 | Proxy pool selection (`pickProxyPoolId`) | `src/sse/services/auth.js` |
-| 16 | Connection proxy layer (`connectionProxy`) | `src/lib/network/connectionProxy.js` |
-| 17 | Sidebar VansRouter brand | `src/shared/components/Sidebar.js` |
-| 18 | Provider detail connections pagination (10/page) | `src/app/(dashboard)/dashboard/providers/[id]/connectionsPagination.js` |
-| 19 | ACL filter di `GET /v1/models` (validate key + filter providers) | `src/app/api/v1/models/route.js` |
+| 10 | 429 classification (`classify429`) | `open-sse/services/accountFallback.js` |
+| 11 | YAGNI ponytail mode | `open-sse/rtk/ponytail.js` |
+| 12 | Terse caveman mode | `open-sse/rtk/caveman.js` |
+| 13 | Proxy pool selection (`pickProxyPoolId`) | `src/sse/services/auth.js` |
+| 14 | Connection proxy layer (`connectionProxy`) | `src/lib/network/connectionProxy.js` |
+| 15 | Sidebar VansRouter brand | `src/shared/components/Sidebar.js` |
+| 16 | Provider detail connections pagination (10/page) | `src/app/(dashboard)/dashboard/providers/[id]/connectionsPagination.js` |
+| 17 | ACL filter di `GET /v1/models` (validate key + filter providers) | `src/app/api/v1/models/route.js` |
 
 ### Aturan Hybrid Upstream
 
