@@ -1,3 +1,87 @@
+# v0.91.88 (2026-10-30)
+
+This release syncs the fork with upstream `decolua/9router` v0.5.104 → v0.5.112
+and finishes the provider batch that the sync introduced. 36 upstream commits
+are adopted and 34 are deferred with a recorded reason in
+`.audit/sync-ledger-0.5.104-0.5.112.md`; every upstream commit in the range is
+accounted for. Fork-owned behavior is unchanged: per-key ACL, multiple
+connections per node, quota latest-wins/provider scoping, Proxy Fitness, and the
+Vercel/Cloudflare relay deploy modals.
+
+## Features
+
+- **SenseNova** provider (`p163`) with its LLM and image lanes.
+- **Runcrate** provider (`p164`).
+- **Nace Drex** provider in the System One lane (`p165`); a saved host is joined
+  with the registry `path` instead of replacing it.
+- **Kimi K3.1 Pro** on CommandCode and OpenCode Go.
+- **GPT-6.1 Terra** on Codex.
+- Gemini and MITM image paths accept reference-image inputs (#4981).
+- Codex image generation skips ChatGPT Free accounts, uses a Go-compatible main
+  model, and drives `image_generation` from `gpt-6-sol`.
+
+## Reliability & Compatibility
+
+- Kiro: Anthropic model ids are normalized onto Kiro upstream aliases again;
+  `normalizeKiroUpstreamModelId` is restored for the Kiro test suite.
+- Thinking: a transport can declare its thinking shape, and OpenCode Go
+  `/responses` nests reasoning instead of flattening it.
+- CodeBuddy: back off blocked international connections, share the channel
+  request id on international requests, and send the plugin request/conversation
+  id headers.
+- Combos: advance to the next model when credits run out or a request-scoped 4xx
+  is returned instead of ending the combo.
+- Capabilities: Grok 4.7 500k context, refreshed Copilot fallback catalog,
+  `reasoning_effort` for `glm-5.3-flash-free`, `low|high|max` for OpenCode zen
+  `deepseek-v4.1-flash`, a 330k cap for `oc/deepseek-v4.1-flash-free`, the
+  upstream DeepSeek model id, `effort: max` for GPT-5.6/GPT-6 on OpenAI
+  Compatible nodes, adaptive thinking for Claude Haiku 5.5, and Claude 5.5
+  thinking rules for Copilot's dotted model ids.
+- Security: undici 7.30.1; the headroom server binds to loopback.
+- OpenAI: `max_tokens` is renamed to `max_completion_tokens` where required.
+- Search: the model-match regex state is reset between matches.
+- Database: NUL bytes are stripped from bound strings before SQLite writes.
+- Streaming: missing tool-call ids are filled and renamed tool names restored
+  (#4992, #4986); SSE errors in a non-streaming response are rejected.
+- Translators: `image_url` parts inside tool messages become Claude images;
+  Gemini protobuf type predicates are enforced on schema items and properties;
+  NVIDIA reasoning aliases are normalized for NIM.
+- Bulk add: `LLM|id|secret` is treated as an opaque token, not `name|key`.
+- Fallback: credit errors are classified as account-scoped.
+- Docker: Node 22.23.4 patches the October 2026 security CVEs.
+
+## Release Infrastructure
+
+- `publish-npm` now treats npm's staged-publish window as accepted-but-not-yet
+  visible. A publish that returns success while the version stays out of the
+  packument no longer fails the release, and a retry that gets
+  `E409 Cannot publish over previously staged version` for the exact release
+  version continues to integrity verification instead of failing. Any other
+  version or error stays fatal. The visibility wait is 20 minutes inside a
+  35-minute job.
+- Documented the rule in `.agent/cicd.md` with the v0.91.87 evidence: npm
+  `0.91.87` eventually became public, but its GHCR tag and GitHub Release were
+  never created because `publish-npm` failed at the 15-minute mark.
+- `pnpm-lock.yaml` now matches the `undici` `^7.30.1` security bump, so every
+  `--frozen-lockfile` CI job installs the patched release instead of failing at
+  install time.
+- The custom-logic label no longer lists ZCode; the sync skill and verifier now
+  separate fork-owned behavior, presentation/deployment config, and upstream
+  features.
+
+## Tests
+
+- Full suite: 470 test files, 4975 tests passed, 121 skipped, 1 todo
+  (`CI=true pnpm test`, exit 0).
+- `pnpm run lint` exit 0 (0 errors); `node scripts/lint-undef.cjs` and
+  `node scripts/lint-reacthooks.cjs` clean.
+- Production build: `SKIP_PREBUILD_LINT=1 pnpm build` exit 0, `✅ build
+  complete`, `.next/standalone/server.js` emitted.
+- `tests/unit/release-hardening.test.js` passes with the new publish-npm
+  handling.
+- The codex-image plan-gate mock now provides the ACL helpers the synced image
+  handler imports.
+
 # v0.91.87 (2026-10-29)
 
 v0.91.86 moved the build into a separate staging package to keep the public
