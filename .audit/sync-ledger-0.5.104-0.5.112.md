@@ -83,6 +83,8 @@ provider commits are deferred with the reasons at the end. No push, no tag.
 | `9b4ea9eb` | Combo search UI; deferred |
 | `31b8439b` | Usage `/api/balance`; deferred |
 | `82aeb907`, `f172c3c4` | Antigravity catalog/UA; deferred |
+| `483c10f5` | OpenCode fingerprint tool-definition normalization; the fork's fingerprint pass is a different implementation |
+| `b08f12d5` | Codex image free-account routing; the fork's codex-image path differs |
 | `b6a9ca43` | Upstream test triage; superseded by the local triage commit |
 | `5883110b` | Monaco 0.57; dependency upgrade deferred |
 | `10cd6c08`, `31a9d262`, `421f2262` | Ollama embedding/TTS, Codex OAuth STT; deferred |
