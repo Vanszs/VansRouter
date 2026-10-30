@@ -15,6 +15,8 @@ export const UNSUPPORTED_SCHEMA_CONSTRAINTS = [
   "uniqueItems", "contains",
   // 2020-12 keywords with no Gemini equivalent
   "unevaluatedProperties", "unevaluatedItems", "contentSchema",
+  // Tuple-array keywords; converted to items first, leftovers stripped
+  "prefixItems", "additionalItems",
   // Claude rejects these in VALIDATED mode
   "default", "examples",
   // JSON Schema meta keywords
@@ -344,6 +346,31 @@ function ensureObjectType(obj) {
   }
 }
 
+// Convert prefixItems (tuple validation) to items — Gemini cannot express tuples,
+// and a type:"array" schema without items is rejected with "missing field"
+function convertPrefixItems(obj) {
+  if (!obj || typeof obj !== "object") return;
+
+  if (Array.isArray(obj.prefixItems) && obj.prefixItems.length > 0) {
+    const variants = obj.prefixItems.filter(s => s && s.type !== "null");
+    if (!obj.items && variants.length === 1) {
+      obj.items = variants[0];
+    } else if (!obj.items && variants.length > 1) {
+      obj.items = { anyOf: variants };
+    }
+    delete obj.prefixItems;
+  }
+
+  for (const [key, v] of Object.entries(obj)) {
+    if (!v || typeof v !== "object") continue;
+    if (key === "properties" && !Array.isArray(v)) {
+      for (const sub of Object.values(v)) convertPrefixItems(sub);
+    } else {
+      convertPrefixItems(v);
+    }
+  }
+}
+
 // Gemini rejects an array-typed node with no `items`:
 //   ...properties[where].items.items: missing field
 // Clients nest arrays freely, so fill the innermost gap. string is the safe
@@ -372,7 +399,14 @@ function ensureArrayItems(obj) {
       }
     }
   }
-  for (const v of Object.values(obj)) if (v && typeof v === "object") ensureArrayItems(v);
+  for (const [key, v] of Object.entries(obj)) {
+    if (!v || typeof v !== "object") continue;
+    if (key === "properties" && !Array.isArray(v)) {
+      for (const sub of Object.values(v)) ensureArrayItems(sub);
+    } else {
+      ensureArrayItems(v);
+    }
+  }
 }
 
 // Gemini Schema proto validation rules:
@@ -381,9 +415,12 @@ function ensureArrayItems(obj) {
 function enforceTypeConstraints(obj) {
   if (!obj || typeof obj !== "object") return;
 
-  for (const value of Object.values(obj)) {
-    if (value && typeof value === "object") {
-      enforceTypeConstraints(value);
+  for (const [key, v] of Object.entries(obj)) {
+    if (!v || typeof v !== "object") continue;
+    if (key === "properties" && !Array.isArray(v)) {
+      for (const sub of Object.values(v)) enforceTypeConstraints(sub);
+    } else {
+      enforceTypeConstraints(v);
     }
   }
 
@@ -425,9 +462,9 @@ export function cleanJSONSchemaForAntigravity(schema) {
 
   // Phase 2: Flatten complex structures
   mergeAllOf(cleaned);
+  convertPrefixItems(cleaned);
   flattenAnyOfOneOf(cleaned);
   flattenTypeArrays(cleaned);
-
   // Phase 2.5: Infer missing type=object when properties exist, and missing
   // items on arrays (both are Gemini requirements, issue #144)
   ensureObjectType(cleaned);
