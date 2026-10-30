@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useState, useEffect } from "react";
 import { Card, Badge, Button, AddCustomEmbeddingModal, NoAuthProxyCard, ProviderInfoCard } from "@/shared/components";
 import ProviderIcon from "@/shared/components/ProviderIcon";
-import { MEDIA_PROVIDER_KINDS, AI_PROVIDERS, isCustomEmbeddingProvider } from "@/shared/constants/providers";
+import { MEDIA_PROVIDER_KINDS, AI_PROVIDERS, OAUTH_PROVIDERS, isCustomEmbeddingProvider } from "@/shared/constants/providers";
 import ConnectionsCard from "@/app/(dashboard)/dashboard/providers/components/ConnectionsCard";
 import ModelsCard from "@/app/(dashboard)/dashboard/providers/components/ModelsCard";
 import { KIND_EXAMPLE_CONFIG } from "./components/exampleShared";
@@ -159,6 +159,11 @@ export default function MediaProviderDetailPage() {
       {/* Connections */}
       {!isCustom && provider.noAuth ? (
         <NoAuthProxyCard providerId={id} />
+      ) : OAUTH_PROVIDERS[id] ? (
+        <Card>
+          <p className="text-sm text-text-muted mb-3">This service shares your existing OAuth connections.</p>
+          <Link href={`/dashboard/providers/${id}`} className="text-primary hover:underline">Manage OAuth connections →</Link>
+        </Card>
       ) : (
         <ConnectionsCard providerId={id} isOAuth={false} />
       )}

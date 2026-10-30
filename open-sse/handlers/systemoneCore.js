@@ -10,13 +10,6 @@ import { generateSessionId } from "../executors/opencode.js";
 const OPENCODE_PROVIDERS = new Set(["opencode", "opencode-zen"]);
 
 /**
- * Core System One (Jev) handler — native decision payload pass-through.
- * URL/headers come from the registry's systemoneConfig; body and JSON response
- * are forwarded untouched (decision models have no chat translation layer).
- *
- * @returns {Promise<{ success: boolean, response: Response, usage?: object, status?: number, error?: string }>}
- */
-/**
  * Resolve the System One URL. A saved host override is joined with the registry
  * `path` (e.g. "/v1/systemone") without doubling a "/v1" or "/v1/systemone" the
  * user already included. Without `path`, the override is used as a full URL.
@@ -32,6 +25,14 @@ export function buildSystemoneUrl(override, cfg) {
   if (prefix && host.endsWith(prefix)) return host + path.slice(prefix.length);
   return host + path;
 }
+
+/**
+ * Core System One (Jev) handler — native decision payload pass-through.
+ * URL/headers come from the registry's systemoneConfig; body and JSON response
+ * are forwarded untouched (decision models have no chat translation layer).
+ *
+ * @returns {Promise<{ success: boolean, response: Response, usage?: object, status?: number, error?: string }>}
+ */
 
 export async function handleSystemoneCore({
   body,

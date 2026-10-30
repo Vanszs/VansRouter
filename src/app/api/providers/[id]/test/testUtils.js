@@ -454,6 +454,27 @@ async function testApiKeyConnection(connection, effectiveProxy = null) {
 
   try {
     switch (connection.provider) {
+      case "commandcode": {
+        const res = await fetchWithConnectionProxy(
+          "https://api.commandcode.ai/alpha/whoami?limits=1",
+          {
+            headers: {
+              Authorization: `Bearer ${connection.apiKey}`,
+              Accept: "application/json",
+            },
+          },
+          effectiveProxy,
+        );
+        const valid = res.ok;
+        return {
+          valid,
+          error: valid
+            ? null
+            : res.status === 401 || res.status === 403
+              ? "Invalid API key"
+              : `Command Code API error (${res.status})`,
+        };
+      }
       case "cloudflare-ai": {
         const psd = connection.providerSpecificData || {};
         const accountId = psd.accountId;

@@ -28,6 +28,7 @@ export const RESPONSES_ITEM = {
   MESSAGE: "message",
   FUNCTION_CALL: "function_call",
   FUNCTION_CALL_OUTPUT: "function_call_output",
+  CUSTOM_TOOL_CALL: "custom_tool_call",
   REASONING: "reasoning",
   OUTPUT_TEXT: "output_text",
   INPUT_TEXT: "input_text",

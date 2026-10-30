@@ -369,6 +369,12 @@ export function calculatePercentage(used, total) {
  * @returns {number} Remaining percentage (0-100)
  */
 export function getRemainingPercentage(quota) {
+  if (quota?.percentage !== undefined) {
+    // Providers may report the used share; the UI renders the remaining one.
+    const value = quota.percentageIsUsed === true ? 100 - quota.percentage : quota.percentage;
+    return Math.max(0, Math.round(value));
+  }
+
   if (quota?.remaining !== undefined) {
     return Math.max(0, Math.round(quota.remaining));
   }
@@ -664,10 +670,19 @@ export function parseQuotaData(provider, data) {
         if (data.quotas) {
           Object.entries(data.quotas).forEach(([name, quota]) => {
             normalizedQuotas.push({
-              name,
+              name: quota.name || name,
               used: quota.used || 0,
               total: quota.total || 0,
+              percentage: quota.percentage,
+              colorPercentage: quota.colorPercentage,
+              percentageIsUsed: quota.percentageIsUsed === true,
+              remainingPercentage: quota.remainingPercentage,
               resetAt: quota.resetAt || null,
+              emptyMessage: quota.emptyMessage || null,
+              isCreditBalance: quota.isCreditBalance,
+              currency: quota.currency,
+              unit: quota.unit,
+              unlimited: quota.unlimited,
             });
           });
         }

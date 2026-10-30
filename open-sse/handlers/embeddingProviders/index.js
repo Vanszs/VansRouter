@@ -3,6 +3,7 @@ import createOpenAIEmbeddingAdapter from "./openai.js";
 import gemini from "./gemini.js";
 import github from "./github.js";
 import openaiCompatNode from "./openaiCompatNode.js";
+import ollamaLocal from "./ollamaLocal.js";
 
 const OPENAI_COMPAT_PROVIDERS = [
   "openai", "openrouter", "mistral", "voyage-ai", "fireworks",
@@ -15,6 +16,7 @@ const ADAPTERS = {
   gemini,
   google_ai_studio: gemini,
   github,
+  "ollama-local": ollamaLocal,
 };
 
 export function getEmbeddingAdapter(provider) {

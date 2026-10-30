@@ -131,7 +131,8 @@ RUN mkdir -p /app/data /app/data-home && \
 
 # Tailscale Funnel requires CAP_NET_ADMIN for TUN mode; keep su-exec for dropping privileges.
 # When using host socket mode (TAILSCALE_USE_HOST_SOCKET=true), no extra capability is needed.
-RUN apk --no-cache add su-exec ip6tables iptables
+# ffmpeg converts audio for the Codex OAuth transcription lane.
+RUN apk --no-cache add su-exec ip6tables iptables ffmpeg
 COPY docker/migrate-legacy-volume.cjs /usr/local/bin/migrate-legacy-volume.cjs
 COPY docker/entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
