@@ -9,8 +9,6 @@ import { generateSessionId } from "../executors/opencode.js";
 
 const OPENCODE_PROVIDERS = new Set(["opencode", "opencode-zen"]);
 
-const OPENCODE_PROVIDERS = new Set(["opencode", "opencode-zen"]);
-
 /**
  * Resolve the System One URL. A saved host override is joined with the registry
  * `path` (e.g. "/v1/systemone") without doubling a "/v1" or "/v1/systemone" the
@@ -35,22 +33,6 @@ export function buildSystemoneUrl(override, cfg) {
  *
  * @returns {Promise<{ success: boolean, response: Response, usage?: object, status?: number, error?: string }>}
  */
-/**
- * Resolve the System One URL. A saved host override is joined with the registry
- * `path` (e.g. "/v1/systemone") without doubling a "/v1" or "/v1/systemone" the
- * user already included. Without `path`, the override is used as a full URL.
- */
-export function buildSystemoneUrl(override, cfg) {
-  const base = override?.trim();
-  if (!base) return cfg?.baseUrl;
-  if (!cfg?.path) return base;
-  const host = base.replace(/\/+$/, "");
-  const path = cfg.path.replace(/\/+$/, "");
-  if (host.endsWith(path)) return host;
-  const prefix = path.slice(0, path.lastIndexOf("/"));
-  if (prefix && host.endsWith(prefix)) return host + path.slice(prefix.length);
-  return host + path;
-}
 
 export async function handleSystemoneCore({
   body,

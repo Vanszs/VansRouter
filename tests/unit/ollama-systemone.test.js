@@ -72,7 +72,8 @@ describe("handleSystemoneCore request", () => {
   });
 
   it("still sends the session header to OpenCode Zen", async () => {
-    const r = await call("opencode-zen", "jev-1.13", { apiKey: "k" });
+    // The fork merged the Zen executor into the `opencode` lane.
+    const r = await call("opencode", "jev-1.13", { apiKey: "k" });
     expect(r.headers["x-opencode-session"]).toMatch(/^ses_/);
   });
 });
