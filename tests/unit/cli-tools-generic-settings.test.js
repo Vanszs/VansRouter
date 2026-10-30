@@ -90,8 +90,8 @@ describe("cli-tools dynamic settings routes", () => {
       apiKey: "sk_test",
       api: "openai-completions",
       models: [
-        { id: "gemini/gemini-3-flash", name: "gemini/gemini-3-flash", contextWindow: 128000, maxTokens: 16384 },
-        { id: "cc/claude-sonnet-5", name: "cc/claude-sonnet-5", contextWindow: 128000, maxTokens: 16384 },
+        { id: "gemini/gemini-3-flash", name: "gemini/gemini-3-flash", contextWindow: 200000, maxTokens: 64000 },
+        { id: "cc/claude-sonnet-5", name: "cc/claude-sonnet-5", contextWindow: 200000, maxTokens: 64000 },
       ],
     });
 
@@ -104,6 +104,24 @@ describe("cli-tools dynamic settings routes", () => {
 
     state.files.clear();
     expect((await (await pi.DELETE()).json()).message).toBe("No config file to reset");
+  });
+
+  it("keeps hand-set Pi caps when re-applying the model list", async () => {
+    state.files.set(PI_PATH, JSON.stringify({
+      providers: {
+        "9router": {
+          baseUrl: "https://router.example/v1",
+          apiKey: "sk_test",
+          models: [{ id: "a/b", name: "a/b", contextWindow: 1000000, maxTokens: 128000 }],
+        },
+      },
+    }));
+
+    await post(pi, { baseUrl: "https://router.example", apiKey: "sk_test", models: ["a/b", "c/d"] });
+
+    const models = readJson(PI_PATH).providers["9router"].models;
+    expect(models[0]).toMatchObject({ id: "a/b", contextWindow: 1000000, maxTokens: 128000 });
+    expect(models[1]).toMatchObject({ id: "c/d", contextWindow: 200000, maxTokens: 64000 });
   });
 
   it("keeps unrelated Pi providers and tolerates JSONC trailing commas", async () => {
