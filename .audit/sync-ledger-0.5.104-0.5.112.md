@@ -46,6 +46,8 @@ provider commits are deferred with the reasons at the end. No push, no tag.
 | `3ce2b828` | `0528bef0` | Normalize Anthropic ids onto Kiro aliases |
 | `161e3493` | `2871a31c` | Reference images for Gemini; MITM directory |
 | `a3bdaf6d` | `3e237e3f` | Add Kimi K3.1 Pro to CommandCode |
+| `b08f12d5` | `69300518` | Skip ChatGPT Free accounts and use a Go-compatible image model |
+| `fbac1220` | `d2895658` | Drive image_generation from gpt-6-sol |
 
 ## Fork fixes and test triage
 
@@ -73,7 +75,6 @@ provider commits are deferred with the reasons at the end. No push, no tag.
 | `d7bb71ce` | DeepSeek PoW via noble-hashes; new dependency, deferred |
 | `85d73bd6` | MiniMax lease auth; touches the fork's dashboardGuard paths |
 | `e70ea24d`, `ce060c79` | OpenCode fixes; the fork's lane diverged |
-| `fbac1220` | Codex image routing; fork path differs |
 | `b1effa03` | CommandCode header alignment; the fork's executor/usage path differs |
 | `72cb589e`, `50dcaa0c` | Pi settings; deferred |
 | `00dd3dfc` | Media providers; deferred |
@@ -84,7 +85,6 @@ provider commits are deferred with the reasons at the end. No push, no tag.
 | `31b8439b` | Usage `/api/balance`; deferred |
 | `82aeb907`, `f172c3c4` | Antigravity catalog/UA; deferred |
 | `483c10f5` | OpenCode fingerprint tool-definition normalization; the fork's fingerprint pass is a different implementation |
-| `b08f12d5` | Codex image free-account routing; the fork's codex-image path differs |
 | `b6a9ca43` | Upstream test triage; superseded by the local triage commit |
 | `5883110b` | Monaco 0.57; dependency upgrade deferred |
 | `10cd6c08`, `31a9d262`, `421f2262` | Ollama embedding/TTS, Codex OAuth STT; deferred |
@@ -92,7 +92,7 @@ provider commits are deferred with the reasons at the end. No push, no tag.
 
 ## Verification
 
-- Full suite: 468 files, 4963 tests passed, 121 skipped, 1 todo
+- Full suite: 470 files, 4975 tests passed, 121 skipped, 1 todo
   (`CI=true pnpm test`, exit 0).
 - Lint: `pnpm run lint` exit 0 (0 errors); `node scripts/lint-undef.cjs` and
   `node scripts/lint-reacthooks.cjs` clean.
