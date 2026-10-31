@@ -906,7 +906,7 @@ export default function ProviderLimits() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 min-h-[70vh]">
       {/* Header Controls */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-end">
         <div className="flex flex-wrap items-center gap-1.5">

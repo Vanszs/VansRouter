@@ -366,6 +366,10 @@ export default function ProvidersPage() {
       <div className="flex flex-col gap-8">
         <CardSkeleton />
         <CardSkeleton />
+        <CardSkeleton />
+        <CardSkeleton />
+        <CardSkeleton />
+        <CardSkeleton />
       </div>
     );
   }
