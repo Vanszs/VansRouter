@@ -1,3 +1,58 @@
+# v0.91.90 (2026-10-31)
+
+This release merges the remaining useful open pull requests and adds a
+performance pass. v0.91.89 shipped the v0.5.112 sync; this release carries the
+follow-ups that landed after it.
+
+## Features
+
+- **`/v1/systemone` endpoint** (PR #173): native System One decision requests
+  through the same ACL path as the other handlers (`isProviderAllowed`,
+  `isKindAllowed`, `isModelAllowed`, `isTrustedInternalRequest`), with
+  `{accountId}`/`{model}` URL placeholders for Cloudflare-style endpoints and a
+  `/systemone` rewrite. Adds the System One entry to the media-provider UI.
+- **Gemini schema `items` fix** (PR #194): `ensureArrayItems` no longer
+  misidentifies the `properties` map as an array when a tool parameter is named
+  `items`; `prefixItems` is mapped to `items` and stripped.
+- **Default model for compatible providers** (PR #198): the Add API Key dialog
+  can carry an optional model id, persisted with the connection.
+
+## Performance
+
+- **Basic Chat no longer fires one model-discovery request per connection.**
+  A 789-connection install produced 789 `/api/providers/:id/models` calls
+  (~16 MB) on page load. The catalogue is now fetched once per provider.
+  Lighthouse performance for `/dashboard/basic-chat`: **45 → 100**.
+- Loading placeholders on the dashboard, providers, and combos pages reserve
+  the space the loaded list needs.
+- The quota view reserves its container height, and the translator step header
+  reserves the loaded-character slot, removing layout shifts.
+- Lighthouse desktop preset (authenticated), before → after:
+
+| Page | Before | After |
+|---|---|---|
+| basic-chat | 45 | 100 |
+| providers | 71 | 85 |
+| quota | 44 | 76 |
+| combos | 84 | 86 |
+| endpoint | 85 | 85 |
+| translator | 78 | 85 |
+| usage | 93 | 88 |
+| media/embedding | 79 | 88 |
+| dashboard | 68 | 71 |
+
+  The remaining gap is the simulated LCP of a client-fetched section heading;
+  closing it needs server-rendered initial data, not a placeholder change.
+
+## Tests
+
+- Full suite: 483 test files, 5128 tests passed, 121 skipped, 1 todo
+  (`CI=true pnpm test`, exit 0).
+- `pnpm run lint` exit 0 (0 errors); `node scripts/lint-undef.cjs` and
+  `node scripts/lint-reacthooks.cjs` clean.
+- `SKIP_PREBUILD_LINT=1 pnpm build` exit 0 on the merged tree; CI `Validate`
+  rebuilt the same tree for PR #199 and #200.
+
 # v0.91.89 (2026-10-30)
 
 This release adds the hybrid feature pass on top of the v0.5.112 sync. The
