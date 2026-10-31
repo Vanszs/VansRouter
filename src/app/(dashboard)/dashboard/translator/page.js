@@ -266,7 +266,7 @@ export default function TranslatorPage() {
                   <span className="text-xs font-mono text-text-muted/60 w-4">{step.id}</span>
                   <h3 className="text-sm font-semibold text-text-main">{step.label}</h3>
                   <span className="text-xs text-text-muted/60 font-mono">{step.file}</span>
-                  {content && <span className="text-xs text-green-500">({content.length} chars)</span>}
+                  <span className="min-w-[72px] text-xs text-green-500">{content ? `(${content.length} chars)` : ""}</span>
                 </button>
                 {!isExpanded && (
                   <div className="flex gap-1 shrink-0">
