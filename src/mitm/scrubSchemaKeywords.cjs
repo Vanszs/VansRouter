@@ -11,6 +11,8 @@ const UNSUPPORTED_SCHEMA_KEYWORDS = [
   "minItems", "maxItems", "format", "multipleOf",
   // Array keywords the Gemini schema proto has no field for
   "uniqueItems", "contains",
+  // Tuple-array keywords; converted to items in the provider path
+  "prefixItems", "additionalItems",
   // 2020-12 keywords with no Gemini equivalent
   "unevaluatedProperties", "unevaluatedItems", "contentSchema",
   // Claude rejects these in VALIDATED mode
