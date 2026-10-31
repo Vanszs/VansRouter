@@ -108,8 +108,9 @@ describe("OpenCode Zen model catalog", () => {
     expect(ids).toContain("gpt-5.5");
     expect(ids).toContain("kimi-k3");
     expect(ids).toContain("deepseek-v4-pro");
+    expect(ids).toContain("jev-1.13");
     expect(ids).toHaveLength(
-      CHAT_ONLY.length + GEMINI.length + CLAUDE_CAPABLE.length + RESPONSES_CAPABLE.length,
+      CHAT_ONLY.length + GEMINI.length + CLAUDE_CAPABLE.length + RESPONSES_CAPABLE.length + 1,
     );
   });
 

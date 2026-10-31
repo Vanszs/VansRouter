@@ -124,7 +124,6 @@ export default {
     { id: "union-alpha", name: "Union Alpha", supportedFormats: ["claude"] },
     // System One (Jev) decision models on the native /systemone endpoint
     { id: "jev-1.13", name: "Jev 1.13", kind: "systemone" },
-    { id: "jev-1.13-free", name: "Jev 1.13 Free", kind: "systemone" },
   ],
   serviceKinds: ["llm", "systemone"],
   systemoneConfig: {
