@@ -306,6 +306,10 @@ export default function CombosPage() {
       <div className="flex flex-col gap-6">
         <CardSkeleton />
         <CardSkeleton />
+        <CardSkeleton />
+        <CardSkeleton />
+        <CardSkeleton />
+        <CardSkeleton />
       </div>
     );
   }

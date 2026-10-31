@@ -276,18 +276,28 @@ export default function BasicChatPageClient() {
           group.models.push(...staticModels);
         }
 
+        // One live catalogue per provider, not per connection: an install with
+        // hundreds of accounts would otherwise fire hundreds of discovery calls
+        // for the same provider. The first connection is representative.
+        const liveByProvider = new Map();
+        const loadLiveModels = async (connection) => {
+          try {
+            const response = await fetch(`/api/providers/${connection.id}/models`, { cache: "no-store", signal: controller.signal });
+            const data = await response.json().catch(() => ({}));
+            if (!response.ok) return [];
+            return parseProviderModelsPayload(data)
+              .flatMap((model) => { const m = normalizeLiveModel(model, connection); return m ? [m] : []; });
+          } catch {
+            return [];
+          }
+        };
         const liveResults = await Promise.all(
           connections.map(async (connection) => {
-            try {
-              const response = await fetch(`/api/providers/${connection.id}/models`, { cache: "no-store", signal: controller.signal });
-              const data = await response.json().catch(() => ({}));
-              if (!response.ok) return { connection, models: [] };
-              const models = parseProviderModelsPayload(data)
-                .flatMap((model) => { const m = normalizeLiveModel(model, connection); return m ? [m] : []; });
-              return { connection, models };
-            } catch {
-              return { connection, models: [] };
+            const providerId = connection.provider || connection.id;
+            if (!liveByProvider.has(providerId)) {
+              liveByProvider.set(providerId, loadLiveModels(connection));
             }
+            return { connection, models: await liveByProvider.get(providerId) };
           })
         );
 
