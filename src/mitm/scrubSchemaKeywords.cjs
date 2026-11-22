@@ -44,8 +44,14 @@ const UNSUPPORTED_SCHEMA_KEYWORDS = [
 const BLOCKED_KEYWORDS = new Set(UNSUPPORTED_SCHEMA_KEYWORDS);
 const QUOTED_KEYWORDS = UNSUPPORTED_SCHEMA_KEYWORDS.map(k => `"${k}"`);
 
-function mentionsUnsupportedKeyword(bodyBuffer) {
-  for (const needle of QUOTED_KEYWORDS) {
+// `items` is not an unsupported keyword, but it is the field whose protobuf
+// predicate rejects a node that is not an array (issue #163). Include it in the
+// cheap pre-parse scan so such a body is parsed and repaired; a body that only
+// mentions it in prose parses once and is still returned byte-identical.
+const QUOTED_DETECTION_KEYWORDS = [...QUOTED_KEYWORDS, '"items"'];
+
+function needsSchemaScrub(bodyBuffer) {
+  for (const needle of QUOTED_DETECTION_KEYWORDS) {
     if (bodyBuffer.includes(needle, 0, "latin1")) return true;
   }
   return false;
@@ -60,9 +66,47 @@ function stripKeywords(node, state) {
   for (const key of Object.keys(node)) {
     if (BLOCKED_KEYWORDS.has(key)) {
       delete node[key];
-      state.removed = true;
+      state.changed = true;
     } else {
       stripKeywords(node[key], state);
+    }
+  }
+}
+
+// Gemini's Schema proto only allows `items` on a node whose type is ARRAY:
+//   field predicate failed: $type == Type.ARRAY
+// The Antigravity passthrough skips the provider translator (and its
+// cleanJSONSchemaForAntigravity), so a native tool schema can reach Google with
+// `items` still attached to a node that lost or never carried the type — the
+// exact 400 of issue #163. Mirror the provider sanitiser: a node with `items`,
+// no type and no object shape is an array that lost its type; anything else is
+// an object that must not carry `items` at all.
+function enforceItemsPredicate(node, state) {
+  if (!node || typeof node !== "object") return;
+  if (Array.isArray(node)) {
+    for (const item of node) enforceItemsPredicate(item, state);
+    return;
+  }
+  // Native Antigravity bodies carry the proto enum names ("ARRAY", "OBJECT"),
+  // while the provider translator emits lowercase; the API accepts either, so
+  // the predicate check must be case-insensitive.
+  const isArray = typeof node.type === "string" && node.type.toLowerCase() === "array";
+  if (Object.hasOwn(node, "items") && !isArray) {
+    if (node.type === undefined && !node.properties) {
+      node.type = "array";
+    } else {
+      delete node.items;
+    }
+    state.changed = true;
+  }
+  for (const [key, value] of Object.entries(node)) {
+    // A `properties` map is not itself a schema node. A tool parameter may be
+    // named "items", and treating the map as a node would inject
+    // type:"array" into it instead of fixing the parameter's own schema.
+    if (key === "properties" && value && typeof value === "object" && !Array.isArray(value)) {
+      for (const sub of Object.values(value)) enforceItemsPredicate(sub, state);
+    } else {
+      enforceItemsPredicate(value, state);
     }
   }
 }
@@ -79,7 +123,11 @@ function scrubToolDeclarations(node, state) {
     for (const group of node.tools) {
       const declarations = group?.functionDeclarations || group?.function_declarations;
       if (!Array.isArray(declarations)) continue;
-      for (const declaration of declarations) stripKeywords(declaration?.parameters, state);
+      for (const declaration of declarations) {
+        const parameters = declaration?.parameters;
+        stripKeywords(parameters, state);
+        enforceItemsPredicate(parameters, state);
+      }
     }
   }
   for (const key of Object.keys(node)) scrubToolDeclarations(node[key], state);
@@ -87,13 +135,14 @@ function scrubToolDeclarations(node, state) {
 
 /**
  * Remove JSON Schema keywords Google's Antigravity backend rejects from tool
- * declaration parameters. Returns the original buffer untouched when nothing
- * matched (clean bodies stay byte-identical), and the original buffer again when
- * the body is not JSON (binary/proto payloads).
+ * declaration parameters, and enforce the `items` predicate the proto applies
+ * to them. Returns the original buffer untouched when nothing changed (clean
+ * bodies stay byte-identical), and the original buffer again when the body is
+ * not JSON (binary/proto payloads).
  */
 function scrubSchemaKeywords(bodyBuffer) {
   if (!Buffer.isBuffer(bodyBuffer) || bodyBuffer.length === 0) return bodyBuffer;
-  if (!mentionsUnsupportedKeyword(bodyBuffer)) return bodyBuffer;
+  if (!needsSchemaScrub(bodyBuffer)) return bodyBuffer;
 
   let parsed;
   try {
@@ -102,9 +151,9 @@ function scrubSchemaKeywords(bodyBuffer) {
     return bodyBuffer;
   }
 
-  const state = { removed: false };
+  const state = { changed: false };
   scrubToolDeclarations(parsed, state);
-  if (!state.removed) return bodyBuffer;
+  if (!state.changed) return bodyBuffer;
   return Buffer.from(JSON.stringify(parsed));
 }
 

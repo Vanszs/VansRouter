@@ -91,6 +91,107 @@ describe("Antigravity MITM tool-schema scrubbing", () => {
     expect(params.properties.opts.properties.value).toEqual({ type: "string" });
   });
 
+  it("types a node that carries items but no type as an array (issue #163)", () => {
+    // The exact shape of the reported GenerateContentRequest failure:
+    // operations[].items.properties.{expectedValue,value}.items, where both
+    // array parameters lost their `type` but kept `items`.
+    // Native Antigravity bodies carry the proto enum names ("ARRAY", "OBJECT").
+    const body = geminiBody({
+      type: "OBJECT",
+      properties: {
+        operations: {
+          type: "ARRAY",
+          items: {
+            type: "OBJECT",
+            properties: {
+              expectedValue: { items: { type: "STRING" } },
+              value: { items: { type: "NUMBER" } },
+            },
+          },
+        },
+      },
+    }, "function_declarations");
+
+    const forwarded = JSON.parse(scrubSchemaKeywords(body).toString());
+    const params = forwarded.request.tools[0].function_declarations[0].parameters;
+    expect(params.properties.operations.items.properties.expectedValue).toEqual({
+      type: "array",
+      items: { type: "STRING" },
+    });
+    expect(params.properties.operations.items.properties.value).toEqual({
+      type: "array",
+      items: { type: "NUMBER" },
+    });
+  });
+
+  it("keeps items on a valid array sent with the proto enum casing", () => {
+    const body = geminiBody({
+      type: "OBJECT",
+      properties: { tags: { type: "ARRAY", items: { type: "STRING" } } },
+    });
+
+    expect(scrubSchemaKeywords(body)).toBe(body);
+  });
+
+  it("drops items from a node that is not an array", () => {
+    const body = geminiBody({
+      type: "object",
+      properties: {
+        expectedValue: {
+          type: "object",
+          properties: { id: { type: "string" } },
+          items: { type: "string" },
+        },
+      },
+    });
+
+    const params = JSON.parse(scrubSchemaKeywords(body).toString()).request.tools[0].functionDeclarations[0].parameters;
+    expect(params.properties.expectedValue).toEqual({
+      type: "object",
+      properties: { id: { type: "string" } },
+    });
+  });
+
+  it("does not treat a properties map as a schema node when a parameter is named items", () => {
+    const body = geminiBody({
+      type: "object",
+      properties: {
+        items: { type: "array", items: { type: "string" } },
+        list: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: { items: { type: "array", items: { type: "number" } } },
+          },
+        },
+      },
+    });
+
+    const params = JSON.parse(scrubSchemaKeywords(body).toString()).request.tools[0].functionDeclarations[0].parameters;
+    expect(params.properties.type).toBeUndefined();
+    expect(params.properties.items).toEqual({ type: "array", items: { type: "string" } });
+    expect(params.properties.list.items.properties.type).toBeUndefined();
+    expect(params.properties.list.items.properties.items).toEqual({ type: "array", items: { type: "number" } });
+  });
+
+  it("forwards a valid array schema byte-identical", () => {
+    const body = geminiBody({
+      type: "object",
+      properties: { tags: { type: "array", items: { type: "string" } } },
+    });
+
+    expect(scrubSchemaKeywords(body)).toBe(body);
+  });
+
+  it("leaves a body where items only appears in prose untouched", () => {
+    const body = geminiBody({
+      type: "object",
+      properties: { q: { type: "string", description: "items to search" } },
+    });
+
+    expect(scrubSchemaKeywords(body)).toBe(body);
+  });
+
   it("forwards bodies with only supported keywords byte-identical", () => {
     const body = geminiBody({
       type: "object",
