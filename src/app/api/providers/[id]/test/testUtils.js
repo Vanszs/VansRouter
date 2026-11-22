@@ -395,6 +395,41 @@ async function fetchWithConnectionProxy(url, options = {}, effectiveProxy = null
   });
 }
 
+// CodeBuddy (CN + intl) exposes its credit balance on a billing endpoint that
+// belongs to the same gateway. Probing it proves a manually pasted access token
+// without spending inference quota. The chat endpoint cannot answer "is this
+// token accepted?": it rejects non-official clients with 400/11128 even when
+// the token is valid. A 401/403 on the billing endpoint means the token is bad.
+async function probeCodebuddyAccessToken(connection, token, effectiveProxy = null) {
+  const providerCfg = PROVIDERS[connection.provider];
+  const probeUrl = providerCfg?.usage?.url;
+  if (!probeUrl) return { valid: false, error: "Provider test not supported" };
+  if (!token) return { valid: false, error: "No access token" };
+
+  try {
+    const res = await fetchWithConnectionProxy(probeUrl, {
+      method: "POST",
+      headers: {
+        ...(providerCfg.headers || {}),
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+      body: "{}",
+    }, effectiveProxy);
+
+    if (res.status === 401 || res.status === 403) {
+      return { valid: false, error: "CodeBuddy access token invalid or expired" };
+    }
+    return {
+      valid: res.ok,
+      error: res.ok ? null : `CodeBuddy API returned ${res.status}`,
+    };
+  } catch (err) {
+    return { valid: false, error: err.message };
+  }
+}
+
 async function testApiKeyConnection(connection, effectiveProxy = null) {
   if (isOpenAICompatibleProvider(connection.provider)) {
     const modelsBase = connection.providerSpecificData?.baseUrl;
@@ -454,6 +489,16 @@ async function testApiKeyConnection(connection, effectiveProxy = null) {
 
   try {
     switch (connection.provider) {
+      case "codebuddy-cn":
+      case "codebuddy-intl":
+        // Manually pasted access tokens land on the API-key path; without this
+        // case the switch default reports "Provider test not supported" and
+        // marks a working connection as errored.
+        return probeCodebuddyAccessToken(
+          connection,
+          connection.apiKey || connection.accessToken,
+          effectiveProxy,
+        );
       case "commandcode": {
         const res = await fetchWithConnectionProxy(
           "https://api.commandcode.ai/alpha/whoami?limits=1",
