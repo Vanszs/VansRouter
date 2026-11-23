@@ -13,6 +13,7 @@ const IS_MAC = process.platform === "darwin";
 const { generateCert } = require("./cert/generate");
 const { installCert, uninstallCert } = require("./cert/install");
 const { isCertExpired } = require("./cert/rootCA");
+const { restrictPrivateKeyPermissions } = require("./cert/keyPermissions");
 const { DATA_DIR, MITM_DIR } = require("./paths");
 const { log, err } = require("./logger");
 const { LSOF_BIN } = require("./config");
@@ -546,6 +547,11 @@ async function startServer(apiKey, sudoPassword, forceKillPort443 = false) {
     log("🔐 Generating Root CA...");
     await generateCert();
   }
+
+  // Retro-fix keys created by older releases with the default umask (0644).
+  // generateCert() is skipped when a valid CA already exists, so harden here
+  // too instead of only at generation time.
+  restrictPrivateKeyPermissions(rootCAKeyPath);
 
   // Step 1.5: Auto-install Root CA if not trusted yet
   const { checkCertInstalled } = require("./cert/install");

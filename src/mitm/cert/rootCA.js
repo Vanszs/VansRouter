@@ -2,6 +2,7 @@ const path = require("path");
 const fs = require("fs");
 const forge = require("node-forge");
 const { MITM_DIR } = require("../paths");
+const { restrictPrivateKeyPermissions } = require("./keyPermissions");
 
 const ROOT_CA_KEY_PATH = path.join(MITM_DIR, "rootCA.key");
 const ROOT_CA_CERT_PATH = path.join(MITM_DIR, "rootCA.crt");
@@ -25,6 +26,8 @@ function isCertExpired(certPath) {
  */
 async function generateRootCA() {
   const exists = fs.existsSync(ROOT_CA_KEY_PATH) && fs.existsSync(ROOT_CA_CERT_PATH);
+  // Retro-fix keys created by older releases with the default umask (0644).
+  restrictPrivateKeyPermissions(ROOT_CA_KEY_PATH);
   if (exists && !isCertExpired(ROOT_CA_CERT_PATH)) {
     console.log("✅ Root CA already exists");
     return { key: ROOT_CA_KEY_PATH, cert: ROOT_CA_CERT_PATH };
@@ -85,7 +88,10 @@ async function generateRootCA() {
   const privateKeyPem = forge.pki.privateKeyToPem(keys.privateKey);
   const certPem = forge.pki.certificateToPem(cert);
 
-  fs.writeFileSync(ROOT_CA_KEY_PATH, privateKeyPem);
+  fs.writeFileSync(ROOT_CA_KEY_PATH, privateKeyPem, { mode: 0o600 });
+  // writeFileSync only applies mode on creation; enforce it if a stale key
+  // survived (e.g. key present, cert missing) or the umask widened the bits.
+  restrictPrivateKeyPermissions(ROOT_CA_KEY_PATH);
   fs.writeFileSync(ROOT_CA_CERT_PATH, certPem);
 
   console.log("✅ Root CA generated successfully");
@@ -100,6 +106,9 @@ function loadRootCA() {
     throw new Error("Root CA not found. Generate it first.");
   }
 
+  // Harden before reading so a key written by an older release is fixed the
+  // first time any signing path touches it.
+  restrictPrivateKeyPermissions(ROOT_CA_KEY_PATH);
   const keyPem = fs.readFileSync(ROOT_CA_KEY_PATH, "utf8");
   const certPem = fs.readFileSync(ROOT_CA_CERT_PATH, "utf8");
 
