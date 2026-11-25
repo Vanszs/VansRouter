@@ -115,7 +115,7 @@ describe("Antigravity executor", () => {
     expect(getRequestTranslator("openai:antigravity")).toBeDefined();
   });
 
-  it("strips optional from nested tool schemas", () => {
+  it.each(["optional", "~optional"])("strips %s from nested tool schemas", (annotation) => {
     const out = new AntigravityExecutor().transformRequest("gemini-2.5-pro", {
       request: {
         contents: [{ role: "user", parts: [{ text: "hi" }] }],
@@ -129,7 +129,7 @@ describe("Antigravity executor", () => {
                 query: {
                   type: "string",
                   description: "Search query",
-                  optional: true,
+                  [annotation]: true,
                 },
               },
             },

@@ -8,6 +8,19 @@ import {
 } from "./codebuddyShared.js";
 
 const REQUIRED_SYSTEM_PROMPT = "You are CodeBuddy Code.";
+const NEUTRAL_SYSTEM_PROMPT = "You are CodeBuddy Code, an expert software engineering assistant.";
+
+// Broader CLI-agent identity markers than the shared Claude/ZCode rewrites
+// (Tencent WAF, #5319 family). Applied to system prompts only.
+const AGENT_IDENTITY_PATTERN = /you are claude code|claude.?code.+official.+cli|anthropic.+official.+cli|anxthxropic.+official.+cli|you are (?:cursor|windsurf|cline|aider|continue|copilot|cody)|OhMyOpenCode|<agent-identity>|<Behavior_Instructions>|cc_entrypoint\s*=\s*(?:cli|vscode|jetbrains|gui)|claude.?code.+issues|give feedback.+claude.?code/i;
+// Claude Code's canonical identity sentence ends at the first period; consume
+// exactly that sentence so the rest of the system prompt survives.
+const CLAUDE_CODE_IDENTITY_RE = /you are claude code[^.\n]*\.?/i;
+const neutralizeAgentIdentity = (text) => (
+  CLAUDE_CODE_IDENTITY_RE.test(text)
+    ? text.replace(CLAUDE_CODE_IDENTITY_RE, NEUTRAL_SYSTEM_PROMPT)
+    : text.replace(AGENT_IDENTITY_PATTERN, NEUTRAL_SYSTEM_PROMPT)
+);
 
 // Deterministic RFC-4122-v5-shaped UUID derived from a session key, mirroring
 // the official client's per-conversation id (uuid5 over the session key).
@@ -123,6 +136,20 @@ export class CodeBuddyIntlExecutor extends DefaultExecutor {
         if (requiredPromptSeen) continue;
         requiredPromptSeen = true;
         continue;
+      }
+      if (message.role === "system") {
+        const text =
+          typeof message.content === "string"
+            ? message.content
+            : Array.isArray(message.content)
+              ? message.content.map((part) => (part && typeof part.text === "string" ? part.text : "")).join("\n")
+              : "";
+        if (AGENT_IDENTITY_PATTERN.test(text)) {
+          // Rewrite only the matched identity span so persona/guardrails in the
+          // same system prompt survive.
+          messages.push({ role: "system", content: neutralizeAgentIdentity(text) });
+          continue;
+        }
       }
       if (message.role === "user" && typeof message.content === "string") {
         messages.push({ ...message, content: [{ type: "text", text: message.content }] });

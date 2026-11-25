@@ -377,7 +377,6 @@ describe("proxyAwareFetch — api.anthropic.com routing", () => {
       return { gotScraping: mockGotScraping };
     });
 
-    const originalFetch = globalThis.fetch;
     const mockFetch = vi.fn().mockResolvedValue({
       ok: true,
       status: 200,
@@ -387,9 +386,8 @@ describe("proxyAwareFetch — api.anthropic.com routing", () => {
       text: async () => JSON.stringify({ id: "msg_test" }),
       json: async () => ({ id: "msg_test" }),
     });
-    // proxyFetch.js captures originalFetch = globalThis.fetch at module load,
-    // so install the mock BEFORE resetting modules and importing.
-    globalThis.fetch = mockFetch;
+    // The direct transport now runs on the package's own undici instance.
+    vi.doMock("undici", () => ({ fetch: mockFetch, Agent: class { close() {} destroy() {} } }));
 
     vi.resetModules();
     const { proxyAwareFetch } = await import("open-sse/utils/proxyFetch.js");
@@ -409,7 +407,6 @@ describe("proxyAwareFetch — api.anthropic.com routing", () => {
     expect(res.status).toBe(200);
     const data = await res.json();
     expect(data.id).toBe("msg_test");
-    globalThis.fetch = originalFetch;
   });
 
   it("falls back gracefully when got-scraping throws on non-streaming path", async () => {
@@ -419,16 +416,18 @@ describe("proxyAwareFetch — api.anthropic.com routing", () => {
       return { gotScraping: fn };
     });
 
-    const originalFetch = globalThis.fetch;
-    globalThis.fetch = vi.fn().mockResolvedValue({
-      ok: true,
-      status: 200,
-      statusText: "OK",
-      headers: new Headers(),
-      body: null,
-      text: async () => "{}",
-      json: async () => ({}),
-    });
+    vi.doMock("undici", () => ({
+      Agent: class { close() {} destroy() {} },
+      fetch: vi.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+        statusText: "OK",
+        headers: new Headers(),
+        body: null,
+        text: async () => "{}",
+        json: async () => ({}),
+      }),
+    }));
 
     vi.resetModules();
     const { proxyAwareFetch } = await import("open-sse/utils/proxyFetch.js");
@@ -440,7 +439,6 @@ describe("proxyAwareFetch — api.anthropic.com routing", () => {
     });
 
     expect(res.ok).toBe(true);
-    globalThis.fetch = originalFetch;
   });
 
   it("does NOT route non-Anthropic hosts through gotScraping", async () => {

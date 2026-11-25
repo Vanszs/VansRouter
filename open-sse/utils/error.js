@@ -40,6 +40,42 @@ export function errorResponse(statusCode, message, extraHeaders = null) {
 }
 
 /**
+ * 503 returned while an OpenCode egress pool is being rotated. The client is
+ * expected to retry after the advertised delay; the next request picks another
+ * pool because the failed one is now benched in the fitness store.
+ */
+export function rotationInProgressResponse({
+  message,
+  retryAfterMs = 1500,
+  fromPoolId = null,
+  toPoolId = null,
+  reason = "",
+} = {}) {
+  const retryAfterSec = Math.max(1, Math.ceil(retryAfterMs / 1000));
+  const body = {
+    error: {
+      message: message || `OpenCode egress rotated; retry in ${retryAfterSec}s.`,
+      type: "server_error",
+      code: "rotation_in_progress",
+      ...(reason ? { reason } : {}),
+    },
+  };
+  return new Response(JSON.stringify(body), {
+    status: 503,
+    headers: {
+      "Content-Type": "application/json",
+      "Access-Control-Allow-Origin": "*",
+      // Lower-case on purpose: avoids a duplicate header when an upstream
+      // Retry-After is also forwarded.
+      "retry-after": String(retryAfterSec),
+      ...(fromPoolId || toPoolId
+        ? { "x-vansroute-rotation": `${fromPoolId || "direct"}>${toPoolId || "next"}` }
+        : {}),
+    },
+  });
+}
+
+/**
  * Write error to SSE stream (for streaming)
  * @param {WritableStreamDefaultWriter} writer - Stream writer
  * @param {number} statusCode - HTTP status code
@@ -75,7 +111,9 @@ export async function parseUpstreamError(response, executor = null) {
           statusCode: parsed.status || response.status,
           message: msg,
           resetsAtMs: parsed.resetsAtMs,
-          poolScoped: parsed.poolScoped,
+          poolScoped: parsed.poolScoped
+            ? { ...parsed.poolScoped, resetsAtMs: parsed.resetsAtMs }
+            : parsed.poolScoped,
         };
       }
     } catch { /* fall through to default parsing */ }

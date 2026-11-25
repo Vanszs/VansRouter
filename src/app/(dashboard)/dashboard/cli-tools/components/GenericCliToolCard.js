@@ -7,6 +7,7 @@ import BaseUrlSelect from "./BaseUrlSelect";
 import ApiKeySelect from "./ApiKeySelect";
 import useCliToolLifecycle from "./useCliToolLifecycle";
 import { matchKnownEndpoint } from "./cliEndpointMatch";
+import { buildModelGroups, collectModelValues, LIVE_CATALOG_PROVIDERS } from "@/shared/utils/selectableModels";
 
 const CONFIG_FILES = {
   pi: "~/.pi/agent/models.json",
@@ -66,6 +67,7 @@ export default function GenericCliToolCard({ tool, isExpanded, onToggle, baseUrl
   const [modelOverride, setModelOverride] = useState(null);
   const [modelsOverride, setModelsOverride] = useState(null);
   const [modelCaps, setModelCaps] = useState({});
+  const [addingAll, setAddingAll] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const [showInstallGuide, setShowInstallGuide] = useState(false);
   const [showManualConfigModal, setShowManualConfigModal] = useState(false);
@@ -114,6 +116,73 @@ export default function GenericCliToolCard({ tool, isExpanded, onToggle, baseUrl
       }
     } catch (error) {
       dispatch({ type: "APPLY_DONE", message: { type: "error", text: error.message } });
+    }
+  };
+
+  // Resolve every model the picker can offer (no-auth providers, custom models,
+  // aliases, live per-account catalogs, disabled filter) instead of walking the
+  // static registry over connection rows only.
+  const loadActiveModelValues = async () => {
+    const readJson = async (url) => {
+      try {
+        const res = await fetch(url, { cache: "no-store" });
+        return res.ok ? await res.json() : null;
+      } catch {
+        return null;
+      }
+    };
+
+    const [providersData, aliasData, customData, disabledData] = await Promise.all([
+      readJson("/api/providers"),
+      readJson("/api/models/alias"),
+      readJson("/api/models/custom"),
+      readJson("/api/models/disabled"),
+    ]);
+
+    const allConnections = providersData?.connections ?? activeProviders ?? [];
+    const connections = allConnections.filter((conn) => conn && conn.isActive !== false);
+
+    const liveModels = {};
+    await Promise.all(
+      LIVE_CATALOG_PROVIDERS.map(async (providerId) => {
+        const connectionIds = connections.filter((conn) => conn.provider === providerId).map((conn) => conn.id);
+        if (connectionIds.length === 0) return;
+        const lists = await Promise.all(connectionIds.map((id) => readJson(`/api/providers/${id}/models`)));
+        liveModels[providerId] = lists.flatMap((data) => (Array.isArray(data?.models) ? data.models : []));
+      })
+    );
+
+    return collectModelValues(
+      buildModelGroups({
+        connections,
+        allConnections,
+        modelAliases: aliasData?.aliases || {},
+        customModels: customData?.models || [],
+        disabledModels: disabledData?.disabled || {},
+        liveModels,
+      })
+    );
+  };
+
+  const handleAddAllActiveModels = async () => {
+    setAddingAll(true);
+    dispatch({ type: "APPLY_DONE", message: null });
+    try {
+      const allModels = await loadActiveModelValues();
+      if (allModels.length === 0) {
+        dispatch({ type: "APPLY_DONE", message: { type: "error", text: "No active models found to add." } });
+        return;
+      }
+      setModelsOverride((prev) => Array.from(new Set([...(prev ?? selectedModels), ...allModels])));
+      setModelCaps((prev) => {
+        const next = { ...prev };
+        allModels.forEach((id) => { next[id] ||= { ...PI_DEFAULT_CAPS }; });
+        return next;
+      });
+    } catch (error) {
+      dispatch({ type: "APPLY_DONE", message: { type: "error", text: error.message } });
+    } finally {
+      setAddingAll(false);
     }
   };
 
@@ -304,6 +373,16 @@ export default function GenericCliToolCard({ tool, isExpanded, onToggle, baseUrl
                         <Button type="button" size="sm" variant="secondary" onClick={() => setModalOpen(true)} disabled={!activeProviders?.length}>
                           <span className="material-symbols-outlined text-[14px] mr-1">add</span>
                           Add Model
+                        </Button>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="ghost"
+                          onClick={handleAddAllActiveModels}
+                          disabled={addingAll}
+                          className="text-xs text-primary hover:text-primary-hover"
+                        >
+                          {addingAll ? "Adding..." : "+ Add All Active Models"}
                         </Button>
                         {selectedModels.length > 0 && (
                           <button type="button" onClick={() => setModelsOverride([])} className="text-xs text-text-muted hover:text-red-500 ml-auto">Clear all</button>

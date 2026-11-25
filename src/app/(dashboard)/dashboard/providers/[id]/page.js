@@ -6,6 +6,9 @@ import Link from "next/link";
 import Image from "next/image";
 import { getProviderIconSrc, markProviderIconMissing } from "@/shared/utils/providerIcon";
 import ProviderIcon from "@/shared/components/ProviderIcon";
+import { deleteSelectedModels } from "@/shared/utils/deleteSelectedModels.js";
+import ModelImportModal from "@/shared/components/ModelImportModal.js";
+import { importSelectedModels } from "@/shared/utils/importSelectedModels.js";
 import { Card, Button, Badge, Input, Modal, CardSkeleton, OAuthModal, KiroOAuthWrapper, CursorAuthModal, ZedAuthModal, IFlowCookieModal, GitLabAuthModal, Toggle, Select, EditConnectionModal, NoAuthProxyCard, ConfirmModal, Pagination } from "@/shared/components";
 import { CONNECTIONS_PER_PAGE, computeConnectionPagination } from "./connectionsPagination";
 import { OAUTH_PROVIDERS, APIKEY_PROVIDERS, FREE_PROVIDERS, FREE_TIER_PROVIDERS, WEB_COOKIE_PROVIDERS, getProviderAlias, isOpenAICompatibleProvider, isAnthropicCompatibleProvider, AI_PROVIDERS } from "@/shared/constants/providers";
@@ -77,6 +80,15 @@ export default function ProviderDetailPage() {
   const [autoPing, setAutoPing] = useState({ enabled: false, connections: {}, schedules: {} });
   const [scheduleConnection, setScheduleConnection] = useState(null);
   const [suggestedModels, setSuggestedModels] = useState([]);
+  const [modelSelection, setModelSelection] = useState({ providerId: null, ids: [] });
+  const selectedModelIds = modelSelection.providerId === providerId ? modelSelection.ids : [];
+  const setSelectedModelIds = (next) => setModelSelection((prev) => {
+    const base = prev.providerId === providerId ? prev.ids : [];
+    return { providerId, ids: typeof next === "function" ? next(base) : next };
+  });
+  const [bulkDeleteBusy, setBulkDeleteBusy] = useState(false);
+  const [importPreview, setImportPreview] = useState(null);
+  const [showImportMenu, setShowImportMenu] = useState(false);
   const [liveModels, setLiveModels] = useState([]);
   const [kiloFreeModels, setKiloFreeModels] = useState([]);
   const [disabledModelIds, setDisabledModelIds] = useState([]);
@@ -89,6 +101,7 @@ export default function ProviderDetailPage() {
   const [oneByOneResults, setOneByOneResults] = useState({});
   const [oneByOneSummary, setOneByOneSummary] = useState(null);
   const stopOneByOneRef = useRef(false);
+  const importMenuRef = useRef(null);
   const [importingModels, setImportingModels] = useState(false);
   const { copied, copy } = useCopyToClipboard();
 
@@ -301,6 +314,16 @@ export default function ProviderDetailPage() {
       console.log("Error fetching custom models:", error);
     }
   }, []);
+
+  // Close the import dropdown on an outside click.
+  useEffect(() => {
+    if (!showImportMenu) return;
+    const handleClick = (e) => {
+      if (importMenuRef.current && !importMenuRef.current.contains(e.target)) setShowImportMenu(false);
+    };
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [showImportMenu]);
 
   // Fetch free models from Kilo API for kilocode provider
   useEffect(() => {
@@ -635,7 +658,7 @@ export default function ProviderDetailPage() {
    * compatible nodes all resolved server-side), otherwise falls back to the
    * provider's public modelsFetcher (free / no-auth providers).
    */
-  const handleImportProviderModels = async () => {
+  const handleImportProviderModels = async (mode = "batch") => {
     if (importingModels) return;
     const activeConnection = connections.find((conn) => conn.isActive !== false);
 
@@ -703,23 +726,13 @@ export default function ProviderDetailPage() {
 
       if (toImport.length === 0) {
         setNoticeState({ title: translate("Notice"), message: translate("All models already exist, no new models added"), variant: "info" });
-      } else {
-        const res = await fetch("/api/models/custom", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ models: toImport }),
-        });
-        const data = await res.json();
-        const importedCount = data.count ?? toImport.length;
-
+      } else if (mode === "all") {
+        const count = await importSelectedModels(toImport);
         await fetchCustomModels();
         if (typeof window !== "undefined") window.dispatchEvent(new CustomEvent("customModelChanged"));
-
-        setNoticeState({
-          title: translate("Success"),
-          message: translate("Successfully added") + ` ${importedCount} ` + translate("models"),
-          variant: "success",
-        });
+        setNoticeState({ title: translate("Success"), message: translate("Successfully added") + ` ${count} ` + translate("models"), variant: "success" });
+      } else {
+        setImportPreview(toImport);
       }
     } catch (error) {
       console.log("Error importing provider models:", error);
@@ -727,6 +740,13 @@ export default function ProviderDetailPage() {
     } finally {
       setImportingModels(false);
     }
+  };
+
+  const confirmModelImport = async (selected) => {
+    const count = await importSelectedModels(selected);
+    await fetchCustomModels();
+    window.dispatchEvent(new CustomEvent("customModelChanged"));
+    setNoticeState({ title: translate("Success"), message: `${count} models imported`, variant: "success" });
   };
 
   const handleRunOneByOneTest = async () => {
@@ -1297,6 +1317,49 @@ export default function ProviderDetailPage() {
     }
   };
 
+  // Compatible-provider rows keep the existing per-model delete; the bulk
+  // toolbar only exists on standard provider pages.
+  const deletableModelRows = isCompatible ? [] : getProviderCustomModelRows({
+    customModels,
+    modelAliases,
+    providerAlias: providerStorageAlias,
+    builtInModels: models,
+    type: "llm",
+  });
+  const allDeletableSelected =
+    deletableModelRows.length > 0 && selectedModelIds.length === deletableModelRows.length;
+  const toggleSelectModel = (id) =>
+    setSelectedModelIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
+  const toggleSelectAllModels = () =>
+    setSelectedModelIds(allDeletableSelected ? [] : deletableModelRows.map((m) => m.id));
+  const handleBulkDeleteModels = () => {
+    if (selectedModelIds.length === 0) return;
+    const count = selectedModelIds.length;
+    setConfirmState({
+      title: "Remove Added Models",
+      message: `Remove ${count} added model${count === 1 ? "" : "s"} and their aliases? This cannot be undone.`,
+      confirmText: "Remove",
+      variant: "danger",
+      onConfirm: async () => {
+        setBulkDeleteBusy(true);
+        try {
+          const chosen = deletableModelRows.filter((m) => selectedModelIds.includes(m.id));
+          await deleteSelectedModels(chosen, providerStorageAlias, modelAliases);
+          await Promise.all([fetchCustomModels(), fetchAliases()]);
+          if (typeof window !== "undefined") window.dispatchEvent(new CustomEvent("customModelChanged"));
+          setSelectedModelIds([]);
+          setConfirmState(null);
+        } catch (error) {
+          setConfirmState(null);
+          setNoticeState({ title: translate("Error"), message: error.message || "Failed to remove selected models", variant: "error" });
+          await Promise.all([fetchCustomModels(), fetchAliases()]);
+        } finally {
+          setBulkDeleteBusy(false);
+        }
+      },
+    });
+  };
+
   const renderModelsSection = () => {
     if (isCompatible) {
       return (
@@ -1309,6 +1372,7 @@ export default function ProviderDetailPage() {
           onCopy={copy}
           onSetAlias={handleSetAlias}
           onDeleteAlias={handleDeleteAlias}
+          onImportModels={confirmModelImport}
           onAddCustomModel={(modelId) => handleAddCustomModel(modelId, "llm", providerStorageAlias)}
           onDeleteCustomModel={(modelId) => handleDeleteCustomModel(modelId, "llm", providerStorageAlias)}
           connections={connections}
@@ -1359,6 +1423,8 @@ export default function ProviderDetailPage() {
             isFree={false}
             caps={getCaps(`${providerId}/${model.id}`)}
             thinkingSuffix={resolveThinkingSuffix(model.id)}
+            selected={selectedModelIds.includes(model.id)}
+            onToggleSelect={() => toggleSelectModel(model.id)}
           />
         ))}
 
@@ -1867,6 +1933,36 @@ export default function ProviderDetailPage() {
             <h2 className="text-lg font-semibold">
               {"Available Models"}
             </h2>
+            {deletableModelRows.length > 0 && (
+              <label className="flex cursor-pointer select-none items-center gap-2 text-xs text-text-muted hover:text-primary">
+                <input
+                  type="checkbox"
+                  checked={allDeletableSelected}
+                  ref={(el) => { if (el) el.indeterminate = selectedModelIds.length > 0 && !allDeletableSelected; }}
+                  onChange={toggleSelectAllModels}
+                  className="h-3.5 w-3.5 rounded border-gray-300 text-primary focus:ring-primary"
+                  aria-label="Select all added models"
+                />
+                <span>{selectedModelIds.length > 0 ? `${selectedModelIds.length} selected` : `Select all (${deletableModelRows.length})`}</span>
+              </label>
+            )}
+            {selectedModelIds.length > 0 && (
+              <>
+                <Button
+                  size="sm"
+                  variant="danger"
+                  icon="delete"
+                  disabled={bulkDeleteBusy}
+                  loading={bulkDeleteBusy}
+                  onClick={handleBulkDeleteModels}
+                >
+                  {`Remove (${selectedModelIds.length})`}
+                </Button>
+                <Button size="sm" variant="ghost" disabled={bulkDeleteBusy} onClick={() => setSelectedModelIds([])}>
+                  Clear
+                </Button>
+              </>
+            )}
             {providerThinkingLevels && (
               <select
                 value={thinkingMode}
@@ -1880,15 +1976,40 @@ export default function ProviderDetailPage() {
               </select>
             )}
             {!isCompatible && (
-              <Button
-                size="sm"
-                variant="secondary"
-                icon="download"
-                loading={importingModels}
-                onClick={handleImportProviderModels}
-              >
-                {translate("Import models")}
-              </Button>
+              <div className="relative" ref={importMenuRef}>
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  icon="download"
+                  loading={importingModels}
+                  onClick={() => setShowImportMenu((prev) => !prev)}
+                >
+                  {translate("Import models")}
+                  <span className="material-symbols-outlined ml-1 text-[18px]">
+                    {showImportMenu ? "expand_less" : "expand_more"}
+                  </span>
+                </Button>
+                {showImportMenu && (
+                  <div className="absolute left-0 top-full z-50 mt-1 min-w-[210px] rounded-xl border border-black/10 bg-white p-1 shadow-xl dark:border-white/10 dark:bg-zinc-900 sm:left-auto sm:right-0">
+                    <button
+                      type="button"
+                      onClick={() => { setShowImportMenu(false); handleImportProviderModels("all"); }}
+                      className="flex w-full items-center gap-2 whitespace-nowrap rounded-lg px-3 py-2 text-left text-sm text-text-main transition-colors hover:bg-black/5 dark:hover:bg-white/5"
+                    >
+                      <span className="material-symbols-outlined shrink-0 text-[20px] leading-none text-primary">download</span>
+                      <span className="min-w-0 flex-1 truncate">{"Import all"}</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => { setShowImportMenu(false); handleImportProviderModels("batch"); }}
+                      className="flex w-full items-center gap-2 whitespace-nowrap rounded-lg px-3 py-2 text-left text-sm text-text-main transition-colors hover:bg-black/5 dark:hover:bg-white/5"
+                    >
+                      <span className="material-symbols-outlined shrink-0 text-[20px] leading-none text-emerald-500">checklist</span>
+                      <span className="min-w-0 flex-1 truncate">{"Import batch"}</span>
+                    </button>
+                  </div>
+                )}
+              </div>
             )}
           </div>
           {!isCompatible && (() => {
@@ -2042,6 +2163,22 @@ export default function ProviderDetailPage() {
         />
       )}
 
+      {importPreview && (
+        <ModelImportModal
+          models={importPreview}
+          onClose={() => setImportPreview(null)}
+          onConfirm={confirmModelImport}
+          onTestConnection={async () => {
+            const activeConnection = connections.find((conn) => conn.isActive !== false);
+            if (!activeConnection) throw new Error(translate("Please add an active connection first"));
+            const res = await fetch(`/api/providers/${activeConnection.id}/test`, { method: "POST" });
+            const data = await res.json();
+            if (!res.ok || !data.valid) throw new Error(data.error || "Connection failed");
+            return translate("Connection OK");
+          }}
+        />
+      )}
+
       {/* AG Risk Confirmation Modal */}
       <ConfirmModal
         isOpen={showAgRiskModal}
@@ -2061,6 +2198,8 @@ export default function ProviderDetailPage() {
         onConfirm={confirmState?.onConfirm}
         title={confirmState?.title || "Confirm"}
         message={confirmState?.message}
+        confirmText={confirmState?.confirmText}
+        loading={bulkDeleteBusy}
         variant="danger"
       />
 

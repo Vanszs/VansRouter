@@ -15,6 +15,7 @@ export default {
     deprecationNotice: "RISK_NOTICE",
   },
   category: "oauth",
+  hasOAuth: true,
   hasFree: true,
   freeRefresh: "monthly",
   transport: {
@@ -60,7 +61,6 @@ export default {
     { id: "gpt-6-sol", name: "GPT-6 Sol" },
     { id: "gpt-6.1-sol", name: "GPT-6.1 Sol" },
     { id: "claude-fable-5", name: "Claude Fable 5" },
-    { id: "claude-fable-5.1", name: "Claude Fable 5.1" },
     { id: "claude-haiku-4.5", name: "Claude Haiku 4.5" },
     { id: "claude-haiku-5.5", name: "Claude Haiku 5.5" },
     { id: "claude-opus-4.8", name: "Claude Opus 4.8" },

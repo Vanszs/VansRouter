@@ -12,10 +12,19 @@
  */
 import { register } from "../index.js";
 import { FORMATS } from "../formats.js";
-import { randomUUID } from "crypto";
-import { ROLE, OPENAI_BLOCK, CLAUDE_BLOCK, DEFAULT_IMAGE_MIME } from "../schema/index.js";
+import { createHash, randomUUID } from "crypto";
 import { DEFAULT_MAX_TOKENS } from "../../config/runtimeConfig.js";
+import { ROLE, OPENAI_BLOCK, CLAUDE_BLOCK, DEFAULT_IMAGE_MIME } from "../schema/index.js";
 import { parseDataUri, encodeDataUri } from "../concerns/image.js";
+
+// Deterministic UUID-shaped id for a stable session, so threadId and the
+// x-session-id header can share one value across a conversation (upstream CLI).
+function toCommandCodeSessionUuid(sessionId) {
+  if (!sessionId) return randomUUID();
+  const h = createHash("sha256").update(String(sessionId)).digest("hex");
+  const variant = ((parseInt(h[16], 16) & 0x3) | 0x8).toString(16);
+  return `${h.slice(0, 8)}-${h.slice(8, 12)}-4${h.slice(13, 16)}-${variant}${h.slice(17, 20)}-${h.slice(20, 32)}`;
+}
 
 function flattenText(content) {
   if (content == null) return "";
@@ -96,12 +105,32 @@ function toContentBlocks(content) {
 function safeParseJson(s) {
   if (s == null) return {};
   if (typeof s !== "string") return s;
-  try { return JSON.parse(s); } catch { return {}; }
+  const trimmed = s.trim();
+  if (!trimmed) return {};
+  try {
+    const parsed = JSON.parse(trimmed);
+    if (parsed && typeof parsed === "object") return parsed;
+    return { value: parsed };
+  } catch {
+    return { raw: s };
+  }
 }
+
 
 function convertMessages(messages = []) {
   const out = [];
   const systemTexts = [];
+  // role:"tool" turns usually omit the tool name; resolve it from the matching
+  // assistant tool_call id so upstream does not receive an empty toolName.
+  const toolCallIdToName = new Map();
+  for (const m of messages) {
+    if (m?.role === ROLE.ASSISTANT && Array.isArray(m.tool_calls)) {
+      for (const tc of m.tool_calls) {
+        const name = tc?.function?.name || tc?.name;
+        if (tc?.id && name) toolCallIdToName.set(tc.id, name);
+      }
+    }
+  }
 
   for (const m of messages) {
     if (!m) continue;
@@ -115,13 +144,15 @@ function convertMessages(messages = []) {
 
     if (role === ROLE.TOOL) {
       const value = typeof m.content === "string" ? m.content : flattenText(m.content);
+      const isError = Boolean(m.is_error || m.status === "error");
+      const toolName = m.name || (m.tool_call_id ? toolCallIdToName.get(m.tool_call_id) : null) || "unknown";
       out.push({
         role: ROLE.TOOL,
         content: [{
           type: "tool-result",
           toolCallId: m.tool_call_id || "",
-          toolName: m.name || "",
-          output: { type: "text", value },
+          toolName,
+          output: { type: isError ? "error-text" : "text", value },
         }],
       });
       continue;
@@ -130,8 +161,8 @@ function convertMessages(messages = []) {
     if (role === ROLE.ASSISTANT) {
       const blocks = [];
       const rc = m.reasoning_content || m.thought || m.reasoning;
-      if (rc || (Array.isArray(m.tool_calls) && m.tool_calls.length > 0)) {
-        blocks.push({ type: "reasoning", text: rc || " " });
+      if (rc && typeof rc === "string" && rc.trim()) {
+        blocks.push({ type: "reasoning", text: rc });
       }
       const text = flattenText(m.content);
       if (text) blocks.push({ type: OPENAI_BLOCK.TEXT, text });
@@ -141,8 +172,8 @@ function convertMessages(messages = []) {
           blocks.push({
             type: "tool-call",
             toolCallId: tc.id || "",
-            toolName: fn.name || "",
-            input: safeParseJson(fn.arguments),
+            toolName: fn.name || tc.name || "",
+            input: safeParseJson(fn.arguments ?? tc.input),
           });
         }
       }
@@ -178,7 +209,7 @@ function convertTools(tools) {
   return result.length ? result : undefined;
 }
 
-export function openaiToCommandCodeRequest(model, body, stream /* , credentials */) {
+export function openaiToCommandCodeRequest(model, body, stream, credentials = null) {
   const { messages, system } = convertMessages(body.messages);
   const params = {
     model,
@@ -194,11 +225,21 @@ export function openaiToCommandCodeRequest(model, body, stream /* , credentials 
   if (tools) params.tools = tools;
   if (body.top_p != null) params.top_p = body.top_p;
 
+  const effort = body.reasoning_effort ??
+    body.output_config?.effort ??
+    (typeof body.reasoning === "object" ? body.reasoning?.effort : null);
+  if (effort && typeof effort === "string") {
+    params.reasoning_effort = effort;
+  }
+
   const today = new Date().toISOString().slice(0, 10);
 
   return {
-    threadId: randomUUID(),
-    memory: "",
+    threadId: toCommandCodeSessionUuid(credentials?._clientSessionId),
+    memory: null,
+    taste: null,
+    skills: null,
+    permissionMode: "standard",
     config: {
       workingDir: process.cwd(),
       date: today,

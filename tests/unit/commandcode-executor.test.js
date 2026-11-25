@@ -19,6 +19,15 @@ function createNdjsonStream(lines) {
   });
 }
 
+describe("CommandCode session header", () => {
+  it("reuses the request threadId as x-session-id", () => {
+    const headers = new CommandCodeExecutor().buildHeaders(
+      { apiKey: "key" }, true, null, null, { threadId: "6f1e6e2a-4d3b-4f0a-8f1e-000000000001" },
+    );
+    expect(headers["x-session-id"]).toBe("6f1e6e2a-4d3b-4f0a-8f1e-000000000001");
+  });
+});
+
 describe("parseCommandCodeError", () => {
   it("parses user exact error payload with statusCode 503 and isRetryable", () => {
     const event = {

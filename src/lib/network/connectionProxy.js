@@ -1,5 +1,5 @@
 import { getProxyPoolById } from "@/models";
-import { fitPoolIds, loadPoolFitness } from "open-sse/services/proxyPoolFitness.js";
+import { fitPoolIds, loadPoolFitness, isPoolFit } from "open-sse/services/proxyPoolFitness.js";
 
 // Safely normalize any value into a trimmed string.
 function normalizeString(value) {
@@ -51,12 +51,19 @@ export async function resolveConnectionProxyConfig(
     const proxyPoolIds = Array.isArray(providerSpecificData?.proxyPoolIds) ? providerSpecificData.proxyPoolIds : [];
     const strategy = providerSpecificData?.proxyRotationStrategy || "none";
     const scope = providerSpecificData?.proxyPoolScope || null;
-    if (strategy === "smart" && scope) {
+    if (scope) {
       await Promise.all(proxyPoolIds.map((id) => loadPoolFitness(id)));
     }
-    const selectedPoolId = proxyPoolIds.length
-      ? pickProxyPoolId(proxyPoolIds, strategy, connectionId || "", providerSpecificData?.targetProxyPoolIds || [], { scope, excludeIds: excludePoolIds || [] })
-      : proxyPoolId;
+    const excludeIds = excludePoolIds || [];
+    const preferredPoolId = proxyPoolId
+      && proxyPoolIds.includes(proxyPoolId)
+      && !excludeIds.includes(proxyPoolId)
+      && isPoolFit(proxyPoolId, scope)
+      ? proxyPoolId
+      : null;
+    const selectedPoolId = preferredPoolId || (proxyPoolIds.length
+      ? pickProxyPoolId(proxyPoolIds, strategy, connectionId || "", providerSpecificData?.targetProxyPoolIds || [], { scope, excludeIds })
+      : proxyPoolId);
 
     const legacy = normalizeLegacyProxy(providerSpecificData);
 
@@ -265,7 +272,9 @@ export function pickProxyPoolId(poolIds, strategy, providerId = "", targetProxyP
   const strat = String(strategy || "").toLowerCase();
   const { scope = null, excludeIds = [] } = options || {};
   eligiblePoolIds = eligiblePoolIds.filter((id) => !excludeIds.includes(id));
-  const fitnessApplied = strat === "smart" && !!scope;
+  // Fitness means "unfit": skip benched pools for every rotation strategy,
+  // otherwise a 24h ban is ignored by fill-first/round-robin/random.
+  const fitnessApplied = !!scope;
   if (fitnessApplied) eligiblePoolIds = fitPoolIds(eligiblePoolIds, scope);
   if (eligiblePoolIds.length === 0 && !fitnessApplied) {
     eligiblePoolIds = filterTargetProxyPoolIds(poolIds, targetProxyPoolIds)

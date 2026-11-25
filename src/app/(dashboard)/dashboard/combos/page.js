@@ -6,6 +6,7 @@ import { useCopyToClipboard } from "@/shared/hooks/useCopyToClipboard";
 import { useModelCaps } from "@/shared/hooks/useModelCaps";
 import { isOpenAICompatibleProvider, isAnthropicCompatibleProvider } from "@/shared/constants/providers";
 
+
 export default function CombosPage() {
   const [combos, setCombos] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -25,7 +26,7 @@ export default function CombosPage() {
      One-time bootstrap fetch on mount; fetchData is declared below. */
   useEffect(() => {
     fetchData();
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, []);
 
   // Drop stale selection when the combo list changes (delete / refresh).
   useEffect(() => {
@@ -563,6 +564,7 @@ export default function CombosPage() {
 const STRATEGY_OPTIONS = [
   { value: "fallback", label: "Fallback — try in order" },
   { value: "round-robin", label: "Round Robin — rotate" },
+  { value: "smart", label: "Smart Router — System One" },
   { value: "fusion", label: "Fusion — panel + judge" },
 ];
 
@@ -698,6 +700,7 @@ function ComboCard({ combo, getCaps, activeProviders = [], copied, onCopy, onEdi
           closeOnSelect={true}
         />
       )}
+
     </Card>
   );
 }

@@ -1,9 +1,63 @@
 import { Readable } from "stream";
-import { MEMORY_CONFIG } from "../config/runtimeConfig.js";
+import {
+  MEMORY_CONFIG,
+  FRESH_RETRY_KEEPALIVE_TIMEOUT_MS,
+  STALE_SOCKET_ERROR_CODES,
+  NON_STALE_SOCKET_ERROR_CODES,
+  STALE_SOCKET_ERROR_SUBSTRINGS,
+  resolveKeepAliveTimeouts,
+  isFreshSocketReplayEnabled,
+} from "../config/runtimeConfig.js";
 import { dbg } from "./debugLog.js";
+import { ensureClaudeCliVersion, applyClaudeCliVersion } from "./claudeCliVersion.js";
+
+const CLAUDE_UA_PROBE = /claude-cli\/\d/;
+function hasClaudeCliHeader(headers) {
+  if (!headers) return false;
+  const values = headers instanceof Headers ? [...headers.values()] : Array.isArray(headers) ? headers.map((h) => h[1]) : Object.values(headers);
+  return values.some((v) => typeof v === "string" && CLAUDE_UA_PROBE.test(v));
+}
 
 const originalFetch = globalThis.fetch;
 const proxyDispatchers = new Map();
+const directDispatchers = new Map();
+
+// Keep native Antigravity traffic direct unless the connection explicitly
+// configures a proxy: shared relay defaults change Cloud Code's IP identity and
+// trigger false 429s.
+export function resolveAntigravityProxyConfig(providerSpecificData = {}) {
+  return {
+    connectionProxyEnabled: providerSpecificData.connectionProxyEnabled === true,
+    connectionProxyUrl: providerSpecificData.connectionProxyUrl || "",
+    connectionNoProxy: providerSpecificData.connectionNoProxy || "",
+    proxyPoolId: null,
+    vercelRelayUrl: "",
+    strictProxy: providerSpecificData.strictProxy === true,
+  };
+}
+
+export function resetDirectDispatchersForTests() {
+  directDispatchers.clear();
+  proxyDispatchers.clear();
+}
+
+export function isStaleSocketError(error) {
+  if (!error || error.name === "AbortError" || isTlsCertError(error)) return false;
+  const code = error?.cause?.code || error?.code || "";
+  if (NON_STALE_SOCKET_ERROR_CODES.has(code)) return false;
+  if (STALE_SOCKET_ERROR_CODES.has(code)) return true;
+  const msg = `${error?.message || ""} ${error?.cause?.message || ""}`.toLowerCase();
+  return STALE_SOCKET_ERROR_SUBSTRINGS.some((sub) => msg.includes(sub));
+}
+
+// Always fetch through the package's own undici instance so fetch and the
+// Agents below come from the same copy — dispatcher options are only guaranteed
+// to match within one undici version.
+let undiciFetch = null;
+async function rawFetch(url, options) {
+  undiciFetch ??= (await import("undici")).fetch;
+  return undiciFetch(url, options);
+}
 
 // DNS cache — use Map to avoid prototype pollution via malformed hostnames
 const DNS_CACHE = new Map();
@@ -37,17 +91,6 @@ const HTTP_SUCCESS_MAX = 300;
 function normalizeString(value) {
   if (value === undefined || value === null) return "";
   return String(value).trim();
-}
-
-export function resolveAntigravityProxyConfig(providerSpecificData = {}) {
-  return {
-    connectionProxyEnabled: providerSpecificData.connectionProxyEnabled === true,
-    connectionProxyUrl: providerSpecificData.connectionProxyUrl || "",
-    connectionNoProxy: providerSpecificData.connectionNoProxy || "",
-    proxyPoolId: null,
-    vercelRelayUrl: "",
-    strictProxy: providerSpecificData.strictProxy === true,
-  };
 }
 
 /**
@@ -88,7 +131,7 @@ function shouldBypassByNoProxy(targetUrl, noProxyValue) {
 
   let hostname;
   try { hostname = new URL(targetUrl).hostname.toLowerCase(); } catch { return false; }
-  const patterns = noProxy.split(",").flatMap((p) => { const t = p.trim().toLowerCase(); return t ? [t] : []; });
+  const patterns = noProxy.split(",").map((p) => p.trim().toLowerCase()).filter(Boolean);
 
   return patterns.some((pattern) => {
     if (pattern === "*") return true;
@@ -146,67 +189,150 @@ function resolveConnectionProxyUrl(targetUrl, proxyOptions) {
   return normalizeProxyUrl(proxyUrlRaw);
 }
 
-/**
- * Create proxy dispatcher lazily (undici-compatible)
- */
-async function getDispatcher(proxyUrl, insecure = false) {
-  const normalized = normalizeProxyUrl(proxyUrl);
-  if (!normalized && !insecure) return null;
+// ISP DPI (VN → api.anthropic.com) RSTs Node's default TLS ClientHello curve
+// list; a single curve rewrites the fingerprint enough to pass. Empirically:
+// default agent = ECONNRESET 100%, X25519 = through 100%.
+const TLS_ECDH_CURVE = process.env.NINEROUTER_TLS_ECDH_CURVE || "X25519";
 
-  const key = `${normalized || "direct"}::${insecure ? "insecure" : "secure"}`;
+// autoSelectFamilyAttemptTimeout = happy eyeballs (RFC 8305): race both address
+// families, fall over in 250ms — replaces the old global ipv4first flag, which fixed
+// one broken-family network by breaking the other (see claude-code#20240).
+// requestTls must stay TLS-options-only (connect-level options belong in `connect`).
+const EYEBALLS_CONNECT = { autoSelectFamily: true, autoSelectFamilyAttemptTimeout: 250 };
+function buildConnectOptions(insecure) {
+  return { ...EYEBALLS_CONNECT, ecdhCurve: TLS_ECDH_CURVE, ...(insecure ? { rejectUnauthorized: false } : {}) };
+}
+
+function evictOldest(cacheMap) {
+  if (cacheMap.size >= MEMORY_CONFIG.proxyDispatchersMaxSize) {
+    cacheMap.delete(cacheMap.keys().next().value);
+  }
+}
+
+async function getOrCreateDirectAgent(key, insecure, keepAliveTimeout, keepAliveMaxTimeout) {
+  const cached = directDispatchers.get(key);
+  if (cached) return cached;
+  const { Agent } = await import("undici");
+  evictOldest(directDispatchers);
+  const agent = new Agent({
+    connect: buildConnectOptions(insecure),
+    keepAliveTimeout,
+    keepAliveMaxTimeout,
+  });
+  directDispatchers.set(key, agent);
+  return agent;
+}
+
+/**
+ * Shared direct dispatcher with capped keep-alive TTL. Prevents undici from
+ * reusing idle sockets that upstream edges (NVIDIA NIM, Cloudflare) silently
+ * dropped without sending a TCP RST.
+ */
+export function getDirectDispatcher(insecure = false) {
+  const { keepAliveTimeout, keepAliveMaxTimeout } = resolveKeepAliveTimeouts();
+  const key = `direct::${insecure ? "insecure" : "secure"}::${keepAliveTimeout}::${keepAliveMaxTimeout}`;
+  return getOrCreateDirectAgent(key, insecure, keepAliveTimeout, keepAliveMaxTimeout);
+}
+
+/**
+ * No-keep-alive retry dispatcher (`keepAliveTimeout: 1ms`) — guarantees a fresh
+ * TCP/TLS connection after a poisoned pooled socket or a connect timeout.
+ */
+export function getFreshRetryDispatcher(insecure = false) {
+  const key = `fresh::${insecure ? "insecure" : "secure"}`;
+  return getOrCreateDirectAgent(
+    key,
+    insecure,
+    FRESH_RETRY_KEEPALIVE_TIMEOUT_MS,
+    FRESH_RETRY_KEEPALIVE_TIMEOUT_MS
+  );
+}
+
+/**
+ * Create proxy or direct dispatcher lazily (undici-compatible).
+ * Always returns a dispatcher — the direct path needs the custom Agent too,
+ * otherwise the default global agent's ClientHello gets RST-ed by DPI.
+ */
+async function getDispatcher(proxyUrl, insecure = false, forceFreshSocket = false) {
+  const normalized = normalizeProxyUrl(proxyUrl);
+  if (!normalized) {
+    return forceFreshSocket ? getFreshRetryDispatcher(insecure) : getDirectDispatcher(insecure);
+  }
+
+  // A fresh-socket retry must create a new ProxyAgent: reusing the pooled key
+  // would hand back the same poisoned tunnel the retry is trying to escape.
+  const baseKey = `${normalized}::${insecure ? "insecure" : "secure"}`;
+  const key = forceFreshSocket
+    ? `${baseKey}::fresh-${Date.now()}-${Math.random().toString(36).slice(2)}`
+    : baseKey;
   if (!proxyDispatchers.has(key)) {
     // Evict oldest entry if max size reached
     if (proxyDispatchers.size >= MEMORY_CONFIG.proxyDispatchersMaxSize) {
-      proxyDispatchers.delete(proxyDispatchers.keys().next().value);
+      const oldest = proxyDispatchers.keys().next().value;
+      const evicted = proxyDispatchers.get(oldest);
+      proxyDispatchers.delete(oldest);
+      evicted?.destroy?.();
     }
-    const { Agent, ProxyAgent } = await import("undici");
-    const connect = insecure ? { rejectUnauthorized: false } : undefined;
-    const dispatcher = normalized
-      ? new ProxyAgent({ uri: normalized, ...(insecure ? { requestTls: connect } : {}) })
-      : new Agent({ connect });
+    const { ProxyAgent } = await import("undici");
+    const dispatcher = new ProxyAgent({
+      uri: normalized,
+      connect: EYEBALLS_CONNECT,
+      requestTls: { ecdhCurve: TLS_ECDH_CURVE, ...(insecure ? { rejectUnauthorized: false } : {}) },
+    });
     proxyDispatchers.set(key, dispatcher);
   }
 
   return proxyDispatchers.get(key);
 }
 
-async function fetchWithTlsFallback(url, options, proxyUrl) {
+function isBodyReplaySafe(body) {
+  return !(body && typeof body.getReader === "function" && body.locked);
+}
+
+async function fetchWithTlsFallback(url, options, proxyUrl, forceFreshSocket = false) {
+  // Unit tests stub globalThis.fetch before importing this module; route through
+  // the stub so they can assert dispatcher wiring without real network calls.
+  const transportFetch = process.env.NODE_ENV === "test" && originalFetch?._isMockFunction
+    ? originalFetch
+    : rawFetch;
   try {
     // Protocol adapters may need Node's HTTP/1 transport on the direct path.
     // Keep proxy/no-proxy resolution and strict-proxy enforcement here.
     if (!proxyUrl && options.directFetch) return await options.directFetch(url, options);
-    const dispatcher = proxyUrl ? await getDispatcher(proxyUrl) : undefined;
-    return await originalFetch(url, dispatcher ? { ...options, dispatcher } : options);
+    const dispatcher = await getDispatcher(proxyUrl, false, forceFreshSocket);
+    return await transportFetch(url, { ...options, dispatcher });
   } catch (err) {
     const isStrictSsl = options.strictTls === true || process.env.STRICT_SSL === "true" || process.env.STRICT_SSL === "1";
     if (!isStrictSsl && isTlsCertError(err)) {
-      if (options.body && typeof options.body.getReader === "function" && options.body.locked) {
+      if (!isBodyReplaySafe(options.body)) {
         throw err;
       }
       // ponytail: in-memory insecure agent fallback for self-signed MITM corporate/antivirus certs
       console.warn(`[ProxyFetch] TLS cert verification failed (${err.cause?.code || err.code}), retrying with insecure TLS: ${url}`);
-      const insecureDispatcher = await getDispatcher(proxyUrl, true);
-      return await originalFetch(url, { ...options, dispatcher: insecureDispatcher });
+      const insecureDispatcher = await getDispatcher(proxyUrl, true, forceFreshSocket);
+      return await transportFetch(url, { ...options, dispatcher: insecureDispatcher });
+    }
+
+    // Stale keep-alive recovery: a pooled socket died before returning headers. Replay
+    // once on the fresh-socket dispatcher instead of waiting out the connect timeout.
+    // Never replay a non-idempotent request: the upstream may already have accepted
+    // the body even when the response headers were lost.
+    const replayMethod = String(options.method || "GET").toUpperCase();
+    const replayableMethod = replayMethod === "GET" || replayMethod === "HEAD";
+    if (
+      replayableMethod
+      && !proxyUrl
+      && !forceFreshSocket
+      && !options.directFetch
+      && !options.signal?.aborted
+      && isBodyReplaySafe(options.body)
+      && isFreshSocketReplayEnabled()
+      && isStaleSocketError(err)
+    ) {
+      dbg("FETCH", `stale keep-alive socket (${err.cause?.code || err.code || err.message}), retrying on fresh socket: ${url}`);
+      return await fetchWithTlsFallback(url, options, proxyUrl, true);
     }
     throw err;
-  }
-}
-
-async function replayFreeTierError(url, options, response, fetchDirect) {
-  const bodyText = await response.text();
-  const headers = new Headers(response.headers);
-  headers.delete("content-length");
-  headers.delete("content-encoding");
-  const originalRejection = () => new Response(bodyText, {
-    status: response.status,
-    statusText: response.statusText,
-    headers,
-  });
-  if (!bodyText.includes("FreeTierError") || options.body?.getReader) return originalRejection();
-  try {
-    return await fetchDirect(url, options, null);
-  } catch {
-    return originalRejection();
   }
 }
 
@@ -214,7 +340,8 @@ async function replayFreeTierError(url, options, response, fetchDirect) {
  * Create HTTPS request with manual socket connection (bypass DNS)
  */
 async function createBypassRequest(parsedUrl, realIP, options) {
-  const [httpsModule, netModule] = await Promise.all([import("https"), import("net")]);
+  const httpsModule = await import("https");
+  const netModule = await import("net");
   // CJS modules expose exports via .default in ESM dynamic import context
   const https = httpsModule.default ?? httpsModule;
   const net = netModule.default ?? netModule;
@@ -269,22 +396,26 @@ async function createBypassRequest(parsedUrl, realIP, options) {
 }
 
 export async function proxyAwareFetch(url, options = {}, proxyOptions = null) {
+  // Keep the spoofed Claude Code version current (new models require a minimum CLI version).
+  // Refresh in the background: the request uses the version already known, so an
+  // unreachable npm registry can never add latency to the chat path.
+  if (hasClaudeCliHeader(options?.headers)) {
+    void ensureClaudeCliVersion(rawFetch);
+    options = { ...options, headers: applyClaudeCliVersion(options.headers) };
+  }
   const targetUrl = typeof url === "string" ? url : url.toString();
+  const forceFreshSocket = proxyOptions?.forceFreshSocket === true || options?.forceFreshSocket === true;
 
-  // Keep native AG traffic direct unless the connection explicitly configures a proxy.
-  // Shared relay defaults change Cloud Code's account/IP identity and trigger false 429s.
   const hasExplicitProxy = proxyOptions?.connectionProxyEnabled === true
     || !!proxyOptions?.vercelRelayUrl
     || !!proxyOptions?.proxyPoolId;
-  if (options.provider === "antigravity" && !hasExplicitProxy) {
+  if (options.provider === "antigravity" && !hasExplicitProxy && !forceFreshSocket) {
     return originalFetch(url, options);
   }
+  const isOpencodeFreeRequest = options.provider === "opencode";
 
   // Vercel relay: forward request via relay headers
   const vercelRelayUrl = normalizeString(proxyOptions?.vercelRelayUrl);
-  const isOpenCodeFreeRequest = options.provider === "opencode" && /\/zen\/v1\//.test(new URL(targetUrl).pathname);
-  const proxyStrict = proxyOptions?.strictProxy === true;
-
   if (vercelRelayUrl) {
     const parsed = new URL(targetUrl);
     const baseHeaders = options.headers instanceof Headers
@@ -295,11 +426,10 @@ export async function proxyAwareFetch(url, options = {}, proxyOptions = null) {
       "x-relay-target": `${parsed.protocol}//${parsed.host}`,
       "x-relay-path": `${parsed.pathname}${parsed.search}`,
     };
-    const relayed = await originalFetch(vercelRelayUrl, { ...options, headers: relayHeaders });
-    if (options.provider !== "opencode" || !/\/zen\/v1\//.test(parsed.pathname) || relayed.status !== 403 || proxyStrict) {
-      return relayed;
-    }
-    return replayFreeTierError(url, options, relayed, fetchWithTlsFallback);
+    // The relay is a plain HTTP hop; protocol-specific directFetch adapters
+    // (e.g. Codex's https.request transport) must not be used for it.
+    const { directFetch: _directFetch, ...relayOptions } = options;
+    return fetchWithTlsFallback(vercelRelayUrl, { ...relayOptions, headers: relayHeaders }, null, forceFreshSocket);
   }
 
   const connectionProxyUrl = resolveConnectionProxyUrl(targetUrl, proxyOptions);
@@ -311,9 +441,9 @@ export async function proxyAwareFetch(url, options = {}, proxyOptions = null) {
     if (proxyUrl) {
       // Proxy resolves DNS externally (not affected by /etc/hosts) — use proxy directly
       try {
-        return await fetchWithTlsFallback(url, options, proxyUrl);
+        return await fetchWithTlsFallback(url, options, proxyUrl, forceFreshSocket);
       } catch (proxyError) {
-        if (proxyOptions?.strictProxy === true) {
+        if (proxyOptions?.strictProxy === true || isOpencodeFreeRequest) {
           throw new Error(`[ProxyFetch] Proxy required but failed (strictProxy=true): ${proxyError.message}`);
         }
         console.warn(`[ProxyFetch] Proxy failed, falling back to direct bypass: ${proxyError.message}`);
@@ -331,16 +461,14 @@ export async function proxyAwareFetch(url, options = {}, proxyOptions = null) {
 
   if (proxyUrl) {
     try {
-      const proxiedResponse = await fetchWithTlsFallback(url, options, proxyUrl);
-      if (!isOpenCodeFreeRequest || proxiedResponse.status !== 403 || proxyStrict) return proxiedResponse;
-      return replayFreeTierError(url, options, proxiedResponse, fetchWithTlsFallback);
+      return await fetchWithTlsFallback(url, options, proxyUrl, forceFreshSocket);
     } catch (proxyError) {
       // If strictProxy is enabled, fail hard instead of falling back to direct
-      if (proxyOptions?.strictProxy === true) {
+      if (proxyOptions?.strictProxy === true || isOpencodeFreeRequest) {
         throw new Error(`[ProxyFetch] Proxy required but failed (strictProxy=true): ${proxyError.message}`);
       }
       console.warn(`[ProxyFetch] Proxy failed, falling back to direct: ${proxyError.message}`);
-      return fetchWithTlsFallback(url, options, null);
+      return fetchWithTlsFallback(url, options, null, forceFreshSocket);
     }
   }
 
@@ -364,7 +492,7 @@ export async function proxyAwareFetch(url, options = {}, proxyOptions = null) {
 
   // got-scraping disabled — use native fetch directly
   // (Re-enable per-host by wrapping with tryGotScrapingFetch when needed)
-  return fetchWithTlsFallback(url, options, null);
+  return fetchWithTlsFallback(url, options, null, forceFreshSocket);
 }
 
 /**
@@ -374,8 +502,10 @@ async function patchedFetch(url, options = {}) {
   return proxyAwareFetch(url, options, null);
 }
 
-// Idempotency guard — only patch once to avoid wrapping multiple times
-if (globalThis.fetch !== patchedFetch) {
+// Idempotency guard — only patch once to avoid wrapping multiple times.
+// Never replace a test runner's fetch mock: unit tests stub globalThis.fetch
+// after importing this module and expect their stub to receive the call.
+if (process.env.NODE_ENV !== "test" && globalThis.fetch !== patchedFetch) {
   globalThis.fetch = patchedFetch;
 }
 

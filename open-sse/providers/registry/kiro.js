@@ -16,6 +16,9 @@ export default {
   },
   category: "free",
   hasFree: true,
+  // OAuth (Kiro subscription) and API key (headless) are both supported.
+  authModes: ["oauth", "apikey"],
+  hasOAuth: true,
   transport: {
     baseUrl: "https://runtime.us-east-1.kiro.dev/generateAssistantResponse",
     baseUrls: [

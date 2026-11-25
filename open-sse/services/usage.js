@@ -19,6 +19,8 @@ import { getDeepseekUsage } from "./usage/deepseek.js";
 import { getOpenCodeGoUsage } from "./usage/opencode-go.js";
 import { getOpenCodeZenUsage } from "./usage/opencode-zen.js";
 import { getZedUsage } from "./usage/zed.js";
+import { getSyntheticUsage } from "./usage/synthetic.js";
+import { getClinepassUsage } from "./usage/clinepass.js";
 import { resolveQoderCredentials } from "./qoderModels.js";
 import getFreebuffUsage from "./usage/freebuff.js";
 import { getGlmUsage } from "./usage/glm.js";
@@ -69,6 +71,9 @@ const USAGE_HANDLERS = {
   "opencode-zen": (c) => getOpenCodeZenUsage(c.apiKey, c.proxyOptions),
   freebuff: (c) => getFreebuffUsage(c.accessToken, c.providerSpecificData, c.proxyOptions),
   zed: (c) => getZedUsage(c.accessToken, c.providerSpecificData, c.proxyOptions),
+  synthetic: (c) => getSyntheticUsage(c.apiKey, c.proxyOptions),
+  // OAuth WorkOS JWT (workos: prefix) or plain ClinePass API key — same usage-limits URL.
+  clinepass: (c) => getClinepassUsage(c.accessToken, c.apiKey, c.proxyOptions),
 };
 
 export async function getUsageForProvider(connection, proxyOptions = null, options = {}) {

@@ -13,6 +13,7 @@ export default {
     },
   },
   category: "oauth",
+  hasOAuth: true,
   transport: {
     baseUrl: "https://portal.qwen.ai/v1/chat/completions",
   },

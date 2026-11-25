@@ -38,15 +38,21 @@ export async function deleteProxyPoolFitness(poolId, scope) {
   return db.run("DELETE FROM proxyPoolFitness WHERE poolId = ? AND scope = ?", [poolId, scope]);
 }
 
+export async function deleteExpiredProxyPoolFitness(until = Date.now()) {
+  const db = await getAdapter();
+  return db.run("DELETE FROM proxyPoolFitness WHERE until <= ?", [until]);
+}
+
+// `provider` arrives from the dashboard request, so treat % and _ as literals:
+// an unescaped LIKE would let `{"provider":"%"}` wipe every row.
+export function escapeLikePattern(value) {
+  return String(value).replace(/[\\%_]/g, (char) => `\\${char}`);
+}
+
 export async function clearProxyPoolFitness(provider = null) {
   const db = await getAdapter();
   if (provider) {
-    return db.run("DELETE FROM proxyPoolFitness WHERE scope = ? OR scope LIKE ?", [`${provider}::*`, `${provider}::%`]);
+    return db.run("DELETE FROM proxyPoolFitness WHERE scope LIKE ? ESCAPE '\\'", [`${escapeLikePattern(provider)}::%`]);
   }
   return db.run("DELETE FROM proxyPoolFitness");
-}
-
-export async function deleteProxyPoolFitnessByPool(poolId) {
-  const db = await getAdapter();
-  return db.run("DELETE FROM proxyPoolFitness WHERE poolId = ?", [poolId]);
 }

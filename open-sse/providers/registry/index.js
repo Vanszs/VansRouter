@@ -164,15 +164,16 @@ import p161 from "./bedrock.js";
 import p162 from "./bedrock-xai.js";
 import p163 from "./sensenova.js";
 import p164 from "./runcrate.js";
+import p166 from "./synthetic.js";
 import p165 from "./nace.js";
 
 // Auto-generated: static imports for all registry entries
-import p68z from "./opencode-zen.js";
 // Temporarily hidden — no tool calling support (trae SOLO agent / windsurf gRPC skip ToolCallChunk).
 // Re-enable by uncommenting both the import and the array entry below.
 // import p102 from "./trae.js";
 // import p114 from "./devin-cli.js";
 // import p104 from "./windsurf.js";
+import p167 from "./sensenova-intl.js";
 import nousProvider from "./nous.js";
 
 export default [
@@ -343,5 +344,7 @@ export default [
   p163,
   p164,
   p165,
+  p166,
+  p167,
   nousProvider
 ];

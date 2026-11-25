@@ -3,130 +3,11 @@
 import { useCallback, useEffect, useMemo, useState, useRef } from "react";
 import { Badge, Button, Card, CardSkeleton, Input, Modal, Toggle, ConfirmModal } from "@/shared/components";
 import { useNotificationStore } from "@/store/notificationStore";
+import { filterProxyPools, getVisibleProxyPoolSelection, updateProxyPoolSelection } from "@/shared/utils/proxyPoolSelection";
 import { countBatchResults, dedupeProxyEntries, runProxyPoolBatch } from "./batchOperations.js";
 import RelayDeployModal from "./RelayDeployModal";
-
-function parseProxyLine(line) {
-  const trimmed = line.trim();
-  if (!trimmed) return null;
-  if (trimmed.includes("://")) {
-    const parsed = new URL(trimmed);
-    const hostLabel = parsed.port ? `${parsed.hostname}:${parsed.port}` : parsed.hostname;
-    return { proxyUrl: parsed.toString(), name: `Imported ${hostLabel}` };
-  }
-  const parts = trimmed.split(":");
-  if (parts.length === 4) {
-    const [host, port, username, password] = parts;
-    if (!host || !port || !username || !password) throw new Error("Invalid host:port:user:pass format");
-    const proxyUrl = `http://${encodeURIComponent(username)}:${encodeURIComponent(password)}@${host}:${port}`;
-    const parsed = new URL(proxyUrl);
-    return { proxyUrl: parsed.toString(), name: `Imported ${host}:${port}` };
-  }
-  throw new Error("Unsupported format");
-}
-
-function getStatusVariant(status) {
-  if (status === "active") return "success";
-  if (status === "error") return "error";
-  return "default";
-}
-
-function formatDateTime(value) {
-  if (!value) return "Never";
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "Never";
-  return date.toLocaleString();
-}
-
-function normalizeFormData(data = {}) {
-  return {
-    name: data.name || "",
-    proxyUrl: data.proxyUrl || "",
-    noProxy: data.noProxy || "",
-    isActive: data.isActive !== false,
-    strictProxy: data.strictProxy === true,
-  };
-}
-
-const VERCEL_TOKEN_HINT = <>Token is used once for deployment and not stored. <a href="https://vercel.com/account/tokens" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">Get token →</a></>;
-const CF_TOKEN_HINT = <>Requires &quot;Workers Scripts: Edit&quot; permission. <a href="https://dash.cloudflare.com/profile/api-tokens" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">Get token →</a></>;
-
-function PoolFormModal({ isOpen, editingProxyPool, formData, saving, onClose, onSave, onChange }) {
-  return (
-    <Modal isOpen={isOpen} title={editingProxyPool ? "Edit Proxy Pool" : "Add Proxy Pool"} onClose={onClose}>
-      <div className="flex flex-col gap-4">
-        <Input label="Name" value={formData.name} onChange={(e) => onChange("name", e.target.value)} placeholder="Office Proxy" />
-        <Input label="Proxy URL" value={formData.proxyUrl} onChange={(e) => onChange("proxyUrl", e.target.value)} placeholder="http://127.0.0.1:7897" />
-        <Input label="No Proxy" value={formData.noProxy} onChange={(e) => onChange("noProxy", e.target.value)} placeholder="localhost,127.0.0.1,.internal" hint="Comma-separated hosts/domains to bypass proxy" />
-        <ToggleField label="Active" description="Inactive pools are ignored by runtime resolution." checked={formData.isActive} onChange={() => onChange("isActive", !formData.isActive)} disabled={saving} />
-        <ToggleField label="Strict Proxy" description="Fail request if proxy is unreachable instead of falling back to direct." checked={formData.strictProxy} onChange={() => onChange("strictProxy", !formData.strictProxy)} disabled={saving} />
-        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-          <Button fullWidth onClick={onSave} disabled={!formData.name.trim() || !formData.proxyUrl.trim() || saving}>{saving ? "Saving..." : "Save"}</Button>
-          <Button fullWidth variant="ghost" onClick={onClose} disabled={saving}>Cancel</Button>
-        </div>
-      </div>
-    </Modal>
-  );
-}
-
-function ToggleField({ label, description, checked, onChange, disabled }) {
-  return (
-    <div className="flex flex-col gap-3 rounded-lg border border-border/50 p-3 sm:flex-row sm:items-center sm:justify-between">
-      <div><p className="font-medium text-sm">{label}</p><p className="text-xs text-text-muted">{description}</p></div>
-      <Toggle checked={checked === true} onChange={onChange} disabled={disabled} />
-    </div>
-  );
-}
-
-function BatchImportModal({ isOpen, text, importing, onChange, onImport, onClose }) {
-  return (
-    <Modal isOpen={isOpen} title="Batch Import Proxies" onClose={onClose}>
-      <div className="flex flex-col gap-4">
-        <div>
-          <label htmlFor="proxy-batch-import" className="text-sm font-medium text-text-main mb-1 block">Paste Proxy List (One per line)</label>
-          <textarea id="proxy-batch-import" value={text} onChange={(e) => onChange(e.target.value)} placeholder={"http://user:pass@127.0.0.1:7897\n127.0.0.1:7897:user:pass"} className="w-full min-h-[180px] py-2 px-3 text-sm text-text-main bg-white dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-md focus:ring-1 focus:ring-primary/30 focus:border-primary/50 focus:outline-none transition-all" />
-          <p className="text-xs text-text-muted mt-1">Supported formats: protocol://user:pass@host:port, host:port:user:pass</p>
-        </div>
-        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-          <Button fullWidth onClick={onImport} disabled={!text.trim() || importing}>{importing ? "Importing..." : "Import"}</Button>
-          <Button fullWidth variant="ghost" onClick={onClose} disabled={importing}>Cancel</Button>
-        </div>
-      </div>
-    </Modal>
-  );
-}
-
-
-function PoolRow({ pool, selected, testing, onSelect, onToggle, onTest, onEdit, onDelete }) {
-  return (
-    <div className="flex flex-col gap-3 py-3 sm:flex-row sm:items-center sm:justify-between">
-      <div className="flex items-start gap-3 min-w-0 flex-1">
-        <input type="checkbox" checked={selected} onChange={onSelect} aria-label={`Select proxy ${pool.name || pool.id}`} className="mt-1 size-4 shrink-0 rounded border-black/20 dark:border-white/20" />
-        <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-2 flex-wrap">
-            <p className="min-w-0 max-w-full truncate text-sm font-medium sm:max-w-[18rem]">{pool.name}</p>
-            <Badge variant={getStatusVariant(pool.testStatus)} size="sm" dot>{pool.testStatus || "unknown"}</Badge>
-            <Badge variant={pool.isActive ? "success" : "default"} size="sm">{pool.isActive ? "active" : "inactive"}</Badge>
-            {pool.type === "vercel" && <Badge variant="default" size="sm">vercel relay</Badge>}
-            {pool.type === "cloudflare" && <Badge variant="default" size="sm">cloudflare relay</Badge>}
-            <Badge variant="default" size="sm">{pool.boundConnectionCount || 0} bound</Badge>
-          </div>
-          <p className="text-xs text-text-muted truncate mt-1">{pool.proxyUrl}</p>
-          {pool.noProxy ? <p className="text-xs text-text-muted truncate">No proxy: {pool.noProxy}</p> : null}
-          <p className="text-[11px] text-text-muted mt-1">Last tested: {formatDateTime(pool.lastTestedAt)}{pool.lastError ? ` · ${pool.lastError}` : ""}</p>
-        </div>
-      </div>
-      <div className="flex items-center justify-end gap-1">
-        <Toggle size="sm" checked={pool.isActive === true} onChange={onToggle} title={pool.isActive ? "Disable" : "Enable"} />
-        <button type="button" onClick={onTest} className="p-2 rounded hover:bg-black/5 dark:hover:bg-white/5 text-text-muted hover:text-primary" title="Test proxy" disabled={testing}>
-          <span className="material-symbols-outlined text-[18px]" style={testing ? { animation: "spin 1s linear infinite" } : undefined}>{testing ? "progress_activity" : "science"}</span>
-        </button>
-        <button type="button" onClick={onEdit} className="p-2 rounded hover:bg-black/5 dark:hover:bg-white/5 text-text-muted hover:text-primary" title="Edit"><span className="material-symbols-outlined text-[18px]">edit</span></button>
-        <button type="button" onClick={onDelete} className="p-2 rounded hover:bg-red-500/10 text-red-500" title="Delete"><span className="material-symbols-outlined text-[18px]">delete</span></button>
-      </div>
-    </div>
-  );
-}
+import { PUBLIC_PROXY_SOURCES } from "@/shared/constants/publicProxySources.js";
+import { PoolFormModal, BatchImportModal, PublicImportModal, PoolRow, parseProxyLine, getStatusVariant, formatDateTime, normalizeFormData, VERCEL_TOKEN_HINT, CF_TOKEN_HINT } from "./proxyPoolsComponents";
 
 export default function ProxyPoolsPage() {
   const [proxyPools, setProxyPools] = useState([]);
@@ -138,6 +19,19 @@ export default function ProxyPoolsPage() {
   const [showDenoModal, setShowDenoModal] = useState(false);
   const [showNetlifyModal, setShowNetlifyModal] = useState(false);
   const [showRelayMenu, setShowRelayMenu] = useState(false);
+  const [showAddMenu, setShowAddMenu] = useState(false);
+  const [showPublicImportModal, setShowPublicImportModal] = useState(false);
+  const [publicImportForm, setPublicImportForm] = useState({
+    source: "freeproxydb",
+    count: PUBLIC_PROXY_SOURCES.freeproxydb.defaultCount,
+    protocol: "http",
+    country: "",
+    anonymity: "",
+    httpsOnly: false,
+    maxSpeed: "",
+    orderBy: "success",
+  });
+  const [publicImporting, setPublicImporting] = useState(false);
   const [editingProxyPool, setEditingProxyPool] = useState(null);
   const [formData, setFormData] = useState(() => normalizeFormData());
   const [batchImportText, setBatchImportText] = useState("");
@@ -149,13 +43,16 @@ export default function ProxyPoolsPage() {
   const [importing, setImporting] = useState(false);
   const [deploying, setDeploying] = useState(false);
   const [testingId, setTestingId] = useState(null);
-  const [selectedIds, setSelectedIds] = useState([]);
+  const [selectedPoolIds, setSelectedIds] = useState([]);
+  const [statusFilter, setStatusFilter] = useState("all");
+  const selectionAnchorRef = useRef(null);
   const [healthChecking, setHealthChecking] = useState(false);
   const [healthProgress, setHealthProgress] = useState({ current: 0, total: 0 });
   const [bulkBusy, setBulkBusy] = useState(false);
   const [batchProgress, setBatchProgress] = useState({ label: "", current: 0, total: 0 });
   const [confirmState, setConfirmState] = useState(null);
   const relayMenuRef = useRef(null);
+  const addMenuRef = useRef(null);
   const notify = useNotificationStore();
 
   useEffect(() => {
@@ -163,12 +60,15 @@ export default function ProxyPoolsPage() {
       if (relayMenuRef.current && !relayMenuRef.current.contains(e.target)) {
         setShowRelayMenu(false);
       }
+      if (addMenuRef.current && !addMenuRef.current.contains(e.target)) {
+        setShowAddMenu(false);
+      }
     };
-    if (showRelayMenu) {
+    if (showRelayMenu || showAddMenu) {
       document.addEventListener("mousedown", handleClickOutside);
     }
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [showRelayMenu]);
+  }, [showRelayMenu, showAddMenu]);
 
   const fetchProxyPools = useCallback(async () => {
     try {
@@ -313,14 +213,27 @@ export default function ProxyPoolsPage() {
     }
   };
 
-  const validSelectedIds = selectedIds.filter((id) => proxyPools.some((p) => p.id === id));
-  const allSelected = proxyPools.length > 0 && validSelectedIds.length === proxyPools.length;
-  const toggleSelect = (id) => setSelectedIds((prev) => prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]);
-  const toggleSelectAll = () => setSelectedIds(allSelected ? [] : proxyPools.map((p) => p.id));
-  const clearSelection = () => setSelectedIds([]);
+  const visiblePools = useMemo(() => filterProxyPools(proxyPools, statusFilter), [proxyPools, statusFilter]);
+  const visiblePoolsRef = useRef([]);
+  useEffect(() => { visiblePoolsRef.current = visiblePools; }, [visiblePools]);
+  const selectedIds = getVisibleProxyPoolSelection(visiblePools, selectedPoolIds);
+  const allSelected = visiblePools.length > 0 && selectedIds.length === visiblePools.length;
+  const toggleSelect = (id, checked, shiftKey) => {
+    const anchorId = selectionAnchorRef.current;
+    setSelectedIds((prev) => updateProxyPoolSelection(visiblePools, prev, { id, checked, shiftKey, anchorId }));
+    selectionAnchorRef.current = id;
+  };
+  const toggleSelectAll = () => {
+    setSelectedIds(allSelected ? [] : visiblePools.map((p) => p.id));
+    selectionAnchorRef.current = null;
+  };
+  const clearSelection = () => {
+    setSelectedIds([]);
+    selectionAnchorRef.current = null;
+  };
 
   const bulkSetActive = async (isActive) => {
-    const targets = selectedIds.length > 0 ? selectedIds : proxyPools.map((p) => p.id);
+    const targets = selectedIds.length > 0 ? selectedIds : visiblePools.map((p) => p.id);
     if (targets.length === 0) return;
     setBulkBusy(true);
     setBatchProgress({ label: isActive ? "Activating" : "Deactivating", current: 0, total: targets.length });
@@ -351,7 +264,7 @@ export default function ProxyPoolsPage() {
       onConfirm: async () => {
         setConfirmState(null);
         setBulkBusy(true);
-        const targets = [...selectedIds];
+        const targets = getVisibleProxyPoolSelection(visiblePoolsRef.current, selectedIds);
         setBatchProgress({ label: "Deleting", current: 0, total: targets.length });
         try {
           const results = await runProxyPoolBatch(targets, async (id) => {
@@ -374,8 +287,8 @@ export default function ProxyPoolsPage() {
 
   const handleHealthCheck = async () => {
     const targets = selectedIds.length > 0
-      ? proxyPools.filter((p) => selectedIds.includes(p.id))
-      : proxyPools;
+      ? visiblePools.filter((p) => selectedIds.includes(p.id))
+      : visiblePools;
     if (targets.length === 0) return;
     setHealthChecking(true);
     setHealthProgress({ current: 0, total: targets.length });
@@ -441,6 +354,74 @@ export default function ProxyPoolsPage() {
   const closeBatchImportModal = () => {
     if (importing) return;
     setShowBatchImportModal(false);
+  };
+
+  const openPublicImportModal = () => {
+    setPublicImportForm({
+      source: "freeproxydb",
+      count: PUBLIC_PROXY_SOURCES.freeproxydb.defaultCount,
+      protocol: "http",
+      country: "",
+      anonymity: "",
+      httpsOnly: false,
+      maxSpeed: "",
+      orderBy: "success",
+    });
+    setShowPublicImportModal(true);
+  };
+
+  const closePublicImportModal = () => {
+    if (publicImporting) return;
+    setShowPublicImportModal(false);
+  };
+
+  const handlePublicImportField = (field, value) => {
+    setPublicImportForm((prev) => {
+      if (field === "source") {
+        const source = PUBLIC_PROXY_SOURCES[value] || prev.source;
+        return {
+          source: value,
+          count: source.defaultCount,
+          protocol: "http",
+          country: source.supportsCountry ? prev.country : "",
+          anonymity: "",
+          httpsOnly: false,
+          maxSpeed: source.supportsMaxSpeed ? prev.maxSpeed : "",
+          orderBy: "success",
+        };
+      }
+      return { ...prev, [field]: value };
+    });
+  };
+
+  const handlePublicImport = async () => {
+    setPublicImporting(true);
+    try {
+      const res = await fetch("/api/proxy-pools/import-public", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(publicImportForm),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        await fetchProxyPools();
+        setShowPublicImportModal(false);
+        if (data.imported === 0 && data.reason) {
+          notify.warning(data.reason);
+        } else {
+          notify.success(
+            `Public import: created ${data.imported}, skipped ${data.duplicates} duplicates${data.failed ? `, failed ${data.failed}` : ""}`
+          );
+        }
+      } else {
+        notify.error(data.error || "Public import failed");
+      }
+    } catch (error) {
+      console.log("Error importing public proxies:", error);
+      notify.error("Public import failed");
+    } finally {
+      setPublicImporting(false);
+    }
   };
 
   const openVercelModal = () => {
@@ -740,13 +721,59 @@ export default function ProxyPoolsPage() {
           <Button size="sm" variant="secondary" icon="upload" onClick={openBatchImportModal}>
             Batch Import
           </Button>
-          <Button size="sm" icon="add" onClick={openCreateModal}>Add Proxy Pool</Button>
+          <div className="relative" ref={addMenuRef}>
+            <Button
+              size="sm"
+              icon="add"
+              onClick={() => setShowAddMenu(!showAddMenu)}
+            >
+              Add Proxy Pool
+              <span className="material-symbols-outlined ml-1 text-[18px]">
+                {showAddMenu ? "expand_less" : "expand_more"}
+              </span>
+            </Button>
+
+            {showAddMenu && (
+              <div className="absolute left-0 top-full z-50 mt-1 w-56 rounded-xl border border-black/10 bg-white p-1 shadow-xl dark:border-white/10 dark:bg-zinc-900 sm:left-auto sm:right-0">
+                <button type="button"
+                  onClick={() => {
+                    openCreateModal();
+                    setShowAddMenu(false);
+                  }}
+                  className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-text-main transition-colors hover:bg-black/5 dark:hover:bg-white/5"
+                >
+                  <span className="material-symbols-outlined text-[20px] text-primary">edit_note</span>
+                  Manual Entry
+                </button>
+                <button type="button"
+                  onClick={() => {
+                    openPublicImportModal();
+                    setShowAddMenu(false);
+                  }}
+                  className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-text-main transition-colors hover:bg-black/5 dark:hover:bg-white/5"
+                >
+                  <span className="material-symbols-outlined text-[20px] text-emerald-500">public</span>
+                  Import from Public Lists
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
       <Card>
         <div className="mb-4 flex flex-wrap items-center gap-2">
-          {proxyPools.length > 0 && (
+          <select
+            value={statusFilter}
+            onChange={(event) => setStatusFilter(event.target.value)}
+            aria-label="Filter proxy pools by status"
+            className="rounded border border-border bg-surface px-2 py-1 text-xs text-text-main"
+          >
+            <option value="all">All pools</option>
+            <option value="enabled">Enabled only</option>
+            <option value="disabled">Disabled only</option>
+          </select>
+          {visiblePools.length > 0 && (
             <label className="flex items-center gap-1.5 text-xs text-text-muted cursor-pointer">
               <input
                 type="checkbox"
@@ -815,13 +842,13 @@ export default function ProxyPoolsPage() {
           </div>
         ) : (
           <div className="flex flex-col divide-y divide-black/[0.04] dark:divide-white/[0.05]">
-            {proxyPools.map((pool) => (
+            {visiblePools.map((pool) => (
               <PoolRow
                 key={pool.id}
                 pool={pool}
                 selected={selectedIds.includes(pool.id)}
                 testing={testingId === pool.id}
-                onSelect={() => toggleSelect(pool.id)}
+                onSelect={(event) => toggleSelect(pool.id, event.target.checked, event.nativeEvent.shiftKey)}
                 onToggle={() => handleToggleActive(pool)}
                 onTest={() => handleTest(pool.id)}
                 onEdit={() => openEditModal(pool)}
@@ -839,6 +866,15 @@ export default function ProxyPoolsPage() {
         onChange={setBatchImportText}
         onImport={handleBatchImport}
         onClose={closeBatchImportModal}
+      />
+
+      <PublicImportModal
+        isOpen={showPublicImportModal}
+        form={publicImportForm}
+        importing={publicImporting}
+        onChange={handlePublicImportField}
+        onImport={handlePublicImport}
+        onClose={closePublicImportModal}
       />
 
       <RelayDeployModal

@@ -5,6 +5,7 @@ import { isOpenAICompatibleProvider, isAnthropicCompatibleProvider, AI_PROVIDERS
 import { getDefaultModel } from "open-sse/config/providerModels.js";
 import { probeBedrockCredentials } from "open-sse/executors/bedrock.js";
 import { resolveOllamaLocalHost, PROVIDERS } from "open-sse/config/providers.js";
+import { proxyAwareFetch } from "open-sse/utils/proxyFetch.js";
 import { OPENCODE_UA } from "open-sse/executors/opencode.js";
 import { decodeJwtPayload } from "@/lib/oauth/kiroExternalIdp.js";
 import {
@@ -143,7 +144,9 @@ async function refreshOAuthToken(connection) {
     }
 
     if (provider === "claude") {
-      const response = await fetch(CLAUDE_CONFIG.tokenUrl, {
+      // proxyAwareFetch, not bare fetch: the curved dispatcher is required to
+      // survive the DPI that RSTs Node's default ClientHello.
+      const response = await proxyAwareFetch(CLAUDE_CONFIG.tokenUrl, {
         method: "POST",
         headers: { "Content-Type": "application/json", "Accept": "application/json" },
         body: JSON.stringify({
@@ -395,6 +398,41 @@ async function fetchWithConnectionProxy(url, options = {}, effectiveProxy = null
   });
 }
 
+// CodeBuddy (CN + intl) exposes its credit balance on a billing endpoint that
+// belongs to the same gateway. Probing it proves a manually pasted access token
+// without spending inference quota. The chat endpoint cannot answer "is this
+// token accepted?": it rejects non-official clients with 400/11128 even when
+// the token is valid. A 401/403 on the billing endpoint means the token is bad.
+async function probeCodebuddyAccessToken(connection, token, effectiveProxy = null) {
+  const providerCfg = PROVIDERS[connection.provider];
+  const probeUrl = providerCfg?.usage?.url;
+  if (!probeUrl) return { valid: false, error: "Provider test not supported" };
+  if (!token) return { valid: false, error: "No access token" };
+
+  try {
+    const res = await fetchWithConnectionProxy(probeUrl, {
+      method: "POST",
+      headers: {
+        ...(providerCfg.headers || {}),
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+      body: "{}",
+    }, effectiveProxy);
+
+    if (res.status === 401 || res.status === 403) {
+      return { valid: false, error: "CodeBuddy access token invalid or expired" };
+    }
+    return {
+      valid: res.ok,
+      error: res.ok ? null : `CodeBuddy API returned ${res.status}`,
+    };
+  } catch (err) {
+    return { valid: false, error: err.message };
+  }
+}
+
 async function testApiKeyConnection(connection, effectiveProxy = null) {
   if (isOpenAICompatibleProvider(connection.provider)) {
     const modelsBase = connection.providerSpecificData?.baseUrl;
@@ -454,6 +492,16 @@ async function testApiKeyConnection(connection, effectiveProxy = null) {
 
   try {
     switch (connection.provider) {
+      case "codebuddy-cn":
+      case "codebuddy-intl":
+        // Manually pasted access tokens land on the API-key path; without this
+        // case the switch default reports "Provider test not supported" and
+        // marks a working connection as errored.
+        return probeCodebuddyAccessToken(
+          connection,
+          connection.apiKey || connection.accessToken,
+          effectiveProxy,
+        );
       case "commandcode": {
         const res = await fetchWithConnectionProxy(
           "https://api.commandcode.ai/alpha/whoami?limits=1",
@@ -665,7 +713,8 @@ async function testApiKeyConnection(connection, effectiveProxy = null) {
       case "agnes":
       case "bai":
       case "muse":
-      case "runcrate": {
+      case "runcrate":
+      case "synthetic": {
         const cfg = PROVIDERS[connection.provider];
         const res = await fetchWithConnectionProxy(cfg.validateUrl, { headers: { Authorization: `Bearer ${connection.apiKey}` } }, effectiveProxy);
         return { valid: res.ok, error: res.ok ? null : "Invalid API key" };
@@ -740,7 +789,7 @@ async function testApiKeyConnection(connection, effectiveProxy = null) {
         return { valid: res.ok, error: res.ok ? null : "OpenCode free tier unavailable" };
       }
       case "opencode-go": {
-        const res = await fetchWithConnectionProxy("https://opencode.ai/zen/go/v1/chat/completions", {
+        const res = await fetchWithConnectionProxy("https://opencode.ai/inference/go/openai/v1/chat/completions", {
           method: "POST",
           headers: { "Content-Type": "application/json", Authorization: `Bearer ${connection.apiKey}` },
           body: JSON.stringify({ model: getDefaultModel("opencode-go"), messages: [{ role: "user", content: "ping" }], max_tokens: 1, stream: false }),
@@ -794,8 +843,11 @@ case "llm7": {
         }, effectiveProxy);
         return { valid: res.ok, error: res.ok ? null : "Invalid API key or base URL" };
       }
-      case "sensenova": {
-        const validateUrl = PROVIDERS.sensenova?.validateUrl || "https://token.sensenova.cn/v1/models";
+      case "sensenova":
+      case "sensenova-intl": {
+        // China and international sites are separate providers; each registry entry owns its host.
+        const validateUrl = PROVIDERS[connection.provider]?.validateUrl;
+        if (!validateUrl) return { valid: false, error: "Provider test not supported" };
         const res = await fetchWithConnectionProxy(validateUrl, {
           method: "GET",
           headers: {

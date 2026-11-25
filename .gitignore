@@ -132,3 +132,14 @@ graphify-out/*
 
 # CLI package smoke scratch dir (CI + local `npm pack` verification)
 .ci-cli-smoke/
+
+# =============================================================================
+# Local-only repo hygiene (generated or internal notes)
+# =============================================================================
+/server
+/.docs/
+/.kilocode/
+/.kilo/
+/.kiro/
+handover.md
+/.agent/ROBUST_PLAN.md

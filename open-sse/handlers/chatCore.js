@@ -10,11 +10,11 @@ import { createRequestLogger } from "../utils/requestLogger.js";
 import { extractThinking, stripThinkingSuffix } from "../translator/concerns/thinkingUnified.js";
 import { getModelTargetFormat, getModelSupportedFormats, getModelStrip, getModelUpstreamId, getModelType, PROVIDER_ID_TO_ALIAS } from "../config/providerModels.js";
 import { PROVIDERS } from "../config/providers.js";
-import { createErrorResult, parseUpstreamError, formatProviderError } from "../utils/error.js";
+import { createErrorResult, parseUpstreamError, formatProviderError, rotationInProgressResponse } from "../utils/error.js";
 import { checkFallbackError } from "../services/accountFallback.js";
 import { classifyError, logGatewayError } from "../utils/errorLog.js";
 import { upstreamResponseHeaders } from "../utils/upstreamHeaders.js";
-import { HTTP_STATUS, TOKEN_SAVER_HEADER } from "../config/runtimeConfig.js";
+import { HTTP_STATUS, TOKEN_SAVER_HEADER, OPENCODE_ROTATION_RETRY_AFTER_MS } from "../config/runtimeConfig.js";
 import { handleBypassRequest } from "../utils/bypassHandler.js";
 import { trackPendingRequest, appendRequestLog, saveRequestDetail } from "@/lib/usageDb.js";
 import { getExecutor } from "../executors/index.js";
@@ -256,8 +256,12 @@ export async function handleChatCore({ body, modelInfo, credentials, log, onCred
     }
     // Convert remote image URLs to base64 for targets that can't fetch URLs.
     try {
-      const n = await prefetchRemoteImages(body, sourceFormat, targetFormat, { signal: undefined });
-      if (n > 0) log?.debug?.("MODALITY", `prefetched ${n} remote image(s) for ${targetFormat}`);
+      const requiresInline = PROVIDERS[provider]?.quirks?.requiresInlineImages === true;
+      const n = await prefetchRemoteImages(body, sourceFormat, targetFormat, {
+        force: requiresInline,
+        onDrop: ({ reason }) => log?.warn?.("MODALITY", `image omitted for ${provider}/${model} (${reason})`),
+      });
+      if (n > 0) log?.debug?.("MODALITY", `${requiresInline ? "prefetched" : "normalized"} ${n} image(s) for ${targetFormat}`);
     } catch (e) { log?.warn?.("MODALITY", `image prefetch failed: ${e.message}`); }
   }
 
@@ -287,7 +291,7 @@ export async function handleChatCore({ body, modelInfo, credentials, log, onCred
   // Tool normalization: MCP-equivalent built-in dedup (Claude clients) + same-name
   // dedup for DeepSeek models (upstream rejects duplicate tool names on all endpoints).
   if (Array.isArray(translatedBody.tools)) {
-    const { tools: deduped, stripped } = dedupeTools(translatedBody.tools, { clientTool, model });
+    const { tools: deduped, stripped } = dedupeTools(translatedBody.tools, { clientTool, model, messages: translatedBody.messages });
     if (stripped.length > 0) {
       translatedBody.tools = deduped;
       log?.debug?.("TOOLDEDUP", `stripped ${stripped.length}: ${stripped.slice(0, 3).join(", ")}${stripped.length > 3 ? "..." : ""}`);
@@ -344,7 +348,7 @@ export async function handleChatCore({ body, modelInfo, credentials, log, onCred
   if (headroomLine) {
     log?.info?.("HEADROOM", `${headroomLine}${headroomSizeLine ? ` | ${headroomSizeLine}` : ""}`);
     if (isHeadroomPhantomSavings(headroomStats, headroomDiagnostics)) {
-      log?.warn?.("HEADROOM", `reported token delta, but outbound JSON shrank <5%; provider may bill near-original payload | ${headroomSizeLine}`);
+      log?.warn?.("HEADROOM", `reported token delta, but messages and outbound JSON shrank <5% | ${headroomSizeLine}`);
     }
   } else if (tokenSaverEnabled && headroomEnabled) log?.warn?.("HEADROOM", `skipped: ${headroomDiagnostics.reason || "compression unavailable"}${headroomDiagnostics.endpoint ? ` (${headroomDiagnostics.endpoint})` : ""}`);
 
@@ -512,41 +516,104 @@ export async function handleChatCore({ body, modelInfo, credentials, log, onCred
   }
 
   let parsedNonOk = null;
+
+  // OpenCode free-lane failures are deferred: bench the egress pool, then hand
+  // the client a 503 + Retry-After instead of silently replaying. The next
+  // request excludes the benched pool through the fitness store.
+  const deferredRotationResult = async (poolScoped, failedPool) => {
+    const reason = poolScoped.reason || "egress";
+    // Abusive-traffic bans are IP-wide; scope the bench to the provider so the
+    // next model on the same egress does not rediscover the same ban.
+    const benchScope = reason === "ip-limit" ? `${provider}::*` : (poolScoped.scope || proxyScope);
+    await markPoolUnfit(failedPool, benchScope, poolScoped.resetsAtMs, reason);
+    let nextPool = null;
+    try {
+      nextPool = await resolveProxyConfig(credentials, [failedPool]);
+    } catch (resolveError) {
+      log?.warn?.("PROXY", `${provider.toUpperCase()} | pool re-resolve failed: ${resolveError.message}`);
+    }
+    const hasNext = !!nextPool?.proxyPoolId && nextPool.proxyPoolId !== failedPool;
+    const waitMs = hasNext ? OPENCODE_ROTATION_RETRY_AFTER_MS : 30_000;
+    const message = hasNext
+      ? `OpenCode free tier refused this egress (${reason}); rotating network. Retry in ${Math.max(1, Math.ceil(waitMs / 1000))}s.`
+      : `All OpenCode egress pools are cooling down; retry in ${Math.max(1, Math.ceil(waitMs / 1000))}s.`;
+    log?.warn?.("PROXY", `${provider.toUpperCase()} | ${reason}: bench ${failedPool || "direct"} → ${nextPool?.proxyPoolId || "none"}; returning wait error`);
+    return {
+      success: false,
+      status: HTTP_STATUS.SERVICE_UNAVAILABLE,
+      error: message,
+      errorCode: "ROTATION_IN_PROGRESS",
+      rotationPending: {
+        fromPoolId: failedPool || null,
+        toPoolId: nextPool?.proxyPoolId || null,
+        reason,
+        retryAfterMs: waitMs,
+      },
+      response: rotationInProgressResponse({
+        message,
+        retryAfterMs: waitMs,
+        fromPoolId: failedPool,
+        toPoolId: nextPool?.proxyPoolId || null,
+        reason,
+      }),
+    };
+  };
+
+  const rotatePoolInline = async (poolScoped, failedPool, attempt, maxRetries) => {
+    log?.warn?.("PROXY", `${provider.toUpperCase()} | ${poolScoped.reason || "pool-scoped"}: benching pool ${failedPool} and rotating (${attempt + 1}/${maxRetries})`);
+    await markPoolUnfit(failedPool, poolScoped.scope || proxyScope, poolScoped.resetsAtMs, poolScoped.reason || "pool-scoped");
+    try {
+      const resolved = await resolveProxyConfig(credentials, [failedPool]);
+      if (resolved?.proxyPoolId) {
+        credentials.providerSpecificData = { ...(credentials.providerSpecificData || {}), ...resolved };
+        proxyOptions = buildProxyOptions(credentials.providerSpecificData);
+        return true;
+      }
+    } catch (resolveError) {
+      log?.warn?.("PROXY", `${provider.toUpperCase()} | pool re-resolve failed: ${resolveError.message}`);
+    }
+    return false;
+  };
+
   const executeWithPoolFallback = async (attempt = 0) => {
     let result;
     try {
       result = await executor.execute({ model, body: translatedBody, stream: upstreamStream, credentials, signal: streamController.signal, log, proxyOptions, accountCount });
     } catch (error) {
-      if (error?.poolScoped && typeof resolveProxyConfig === "function" && attempt < MAX_POOL_RETRIES) {
+      const errorMaxRetries = Number.isFinite(error?.poolScoped?.maxRetries)
+        ? error.poolScoped.maxRetries
+        : MAX_POOL_RETRIES;
+      const hasEgressPool = !!proxyOptions?.proxyPoolId
+        || proxyOptions?.connectionProxyEnabled === true
+        || !!proxyOptions?.vercelRelayUrl;
+      if (error?.poolScoped && hasEgressPool && typeof resolveProxyConfig === "function") {
         const failedPool = error.poolScoped.poolId || proxyOptions.proxyPoolId;
-        await markPoolUnfit(failedPool, error.poolScoped.scope || proxyScope, error.resetsAtMs, error.poolScoped.reason || "pool-scoped");
-        try {
-          const resolved = await resolveProxyConfig(credentials, [failedPool]);
-          if (resolved?.proxyPoolId) {
-            credentials.providerSpecificData = { ...(credentials.providerSpecificData || {}), ...resolved };
-            proxyOptions = buildProxyOptions(credentials.providerSpecificData);
-            return executeWithPoolFallback(attempt + 1);
-          }
-        } catch (resolveError) {
-          log?.warn?.("PROXY", `${provider.toUpperCase()} | pool re-resolve failed: ${resolveError.message}`);
+        if (error.poolScoped.deferRotation === true) {
+          return await deferredRotationResult(error.poolScoped, failedPool);
+        }
+        if (attempt < errorMaxRetries
+          && await rotatePoolInline(error.poolScoped, failedPool, attempt, errorMaxRetries)) {
+          return executeWithPoolFallback(attempt + 1);
         }
       }
       throw error;
     }
     if (!result.response.ok) {
       const parsed = await parseUpstreamError(result.response, executor);
-      if (parsed.poolScoped && typeof resolveProxyConfig === "function" && attempt < MAX_POOL_RETRIES) {
+      const parsedMaxRetries = Number.isFinite(parsed.poolScoped?.maxRetries)
+        ? parsed.poolScoped.maxRetries
+        : MAX_POOL_RETRIES;
+      const poolConfigured = !!proxyOptions?.proxyPoolId
+        || proxyOptions?.connectionProxyEnabled === true
+        || !!proxyOptions?.vercelRelayUrl;
+      if (parsed.poolScoped && typeof resolveProxyConfig === "function") {
         const failedPool = parsed.poolScoped.poolId || proxyOptions.proxyPoolId;
-        await markPoolUnfit(failedPool, parsed.poolScoped.scope || proxyScope, parsed.resetsAtMs, parsed.poolScoped.reason || "pool-scoped");
-        try {
-          const resolved = await resolveProxyConfig(credentials, [failedPool]);
-          if (resolved?.proxyPoolId) {
-            credentials.providerSpecificData = { ...(credentials.providerSpecificData || {}), ...resolved };
-            proxyOptions = buildProxyOptions(credentials.providerSpecificData);
-            return executeWithPoolFallback(attempt + 1);
-          }
-        } catch (resolveError) {
-          log?.warn?.("PROXY", `${provider.toUpperCase()} | pool re-resolve failed: ${resolveError.message}`);
+        if (parsed.poolScoped.deferRotation === true && poolConfigured) {
+          return await deferredRotationResult(parsed.poolScoped, failedPool);
+        }
+        if (attempt < parsedMaxRetries
+          && await rotatePoolInline(parsed.poolScoped, failedPool, attempt, parsedMaxRetries)) {
+          return executeWithPoolFallback(attempt + 1);
         }
       }
       parsedNonOk = parsed;
@@ -561,6 +628,14 @@ export async function handleChatCore({ body, modelInfo, credentials, log, onCred
   let providerResponseFormat = targetFormat;
   try {
     const result = await executeWithPoolFallback();
+    // Deferred egress rotation is a terminal response for this request. Return
+    // it before the generic non-ok path can re-parse the 503 body as a new
+    // upstream failure (which would drop errorCode and lock the account).
+    if (!result.success && result.errorCode === "ROTATION_IN_PROGRESS") {
+      trackPendingRequest(model, provider, connectionId, false, true);
+      appendRequestLog({ model, provider, connectionId, status: `FAILED ${HTTP_STATUS.SERVICE_UNAVAILABLE}` }).catch(() => { });
+      return result;
+    }
     providerResponse = result.response;
     providerUrl = result.url;
     providerHeaders = result.headers;

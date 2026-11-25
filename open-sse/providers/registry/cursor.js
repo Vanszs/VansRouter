@@ -15,6 +15,7 @@ export default {
     },
   },
   category: "oauth",
+  hasOAuth: true,
   hasFree: true,
   transport: {
     baseUrl: "https://api2.cursor.sh",

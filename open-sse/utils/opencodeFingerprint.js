@@ -11,6 +11,12 @@
 /** Canonical names required by the upstream free-tier gate. */
 export const OPENCODE_FINGERPRINT_TOOLS = ["bash", "glob", "grep", "read"];
 
+// A second, purely textual gate on the same route: a declared tool name
+// containing "terminal" is answered 429 regardless of quota or payload, while
+// the same body with only that name changed answers normally (#5319).
+export const GATED_TOOL_NAME_RE = /terminal/i;
+const GATED_TOOL_ALIAS = "run_command";
+
 // Request body -> names renamed for that request. transformRequest() mutates the
 // same body object chatCore passed into the executor, so a WeakMap keeps the
 // mapping request-local without putting transport metadata on the wire.
@@ -48,6 +54,7 @@ export function concealFingerprintToolNames(tools) {
   }
 
   const seenQuartet = new Set();
+  const usedNames = new Set(tools.map(toolNameOf).filter(Boolean));
   const out = [];
   for (const tool of tools) {
     if (!tool || typeof tool !== "object" || Array.isArray(tool)) {
@@ -56,6 +63,17 @@ export function concealFingerprintToolNames(tools) {
     }
 
     const current = toolNameOf(tool);
+    if (GATED_TOOL_NAME_RE.test(current)) {
+      let alias = GATED_TOOL_ALIAS;
+      for (let i = 2; usedNames.has(alias); i++) alias = `${GATED_TOOL_ALIAS}${i}`;
+      usedNames.add(alias);
+      map.set(alias, current);
+      const fn = tool.function && typeof tool.function === "object" && !Array.isArray(tool.function)
+        ? tool.function
+        : null;
+      out.push(fn ? { ...tool, function: { ...fn, name: alias } } : { ...tool, name: alias });
+      continue;
+    }
     const key = fingerprintToolKey(current);
     if (!key) {
       out.push(tool);

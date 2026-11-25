@@ -8,9 +8,7 @@ import crypto from "node:crypto";
 import { resolveSessionId } from "../utils/sessionManager.js";
 import { applyFingerprintToolNames } from "../utils/opencodeFingerprint.js";
 import { getModelTargetFormat, PROVIDER_MODELS, PROVIDER_ID_TO_ALIAS } from "../config/providerModels.js";
-
-// OpenCode free tier limits requests per egress IP.
-const IP_LIMIT_BODY = /limit|rate|quota|exhausted|capacity|too many|retry/i;
+import { classifyOpencodeEgressError, opencodeNetworkPoolScoped } from "./opencodeErrors.js";
 
 export const OPENCODE_UA = "opencode/latest/2.0.29/cli";
 
@@ -23,6 +21,34 @@ const LANE_PATH = { chat: "/chat/completions", claude: "/messages", responses: "
 const DECOY_DESCRIPTION = "This tool is currently unavailable and must not be used.";
 
 // Preserve either supported OpenCode CLI UA form; normalize all others to current form.
+
+// Free-lane load shedding: total attempts (first try + retries) and backoff.
+// Live bursts last ~20 s; this schedule covers ~20 s.
+const OPENCODE_OVERLOAD_ATTEMPTS = 8;
+const OPENCODE_OVERLOAD_BASE_MS = 800;
+const OPENCODE_OVERLOAD_MAX_MS = 4000;
+const OPENCODE_OVERLOAD_RE = /overloaded/i;
+
+async function classifyRejection(response) {
+  const status = response?.status;
+  if (status !== 429 && status !== 403) return null;
+  if (status === 403) return "session";
+  try {
+    return OPENCODE_OVERLOAD_RE.test(await response.clone().text()) ? "overload" : "session";
+  } catch {
+    return "session";
+  }
+}
+
+function sleep(ms, signal) {
+  return new Promise((resolve) => {
+    if (signal?.aborted) return resolve();
+    const onAbort = () => { clearTimeout(timer); resolve(); };
+    const timer = setTimeout(() => { signal?.removeEventListener?.("abort", onAbort); resolve(); }, ms);
+    signal?.addEventListener?.("abort", onAbort, { once: true });
+  });
+}
+
 function hasValidOpencodeVersion(ua) {
   const value = String(ua || "").trim();
   const legacy = value.match(/^opencode\/(\d+)\.(\d+)\.\d+$/i);
@@ -254,6 +280,36 @@ export class OpenCodeExecutor extends BaseExecutor {
       || `${this.origin}/zen/v1${LANE_PATH[lane]}`;
   }
 
+  // The free lane sheds load with 429 "The inference service is overloaded."
+  // even after the request passes the TLS gate; retry it like the CLI does.
+  async execute(args) {
+    const hasPool = !!args.proxyOptions?.proxyPoolId || args.proxyOptions?.connectionProxyEnabled === true;
+    // With a proxy pool, an overloaded free lane is handled by rotating egress
+    // (chatCore returns a wait error); retrying the same IP eight times first
+    // only multiplies upstream calls.
+    const maxAttempts = hasPool ? 1 : OPENCODE_OVERLOAD_ATTEMPTS;
+    for (let attempt = 1; ; attempt++) {
+      let result;
+      try {
+        result = await super.execute(args);
+      } catch (error) {
+        if (hasPool && error?.name !== "AbortError" && !error.poolScoped) {
+          error.poolScoped = opencodeNetworkPoolScoped();
+        }
+        throw error;
+      }
+      const rejection = await classifyRejection(result?.response);
+      if (rejection !== "overload" || attempt >= maxAttempts || args.signal?.aborted) {
+        return result;
+      }
+      result.response.body?.cancel?.().catch?.(() => {});
+      args.log?.debug?.("RETRY", `OpenCode free lane overloaded, retry ${attempt}/${OPENCODE_OVERLOAD_ATTEMPTS - 1}`);
+      const backoff = Math.min(OPENCODE_OVERLOAD_BASE_MS * attempt, OPENCODE_OVERLOAD_MAX_MS);
+      await sleep(backoff + Math.random() * 250, args.signal);
+      if (args.signal?.aborted) throw new DOMException("The operation was aborted.", "AbortError");
+    }
+  }
+
   buildHeaders(credentials, stream = true, url, model) {
     const raw = Object.fromEntries(Object.entries(credentials?.rawHeaders || {}).map(([k, v]) => [k.toLowerCase(), v]));
     const rawSession = raw["x-opencode-session"];
@@ -295,11 +351,12 @@ export class OpenCodeExecutor extends BaseExecutor {
     const status = response?.status || 0;
     const text = String(bodyText || "");
     if (this.provider === "opencode") {
-      if ((status === 429 || status === 403) && IP_LIMIT_BODY.test(text)) {
+      const egress = classifyOpencodeEgressError(status, text);
+      if (egress) {
         return {
           status,
-          message: text.slice(0, 300) || `OpenCode free limit (${status})`,
-          poolScoped: { reason: "ip-limit" },
+          message: text.slice(0, 300) || `OpenCode error (${status})`,
+          ...egress,
         };
       }
       if (status === 401 && /Model .* is not supported/i.test(text)) {

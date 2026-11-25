@@ -48,14 +48,17 @@ describe("compressWithHeadroom openai-responses format (#1998)", () => {
     expect(typeof body.input[0].content).not.toBe("string");
   });
 
-  it("skips Responses tool/reasoning history instead of collapsing it into a message (#2132)", async () => {
-    global.fetch = vi.fn(async () => ({
-      ok: true,
-      json: async () => ({
-        messages: [{ role: "user", content: "compressed tool history" }],
-        tokens_saved: 10,
-      }),
-    }));
+  it("compresses Responses tool output leaves instead of collapsing the item list (#2132)", async () => {
+    global.fetch = vi.fn(async (_url, init) => {
+      const payload = JSON.parse(init.body);
+      return {
+        ok: true,
+        json: async () => ({
+          messages: payload.messages.map((message) => ({ ...message, content: "x" })),
+          tokens_saved: 10,
+        }),
+      };
+    });
 
     const input = [
       {
@@ -99,9 +102,15 @@ describe("compressWithHeadroom openai-responses format (#1998)", () => {
       diagnostics,
     });
 
-    expect(data).toBeNull();
-    expect(global.fetch).not.toHaveBeenCalled();
-    expect(body.input).toEqual(input);
-    expect(diagnostics.reason).toBe("skipped: openai-responses tool/reasoning input is not safe to compress");
+    expect(global.fetch).toHaveBeenCalledOnce();
+    expect(data).not.toBeNull();
+    // Only the tool-output leaf changes; every Responses item keeps its shape.
+    expect(body.input.map((item) => item.type)).toEqual([
+      "message", "function_call", "function_call_output", "reasoning",
+    ]);
+    expect(body.input[0]).toEqual(input[0]);
+    expect(body.input[1]).toEqual(input[1]);
+    expect(body.input[2].output).toBe("x");
+    expect(body.input[3]).toEqual(input[3]);
   });
 });
