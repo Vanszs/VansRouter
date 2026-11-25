@@ -1,3 +1,30 @@
+# v0.92.4 (2026-11-23)
+
+Release train for the 0.92 line: the upstream v0.5.116/v0.5.119 sync, OpenCode free-lane egress rotation, the issue-port batch, and the follow-up audit. Production was already running 0.92.3; this version is the CI/CD release candidate.
+
+## Features & Sync
+
+- Upstream v0.5.116/v0.5.119 sync (55 of 69 commits): synthetic.new, SenseNova international, CommandCode live catalog, ClinePass quota, `thinking_levels`, Smart Router, Add All Active Models, proxy-pool filtering, Claude/Codex/model updates (details in 0.92.0).
+- Proxy pools can import active HTTP/SOCKS5 entries from FreeProxyDB and VPSLab with protocol/count/filter validation and duplicate detection (`#157`).
+- Standard provider pages can preview and select models before import (`#168`) and remove user-added models in bulk (`#169`); compatible pages keep per-model delete.
+- OpenCode Go/free requests inline remote images as base64, normalize bare base64, and replace images that cannot be inlined with a placeholder instead of failing the whole request.
+
+## Reliability & Compatibility
+
+- Free OpenCode lane rotates egress on 403/429/5xx/network: benches the pool, returns 503 `rotation_in_progress` + `Retry-After`, never replays direct, fails closed on proxy failure, keeps 24h hard-ban / 60s transient TTL, returns 503 when every pool is benched, and lets combos pass the wait response through.
+- OpenCode Go stays account-scoped: no pool rotation or benching; normal account fallback/retry; the inline-image quirk remains.
+- CodeBuddy manually added access tokens are validated against the billing endpoint, so a valid token no longer reports "Provider test not supported" (`#161`).
+- Antigravity MITM enforces the Gemini `items` predicate (`#163`) and preserves schema parameters whose names collide with blocked keywords (`format`, `title`, `default`).
+- Database startup runs `PRAGMA quick_check` and fails closed on corruption instead of silently starting with an empty connection list; pre-migration backups remain (`#118`).
+- Additional issue fixes: OpenCode session-id contract and UA floor (`#162`, `#164`), OpenCode catalog URL (`#166`), Cursor/Codex port (`#176`), API-key default-model crash (`#188`), Basic Chat answer (`#202`), compatible-provider import failure surfacing, and proxy-source prototype-key rejection.
+
+## Validation
+
+- Full suite: **5582 passed**, 123 skipped, 1 todo (`pnpm test`); the MiMo live repro is opt-in with `RUN_REAL=1` so required CI does not depend on a third-party free endpoint.
+- `pnpm run test:server`: pass; `lint:undef` and `lint-reacthooks`: clean; production `pnpm build`: pass.
+- Live smoke on 0.92.3: OpenCode Go inline image 200, Go text 200, free lane 503 `rotation_in_progress` with `Retry-After`.
+- Release workflow was not run at authoring time because GitHub Actions is disabled for the repository; local gates above are the available evidence. Publish only after Actions is restored and the release PR check is green.
+
 # v0.92.3 (2026-11-23)
 
 ## Changed
