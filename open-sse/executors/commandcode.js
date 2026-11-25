@@ -15,15 +15,20 @@ export class CommandCodeExecutor extends BaseExecutor {
   }
 
   transformRequest(model, body, stream, credentials) {
-    body.stream = true;
+    if (!body || typeof body !== "object") return body || {};
+    if (body.params) {
+      body.params.stream = true;
+    } else {
+      body.stream = true;
+    }
     return body;
   }
 
-  buildHeaders(credentials, stream = true) {
+  buildHeaders(credentials, stream = true, url, model, transformedBody = null) {
     const headers = {
       "Content-Type": "application/json",
       ...(this.config.headers || {}),
-      "x-session-id": randomUUID(),
+      "x-session-id": transformedBody?.threadId || randomUUID(),
     };
 
     const token = credentials?.apiKey || credentials?.accessToken;

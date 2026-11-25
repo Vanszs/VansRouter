@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
   Card,
   CardSkeleton,
@@ -20,7 +20,7 @@ import {
   ANTHROPIC_COMPATIBLE_PREFIX,
 } from "@/shared/constants/providers";
 import Link from "next/link";
-import { getErrorCode, getRelativeTime } from "@/shared/utils";
+import { getProviderConnectionStats, expandAuthTypes } from "@/shared/utils/providerStats";
 import { useNotificationStore } from "@/store/notificationStore";
 import { useHeaderSearchStore } from "@/store/headerSearchStore";
 import ModelAvailabilityBadge from "./components/ModelAvailabilityBadge";
@@ -53,48 +53,6 @@ function getStatusDisplay(connected, error, errorCode) {
   return parts;
 }
 
-function getConnectionErrorTag(connection) {
-  if (!connection) return null;
-
-  const explicitType = connection.lastErrorType;
-  if (explicitType === "runtime_error") return "RUNTIME";
-  if (
-    explicitType === "upstream_auth_error" ||
-    explicitType === "auth_missing" ||
-    explicitType === "token_refresh_failed" ||
-    explicitType === "token_expired"
-  )
-    return "AUTH";
-  if (explicitType === "upstream_rate_limited") return "429";
-  if (explicitType === "upstream_unavailable") return "5XX";
-  if (explicitType === "network_error") return "NET";
-
-  const numericCode = Number(connection.errorCode);
-  if (Number.isFinite(numericCode) && numericCode >= 400)
-    return String(numericCode);
-
-  const fromMessage = getErrorCode(connection.lastError);
-  if (fromMessage === "401" || fromMessage === "403") return "AUTH";
-  if (fromMessage && fromMessage !== "ERR") return fromMessage;
-
-  const msg = (connection.lastError || "").toLowerCase();
-  if (
-    msg.includes("runtime") ||
-    msg.includes("not runnable") ||
-    msg.includes("not installed")
-  )
-    return "RUNTIME";
-  if (
-    msg.includes("invalid api key") ||
-    msg.includes("token invalid") ||
-    msg.includes("revoked") ||
-    msg.includes("unauthorized")
-  )
-    return "AUTH";
-
-  return "ERR";
-}
-
 const APIKEY_INITIAL_VISIBLE = 20;
 
 export default function ProvidersPage() {
@@ -124,28 +82,13 @@ export default function ProvidersPage() {
     return name.toLowerCase().includes(searchQuery.trim().toLowerCase());
   };
 
-  const sortByPriority = (entries, authType) =>
+  const sortByPriority = (entries) =>
     [...entries].sort(([ka, a], [kb, b]) => {
       const pa = a.priority ?? 999;
       const pb = b.priority ?? 999;
       if (pa !== pb) return pa - pb;
-      const sa = getProviderStats(ka, authType);
-      const sb = getProviderStats(kb, authType);
-      const ca = sa.connected > 0 ? 1 : 0;
-      const cb = sb.connected > 0 ? 1 : 0;
-      if (ca !== cb) return cb - ca;
-      return (a.name || "").localeCompare(b.name || "");
-    });
-
-  const sortItemsByPriority = (items, authType) =>
-    [...items].sort((a, b) => {
-      const pa = a.priority ?? 999;
-      const pb = b.priority ?? 999;
-      if (pa !== pb) return pa - pb;
-      const sa = getProviderStats(a.id, authType);
-      const sb = getProviderStats(b.id, authType);
-      const ca = sa.connected > 0 ? 1 : 0;
-      const cb = sb.connected > 0 ? 1 : 0;
+      const ca = getProviderConnectionStats(connections, ka, getProviderAuthTypes(a)).connected > 0 ? 1 : 0;
+      const cb = getProviderConnectionStats(connections, kb, getProviderAuthTypes(b)).connected > 0 ? 1 : 0;
       if (ca !== cb) return cb - ca;
       return (a.name || "").localeCompare(b.name || "");
     });
@@ -172,54 +115,10 @@ export default function ProvidersPage() {
     fetchData();
   }, []);
 
-  const getProviderStats = useCallback((providerId, authType) => {
-    const authTypes = Array.isArray(authType) ? authType : [authType];
-    const providerConnections = connections.filter(
-      (c) => c.provider === providerId && authTypes.includes(c.authType),
-    );
-
-    const getEffectiveStatus = (conn) => {
-      const isCooldown = Object.entries(conn).some(
-        ([k, v]) =>
-          k.startsWith("modelLock_") && v && new Date(v).getTime() > Date.now(),
-      );
-      return conn.testStatus === "unavailable" && !isCooldown
-        ? "active"
-        : conn.testStatus;
-    };
-
-    const connected = providerConnections.filter((c) => {
-      const status = getEffectiveStatus(c);
-      return status === "active" || status === "success";
-    }).length;
-
-    const errorConns = providerConnections.filter((c) => {
-      const status = getEffectiveStatus(c);
-      return (
-        status === "error" || status === "expired" || status === "unavailable"
-      );
-    });
-
-    const error = errorConns.length;
-    const total = providerConnections.length;
-    const allDisabled =
-      total > 0 && providerConnections.every((c) => c.isActive === false);
-
-    const latestError = errorConns.sort(
-      (a, b) => new Date(b.lastErrorAt || 0) - new Date(a.lastErrorAt || 0),
-    )[0];
-    const errorCode = latestError ? getConnectionErrorTag(latestError) : null;
-    const errorTime = latestError?.lastErrorAt
-      ? getRelativeTime(latestError.lastErrorAt)
-      : null;
-
-    return { connected, error, total, errorCode, errorTime, allDisabled };
-  }, [connections]);
-
   // Toggle all connections for a provider on/off. authType may be a single
   // string or an array (kiro counts oauth + api_key/apikey together).
   const handleToggleProvider = async (providerId, authType, newActive) => {
-    const authTypes = Array.isArray(authType) ? authType : [authType];
+    const authTypes = expandAuthTypes(authType);
     const matches = (c) =>
       c.provider === providerId && authTypes.includes(c.authType);
     const providerConns = connections.filter(matches);
@@ -290,9 +189,8 @@ export default function ProvidersPage() {
   const oauthEntries = useMemo(() => {
     return sortByPriority(
       Object.entries(OAUTH_PROVIDERS).filter(([, info]) => !info.hidden && matchSearch(info.name)),
-      "oauth",
     );
-  }, [matchSearch]);
+  }, [matchSearch, connections]);
 
   const freeEntries = useMemo(() => {
     return Object.entries(FREE_PROVIDERS)
@@ -316,12 +214,12 @@ export default function ProvidersPage() {
         if (pa !== pb) return pa - pb;
         const noAuthDiff = (b.noAuth ? 1 : 0) - (a.noAuth ? 1 : 0);
         if (noAuthDiff !== 0) return noAuthDiff;
-        const ca = getProviderStats(ka, getProviderAuthTypes(a, ka)).connected > 0 ? 0 : 1;
-        const cb = getProviderStats(kb, getProviderAuthTypes(b, kb)).connected > 0 ? 0 : 1;
+        const ca = getProviderConnectionStats(connections, ka, getProviderAuthTypes(a)).connected > 0 ? 0 : 1;
+        const cb = getProviderConnectionStats(connections, kb, getProviderAuthTypes(b)).connected > 0 ? 0 : 1;
         if (ca !== cb) return ca - cb;
         return (a.name || "").localeCompare(b.name || "");
       });
-  }, [matchSearch, getProviderStats]);
+  }, [matchSearch, connections]);
 
   // API Key: connected providers first, then alphabetical by name
   const apikeyEntries = useMemo(() => {
@@ -333,12 +231,12 @@ export default function ProvidersPage() {
           matchSearch(info.name),
       )
       .sort(([ka, a], [kb, b]) => {
-        const ca = getProviderStats(ka, "apikey").total > 0 ? 0 : 1;
-        const cb = getProviderStats(kb, "apikey").total > 0 ? 0 : 1;
+        const ca = getProviderConnectionStats(connections, ka, getProviderAuthTypes(a)).total > 0 ? 0 : 1;
+        const cb = getProviderConnectionStats(connections, kb, getProviderAuthTypes(b)).total > 0 ? 0 : 1;
         if (ca !== cb) return ca - cb;
         return (a.name || "").localeCompare(b.name || "");
       });
-  }, [matchSearch, getProviderStats]);
+  }, [matchSearch, connections]);
 
   const webCookieEntries = useMemo(() => {
     return Object.entries(WEB_COOKIE_PROVIDERS)
@@ -348,12 +246,12 @@ export default function ProvidersPage() {
           matchSearch(info.name),
       )
       .sort(([ka, a], [kb, b]) => {
-        const ca = getProviderStats(ka, "cookie").total > 0 ? 0 : 1;
-        const cb = getProviderStats(kb, "cookie").total > 0 ? 0 : 1;
+        const ca = getProviderConnectionStats(connections, ka, "cookie").total > 0 ? 0 : 1;
+        const cb = getProviderConnectionStats(connections, kb, "cookie").total > 0 ? 0 : 1;
         if (ca !== cb) return ca - cb;
         return (a.name || "").localeCompare(b.name || "");
       });
-  }, [matchSearch, getProviderStats]);
+  }, [matchSearch, connections]);
   const isApikeySearching = !!searchQuery.trim();
   const visibleApikeyEntries =
     isApikeySearching || showAllApikey
@@ -434,7 +332,7 @@ export default function ProvidersPage() {
                   key={info.id}
                   providerId={info.id}
                   provider={info}
-                  stats={getProviderStats(info.id, "apikey")}
+                  stats={getProviderConnectionStats(connections, info.id, "apikey")}
                   authType="compatible"
                   circuitBreaker={getCircuitBreakerForProvider(info.id)}
                   onResetCircuit={resetCircuitBreaker}
@@ -478,18 +376,21 @@ export default function ProvidersPage() {
           </div>
         </div>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3 xl:grid-cols-4">
-          {oauthEntries.map(([key, info]) => (
-            <ProviderCard
-              key={key}
-              providerId={key}
-              provider={info}
-              stats={getProviderStats(key, "oauth")}
-              authType="oauth"
-              circuitBreaker={getCircuitBreakerForProvider(key)}
-              onResetCircuit={resetCircuitBreaker}
-              onToggle={(active) => handleToggleProvider(key, "oauth", active)}
-            />
-          ))}
+          {oauthEntries.map(([key, info]) => {
+            const authTypes = getProviderAuthTypes(info);
+            return (
+              <ProviderCard
+                key={key}
+                providerId={key}
+                provider={info}
+                stats={getProviderConnectionStats(connections, key, authTypes)}
+                authType="oauth"
+                circuitBreaker={getCircuitBreakerForProvider(key)}
+                onResetCircuit={resetCircuitBreaker}
+                onToggle={(active) => handleToggleProvider(key, authTypes, active)}
+              />
+            );
+          })}
         </div>
       </div>
       )}
@@ -522,18 +423,15 @@ export default function ProvidersPage() {
         </div>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3 xl:grid-cols-4">
           {freeEntries.map(([key, info]) => {
-            // Kiro accepts both OAuth and api-key connections; count/toggle both
-            // so the card total matches the provider detail page (#kiro-apikey).
-            // Kiro's headless api-key flow persists authType "api_key" (underscore),
-            // while generic apikey providers use "apikey" — include both spellings.
-            const freeAuthTypes =
-              key === "kiro" ? ["oauth", "apikey", "api_key"] : "oauth";
+            // A provider can expose several auth modes (Kimi, xAI, Qoder…):
+            // count and toggle every mode it declares, not just the section label.
+            const freeAuthTypes = getProviderAuthTypes(info);
             return (
               <ProviderCard
                 key={key}
                 providerId={key}
                 provider={info}
-                stats={getProviderStats(key, freeAuthTypes)}
+                stats={getProviderConnectionStats(connections, key, freeAuthTypes)}
                 authType="free"
                 circuitBreaker={getCircuitBreakerForProvider(key)}
                 onResetCircuit={resetCircuitBreaker}
@@ -544,13 +442,13 @@ export default function ProvidersPage() {
             );
           })}
           {freeTierEntries.map(([key, info]) => {
-            const freeAuthTypes = getProviderAuthTypes(info, key);
+            const freeAuthTypes = getProviderAuthTypes(info);
             return (
               <ApiKeyProviderCard
                 key={key}
                 providerId={key}
                 provider={info}
-                stats={getProviderStats(key, freeAuthTypes)}
+                stats={getProviderConnectionStats(connections, key, freeAuthTypes)}
                 authType={Array.isArray(freeAuthTypes) ? (freeAuthTypes[0] ?? "apikey") : freeAuthTypes}
                 onToggle={(active) => handleToggleProvider(key, freeAuthTypes, active)}
               />
@@ -587,16 +485,19 @@ export default function ProvidersPage() {
           </button>
         </div>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3 xl:grid-cols-4">
-          {visibleApikeyEntries.map(([key, info]) => (
-            <ApiKeyProviderCard
-              key={key}
-              providerId={key}
-              provider={info}
-              stats={getProviderStats(key, "apikey")}
-              authType="apikey"
-              onToggle={(active) => handleToggleProvider(key, "apikey", active)}
-            />
-          ))}
+          {visibleApikeyEntries.map(([key, info]) => {
+            const authTypes = getProviderAuthTypes(info);
+            return (
+              <ApiKeyProviderCard
+                key={key}
+                providerId={key}
+                provider={info}
+                stats={getProviderConnectionStats(connections, key, authTypes)}
+                authType="apikey"
+                onToggle={(active) => handleToggleProvider(key, authTypes, active)}
+              />
+            );
+          })}
         </div>
         {!isApikeySearching && !showAllApikey && hiddenApikeyCount > 0 && (
           <button
@@ -624,7 +525,7 @@ export default function ProvidersPage() {
               key={key}
               providerId={key}
               provider={info}
-              stats={getProviderStats(key, "cookie")}
+              stats={getProviderConnectionStats(connections, key, "cookie")}
               authType="cookie"
               onToggle={(active) => handleToggleProvider(key, "cookie", active)}
             />

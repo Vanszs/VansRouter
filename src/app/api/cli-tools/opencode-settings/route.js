@@ -2,6 +2,9 @@
 
 import { NextResponse } from "next/server";
 import { resolveCliApiKey } from "../resolveApiKey.js";
+import { ALIAS_TO_ID } from "@/shared/constants/providers";
+import { PROVIDER_ID_TO_ALIAS } from "@/shared/constants/models";
+import { getThinkingLevels } from "open-sse/providers/thinkingLevels.js";
 import { exec } from "child_process";
 import { promisify } from "util";
 import fs from "fs/promises";
@@ -12,6 +15,22 @@ const execAsync = promisify(exec);
 
 const getConfigDir = () => path.join(os.homedir(), ".config", "opencode");
 const getConfigPath = () => path.join(getConfigDir(), "opencode.json");
+
+const ALIAS_TO_PROVIDER_ID = {
+  ...Object.fromEntries(Object.entries(PROVIDER_ID_TO_ALIAS).map(([id, alias]) => [alias, id])),
+  ...ALIAS_TO_ID,
+};
+
+// Variants built from the levels 9Router offers for a model, so the CLI effort
+// selector matches the dashboard picker. null when the model has none.
+const buildEffortVariants = (fullModelId) => {
+  const slash = fullModelId.indexOf("/");
+  if (slash <= 0) return null;
+  const alias = fullModelId.slice(0, slash);
+  const levels = getThinkingLevels(ALIAS_TO_PROVIDER_ID[alias] || alias, fullModelId.slice(slash + 1));
+  if (!Array.isArray(levels) || levels.length === 0) return null;
+  return Object.fromEntries(levels.map((level) => [level, { reasoningEffort: level }]));
+};
 
 // Check if opencode CLI is installed (via which/where or config file exists)
 const checkOpenCodeInstalled = async () => {
@@ -147,7 +166,10 @@ export async function POST(request) {
     // Add or update entries for all requested models
     for (const m of modelsArray) {
       if (!m || typeof m !== "string") continue;
-      existingProvider.models[m] = { name: m, modalities: { input: ["text", "image"], output: ["text"] } };
+      const entry = { name: m, modalities: { input: ["text", "image"], output: ["text"] } };
+      const variants = existingProvider.models[m]?.variants || buildEffortVariants(m);
+      if (variants) entry.variants = variants;
+      existingProvider.models[m] = entry;
     }
 
     // Save merged provider back

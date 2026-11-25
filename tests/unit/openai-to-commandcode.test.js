@@ -246,3 +246,52 @@ describe("openaiToCommandCodeRequest — assistant reasoning block", () => {
     ]);
   });
 });
+
+describe("openaiToCommandCodeRequest — data bridge parity (v1.88.5)", () => {
+  it("resolves a tool result's name from the matching assistant tool_call id", () => {
+    const out = openaiToCommandCodeRequest(MODEL, {
+      messages: [
+        { role: "assistant", content: "", tool_calls: [{ id: "c1", function: { name: "read_file", arguments: "{}" } }] },
+        { role: "tool", tool_call_id: "c1", content: "ok" },
+      ],
+    }, true);
+
+    const tool = out.params.messages.find((m) => m.role === "tool");
+    expect(tool.content[0].toolName).toBe("read_file");
+  });
+
+  it("marks failed tool executions as error-text and keeps unparseable input raw", () => {
+    const out = openaiToCommandCodeRequest(MODEL, {
+      messages: [
+        { role: "assistant", content: "", tool_calls: [{ id: "c2", function: { name: "shell", arguments: "not json" } }] },
+        { role: "tool", tool_call_id: "c2", name: "shell", is_error: true, content: "boom" },
+      ],
+    }, true);
+
+    const call = out.params.messages.find((m) => m.role === "assistant").content.find((b) => b.type === "tool-call");
+    expect(call.input).toEqual({ raw: "not json" });
+    const tool = out.params.messages.find((m) => m.role === "tool");
+    expect(tool.content[0].output).toEqual({ type: "error-text", value: "boom" });
+  });
+
+  it("forwards Claude output_config.effort and caps default max_tokens at 64k", () => {
+    const out = openaiToCommandCodeRequest(MODEL, {
+      messages: [{ role: "user", content: "hi" }],
+      output_config: { effort: "high" },
+    }, true);
+
+    expect(out.params.reasoning_effort).toBe("high");
+    expect(out.params.max_tokens).toBe(64000);
+  });
+});
+
+describe("CommandCode session identity", () => {
+  it("keeps threadId stable across turns of the same client session", () => {
+    const a = openaiToCommandCodeRequest(MODEL, { messages: [] }, true, { _clientSessionId: "conv-1" });
+    const b = openaiToCommandCodeRequest(MODEL, { messages: [] }, true, { _clientSessionId: "conv-1" });
+    const c = openaiToCommandCodeRequest(MODEL, { messages: [] }, true, { _clientSessionId: "conv-2" });
+
+    expect(a.threadId).toBe(b.threadId);
+    expect(a.threadId).not.toBe(c.threadId);
+  });
+});

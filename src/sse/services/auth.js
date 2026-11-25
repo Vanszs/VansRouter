@@ -3,6 +3,7 @@ import { resolveConnectionProxyConfig, pickProxyPoolId } from "@/lib/network/con
 import { formatRetryAfter, checkFallbackError, isModelLockActive, buildModelLockUpdate, getEarliestModelLockUntil } from "open-sse/services/accountFallback.js";
 import { classify429 } from "open-sse/utils/classify429.js";
 import { resolveAntigravityProxyConfig } from "open-sse/utils/proxyFetch.js";
+import { loadPoolFitness, earliestPoolUnfitUntil } from "open-sse/services/proxyPoolFitness.js";
 import { MAX_RATE_LIMIT_COOLDOWN_MS } from "open-sse/config/errorConfig.js";
 import { resolveProviderId, FREE_PROVIDERS, getProviderAlias, isOpenAICompatibleProvider, isAnthropicCompatibleProvider, isCustomEmbeddingProvider } from "@/shared/constants/providers.js";
 import { getAntigravityQuotaCache, getAntigravityModelQuota } from "./antigravityQuota.js";
@@ -12,6 +13,22 @@ import * as log from "../utils/logger.js";
 // other ACL helpers. Implementation lives in internalTrust.js (dependency-light
 // + independently unit-tested for exploit resistance).
 export { isTrustedInternalRequest } from "./internalTrust.js";
+// The free OpenCode lane is egress-scoped: when every pool is benched, return
+// a wait response instead of falling back to direct. Account-based lanes
+// (opencode-go/zen) keep their normal account fallback.
+function allPoolsCooling(providerId, model, poolIds, connectionId = "noauth") {
+  const scope = `${providerId}::${model || "*"}`;
+  const until = earliestPoolUnfitUntil(poolIds, scope) ?? Date.now() + 30_000;
+  return {
+    allRateLimited: true,
+    retryAfter: new Date(until).toISOString(),
+    retryAfterHuman: formatRetryAfter(until),
+    lastError: "All OpenCode egress pools are cooling down",
+    connectionId,
+    providerSpecificData: {},
+  };
+}
+
 
 // Per-provider mutex — allows parallel credential selection across different providers
 // while preventing races within the same provider's account rotation.
@@ -69,21 +86,33 @@ export async function getProviderCredentials(provider, excludeConnectionIds = nu
       const strategy = override.rotateStrategy || "none";
       const configuredPoolId = override.proxyPoolId || null;
       let pickedId = configuredPoolId;
+      let eligiblePoolIds = [];
       if (strategy !== "none") {
         const allPools = await getProxyPools({ isActive: true });
         const poolIds = allPools
           .filter((pool) => pool.proxyUrl && !excludeSet.has(`proxy:${pool.id}`) && !excludeSet.has(pool.id))
           .map((pool) => pool.id);
-        if (poolIds.length === 0 && allPools.some((pool) => pool.proxyUrl)) return null;
+        if (poolIds.length === 0 && allPools.some((pool) => pool.proxyUrl)) {
+          return allPoolsCooling(providerId, model, allPools.filter((pool) => pool.proxyUrl).map((pool) => pool.id));
+        }
         const scope = `${providerId}::${model || "*"}`;
+        // Durable benches from a previous request/process must be loaded before
+        // selection, not only when the strategy is "smart".
+        await Promise.all(poolIds.map((id) => loadPoolFitness(id)));
         pickedId = pickProxyPoolId(poolIds, strategy, providerId, { scope });
+        eligiblePoolIds = poolIds;
+        // Every configured pool is benched: return a wait response instead of
+        // silently leaving from the server IP.
+        if (!pickedId && eligiblePoolIds.length > 0) {
+          return allPoolsCooling(providerId, model, eligiblePoolIds);
+        }
       } else if (configuredPoolId && (excludeSet.has(`proxy:${configuredPoolId}`) || excludeSet.has(configuredPoolId))) {
-        return null;
+        return allPoolsCooling(providerId, model, [configuredPoolId]);
       }
       const resolvedProxy = await resolveConnectionProxyConfig({ proxyPoolId: pickedId || "" });
-      const selectedPoolIds = strategy !== "none"
-        ? [pickedId].filter(Boolean)
-        : [];
+      // Keep the full eligible set so a retry can rotate to another pool; the
+      // selected id is still carried in proxyPoolId for the initial request.
+      const selectedPoolIds = strategy !== "none" ? eligiblePoolIds : [];
       const connectionId = pickedId ? `proxy:${pickedId}` : "noauth";
       const connectionName = pickedId
         ? (resolvedProxy.proxyPool?.name || `Proxy (${pickedId.slice(0, 8)})`)

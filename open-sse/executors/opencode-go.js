@@ -20,7 +20,9 @@ const MESSAGES_FORMAT_MODELS = new Set([
   "qwen3.6-plus",
 ]);
 
-const BASE = "https://opencode.ai/zen/go/v1";
+const BASE = "https://opencode.ai/inference/go";
+const OPENAI_BASE = `${BASE}/openai/v1`;
+const ANTHROPIC_BASE = `${BASE}/anthropic/v1`;
 const SESSION_HEADER = "x-opencode-session";
 const SESSION_FIELD = "runtimeOpencodeGoSession";
 
@@ -81,7 +83,7 @@ export class OpenCodeGoExecutor extends BaseExecutor {
   buildUrl(model, stream, urlIndex = 0, credentials = null) {
     this._lastModel = model;
     // Responses-only models keep /responses even when a stale runtimeTransport leaks in.
-    if (isResponsesModel(model)) return `${BASE}/responses`;
+    if (isResponsesModel(model)) return `${OPENAI_BASE}/responses`;
     const runtimeTransport = credentials?.runtimeTransport;
     if (runtimeTransport?.baseUrl) {
       return runtimeTransport.urlSuffix
@@ -90,10 +92,10 @@ export class OpenCodeGoExecutor extends BaseExecutor {
     }
     const cleanModel = baseModelId(model);
     return MESSAGES_FORMAT_MODELS.has(cleanModel)
-      ? `${BASE}/messages`
+      ? `${ANTHROPIC_BASE}/messages`
       : isResponsesModel(cleanModel)
-        ? `${BASE}/responses`
-        : `${BASE}/chat/completions`;
+        ? `${OPENAI_BASE}/responses`
+        : `${OPENAI_BASE}/chat/completions`;
   }
 
   buildHeaders(credentials, stream = true, url, model) {

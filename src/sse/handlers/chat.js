@@ -1,4 +1,5 @@
 import "open-sse/index.js";
+import { createHash } from "node:crypto";
 import { readBoundedJson } from "../utils/boundedBody.js";
 
 import {
@@ -44,11 +45,13 @@ import { handleComboChat, handleFusionChat } from "open-sse/services/combo.js";
 import { handleBypassRequest } from "open-sse/utils/bypassHandler.js";
 import { HTTP_STATUS } from "open-sse/config/runtimeConfig.js";
 import { detectFormatByEndpoint } from "open-sse/translator/formats.js";
+import { resolveSessionIdentity } from "open-sse/utils/sessionManager.js";
 import * as log from "../utils/logger.js";
 import { updateProviderCredentials, checkAndRefreshToken } from "../services/tokenRefresh.js";
 import { getProjectIdForConnection } from "open-sse/services/projectId.js";
 import { maybeWaitForCooldown, MAX_COOLDOWN_RETRIES } from "open-sse/utils/cooldownRetry.js";
 import { stripModelContextMarker } from "open-sse/utils/modelMarkers.js";
+import { resolveSmartChoice } from "../services/systemoneRouter.js";
 
 function checkCircuitBreaker(provider, proxyHash = null, enabled = true) {
   if (!enabled) return false;
@@ -60,6 +63,14 @@ function checkCircuitBreaker(provider, proxyHash = null, enabled = true) {
  * Supports: OpenAI, Claude, Gemini, OpenAI Responses API formats
  * Format detection and translation handled by translator
  */
+// Sticky router state must be tenant-scoped even when requireApiKey is off.
+// Hash the raw key rather than storing it in a cache key.
+function tenantSessionScope(apiKeyInfo, apiKey) {
+  if (apiKeyInfo?.id) return apiKeyInfo.id;
+  if (!apiKey) return "anon";
+  return `key:${createHash("sha256").update(apiKey).digest("hex").slice(0, 12)}`;
+}
+
 export async function handleChat(request, clientRawRequest = null) {
   const { body, bytes: requestBytes, error } = await readBoundedJson(request);
   if (error) {
@@ -101,6 +112,8 @@ export async function handleChat(request, clientRawRequest = null) {
   const toolCount = body.tools?.length || 0;
   const effort = body.reasoning_effort || body.reasoning?.effort || null;
   log.request("POST", `${url.pathname} | ${modelStr} | ${msgCount} msgs${toolCount ? ` | ${toolCount} tools` : ""}${effort ? ` | effort=${effort}` : ""}`);
+  const session = resolveSessionIdentity({ headers: clientRawRequest?.headers, body });
+  const sessionId = session?.sessionId || null;
 
   // Log API key (masked)
   const authHeader = request.headers.get("Authorization");
@@ -128,6 +141,8 @@ export async function handleChat(request, clientRawRequest = null) {
       return errorResponse(HTTP_STATUS.UNAUTHORIZED, "Invalid API key");
     }
   }
+
+  const sessionScope = tenantSessionScope(apiKeyInfo, apiKey);
 
   if (!modelStr) {
     log.warn("CHAT", "Missing model");
@@ -179,6 +194,7 @@ export async function handleChat(request, clientRawRequest = null) {
     }
 
     const comboStickyLimit = settings.comboStickyRoundRobinLimit;
+    const comboCfg = comboStrategies[modelStr] || {};
     log.info("CHAT", `Combo "${modelStr}" with ${comboModels.length} models (strategy: ${comboStrategy}, sticky: ${comboStickyLimit})`);
     return handleComboChat({
       body,
@@ -191,6 +207,19 @@ export async function handleChat(request, clientRawRequest = null) {
       signal: request?.signal ?? null,
       timeoutMs: comboStrategies[modelStr]?.targetTimeoutMs ?? null,
       queueDepth: comboStrategies[modelStr]?.queueDepth ?? null,
+      sessionId: sessionId ? `${sessionScope}:${sessionId}` : null,
+      smartPolicy: comboCfg.smartPolicy || "smart",
+      sessionSticky: comboCfg.sessionSticky !== false,
+      confidenceThreshold: typeof comboCfg.confidenceThreshold === "number" ? comboCfg.confidenceThreshold : 0.8,
+      resolveSmartChoice: comboStrategy === "smart"
+        ? (b, m) => resolveSmartChoice({
+            body: b,
+            models: m,
+            routerModel: comboCfg.routerModel,
+            log,
+            apiKeyInfo,
+          })
+        : null,
     });
   }
 
@@ -240,6 +269,9 @@ async function handleSingleModelChat(body, modelStr, clientRawRequest = null, re
       }
 
       const comboStickyLimit = chatSettings.comboStickyRoundRobinLimit;
+      const comboCfg = comboStrategies[modelStr] || {};
+      const nestedSession = resolveSessionIdentity({ headers: clientRawRequest?.headers, body });
+      const nestedSessionId = nestedSession?.sessionId || null;
       log.info("CHAT", `Combo "${modelStr}" with ${comboModels.length} models (strategy: ${comboStrategy}, sticky: ${comboStickyLimit})`);
       return handleComboChat({
         body,
@@ -252,6 +284,19 @@ async function handleSingleModelChat(body, modelStr, clientRawRequest = null, re
         signal: request?.signal ?? null,
         timeoutMs: comboStrategies[modelStr]?.targetTimeoutMs ?? null,
         queueDepth: comboStrategies[modelStr]?.queueDepth ?? null,
+        sessionId: nestedSessionId ? `${tenantSessionScope(apiKeyInfo, apiKey)}:${nestedSessionId}` : null,
+        smartPolicy: comboCfg.smartPolicy || "smart",
+        sessionSticky: comboCfg.sessionSticky !== false,
+        confidenceThreshold: typeof comboCfg.confidenceThreshold === "number" ? comboCfg.confidenceThreshold : 0.8,
+        resolveSmartChoice: comboStrategy === "smart"
+          ? (b, m) => resolveSmartChoice({
+              body: b,
+              models: m,
+              routerModel: comboCfg.routerModel,
+              log,
+              apiKeyInfo,
+            })
+          : null,
       });
     }
     log.warn("CHAT", "Invalid model format", { model: modelStr });
@@ -541,6 +586,13 @@ async function handleSingleModelChat(body, modelStr, clientRawRequest = null, re
     if (clientSignal?.aborted) {
       log.info("CHAT", `[${provider}/${model}] client disconnected — skipping account lock/fallback`);
       return withSelectedConnectionHeader(new Response(null, { status: 499 }), credentials.connectionId);
+    }
+
+    // Egress rotation: the pool is benched; return the wait error directly so
+    // the account/breaker loop does not lock a healthy account for 30 minutes.
+    if (result.errorCode === "ROTATION_IN_PROGRESS") {
+      log.info("PROXY", `${provider}/${model} rotating egress (${result.rotationPending?.reason || "egress"}) — client should retry`);
+      return withSelectedConnectionHeader(result.response, credentials.connectionId);
     }
 
     // STREAM_EARLY_EOF: flaky upstream sent HTTP 200 then closed the SSE before

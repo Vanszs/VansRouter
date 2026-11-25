@@ -1,3 +1,84 @@
+# v0.92.3 (2026-11-23)
+
+## Changed
+
+- Egress rotation is scoped to the **free `opencode` lane** again. OpenCode Go is account-based: 403/429/5xx keep the normal account fallback and retry policy, and never bench proxy pools or return `rotation_in_progress`. The inline-image quirk remains for Go.
+- The free lane keeps the 503 wait response, no direct replay on 403, fail-closed proxy behavior, disabled same-egress 5xx retries, and the 24h/60s bench TTL.
+
+# v0.92.2 (2026-11-23)
+
+## Fixed
+
+- **OpenCode Go** now uses the same egress-rotation policy as the free lane: 403/429/5xx/network failures bench the pool and return the 503 `rotation_in_progress` wait response. A separate executor previously bypassed rotation entirely.
+- Removed the FreeTierError direct replay and the non-strict proxy fallback for OpenCode: a 403 or dead proxy can no longer leak the server IP, and same-egress 5xx retries are disabled.
+- All-benched OpenCode pools now return 503 + `Retry-After` instead of a 404; the parsed rotation path keeps the 24h hard-ban / 60s transient TTL instead of falling back to the 5-minute default.
+- Combos pass a member's rotation 503 through instead of burning the next member's pool.
+- MITM schema scrubbing keeps parameters whose names collide with blocked keywords (`format`, `title`, `default`) and still removes the real keyword from the child schema.
+- Model import surfaces compatible-provider write failures; bulk removal is limited to standard provider pages, shows its confirm label/loading, and selection is scoped per provider.
+- Public proxy import rejects prototype keys as unknown sources; dead modal/export code removed and the proxy-pools page extracted to 999 lines.
+
+# v0.92.1 (2026-11-23)
+
+## Added
+
+- **Proxy pools** can import active HTTP/SOCKS5 entries from FreeProxyDB and VPSLab, validated per source and deduped against existing pools (`#157`).
+- Standard provider pages can **preview and select models before import** and **remove user-added models in bulk** with Select all / Remove (N) / Clear (`#168`, `#169`).
+
+## Fixed
+
+- **CodeBuddy** manually added access tokens are validated against the billing endpoint, so a valid token no longer reports "Provider test not supported" (`#161`).
+- **Antigravity passthrough** enforces the Gemini `items` predicate only on array nodes, removing the `400 INVALID_ARGUMENT` for tool schemas that carried `items` on a non-array node (`#163`).
+
+# v0.92.0 (2026-11-22)
+
+Syncs the fork with upstream `decolua/9router` v0.5.116 and v0.5.119, plus the
+carry-over ports that had usable prerequisites. 55 of 69 upstream commits were
+applied; 9 code commits remain skipped for missing subsystems (ledger:
+`.audit/sync-execution-0.92.0.md`).
+
+## Added
+
+- **synthetic.new** provider with `/v2/quotas` key validation and usage (`ebe398a9`, `402230ed`).
+- **SenseNova international** (`token.sensenova.ai`) as a separate provider; reasoning aliases are lifted on passthrough streams (`14b27dc7`).
+- **CommandCode live catalog** shared resolver, `/v1/models` resolver and provider model route (`fa73c938`).
+- **ClinePass quota tracker** on the usage-limits dashboard (`5f925cf9`).
+- **`thinking_levels`** on `/v1/models` and OpenCode effort variants (`7abc190d`).
+- **Smart Router (System One)** combo strategy with strict/smart/per-turn policies and session stickiness (`f3f86fdd`).
+- **Add All Active Models** resolves no-auth providers, aliases, custom and live catalogs (`69d51c0c`).
+- **Proxy pool filter** (all/enabled/disabled) and shift-range selection scoped to visible rows (`12256f72`).
+- Claude **Fable 5.2** / **Haiku 5.5**, Codex CLI `0.167.1`, GPT Image 2.6, xiaomi-tokenplan catalog (`8aef7480`, `10b0afa4`, `aaf9b65f`, `60a1b365`, `5e54377b`).
+
+## Fixed
+
+- **Dead keep-alive sockets**: capped keep-alive TTL, shared direct dispatcher and one-shot fresh-socket replay; executors force a fresh socket after 502/connect timeout (`963787f7`, `736be957`).
+- **OpenCode Go** now targets `/inference/go/{openai,anthropic}/v1` instead of the retired `/zen/go/v1` (`7ef6df56`); free-lane overload 429s retry with backoff (`989b1eec`).
+- **Kiro** never splices an unserved region into a service hostname (`333d249d`).
+- **CodeBuddy Intl** keeps client system prompts and neutralizes broader CLI identity markers (`3ca04639`).
+- **Headroom** preserves native Claude PDFs/tool history, CommandCode requests, and Gemini/Responses tool outputs (`792f4719`, `a440ef43`, `86adae35`).
+- **DeepSeek thinking budget** passthrough on OpenAI-compatible nodes (`626a0684`); DashScope keeps Claude cache markers (`a61b5a6f`).
+- **Codex image** OAuth generation, tool failures, 2.6 models and native edits (`783c9325`, `a6d3cdbf`, `896ef10c`, `85c91c4e`, `5bb041ed`).
+- Claude CLI fingerprint resolves the published version (floor `2.1.322`) so new models are not rejected as `claude_code_version_too_old` (`43bc940e`, `f4f5f183`).
+- Quota tracker catches Claude resets between auto-ping ticks (`ce1e0c3c`); fal keys validate through the model catalog (`0cf07ccf`); STT multipart uses undici `FormData` (`ec165e1c`).
+- Provider list counts every declared auth mode and every enabled account (`512a7103`).
+
+- OpenCode Go/free requests inline every image before dispatch (remote URL fetched to base64, bare base64 normalized to a data URL); the gateway rejects non-inline media with `unsupported_media`. Images that cannot be inlined (fetch failure, local path, non-image payload) are replaced with a text placeholder so a text turn in a session with old attachments no longer fails.
+- OpenCode free-tier refusals (abusive-traffic 403 / free-usage 429 / 5xx / network) bench the current egress pool and return a 503 `rotation_in_progress` with `Retry-After`; the next request picks another pool through the fitness store (24h hard ban, 60s transient), adapting opencode-hop. Pools are never skipped silently: if every pool is benched the request fails closed instead of leaving from the server IP.
+- Smart Router now obeys the per-key provider ACL, starts its deadline before credential waits, rejects missing/NaN confidence, and scopes sticky sessions per tenant.
+- Transport never replays a non-idempotent POST after a lost response; relay/antigravity honour fresh-socket retries and evicted proxy dispatchers are closed.
+- CodeBuddy rewrites only the CLI identity sentence, CommandCode reuses a stable session id and never caches an empty catalog, and provider/model stats no longer show contradictory connected/error badges.
+
+## Changed
+
+- `undici` stays on `^7.30.1`; `serverExternalPackages` keeps it external so dispatcher connect options survive bundling (`94f141dd`, `736be957`).
+- CLI launcher skips machine-wide process scans; tray reports handshake failures instead of claiming success (`9506a59c`, `8650b046`).
+
+## Skipped
+
+- Requires absent subsystems: `f0938ea7` (lazy runtime), `64a23dc2`/`d7bb71ce` (DeepSeek PoW), `a76c2afc` (wreq-js), `201e81fb` (MiniMax lease), `0760c302` (muse-web), `97b2c545` (deepseek-web/zstd).
+- Deliberate catalogue decision: `8a833631`/`f172c3c4` (Gemini 4 Argon; live probe returned 404).
+- Already fixed in fork: `9ae6e147` (single `[DONE]`).
+- Fork component differs: `850eb573` (custom model type modal).
+
 # v0.91.90 (2026-10-31)
 
 This release merges the remaining useful open pull requests and adds a

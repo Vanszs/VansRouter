@@ -61,6 +61,55 @@ export const EMPTY_PEEK_DEADLINE_MS = envMs("EMPTY_PEEK_DEADLINE_MS", 45 * 1000)
 // Fetch connect timeout: abort if upstream doesn't return response headers within this duration
 export const FETCH_CONNECT_TIMEOUT_MS = envMs("FETCH_CONNECT_TIMEOUT_MS", 60 * 1000);
 
+// Keep-alive socket TTL. Cap it below upstream/edge idle windows (Cloudflare, AWS Global
+// Accelerator / NVIDIA NIM) that drop idle sockets without a TCP RST. keepAliveMaxTimeout is
+// clamped to the same value so an upstream `Keep-Alive` header cannot extend it to 600s.
+export const DEFAULT_KEEPALIVE_TIMEOUT_MS = 4 * 1000;
+export const FRESH_RETRY_KEEPALIVE_TIMEOUT_MS = 1;
+
+export function resolveKeepAliveTimeouts() {
+  const timeout = envMs("FETCH_KEEPALIVE_TIMEOUT_MS", DEFAULT_KEEPALIVE_TIMEOUT_MS);
+  return { keepAliveTimeout: timeout, keepAliveMaxTimeout: timeout };
+}
+
+// Escape hatch: FETCH_FRESH_RETRY=off disables the transport-level replay, leaving only the
+// executor's own retry path (which still forces a fresh socket). Defaults to on.
+export function isFreshSocketReplayEnabled() {
+  const raw = String(process.env.FETCH_FRESH_RETRY ?? "").trim().toLowerCase();
+  return !(raw === "off" || raw === "0" || raw === "false" || raw === "no");
+}
+
+// Dead keep-alive sockets surface as these codes/substrings; DNS, connect-refused and TLS
+// failures are excluded so a real unreachable host is never mistaken for a stale socket.
+export const STALE_SOCKET_ERROR_CODES = new Set([
+  "UND_ERR_SOCKET",
+  "ECONNRESET",
+  "EPIPE",
+]);
+
+export const NON_STALE_SOCKET_ERROR_CODES = new Set([
+  "ENOTFOUND",
+  "EAI_AGAIN",
+  "ECONNREFUSED",
+  "EHOSTUNREACH",
+  "ENETUNREACH",
+  "UND_ERR_CONNECT_TIMEOUT",
+  "UND_ERR_INVALID_ARG",
+]);
+
+// Deliberately excludes a bare "fetch failed": with no error code the upstream may already
+// hold the request, and replaying it would send (and bill) the same completion twice.
+export const STALE_SOCKET_ERROR_SUBSTRINGS = [
+  "other side closed",
+  "socket hang up",
+];
+
+// OpenCode free-tier network refusals (abusive-traffic / free usage limit) are
+// IP-scoped. Bench the egress pool and rotate, mirroring opencode-hop.
+export const OPENCODE_IP_LIMIT_POOL_TTL_MS = envMs("OPENCODE_IP_LIMIT_POOL_TTL_MS", 24 * 60 * 60 * 1000);
+export const OPENCODE_TRANSIENT_POOL_TTL_MS = envMs("OPENCODE_TRANSIENT_POOL_TTL_MS", 60 * 1000);
+export const OPENCODE_ROTATION_RETRY_AFTER_MS = envMs("OPENCODE_ROTATION_RETRY_AFTER_MS", 1500);
+
 // Gemini native TTS fetch timeout: abort if Google does not return response headers in time.
 export const GEMINI_NATIVE_TTS_FETCH_TIMEOUT_MS = envMs("GEMINI_NATIVE_TTS_FETCH_TIMEOUT_MS", 45 * 1000);
 

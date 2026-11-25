@@ -9,7 +9,9 @@ function recordsOf(fitness, pools, now = Date.now()) {
   return Object.entries(fitness || {}).flatMap(([poolId, scopes]) => Object.entries(scopes || {}).flatMap(([scope, info]) => {
     const until = Number(info?.until || 0);
     if (until <= now) return [];
-    const [provider, model] = String(scope).split("::");
+    const sep = String(scope).indexOf("::");
+    const provider = sep < 0 ? String(scope) : String(scope).slice(0, sep);
+    const model = sep < 0 ? "" : String(scope).slice(sep + 2);
     const pool = names.get(poolId);
     return [{ poolId, scope, provider, model: model === "*" ? "all models" : model, until, reason: info?.reason || "blocked", poolName: pool?.name || poolId.slice(0, 8), proxyUrl: pool?.proxyUrl || "" }];
   }));
@@ -22,14 +24,18 @@ export default function ProxyFitnessPage() {
   const [provider, setProvider] = useState("all");
   const [search, setSearch] = useState("");
   const [confirm, setConfirm] = useState(false);
+  const [loadError, setLoadError] = useState(false);
   const notify = useNotificationStore();
   const fetchAll = useCallback(async () => {
+    setLoading(true);
+    setLoadError(false);
     try {
       const [p, f] = await Promise.all([fetch("/api/proxy-pools?includeUsage=true", { cache: "no-store" }), fetch("/api/proxy-pools/fitness", { cache: "no-store" })]);
+      if (!p.ok || !f.ok) throw new Error("proxy fitness unavailable");
       setPools((await p.json()).proxyPools || []);
-      setFitness(f.ok ? ((await f.json()).pools || {}) : {});
+      setFitness((await f.json()).pools || {});
     } catch {
-      // Keep the empty state when the dashboard APIs are unavailable.
+      setLoadError(true);
     } finally {
       setLoading(false);
     }
@@ -41,13 +47,22 @@ export default function ProxyFitnessPage() {
   const records = useMemo(() => recordsOf(fitness, pools).filter((r) => (provider === "all" || r.provider === provider) && `${r.proxyUrl} ${r.poolName} ${r.model}`.toLowerCase().includes(search.toLowerCase())), [fitness, pools, provider, search]);
   const providers = useMemo(() => [...new Set(recordsOf(fitness, pools).map((r) => r.provider))].sort(), [fitness, pools]);
   const clearAll = async () => {
-    await fetch("/api/proxy-pools/fitness/clear-all", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(provider === "all" ? {} : { provider }) });
-    setConfirm(false); notify.success("Proxy fitness cleared"); fetchAll();
+    const res = await fetch("/api/proxy-pools/fitness/clear-all", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(provider === "all" ? {} : { provider }) }).catch(() => null);
+    setConfirm(false);
+    if (res?.ok) notify.success(provider === "all" ? "Proxy fitness cleared" : `Proxy fitness cleared for ${provider}`);
+    else notify.error("Failed to clear proxy fitness");
+    fetchAll();
   };
   return (
     <div className="mx-auto flex w-full max-w-5xl flex-col gap-4 px-1 sm:gap-6 sm:px-0">
       {loading ? (
         <CardSkeleton />
+      ) : loadError ? (
+        <Card className="p-6 text-center">
+          <p className="font-medium text-text-main">Failed to load proxy fitness</p>
+          <p className="mt-1 text-sm text-text-muted">The dashboard APIs did not respond. Nothing is shown as healthy.</p>
+          <Button className="mt-4" variant="secondary" size="sm" onClick={fetchAll} icon="refresh">Retry</Button>
+        </Card>
       ) : (
         <>
           <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
@@ -68,7 +83,7 @@ export default function ProxyFitnessPage() {
               </Button>
               {records.length > 0 && (
                 <Button variant="danger" size="sm" onClick={() => setConfirm(true)} icon="clear_all">
-                  Clear All
+                  {provider === "all" ? "Clear All" : `Clear ${provider}`}
                 </Button>
               )}
             </div>
@@ -131,18 +146,20 @@ export default function ProxyFitnessPage() {
                         </span>
                       </td>
                       <td className="px-5 py-3.5 text-text-muted">
-                        {new Date(r.until).toLocaleTimeString()}
+                        {new Date(r.until).toLocaleString()}
                       </td>
                       <td className="px-5 py-3.5 text-right">
                         <Button
                           variant="ghost"
                           size="sm"
                           onClick={async () => {
-                            await fetch(`/api/proxy-pools/${r.poolId}/fitness/clear`, {
+                            const res = await fetch(`/api/proxy-pools/${r.poolId}/fitness/clear`, {
                               method: "POST",
                               headers: { "Content-Type": "application/json" },
                               body: JSON.stringify({ scope: r.scope }),
-                            });
+                            }).catch(() => null);
+                            if (res?.ok) notify.success("Block cleared");
+                            else notify.error("Failed to clear block");
                             fetchAll();
                           }}
                         >
@@ -175,9 +192,9 @@ export default function ProxyFitnessPage() {
         isOpen={confirm}
         onClose={() => setConfirm(false)}
         onConfirm={clearAll}
-        title="Clear proxy fitness"
-        message="Clear active proxy fitness blocks?"
-        confirmText="Clear All"
+        title={provider === "all" ? "Clear proxy fitness" : `Clear ${provider} fitness`}
+        message={provider === "all" ? "Clear all active proxy fitness blocks?" : `Clear active blocks for ${provider}?`}
+        confirmText={provider === "all" ? "Clear All" : "Clear"}
         cancelText="Cancel"
         variant="danger"
       />
@@ -185,4 +202,3 @@ export default function ProxyFitnessPage() {
   );
 }
 
-export { recordsOf };

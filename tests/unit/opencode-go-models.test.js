@@ -118,13 +118,13 @@ describe("OpenCode Go multi-endpoint transports", () => {
 
   it("resolveTransport picks the endpoint matching the client sourceFormat", () => {
     expect(resolveTransport("opencode-go", "claude").baseUrl).toBe(
-      "https://opencode.ai/zen/go/v1/messages",
+      "https://opencode.ai/inference/go/anthropic/v1/messages",
     );
     expect(resolveTransport("opencode-go", "openai-responses").baseUrl).toBe(
-      "https://opencode.ai/zen/go/v1/responses",
+      "https://opencode.ai/inference/go/openai/v1/responses",
     );
     expect(resolveTransport("opencode-go", "openai").baseUrl).toBe(
-      "https://opencode.ai/zen/go/v1/chat/completions",
+      "https://opencode.ai/inference/go/openai/v1/chat/completions",
     );
   });
 
@@ -140,7 +140,7 @@ describe("OpenCode Go per-model transport guard (chatCore logic)", () => {
     for (const m of CLAUDE_CAPABLE) {
       expect(
         pickTransport("opencode-go", "claude", "opencode-go", m)?.baseUrl,
-      ).toBe("https://opencode.ai/zen/go/v1/messages");
+      ).toBe("https://opencode.ai/inference/go/anthropic/v1/messages");
     }
   });
 
@@ -157,7 +157,7 @@ describe("OpenCode Go per-model transport guard (chatCore logic)", () => {
       expect(
         pickTransport("opencode-go", "openai-responses", "opencode-go", m)
           ?.baseUrl,
-      ).toBe("https://opencode.ai/zen/go/v1/responses");
+      ).toBe("https://opencode.ai/inference/go/openai/v1/responses");
     }
   });
 
@@ -175,9 +175,9 @@ describe("OpenCode Go session affinity headers", () => {
     const executor = new OpenCodeGoExecutor();
     const creds = { apiKey: "test", connectionId: "conn-1" };
     for (const [model, expectedUrl] of [
-      ["glm-5.2", "https://opencode.ai/zen/go/v1/chat/completions"],
-      ["minimax-m3", "https://opencode.ai/zen/go/v1/messages"],
-      ["deepseek-v4-flash", "https://opencode.ai/zen/go/v1/chat/completions"],
+      ["glm-5.2", "https://opencode.ai/inference/go/openai/v1/chat/completions"],
+      ["minimax-m3", "https://opencode.ai/inference/go/anthropic/v1/messages"],
+      ["deepseek-v4-flash", "https://opencode.ai/inference/go/openai/v1/chat/completions"],
     ]) {
       executor.buildUrl(model);
       const headers = executor.buildHeaders(creds, true);
@@ -278,7 +278,7 @@ describe("OpenCode Go Muse Spark (responses-only model)", () => {
   it("routes Muse Spark to /responses only", () => {
     const executor = new OpenCodeGoExecutor();
     expect(executor.buildUrl("muse-spark-1.2-contributor")).toBe(
-      "https://opencode.ai/zen/go/v1/responses",
+      "https://opencode.ai/inference/go/openai/v1/responses",
     );
   });
 });
@@ -306,9 +306,9 @@ describe("OpenCode Go responses-only routing (registry-driven)", () => {
     const executor = new OpenCodeGoExecutor();
     expect(responsesOnlyModels.length).toBeGreaterThan(0);
     for (const m of responsesOnlyModels) {
-      expect(executor.buildUrl(m.id)).toBe("https://opencode.ai/zen/go/v1/responses");
+      expect(executor.buildUrl(m.id)).toBe("https://opencode.ai/inference/go/openai/v1/responses");
       expect(executor.buildUrl(`${m.id}(high)`)).toBe(
-        "https://opencode.ai/zen/go/v1/responses",
+        "https://opencode.ai/inference/go/openai/v1/responses",
       );
     }
   });
@@ -319,7 +319,7 @@ describe("OpenCode Go responses-only routing (registry-driven)", () => {
     for (const m of ["gpt-5.6-luna(high)", "grok-4.6(high)"]) {
       expect(
         executor.buildUrl(m, true, 0, { apiKey: "sk-go-test", runtimeTransport }),
-      ).toBe("https://opencode.ai/zen/go/v1/responses");
+      ).toBe("https://opencode.ai/inference/go/openai/v1/responses");
     }
   });
 
@@ -350,7 +350,7 @@ describe("OpenCode Go executor runtime transports", () => {
   it("uses the Claude transport for Qwen URL and auth", () => {
     const runtimeTransport = resolveTransport("opencode-go", "claude");
     expect(executor.buildUrl("qwen3.7-max", true, 0, { ...credentials, runtimeTransport })).toBe(
-      "https://opencode.ai/zen/go/v1/messages",
+      "https://opencode.ai/inference/go/anthropic/v1/messages",
     );
     expect(executor.buildHeaders({ ...credentials, runtimeTransport }, true)).toMatchObject({
       "x-api-key": "sk-go-test",
@@ -362,7 +362,7 @@ describe("OpenCode Go executor runtime transports", () => {
   it("uses the Claude transport for DeepSeek instead of model sets", () => {
     const runtimeTransport = resolveTransport("opencode-go", "claude");
     expect(executor.buildUrl("deepseek-v4-flash", true, 0, { ...credentials, runtimeTransport })).toBe(
-      "https://opencode.ai/zen/go/v1/messages",
+      "https://opencode.ai/inference/go/anthropic/v1/messages",
     );
     expect(executor.buildHeaders({ ...credentials, runtimeTransport }, true)).toMatchObject({
       "x-api-key": "sk-go-test",
@@ -380,7 +380,7 @@ describe("OpenCode Go executor runtime transports", () => {
       reasoning_effort: "high",
     };
     expect(executor.buildUrl("deepseek-v4-flash", true, 0, { ...credentials, runtimeTransport })).toBe(
-      "https://opencode.ai/zen/go/v1/responses",
+      "https://opencode.ai/inference/go/openai/v1/responses",
     );
     expect(executor.transformRequest("deepseek-v4-flash", body, true, {
       ...credentials,
@@ -395,7 +395,7 @@ describe("OpenCode Go executor runtime transports", () => {
   it("keeps legacy Muse fallback when runtime transport is absent", () => {
     const body = { input: "hi", max_tokens: 123, reasoning_effort: "high" };
     expect(executor.buildUrl("muse-spark-1.2-contributor")).toBe(
-      "https://opencode.ai/zen/go/v1/responses",
+      "https://opencode.ai/inference/go/openai/v1/responses",
     );
     expect(executor.buildHeaders({ apiKey: "sk-go-test" }, true)).toMatchObject({
       Authorization: "Bearer sk-go-test",
@@ -409,7 +409,7 @@ describe("OpenCode Go executor runtime transports", () => {
   it("normalizes legacy model suffixes before selecting URL and auth", () => {
     const credentials = { apiKey: "sk-go-test" };
     expect(executor.buildUrl("minimax-m3(high)", true, 0, credentials)).toBe(
-      "https://opencode.ai/zen/go/v1/messages",
+      "https://opencode.ai/inference/go/anthropic/v1/messages",
     );
     expect(executor.buildHeaders(credentials, true, "minimax-m3(high)")).toMatchObject({
       "x-api-key": "sk-go-test",

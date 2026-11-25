@@ -21,6 +21,11 @@ vi.mock("@/lib/network/connectionProxy", () => ({
   pickProxyPoolId: mocks.pickProxyPoolId,
   getProxyHash: () => "direct",
 }));
+vi.mock("open-sse/services/proxyPoolFitness.js", () => ({
+  loadPoolFitness: vi.fn(async () => {}),
+  isPoolFit: vi.fn(() => true),
+  earliestPoolUnfitUntil: vi.fn(() => null),
+}));
 vi.mock("@/shared/constants/providers.js", () => ({
   FREE_PROVIDERS: { opencode: { id: "opencode", noAuth: true } },
   resolveProviderId: (provider) => provider,
@@ -56,9 +61,10 @@ beforeEach(() => {
 });
 
 describe("no-auth provider proxy fallback", () => {
-  it("returns only the chosen pool as retryable for rotation", async () => {
+  it("returns every eligible pool so a retry can rotate", async () => {
     const result = await getProviderCredentials("opencode", null, "deepseek-v4.1-flash-free");
-    expect(result.providerSpecificData.proxyPoolIds).toEqual(["pool-a"]);
+    expect(result.providerSpecificData.proxyPoolIds).toEqual(["pool-a", "pool-b"]);
+    expect(result.providerSpecificData.proxyPoolId).toBe("pool-a");
   });
 
   it("does not choose an excluded proxy pool", async () => {
@@ -79,15 +85,23 @@ describe("no-auth provider proxy fallback", () => {
       new Set(["proxy:pool-a", "proxy:pool-b"]),
       "deepseek-v4.1-flash-free",
     );
-    expect(credentials).toBeNull();
+    expect(credentials).toMatchObject({ allRateLimited: true });
+    expect(credentials.retryAfter).toBeTruthy();
   });
 
-  it("does not rotate away from an explicitly configured single pool", async () => {
+  it("returns a wait response when every configured pool is benched", async () => {
+    mocks.pickProxyPoolId.mockReturnValue(null);
+    const credentials = await getProviderCredentials("opencode", null, "deepseek-v4.1-flash-free");
+    expect(credentials).toMatchObject({ allRateLimited: true, lastError: expect.stringContaining("cooling") });
+    expect(credentials.retryAfter).toBeTruthy();
+  });
+
+  it("returns a wait response for an explicitly configured single pool", async () => {
     mocks.getSettings.mockResolvedValue({
       providerStrategies: { opencode: { proxyPoolId: "pool-a", rotateStrategy: "none" } },
     });
     const credentials = await getProviderCredentials("opencode", new Set(["proxy:pool-a"]), "deepseek-v4.1-flash-free");
-    expect(credentials).toBeNull();
+    expect(credentials).toMatchObject({ allRateLimited: true });
   });
 
   it("allows retry for a proxy-backed no-auth connection without database account rows", async () => {

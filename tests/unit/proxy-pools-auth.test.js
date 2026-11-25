@@ -19,6 +19,7 @@ vi.mock("open-sse/services/proxyPoolFitness.js", () => ({
 import { DELETE } from "@/app/api/proxy-pools/[id]/route.js";
 import { GET as fitness } from "@/app/api/proxy-pools/fitness/route.js";
 import { POST as clearAll } from "@/app/api/proxy-pools/fitness/clear-all/route.js";
+import { POST as importPublic } from "@/app/api/proxy-pools/import-public/route.js";
 
 const request = () => new Request("http://localhost/api/proxy-pools", { method: "GET" });
 
@@ -29,6 +30,7 @@ describe("proxy-pools dashboard auth", () => {
     ["DELETE /[id]", () => DELETE(request(), { params: Promise.resolve({ id: "p1" }) })],
     ["GET /fitness", () => fitness(request())],
     ["POST /fitness/clear-all", () => clearAll(new Request(request().url, { method: "POST" }))],
+    ["POST /import-public", () => importPublic(new Request("http://localhost/api/proxy-pools/import-public", { method: "POST" }))],
   ])("rejects unauthenticated %s before handler work", async (_name, call) => {
     const response = await call();
     expect(response.status).toBe(401);

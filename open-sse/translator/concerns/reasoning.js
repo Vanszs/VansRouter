@@ -7,6 +7,16 @@ export function reasoningDelta(text, withRole = false) {
     : { reasoning_content: text };
 }
 
+// Lazily add the canonical OpenAI reasoning field when an upstream streams the
+// vendor aliases instead: `reasoning` (string) and `reasoning_details[]`. Only
+// ever ADDS the field, so clients that read the aliases keep working.
+export function liftReasoningAliases(delta) {
+  if (!delta || typeof delta !== "object") return delta;
+  if (typeof delta.reasoning_content === "string" && delta.reasoning_content) return delta;
+  const text = extractReasoningText(delta);
+  return text ? { ...delta, reasoning_content: text } : delta;
+}
+
 // Extract reasoning text from a streamed OpenAI-compatible delta across vendor shapes:
 //   - reasoning_content (GLM, Qwen, DeepSeek, Kimi, Step, Hunyuan)
 //   - reasoning (some compat layers)

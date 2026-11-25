@@ -48,6 +48,15 @@ describe("detectFormat", () => {
 });
 
 describe("normalizeThinkingConfig", () => {
+  it.each([
+    { type: "enabled", budget_tokens: 4096 },
+    { type: "adaptive" },
+    { type: "disabled" },
+  ])("keeps thinking $type on a tool-result turn", (thinking) => {
+    const body = { messages: [{ role: "tool", tool_call_id: "call_1", content: "done" }], thinking };
+    expect(normalizeThinkingConfig(body).thinking).toEqual(thinking);
+  });
+
   it("keeps openai reasoning_effort on non-user turns", () => {
     const body = {
       messages: [{ role: "assistant", content: "ok" }],

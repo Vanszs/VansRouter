@@ -8,7 +8,7 @@ const state = vi.hoisted(() => ({
 vi.mock("child_process", () => ({
   exec: (command, options, callback) => callback(null, "", ""),
 }));
-vi.mock("os", () => ({
+vi.mock("os", async (importOriginal) => ({ ...(await importOriginal()),
   default: { homedir: () => "/tmp/opencode-test", platform: () => "linux" },
 }));
 vi.mock("fs/promises", () => ({

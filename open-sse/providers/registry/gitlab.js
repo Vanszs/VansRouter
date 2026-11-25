@@ -13,6 +13,7 @@ export default {
     },
   },
   category: "oauth",
+  hasOAuth: true,
   transport: {
     baseUrl: "https://gitlab.com/api/v4/chat/completions",
     auth: {

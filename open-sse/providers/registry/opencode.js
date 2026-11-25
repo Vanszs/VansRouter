@@ -13,6 +13,9 @@ export default {
   category: "free",
   noAuth: true,
   transport: {
+    // An OpenCode error is an egress signal: retrying the same IP only multiplies
+    // upstream calls before rotation gets a chance. chatCore rotates instead.
+    retry: { 429: { attempts: 0 }, 502: { attempts: 0 }, 503: { attempts: 0 }, 504: { attempts: 0 } },
     baseUrl: "https://opencode.ai",
     headers: {
       "x-opencode-client": "cli",
@@ -20,6 +23,8 @@ export default {
     noAuth: true,
     // The free tier always answers in SSE; let chatCore aggregate it.
     forceStream: true,
+    // The OpenCode gateway accepts only inline base64 images.
+    quirks: { requiresInlineImages: true },
     reasoningInject: { scope: "all" },
   },
   serviceKinds: ["llm", "systemone"],

@@ -1,3 +1,4 @@
+import { setClaudeCliFallback } from "../utils/claudeCliVersion.js";
 import { platform, arch } from "os";
 
 // === OS/Arch helpers (Stainless fingerprint) ===
@@ -22,9 +23,10 @@ export function mapStainlessArch() {
 
 // Anthropic API version (single source — reused across claude-format providers/executors)
 export const ANTHROPIC_API_VERSION = "2023-06-01";
-
-// Claude CLI version — surfaced in the claude-cli User-Agent (reset-grant gated on surface)
-export const CLAUDE_CLI_VERSION = "2.1.280";
+// Floor version only; the live value comes from npm (utils/claudeCliVersion.js)
+// and outbound claude-cli/x.y.z headers are rewritten in proxyAwareFetch.
+export const CLAUDE_CLI_VERSION = "2.1.322";
+setClaudeCliFallback(CLAUDE_CLI_VERSION);
 
 // Matched pair from one Cursor release — bump together.
 export const CURSOR_IDE_VERSION = "3.13.25";

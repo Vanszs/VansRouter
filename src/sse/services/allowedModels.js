@@ -1,3 +1,5 @@
+import { resolveCommandCodeModels } from "open-sse/services/commandcodeModels.js";
+import { getThinkingLevels } from "open-sse/providers/thinkingLevels.js";
 import { PROVIDER_MODELS, PROVIDER_ID_TO_ALIAS, getModelKind } from "@/shared/constants/models";
 import {
   ALIAS_TO_ID,
@@ -58,6 +60,13 @@ const MODEL_TYPE_TO_KIND = {
 };
 
 const LIVE_MODEL_RESOLVERS = {
+  // CommandCode's catalog is public and account-independent; the connection only
+  // has to exist and be active.
+  commandcode: async () => {
+    const result = await resolveCommandCodeModels();
+    if (!result?.models?.length) return null;
+    return { models: result.models.map(({ id, name }) => ({ id, name })) };
+  },
   kiro: async (conn) => {
     const result = await resolveKiroModels({
       accessToken: conn.accessToken,
@@ -787,6 +796,11 @@ export async function buildModelsList(kindFilter, options = {}) {
     if (entry.kind === "llm" || !entry.kind) {
       if (Number.isFinite(caps.contextWindow)) model.context_length = caps.contextWindow;
       if (Number.isFinite(caps.maxOutput)) model.max_completion_tokens = caps.maxOutput;
+      // Selectable reasoning levels (same set the dashboard picker shows).
+      const slash = entry.id.indexOf("/");
+      const providerId = ALIAS_TO_PROVIDER_ID[entry.owned_by] || entry.owned_by;
+      const thinkingLevels = slash > 0 ? getThinkingLevels(providerId, entry.id.slice(slash + 1)) : null;
+      if (Array.isArray(thinkingLevels) && thinkingLevels.length > 0) model.thinking_levels = thinkingLevels;
     }
     dedupedModels.push(model);
   }

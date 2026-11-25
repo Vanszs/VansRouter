@@ -32,8 +32,7 @@ export {
 // Proxy-pool fitness
 export {
   listProxyPoolFitness, upsertProxyPoolFitness,
-  deleteProxyPoolFitness, clearProxyPoolFitness,
-  deleteProxyPoolFitnessByPool,
+  deleteProxyPoolFitness, deleteExpiredProxyPoolFitness, clearProxyPoolFitness,
 } from "./repos/proxyPoolFitnessRepo.js";
 
 // API keys

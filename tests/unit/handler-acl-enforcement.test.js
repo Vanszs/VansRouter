@@ -110,7 +110,10 @@ vi.mock("open-sse/services/combo.js", () => ({
   stripComboPrefix: vi.fn((s) => s),
 }));
 vi.mock("open-sse/utils/claudeHeaderCache.js", () => ({ cacheClaudeHeaders: mocks.cacheClaudeHeaders }));
-vi.mock("open-sse/translator/formats.js", () => ({ detectFormatByEndpoint: mocks.detectFormatByEndpoint }));
+vi.mock("open-sse/translator/formats.js", async (importOriginal) => ({
+  ...(await importOriginal()),
+  detectFormatByEndpoint: mocks.detectFormatByEndpoint,
+}));
 vi.mock("open-sse/config/runtimeConfig.js", async (importOriginal) => {
   const actual = await importOriginal();
   return {

@@ -23,8 +23,9 @@ export function openAICompletionToClaudeMessage(responseBody, model = null) {
   const content = [];
 
   const reasoning = extractReasoningText(message)
+    || message.reasoning_content
     || message.provider_specific_fields?.reasoning_content
-    || "";
+    || (typeof message.reasoning === "string" ? message.reasoning : "");
   if (reasoning) {
     content.push({ type: CLAUDE_BLOCK.THINKING, thinking: reasoning });
   }

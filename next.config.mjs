@@ -16,11 +16,16 @@ const nextConfig = {
   // Keep `open` external: it derives its own directory from import.meta.url.
   // Bundling it rewrites that URL to the build machine's path and breaks
   // Windows/macOS OAuth flows at module load time.
-  serverExternalPackages: ["better-sqlite3", "sql.js", "node:sqlite", "bun:sqlite", "open", "dompurify", "chalk", "@aws-sdk/credential-providers"],
+  serverExternalPackages: ["better-sqlite3", "sql.js", "node:sqlite", "bun:sqlite", "open", "dompurify", "chalk", "@aws-sdk/credential-providers", "undici"],
   turbopack: {
     root: tracingRoot
   },
   outputFileTracingRoot: tracingRoot,
+  outputFileTracingIncludes: {
+    // undici stays external (dispatcher connect options would be stripped by
+    // webpack's vendored copy); the dynamic import must still ship the package.
+    "*": ["./node_modules/undici/**/*"]
+  },
   outputFileTracingExcludes: {
     "*": ["./gitbook/**/*", "./.git/**/*", "./tests/**/*", "./docs/**/*", "./.fakehome/**/*"]
   },

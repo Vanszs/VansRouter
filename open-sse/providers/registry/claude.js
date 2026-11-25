@@ -1,3 +1,4 @@
+import { CLAUDE_CLI_VERSION } from "../shared.js";
 import { CLAUDE_CLI_SPOOF_HEADERS } from "../shared.js";
 import { ANTHROPIC_API_VERSION } from "../shared.js";
 
@@ -18,6 +19,7 @@ export default {
     deprecationNotice: "RISK_NOTICE",
   },
   category: "oauth",
+  hasOAuth: true,
   transport: {
     baseUrl: "https://api.anthropic.com/v1/messages",
     format: "claude",
@@ -26,7 +28,7 @@ export default {
       "Anthropic-Version": ANTHROPIC_API_VERSION,
       "Anthropic-Beta": "claude-code-20250219,oauth-2025-04-20,interleaved-thinking-2025-05-14,context-management-2025-06-27,prompt-caching-scope-2026-01-05,advanced-tool-use-2025-11-20,effort-2025-11-24,structured-outputs-2025-12-15,fast-mode-2026-02-01,redact-thinking-2026-02-12,token-efficient-tools-2026-03-28",
       "Anthropic-Dangerous-Direct-Browser-Access": "true",
-      "User-Agent": "claude-cli/2.1.280 (external, sdk-cli)",
+      "User-Agent": `claude-cli/${CLAUDE_CLI_VERSION} (external, sdk-cli)`,
       "X-App": "cli",
       "X-Stainless-Helper-Method": "stream",
       "X-Stainless-Retry-Count": "0",
@@ -75,7 +77,8 @@ export default {
     { id: "claude-opus-5-5", name: "Claude Opus 5.5" },
     { id: "claude-opus-5", name: "Claude Opus 5" },
     { id: "claude-sonnet-5", name: "Claude Sonnet 5" },
-    { id: "claude-fable-5-1", name: "Claude Fable 5.1" },
+    { id: "claude-haiku-5-5", name: "Claude Haiku 5.5" },
+    { id: "claude-fable-5-2", name: "Claude Fable 5.2" },
     { id: "claude-fable-5", name: "Claude Fable 5" },
     { id: "claude-sonnet-5-5", name: "Claude Sonnet 5.5" },
   ],

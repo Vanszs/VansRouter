@@ -11,12 +11,10 @@ afterEach(() => {
   vi.resetModules();
 });
 
-describe("OpenCode Free proxy 403 retry", () => {
-  it("retries FreeTierError once without the proxy unless strictProxy is required", async () => {
+describe("OpenCode Free proxy egress policy", () => {
+  it("returns the proxied FreeTierError without replaying from the server IP", async () => {
     const body = JSON.stringify({ error: { type: "FreeTierError" } });
-    const fetchMock = vi.fn()
-      .mockResolvedValueOnce(new Response(body, { status: 403 }))
-      .mockResolvedValueOnce(new Response("data: ok", { status: 200 }));
+    const fetchMock = vi.fn().mockResolvedValueOnce(new Response(body, { status: 403 }));
     const { proxyAwareFetch } = await loadProxyFetch(fetchMock);
 
     const response = await proxyAwareFetch(
@@ -25,17 +23,14 @@ describe("OpenCode Free proxy 403 retry", () => {
       { enabled: true, url: "http://proxy.example:8080" },
     );
 
-    expect(response.status).toBe(200);
-    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(response.status).toBe(403);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
     expect(fetchMock.mock.calls[0][1].dispatcher).toBeDefined();
-    expect(fetchMock.mock.calls[1][1].dispatcher).toBeUndefined();
   });
 
-  it("replays a relay-routed FreeTierError to the original endpoint directly", async () => {
+  it("returns a relay-routed FreeTierError instead of replaying direct", async () => {
     const body = JSON.stringify({ error: { type: "FreeTierError" } });
-    const fetchMock = vi.fn()
-      .mockResolvedValueOnce(new Response(body, { status: 403 }))
-      .mockResolvedValueOnce(new Response("data: ok", { status: 200 }));
+    const fetchMock = vi.fn().mockResolvedValueOnce(new Response(body, { status: 403 }));
     const { proxyAwareFetch } = await loadProxyFetch(fetchMock);
 
     const response = await proxyAwareFetch(
@@ -44,49 +39,21 @@ describe("OpenCode Free proxy 403 retry", () => {
       { vercelRelayUrl: "https://relay.example" },
     );
 
-    expect(response.status).toBe(200);
-    expect(fetchMock.mock.calls[0][0]).toBe("https://relay.example");
-    expect(fetchMock.mock.calls[1][0]).toBe("https://opencode.ai/zen/v1/chat/completions");
-    expect(fetchMock.mock.calls[1][1].headers["x-relay-target"]).toBeUndefined();
-  });
-
-  it("preserves relay rejection body without stale framing headers", async () => {
-    const body = JSON.stringify({ error: { type: "permission_error" } });
-    const fetchMock = vi.fn().mockResolvedValue(new Response(body, {
-      status: 403,
-      headers: { "content-length": "999", "content-encoding": "gzip", "x-upstream": "preserved" },
-    }));
-    const { proxyAwareFetch } = await loadProxyFetch(fetchMock);
-
-    const response = await proxyAwareFetch(
-      "https://opencode.ai/zen/v1/chat/completions",
-      { method: "POST", body: "{}", provider: "opencode" },
-      { vercelRelayUrl: "https://relay.example" },
-    );
-
     expect(response.status).toBe(403);
-    expect(await response.text()).toBe(body);
-    expect(response.headers.get("content-length")).toBeNull();
-    expect(response.headers.get("content-encoding")).toBeNull();
-    expect(response.headers.get("x-upstream")).toBe("preserved");
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(fetchMock.mock.calls[0][0]).toBe("https://relay.example");
   });
 
-  it("returns the original gate error when direct retry fails", async () => {
-    const body = JSON.stringify({ error: { type: "FreeTierError" } });
-    const fetchMock = vi.fn()
-      .mockResolvedValueOnce(new Response(body, { status: 403 }))
-      .mockRejectedValueOnce(new Error("direct egress failed"));
+  it("fails closed when an OpenCode proxy fails instead of going direct", async () => {
+    const fetchMock = vi.fn().mockRejectedValueOnce(new Error("proxy down"));
     const { proxyAwareFetch } = await loadProxyFetch(fetchMock);
 
-    const response = await proxyAwareFetch(
+    await expect(proxyAwareFetch(
       "https://opencode.ai/zen/v1/chat/completions",
       { method: "POST", body: "{}", provider: "opencode" },
       { enabled: true, url: "http://proxy.example:8080" },
-    );
-
-    expect(response.status).toBe(403);
-    expect(await response.text()).toBe(body);
-    expect(fetchMock).toHaveBeenCalledTimes(2);
+    )).rejects.toThrow(/Proxy required but failed/);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
   it("does not replay a non-FreeTierError 403", async () => {

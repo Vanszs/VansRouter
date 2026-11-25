@@ -8,6 +8,10 @@ import { transformEventStreamToSSE } from "./kiroEventStream.js";
 import { assertValidKiroRegion } from "../config/awsRegion.js";
 
 const KIRO_REPAIR_BUFFER_MAX_BYTES = 8 * 1024 * 1024;
+// Regions per service host; a region outside the set is never spliced into the hostname.
+const KIRO_SERVICE_REGIONS = {
+  q: new Set(["us-east-1", "eu-central-1"]),
+};
 const KIRO_REPAIR_HEARTBEAT_MS = 10_000;
 const KIRO_SHORT_FINAL_MAX_CHARS = 800;
 const encoder = new TextEncoder();
@@ -220,10 +224,12 @@ export class KiroExecutor extends BaseExecutor {
   getOrderedBaseUrls(credentials) {
     const region = (credentials?.providerSpecificData?.region || "us-east-1").trim() || "us-east-1";
     assertValidKiroRegion(region);
-    if (region && region !== "us-east-1") {
+    // A region outside the service's DNS coverage must not be spliced into the
+    // hostname: q only serves us-east-1/eu-central-1, codewhisperer us-east-1.
+    const baseUrls = this.getBaseUrls();
+    if (region !== "us-east-1" && KIRO_SERVICE_REGIONS.q.has(region)) {
       return [`https://q.${region}.amazonaws.com/generateAssistantResponse`];
     }
-    const baseUrls = this.getBaseUrls();
     const authMethod = credentials?.providerSpecificData?.authMethod;
     const isCodeWhispererSurface =
       authMethod === "api_key" || authMethod === "external_idp" || authMethod === "idc";
@@ -264,7 +270,16 @@ export class KiroExecutor extends BaseExecutor {
    */
   async execute(args) {
     const result = await super.execute(args);
-    if (result?.response?.ok) this.attachIntegrityGate(result, args);
+    if (result?.response?.ok) {
+      // KIRO_INTEGRITY_GATE=off streams through, forfeiting the tool-call repair retry.
+      if (process.env.KIRO_INTEGRITY_GATE === "off") {
+        result.response = this.transformEventStreamToSSE(result.response, args.model, {
+          toolSpecs: args.body?.conversationState?.currentMessage?.userInputMessage?.userInputMessageContext?.tools || []
+        });
+      } else {
+        this.attachIntegrityGate(result, args);
+      }
+    }
     return result;
   }
 

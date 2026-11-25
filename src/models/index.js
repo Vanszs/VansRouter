@@ -20,7 +20,7 @@ export {
   upsertProxyPoolFitness,
   deleteProxyPoolFitness,
   clearProxyPoolFitness,
-  deleteProxyPoolFitnessByPool,
+  deleteExpiredProxyPoolFitness,
   deleteProviderConnectionsByProvider,
   getCombos,
   getComboById,

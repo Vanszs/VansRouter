@@ -19,6 +19,7 @@ export default {
     deprecationNotice: "RISK_NOTICE",
   },
   category: "free",
+  hasOAuth: true,
   transport: {
     baseUrl: "https://cloudcode-pa.googleapis.com/v1internal",
     format: "gemini-cli",

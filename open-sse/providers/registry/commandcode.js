@@ -25,6 +25,7 @@ export default {
     headers: {
       "x-command-code-version": "0.25.7",
       "x-cli-environment": "cli",
+      "x-cli-surface": "cli",
     },
   },
   models: [
@@ -51,5 +52,7 @@ export default {
     { id: "Qwen/Qwen3.7-Plus", name: "Qwen 3.7 Plus" },
     { id: "stepfun/Step-3.7-Flash", name: "Step 3.7 Flash" },
     { id: "nvidia/nemotron-3-ultra-550b-a55b", name: "Nemotron 3 Ultra" },
+    { id: "google/gemini-4-carbon", name: "Gemini 4 Carbon" },
+    { id: "claude-fable-5-2", name: "Claude Fable 5.2" },
   ],
 };

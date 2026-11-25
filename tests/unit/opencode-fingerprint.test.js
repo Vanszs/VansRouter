@@ -50,10 +50,10 @@ describe("opencodeFingerprint — request side", () => {
   });
 
   it("appends only the members the caller does not declare", () => {
-    const body = { tools: [{ type: "function", name: "Bash" }, { type: "function", name: "terminal" }] };
+    const body = { tools: [{ type: "function", name: "Bash" }, { type: "function", name: "exec" }] };
     applyFingerprintToolNames(body, decoy);
 
-    expect(body.tools.map((tool) => tool.name)).toEqual(["bash", "terminal", "glob", "grep", "read"]);
+    expect(body.tools.map((tool) => tool.name)).toEqual(["bash", "exec", "glob", "grep", "read"]);
   });
 
   it("points a forced tool_choice at the canonical name", () => {
@@ -69,6 +69,22 @@ describe("opencodeFingerprint — request side", () => {
 
     expect(takeRenamedToolNames(body)).toBe(map);
     expect(map.get("glob")).toBe("Glob");
+  });
+
+  it("aliases a declared tool name containing \"terminal\" (#5319)", () => {
+    const { tools, map } = concealFingerprintToolNames(chatTools(["read_file", "terminal", "write_file"]));
+    const sent = tools.map((tool) => tool.function?.name ?? tool.name);
+    expect(sent.some((name) => /terminal/i.test(name))).toBe(false);
+    expect(sent).toContain("run_command");
+    expect(map.get("run_command")).toBe("terminal");
+    expect(sent).toContain("read_file");
+  });
+
+  it("aliases every case and substring variant of the gated name", () => {
+    const { tools } = concealFingerprintToolNames(chatTools(["Terminal", "my_terminal_thing", "terminals", "shell"]));
+    const sent = tools.map((tool) => tool.function?.name ?? tool.name);
+    expect(sent.filter((name) => /terminal/i.test(name))).toEqual([]);
+    expect(sent).toContain("shell");
   });
 
   it("never throws on malformed tools", () => {

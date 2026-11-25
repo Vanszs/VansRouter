@@ -1,5 +1,7 @@
 import { translateResponse, initState } from "../translator/index.js";
 import { FORMATS } from "../translator/formats.js";
+import { PROVIDERS } from "../config/providers.js";
+import { liftReasoningAliases } from "../translator/concerns/reasoning.js";
 import { trackPendingRequest, appendRequestLog } from "@/lib/usageDb.js";
 import { extractUsage, mergeUsage, hasValidUsage, estimateUsage, logUsage, addBufferToUsage, filterUsageForFormat, hasZeroCompletionWithContent, fixZeroCompletionUsage, COLORS } from "./usageTracking.js";
 import { parseSSELine, hasValuableContent, fixInvalidId, formatSSE, ensureStreamToolCallIds } from "./streamHelpers.js";
@@ -144,6 +146,10 @@ export function createSSEStream(options = {}) {
   let openAIResponsesTerminalSeen = false;
   let openAIResponsesDoneSent = false;
   let streamDoneSent = false;  // track duplicate [DONE] across transform + flush
+  // Lane quirk: some upstreams stream thinking under OpenRouter aliases
+  // (`reasoning` / `reasoning_details[]`) instead of reasoning_content.
+  const liftAliases = mode === STREAM_MODE.PASSTHROUGH
+    && !!PROVIDERS[provider]?.quirks?.reasoningAliasFields;
   let finalized = false;
   let completionFlushTimer = null;
 
@@ -292,6 +298,18 @@ export function createSSEStream(options = {}) {
                           fieldsInjected = true;
                         }
                       }
+                    }
+                  }
+                }
+              }
+
+              if (liftAliases && parsed?.choices) {
+                for (const choice of parsed.choices) {
+                  if (choice?.delta) {
+                    const lifted = liftReasoningAliases(choice.delta);
+                    if (lifted !== choice.delta) {
+                      choice.delta = lifted;
+                      fieldsInjected = true;
                     }
                   }
                 }
