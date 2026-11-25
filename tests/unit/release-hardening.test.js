@@ -78,16 +78,19 @@ describe("release hardening contracts", () => {
   it("waits long enough for the registry to list a freshly published version", () => {
     const workflow = read(".github/workflows/release.yml");
     // npm accepts a publish before the version becomes readable ("being
-    // processed"); the delay has been observed at ~9 minutes, so the original
-    // 12 attempts x 5s window failed a release that had actually published.
+    // processed"). The delay has been observed at ~9 minutes normally, and
+    // v0.92.4 did not appear until 55m26s after the publish, so the window
+    // must be at least 60 minutes.
     const attempts = Number((workflow.match(/attempts=(\d+)/) || [])[1]);
     const delay = Number((workflow.match(/delay=(\d+)/) || [])[1]);
     expect(attempts).toBeGreaterThan(0);
     expect(delay).toBeGreaterThan(0);
-    expect(attempts * delay).toBeGreaterThanOrEqual(600);
+    expect(attempts * delay).toBeGreaterThanOrEqual(3600);
     const job = workflow.slice(workflow.indexOf("  publish-npm:"), workflow.indexOf("  promote-ghcr:"));
     const timeout = Number((job.match(/timeout-minutes:\s*(\d+)/) || [])[1]);
     expect(timeout * 60).toBeGreaterThan(attempts * delay);
+    expect(job).toContain("did not become visible with the expected integrity within");
+    expect(job).toContain("npm/cli#9889");
   });
 
   it("keeps Docker dependency installation locked and externally downloaded binaries verified", () => {
