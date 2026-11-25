@@ -223,10 +223,12 @@ jobs:
     environment:
       name: release
     runs-on: ubuntu-latest
-    # npm can accept a publish into its staged-publish window and keep the
-    # version out of the packument for ~17 minutes (npm/cli#9889). The verify
-    # loop below waits up to 20 minutes, so the job has to outlive it.
-    timeout-minutes: 35
+    # npm can accept a publish before the version is readable and keep it out
+    # of the packument far longer than the old loop allowed: the v0.92.4
+    # publish printed "being processed" and the registry did not list the
+    # version until 55 minutes later (npm/cli#9889). The verify loop below
+    # waits up to 90 minutes, so the job has to outlive it.
+    timeout-minutes: 120
     permissions:
       actions: read
       contents: read
@@ -305,9 +307,12 @@ jobs:
           # npm accepts a publish before the version is readable (it reports
           # "being processed"). The observed delays are ~9 minutes normally and
           # up to ~17 minutes when the publish lands in the staged window
-          # (npm/cli#9889). 80 attempts at 15s bounds the wait at 20 minutes.
-          attempts=80
-          delay=15
+          # (npm/cli#9889). v0.92.4 took 55m26s: the old 20-minute loop failed
+          # the job, and the retry only succeeded because the version appeared
+          # while it was polling. 180 attempts at 30s bounds the wait at
+          # 90 minutes.
+          attempts=180
+          delay=30
           for attempt in $(seq 1 "$attempts"); do
             if ! published_integrity="$(node scripts/npm-integrity.cjs "vansrouter@${RELEASE_VERSION}")"; then
               echo "::error::Unable to verify npm registry after publish"
@@ -326,7 +331,8 @@ jobs:
               sleep "$delay"
             fi
           done
-          echo "::error::npm publish did not become visible with the expected integrity after ${attempts} attempts"
+          echo "::error::npm publish did not become visible with the expected integrity within $((attempts * delay / 60)) minutes"
+          echo "::error::The registry accepted the publish but has not listed vansrouter@${RELEASE_VERSION}. This is npm's asynchronous publish processing (npm/cli#9889). Rerun the failed publish-npm job once the version is listed; if it never is, follow .agent/cicd.md Failure Recovery before publishing again."
           exit 1
 
   promote-ghcr:
