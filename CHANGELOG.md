@@ -1,3 +1,28 @@
+# v0.92.7 (2026-11-28)
+
+Security hardening and release-pipeline fixes from the open-PR audit, plus white-box coverage for the OpenCode WARP rotation.
+
+## Security
+
+- MITM Root CA private key is written with mode `0600` and existing keys are retrofitted when the CA is generated, loaded, or the MITM server starts (`#206`). The chmod is best-effort on POSIX and never blocks the key from being used.
+- `restrictPrivateKeyPermissions` is covered for already-restricted keys, missing keys, unusable input, and `chmod` failure (EPERM).
+
+## Release Infrastructure
+
+- npm publish verification now waits up to **90 minutes** (180 × 30 s) with a 120-minute job timeout, and the failure-recovery docs describe npm's asynchronous publish processing (`#207`). This fixes the repeated `publish-npm` failures on v0.92.5/v0.92.6, where npm listed the version 40–55 minutes after accepting it.
+- The release-hardening contract test now requires at least 60 minutes of registry visibility and checks the new diagnostic messages.
+
+## Tests
+
+- New `tests/unit/warp-egress-whitebox.test.js`: probe parsing (`warp=on/off`, empty trace, curl failure), `docker rm` failure tolerated, `docker run` failure with lock release, readiness-deadline timeout with a reusable lock, and container/port/image environment overrides.
+- Extended `opencode-warp-rotation.test.js` (rotation failure → 60 s wait, rotator rejection → fail-closed 503, no pool bench), `noauth-proxy-fallback.test.js` (WARP with zero pools), and `mitm-key-permissions.test.js` (chmod branches).
+- Focused white-box set: **46/46 pass**. Full suite: **5615 passed**, 123 skipped, 1 todo; the 4 `codex-stt-*` failures reproduce on the unmodified tree (pre-existing).
+- `pnpm run build`: pass.
+
+## Repository Maintenance
+
+- Closed six superseded PRs (`#181`, `#180`, `#179`, `#177`, `#174`, `#67`) after verifying their files are identical on main or their test files pass there; merged `#206` and `#207`.
+
 # v0.92.6 (2026-11-28)
 
 Hardening for the scoped OpenCode-free WARP egress after concurrency and failure stress testing.
