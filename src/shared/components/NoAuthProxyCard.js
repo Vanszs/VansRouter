@@ -124,6 +124,9 @@ export default function NoAuthProxyCard({ providerId, isFreeNoAuth = true }) {
             { value: "round-robin", label: "Round-Robin (Rotate active pools)" },
             { value: "random", label: "Random (Rotate active pools)" },
             { value: "smart", label: "Smart (Skip unfit pools)" },
+            ...(providerId === "opencode"
+              ? [{ value: "warp", label: "Reconnect / WARP (new address)" }]
+              : []),
           ]}
         />
 
@@ -146,6 +149,12 @@ export default function NoAuthProxyCard({ providerId, isFreeNoAuth = true }) {
               </span>
             </div>
           )
+        ) : rotateStrategy === "warp" ? (
+          <div className="flex flex-col justify-end pb-1.5">
+            <span className="text-xs text-brand-500 font-medium">
+              🌐 Local WARP egress. On 403/429/5xx the address is replaced; no proxy pool is used.
+            </span>
+          </div>
         ) : (
           <div className="flex flex-col justify-end pb-1.5">
             <span className="text-xs text-brand-500 font-medium">
@@ -155,7 +164,7 @@ export default function NoAuthProxyCard({ providerId, isFreeNoAuth = true }) {
         )}
       </div>
 
-      {rotateStrategy !== "none" && (
+      {rotateStrategy !== "none" && rotateStrategy !== "warp" && (
         <div className="mt-4 rounded-xl border border-border/60 bg-surface/40 p-4">
           <div className="flex items-center justify-between gap-3 mb-3">
             <div>
