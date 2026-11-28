@@ -27,7 +27,7 @@ vi.mock("open-sse/services/proxyPoolFitness.js", () => ({
   earliestPoolUnfitUntil: vi.fn(() => null),
 }));
 vi.mock("@/shared/constants/providers.js", () => ({
-  FREE_PROVIDERS: { opencode: { id: "opencode", noAuth: true } },
+  FREE_PROVIDERS: { opencode: { id: "opencode", noAuth: true }, "mimo-free": { id: "mimo-free", noAuth: true } },
   resolveProviderId: (provider) => provider,
   FREE_TIER_PROVIDERS: {},
   OAUTH_PROVIDERS: {},
@@ -65,6 +65,33 @@ describe("no-auth provider proxy fallback", () => {
     const result = await getProviderCredentials("opencode", null, "deepseek-v4.1-flash-free");
     expect(result.providerSpecificData.proxyPoolIds).toEqual(["pool-a", "pool-b"]);
     expect(result.providerSpecificData.proxyPoolId).toBe("pool-a");
+  });
+
+  it("routes OpenCode free through the local WARP egress instead of a pool", async () => {
+    mocks.getSettings.mockResolvedValue({
+      providerStrategies: { opencode: { rotateStrategy: "warp", proxyPoolId: "pool-a" } },
+    });
+    const result = await getProviderCredentials("opencode", null, "deepseek-v4.1-flash-free");
+    expect(result).toMatchObject({ id: "warp:local", connectionId: "warp:local" });
+    expect(result.providerSpecificData).toMatchObject({
+      connectionProxyEnabled: true,
+      connectionProxyUrl: "http://127.0.0.1:9091",
+      strictProxy: true,
+      proxyRotationStrategy: "warp",
+      proxyPoolIds: [],
+      proxyPoolId: null,
+    });
+    expect(mocks.pickProxyPoolId).not.toHaveBeenCalled();
+  });
+
+  it("does not apply WARP to other free providers", async () => {
+    mocks.getSettings.mockResolvedValue({
+      providerStrategies: { "mimo-free": { rotateStrategy: "warp" } },
+    });
+    const result = await getProviderCredentials("mimo-free", null, "mimo-v2.6-flash-free");
+    expect(result.id).toBe("proxy:pool-a");
+    expect(result.providerSpecificData.proxyRotationStrategy).toBe("warp");
+    expect(result.providerSpecificData.connectionProxyUrl).toBe("http://pool-a");
   });
 
   it("does not choose an excluded proxy pool", async () => {

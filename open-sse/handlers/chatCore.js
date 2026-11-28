@@ -15,6 +15,7 @@ import { checkFallbackError } from "../services/accountFallback.js";
 import { classifyError, logGatewayError } from "../utils/errorLog.js";
 import { upstreamResponseHeaders } from "../utils/upstreamHeaders.js";
 import { HTTP_STATUS, TOKEN_SAVER_HEADER, OPENCODE_ROTATION_RETRY_AFTER_MS } from "../config/runtimeConfig.js";
+import { rotateWarpEgress, WARP_EGRESS_ID } from "../services/warpEgress.js";
 import { handleBypassRequest } from "../utils/bypassHandler.js";
 import { trackPendingRequest, appendRequestLog, saveRequestDetail } from "@/lib/usageDb.js";
 import { getExecutor } from "../executors/index.js";
@@ -39,7 +40,7 @@ import { getCapabilitiesForModel } from "../providers/capabilities.js";
 import { stripUnsupportedModalities } from "../translator/concerns/modality.js";
 import { prefetchRemoteImages } from "../translator/concerns/prefetch.js";
 import { defaultClaudeToolType, shouldDefaultClaudeToolType } from "../translator/concerns/toolCall.js";
-import { markPoolUnfit } from "../services/proxyPoolFitness.js";
+import { markPoolUnfit, earliestPoolUnfitUntil } from "../services/proxyPoolFitness.js";
 
 const MAX_POOL_RETRIES = 2;
 const TOOL_PROTOCOL_PROMPT_PROVIDERS = new Set(["kimchi", "nvidia"]);
@@ -466,6 +467,7 @@ export async function handleChatCore({ body, modelInfo, credentials, log, onCred
     vercelRelayUrl: psd?.vercelRelayUrl || "",
     strictProxy: psd?.strictProxy === true || provider === "freebuff",
     proxyPoolId: psd?.proxyPoolId || psd?.connectionProxyPoolId || null,
+    proxyRotationStrategy: psd?.proxyRotationStrategy || "none",
   });
   const proxyScope = `${provider}::${model}`;
   let proxyOptions = buildProxyOptions(credentials?.providerSpecificData || {});
@@ -522,6 +524,43 @@ export async function handleChatCore({ body, modelInfo, credentials, log, onCred
   // request excludes the benched pool through the fitness store.
   const deferredRotationResult = async (poolScoped, failedPool) => {
     const reason = poolScoped.reason || "egress";
+    if (proxyOptions?.proxyRotationStrategy === "warp") {
+      // The whole egress is replaced, so there is no pool to bench: rotate the
+      // scoped WARP container now and let the client retry on the new address.
+      const rotation = await rotateWarpEgress().catch((error) => {
+        log?.warn?.("PROXY", `${provider.toUpperCase()} | WARP rotation failed: ${error.message}`);
+        return { ok: false, ip: null, reused: false };
+      });
+      const waitMs = rotation.ok
+        ? (rotation.reused ? rotation.retryAfterMs : OPENCODE_ROTATION_RETRY_AFTER_MS)
+        : 60_000;
+      const retryIn = Math.max(1, Math.ceil(waitMs / 1000));
+      const message = rotation.reused
+        ? `OpenCode free tier refused this WARP egress (${reason}); address was rotated recently. Retry in ${retryIn}s.`
+        : rotation.ok
+          ? `OpenCode free tier refused this WARP egress (${reason}); WARP re-registered with address ${rotation.ip}. Retry in ${retryIn}s.`
+          : `OpenCode free tier refused this WARP egress (${reason}); WARP rotation failed. Retry in ${retryIn}s.`;
+      log?.warn?.("PROXY", `${provider.toUpperCase()} | ${reason}: WARP ${rotation.ok ? (rotation.reused ? "cooldown" : `rotated to ${rotation.ip}`) : "rotation failed"}; returning wait error`);
+      return {
+        success: false,
+        status: HTTP_STATUS.SERVICE_UNAVAILABLE,
+        error: message,
+        errorCode: "ROTATION_IN_PROGRESS",
+        rotationPending: {
+          fromPoolId: WARP_EGRESS_ID,
+          toPoolId: WARP_EGRESS_ID,
+          reason,
+          retryAfterMs: waitMs,
+        },
+        response: rotationInProgressResponse({
+          message,
+          retryAfterMs: waitMs,
+          fromPoolId: WARP_EGRESS_ID,
+          toPoolId: WARP_EGRESS_ID,
+          reason,
+        }),
+      };
+    }
     // Abusive-traffic bans are IP-wide; scope the bench to the provider so the
     // next model on the same egress does not rediscover the same ban.
     const benchScope = reason === "ip-limit" ? `${provider}::*` : (poolScoped.scope || proxyScope);
@@ -533,11 +572,18 @@ export async function handleChatCore({ body, modelInfo, credentials, log, onCred
       log?.warn?.("PROXY", `${provider.toUpperCase()} | pool re-resolve failed: ${resolveError.message}`);
     }
     const hasNext = !!nextPool?.proxyPoolId && nextPool.proxyPoolId !== failedPool;
-    const waitMs = hasNext ? OPENCODE_ROTATION_RETRY_AFTER_MS : 30_000;
+    // When nothing is left, advertise the real bench expiry: a same-pool value
+    // here produced `aff7>aff7` + a 30s wait while every pool was benched 24h.
+    const poolIds = (nextPool?.proxyPoolIds?.length ? nextPool.proxyPoolIds : null)
+      || (credentials?.providerSpecificData?.proxyPoolIds?.length ? credentials.providerSpecificData.proxyPoolIds : null)
+      || (failedPool ? [failedPool] : []);
+    const waitMs = hasNext
+      ? OPENCODE_ROTATION_RETRY_AFTER_MS
+      : Math.max(1000, (earliestPoolUnfitUntil(poolIds, benchScope) ?? Date.now() + 30_000) - Date.now());
     const message = hasNext
       ? `OpenCode free tier refused this egress (${reason}); rotating network. Retry in ${Math.max(1, Math.ceil(waitMs / 1000))}s.`
       : `All OpenCode egress pools are cooling down; retry in ${Math.max(1, Math.ceil(waitMs / 1000))}s.`;
-    log?.warn?.("PROXY", `${provider.toUpperCase()} | ${reason}: bench ${failedPool || "direct"} → ${nextPool?.proxyPoolId || "none"}; returning wait error`);
+    log?.warn?.("PROXY", `${provider.toUpperCase()} | ${reason}: bench ${failedPool || "direct"} → ${hasNext ? nextPool.proxyPoolId : "none"}; returning wait error`);
     return {
       success: false,
       status: HTTP_STATUS.SERVICE_UNAVAILABLE,
@@ -545,15 +591,15 @@ export async function handleChatCore({ body, modelInfo, credentials, log, onCred
       errorCode: "ROTATION_IN_PROGRESS",
       rotationPending: {
         fromPoolId: failedPool || null,
-        toPoolId: nextPool?.proxyPoolId || null,
+        toPoolId: hasNext ? nextPool.proxyPoolId : null,
         reason,
         retryAfterMs: waitMs,
       },
       response: rotationInProgressResponse({
         message,
         retryAfterMs: waitMs,
-        fromPoolId: failedPool,
-        toPoolId: nextPool?.proxyPoolId || null,
+        fromPoolId: hasNext ? failedPool : null,
+        toPoolId: hasNext ? nextPool.proxyPoolId : null,
         reason,
       }),
     };

@@ -4,6 +4,7 @@ import { formatRetryAfter, checkFallbackError, isModelLockActive, buildModelLock
 import { classify429 } from "open-sse/utils/classify429.js";
 import { resolveAntigravityProxyConfig } from "open-sse/utils/proxyFetch.js";
 import { loadPoolFitness, earliestPoolUnfitUntil } from "open-sse/services/proxyPoolFitness.js";
+import { WARP_EGRESS_ID, WARP_EGRESS_URL } from "open-sse/services/warpEgress.js";
 import { MAX_RATE_LIMIT_COOLDOWN_MS } from "open-sse/config/errorConfig.js";
 import { resolveProviderId, FREE_PROVIDERS, getProviderAlias, isOpenAICompatibleProvider, isAnthropicCompatibleProvider, isCustomEmbeddingProvider } from "@/shared/constants/providers.js";
 import { getAntigravityQuotaCache, getAntigravityModelQuota } from "./antigravityQuota.js";
@@ -85,6 +86,29 @@ export async function getProviderCredentials(provider, excludeConnectionIds = nu
       const override = (settings.providerStrategies || {})[providerId] || {};
       const strategy = override.rotateStrategy || "none";
       const configuredPoolId = override.proxyPoolId || null;
+      // OpenCode free only: scoped WARP egress replaces pool selection. The
+      // container is local and fail-closed; other providers keep the host route.
+      if (strategy === "warp" && providerId === "opencode") {
+        return {
+          id: WARP_EGRESS_ID,
+          connectionId: WARP_EGRESS_ID,
+          connectionName: "WARP (local)",
+          isActive: true,
+          accessToken: "public",
+          providerSpecificData: {
+            connectionProxyEnabled: true,
+            connectionProxyUrl: WARP_EGRESS_URL,
+            connectionNoProxy: "",
+            connectionProxyPoolId: null,
+            vercelRelayUrl: "",
+            proxyPoolId: null,
+            strictProxy: true,
+            proxyPoolIds: [],
+            proxyRotationStrategy: "warp",
+            proxyPoolScope: `${providerId}::${model || "*"}`,
+          },
+        };
+      }
       let pickedId = configuredPoolId;
       let eligiblePoolIds = [];
       if (strategy !== "none") {
