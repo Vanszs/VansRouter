@@ -1,4 +1,4 @@
-import { describe, it, expect, afterEach } from "vitest";
+import { describe, it, expect, afterEach, vi } from "vitest";
 import { execFileSync } from "child_process";
 import { createRequire } from "module";
 import fs from "fs";
@@ -69,6 +69,23 @@ describe("MITM Root CA private key permissions", () => {
     expect(restrictPrivateKeyPermissions("")).toBe(false);
     expect(restrictPrivateKeyPermissions(null)).toBe(false);
     expect(restrictPrivateKeyPermissions(undefined)).toBe(false);
+  });
+
+  it.skipIf(!IS_POSIX)("does not chmod a key that is already restricted", () => {
+    const keyPath = makeKey(0o600);
+    const chmod = vi.spyOn(fs, "chmodSync");
+    expect(restrictPrivateKeyPermissions(keyPath)).toBe(true);
+    expect(chmod).not.toHaveBeenCalled();
+    chmod.mockRestore();
+  });
+
+  it.skipIf(!IS_POSIX)("returns false when chmod is not permitted", () => {
+    const keyPath = makeKey(0o644);
+    const chmod = vi.spyOn(fs, "chmodSync").mockImplementation(() => {
+      throw new Error("EPERM");
+    });
+    expect(restrictPrivateKeyPermissions(keyPath)).toBe(false);
+    chmod.mockRestore();
   });
 
   it.skipIf(!IS_POSIX)(
