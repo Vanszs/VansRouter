@@ -16,13 +16,26 @@ const WARP_EGRESS_PORT = Number(process.env.WARP_EGRESS_PORT || 9091);
 const WARP_EGRESS_IMAGE = process.env.WARP_EGRESS_IMAGE || "ghcr.io/mon-ius/docker-warp-socks:latest";
 export const WARP_EGRESS_URL = `http://127.0.0.1:${WARP_EGRESS_PORT}`;
 
-const ROTATE_WAIT_MS = 20_000;
+// Readiness ranges from ~3 s (clean registration) to ~24 s when Cloudflare
+// throttles repeated registrations; the budget only affects the error path.
+const ROTATE_WAIT_MS = 45_000;
 // Re-registering on every fast retry would hammer the WARP API; reuse the
 // address that was just issued and make the client wait out the window.
-const MIN_ROTATE_INTERVAL_MS = Number(process.env.WARP_EGRESS_MIN_ROTATE_INTERVAL_MS || 15_000);
+const MIN_ROTATE_INTERVAL_MS = Number(process.env.WARP_EGRESS_MIN_ROTATE_INTERVAL_MS || 60_000);
 
 let rotation = null;
 let lastRotation = { at: 0, ip: null };
+
+async function containerRunning() {
+  try {
+    const { stdout } = await execFileAsync("docker", [
+      "inspect", "-f", "{{.State.Running}}", WARP_EGRESS_CONTAINER,
+    ], { timeout: 5_000 });
+    return String(stdout || "").trim() === "true";
+  } catch {
+    return false;
+  }
+}
 
 /** Probe the local WARP proxy: ok only when the trace says warp=on. */
 export async function probeWarpEgress() {
@@ -44,7 +57,9 @@ export async function probeWarpEgress() {
  */
 export async function rotateWarpEgress({ waitMs = ROTATE_WAIT_MS } = {}) {
   const remaining = MIN_ROTATE_INTERVAL_MS - (Date.now() - lastRotation.at);
-  if (lastRotation.at && remaining > 0) {
+  // A deleted container must not be masked by the cooldown: the cached address
+  // is only reusable while the process that carries it is still running.
+  if (lastRotation.at && remaining > 0 && await containerRunning()) {
     return { ok: true, ip: lastRotation.ip, reused: true, retryAfterMs: remaining };
   }
   // One rotation at a time: concurrent refusals must not fight over the name.
