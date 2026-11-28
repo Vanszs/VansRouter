@@ -1,3 +1,23 @@
+# v0.92.6 (2026-11-28)
+
+Hardening for the scoped OpenCode-free WARP egress after concurrency and failure stress testing.
+
+## Reliability
+
+- WARP cooldown now verifies the container is still running (`docker inspect -f {{.State.Running}}`): a deleted container is recreated immediately instead of being masked by the cached address for the rest of the cooldown.
+- Rotation interval raised from 15 s to 60 s and the readiness budget from 20 s to 45 s. Repeated recreations hit Cloudflare registration throttling; the old budget reported `rotation failed` at 20 s while the tunnel became ready at ~24 s. Rotations remain serialized, so concurrent refusals share one recreation.
+- OpenCode Go and all other providers remain unchanged: account fallback only, no WARP, no rotation headers.
+
+## Tests
+
+- `tests/unit/warp-egress.test.js` now covers four cases: normal recreation, cooldown reuse, dead-container recreation (liveness override), and one shared recreation for concurrent refusals.
+- `pnpm test`: **5598 passed**, 123 skipped, 1 todo. The 4 `codex-stt-*` failures reproduce on the unmodified tree (pre-existing); no new failures.
+- Live stress on the running gateway: after killing the container, a request recreated it in 7.5 s; killing it again and firing 6 concurrent `stream:true` requests produced exactly one recreation, all fail-closed 503s (`Retry-After` 2 or 60) and no `rotation failed`; 3 concurrent OpenCode Go requests returned 200; `/api/health` ok, `/api/ready` 200, PM2 restarts unchanged.
+
+## Release Infrastructure
+
+- v0.92.5 npm and GHCR promotion completed after npm's staged-publish window elapsed; the failed `publish-npm` job was rerun idempotently. This patch supersedes 0.92.5 with the stress fixes.
+
 # v0.92.5 (2026-11-28)
 
 Scoped WARP egress for the OpenCode free lane, plus the all-benched rotation wait fix found by black-box testing.
