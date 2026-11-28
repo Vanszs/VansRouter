@@ -1,3 +1,29 @@
+# v0.92.5 (2026-11-28)
+
+Scoped WARP egress for the OpenCode free lane, plus the all-benched rotation wait fix found by black-box testing.
+
+## Features
+
+- **OpenCode Free — Reconnect / WARP mode.** `providerStrategies.opencode.rotateStrategy = "warp"` routes only the free OpenCode lane through a loopback WARP container (`open-sse/services/warpEgress.js`, HTTP/SOCKS on `127.0.0.1:9091`) instead of a remote proxy pool. The host route and every other provider keep their existing egress. The strategy is exposed as "Reconnect / WARP (new address)" in `NoAuthProxyCard`, only for `opencode`.
+- On an egress refusal (403/429/5xx/network) the container is recreated for a new WARP registration and the request returns the existing 503 `rotation_in_progress` + `Retry-After`; direct replay stays disabled (`strictProxy: true`). Rotations are serialized and rate-limited to one per 15 s; concurrent refusals share the in-flight recreation.
+- OpenCode Go and every other provider are untouched: no WARP, no pool bench, normal account fallback.
+
+## Reliability
+
+- Fixed the all-pools-benched wait: it now reports the real earliest bench expiry (24 h for `ip-limit`) instead of a fixed 30 s, and omits the misleading `pool>same-pool` `x-vansroute-rotation` header (`toPoolId` is null). The same fix covers a static pool whose eligible list is empty.
+- `proxyRotationStrategy` now reaches `chatCore` proxy options, so connection metadata selects the `warp` mode.
+
+## Tests
+
+- New `tests/unit/warp-egress.test.js` (recreate, cooldown, concurrent lock) and `tests/unit/opencode-warp-rotation.test.js` (warp wait response, cooldown, all-benched header/wait regressions); auth scoping tests in `tests/unit/noauth-proxy-fallback.test.js`.
+- `pnpm test`: **5597 passed**, 123 skipped, 1 todo. The 4 `codex-stt-*` failures reproduce on the unmodified tree (pre-existing); no new failures.
+- Live black-box on the release candidate: `warp` request → 503 `rotation_in_progress` (`warp:local>warp:local`, `Retry-After: 2`) with a recreated container; immediate retry → cooldown wait 15 s without recreation; `ocg/*` → 200 on its account; static benched pool → 503 with `Retry-After: 86400` and no rotation header.
+- Production build/deploy: atomic deploy activated and `/api/ready` returned 200.
+
+## Limitations
+
+- WARP egress was verified (`warp=on`, loopback-only listener) but OpenCode currently answers `429 FreeUsageLimitError` for every tested WARP address, as well as the host and relay egress. A successful free-lane 200 through WARP was not observed; the mode fails closed with the wait response until an address is accepted.
+
 # v0.92.4 (2026-11-23)
 
 Release train for the 0.92 line: the upstream v0.5.116/v0.5.119 sync, OpenCode free-lane egress rotation, the issue-port batch, and the follow-up audit. Production was already running 0.92.3; this version is the CI/CD release candidate.
