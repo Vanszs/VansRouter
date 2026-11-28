@@ -90,6 +90,7 @@ describe("OpenCode free WARP rotation", () => {
     const result = await run();
 
     expect(rotateMock).toHaveBeenCalledOnce();
+    expect(markMock).not.toHaveBeenCalled();
     expect(result).toMatchObject({
       success: false,
       status: 503,
@@ -115,6 +116,38 @@ describe("OpenCode free WARP rotation", () => {
 
     expect(result.status).toBe(503);
     expect(result.response.headers.get("retry-after")).toBe("12");
+  });
+
+  it("returns a 60s wait when the WARP recreation fails", async () => {
+    rotateMock.mockResolvedValueOnce({ ok: false, ip: null, reused: false });
+    executeMock.mockImplementationOnce(async () => {
+      const error = new Error("network");
+      error.poolScoped = { reason: "network", deferRotation: true };
+      throw error;
+    });
+
+    const result = await run();
+
+    expect(result.status).toBe(503);
+    expect(result.error).toContain("WARP rotation failed");
+    expect(result.response.headers.get("retry-after")).toBe("60");
+    expect(markMock).not.toHaveBeenCalled();
+  });
+
+  it("survives a rotator rejection without benching a pool", async () => {
+    rotateMock.mockRejectedValueOnce(new Error("docker missing"));
+    executeMock.mockImplementationOnce(async () => {
+      const error = new Error("network");
+      error.poolScoped = { reason: "network", deferRotation: true };
+      throw error;
+    });
+
+    const result = await run();
+
+    expect(result.status).toBe(503);
+    expect(result.error).toContain("WARP rotation failed");
+    expect(result.response.headers.get("retry-after")).toBe("60");
+    expect(markMock).not.toHaveBeenCalled();
   });
 
   it("does not report a same-pool rotation when every pool is benched", async () => {

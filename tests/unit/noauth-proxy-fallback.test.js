@@ -94,6 +94,17 @@ describe("no-auth provider proxy fallback", () => {
     expect(result.providerSpecificData.connectionProxyUrl).toBe("http://pool-a");
   });
 
+  it("uses WARP without requiring any proxy pool", async () => {
+    mocks.getSettings.mockResolvedValue({
+      providerStrategies: { opencode: { rotateStrategy: "warp" } },
+    });
+    mocks.getProxyPools.mockResolvedValue([]);
+    const result = await getProviderCredentials("opencode", null, "deepseek-v4.1-flash-free");
+    expect(result).toMatchObject({ id: "warp:local", connectionId: "warp:local" });
+    expect(result.providerSpecificData.proxyPoolIds).toEqual([]);
+    expect(mocks.resolveConnectionProxyConfig).not.toHaveBeenCalled();
+  });
+
   it("does not choose an excluded proxy pool", async () => {
     mocks.pickProxyPoolId.mockImplementation((ids) => ids.at(-1) || null);
     const result = await getProviderCredentials("opencode", new Set(["proxy:pool-b"]), "deepseek-v4.1-flash-free");
